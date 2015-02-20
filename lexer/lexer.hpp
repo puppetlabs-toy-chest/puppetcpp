@@ -292,7 +292,15 @@ namespace puppet { namespace lexer {
      */
     struct string_token
     {
-        string_token() {}
+        /**
+         * Constructs an empty string token.
+         */
+        string_token() :
+            _interpolated(true),
+            _escaped(true)
+        {
+        }
+
         /**
          * Constructs a string token.
          * @param position The position in the input source for the token.
@@ -417,7 +425,7 @@ namespace boost { namespace spirit { namespace traits
         static void call(Iterator const& first, Iterator const& last, puppet::lexer::string_token& attr)
         {
             // This should not get called and only exists for the code to compile
-            // Tokens that have string data associated with them should be assigned by value, not interators
+            // Tokens that have string data associated with them should be assigned by value, not iterators
             throw std::runtime_error("attempt to assign string token from iterators.");
         }
     };
