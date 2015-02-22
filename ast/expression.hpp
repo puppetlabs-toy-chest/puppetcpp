@@ -15,6 +15,7 @@
 #include "visitors.hpp"
 #include <boost/variant.hpp>
 #include <iostream>
+#include <vector>
 
 namespace puppet { namespace ast {
 

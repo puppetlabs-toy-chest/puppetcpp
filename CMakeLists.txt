@@ -23,6 +23,8 @@ add_executable(puppetcpp
     main.cc
     lexer/lexer.cc
     lexer/static_lexer.hpp
+    lexer/string_token.cc
+    lexer/token_id.cc
     ast/access_expression.cc
     ast/array.cc
     ast/boolean.cc
@@ -35,6 +37,7 @@ add_executable(puppetcpp
     ast/hash.cc
     ast/if_expression.cc
     ast/lambda.cc
+    ast/manifest.cc
     ast/method_call_expression.cc
     ast/name.cc
     ast/node_definition_expression.cc
@@ -47,10 +50,11 @@ add_executable(puppetcpp
     ast/resource_expression.cc
     ast/resource_override_expression.cc
     ast/string.cc
-    ast/manifest.cc
     ast/type.cc
     ast/unless_expression.cc
     ast/variable.cc
     ast/visitors.cc
+    parser/parser.cc
+    utility/error_reporter.cc
 )
 target_link_libraries(puppetcpp ${Boost_LIBRARIES})

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/lexer.hpp"
+#include "../lexer/token_position.hpp"
 #include <boost/range.hpp>
 #include <boost/algorithm/string.hpp>
 #include <iostream>

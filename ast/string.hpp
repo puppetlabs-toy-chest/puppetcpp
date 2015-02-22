@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/lexer.hpp"
+#include "../lexer/string_token.hpp"
 #include <boost/range.hpp>
 #include <iostream>
 #include <string>

@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include "token_id.hpp"
+#include "string_token.hpp"
 #include <string>
 #include <locale>
 #include <iostream>
@@ -14,6 +16,7 @@
 #include <sstream>
 #include <exception>
 #include <tuple>
+#include <functional>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/spirit/include/lex_lexer.hpp>
 #include <boost/spirit/include/lex_lexertl.hpp>
@@ -64,11 +67,6 @@ namespace puppet { namespace lexer {
     };
 
     /**
-     * Stores the offset in input stream and line for a token.
-     */
-    typedef std::tuple<std::size_t, std::size_t> token_position;
-
-    /**
      * Lexer iterator type used to support heredoc parsing.
      * Heredocs require a more complicated iterator type due to the fact heredoc lines are parsed out-of-order.
      * This iterator supports skipping over lines that have already been parsed for a heredoc token.
@@ -107,9 +105,7 @@ namespace puppet { namespace lexer {
 
     private:
         friend class boost::iterator_core_access;
-
-        template <typename T> friend
-        struct lexer;
+        template <typename Base> friend struct lexer;
 
         void set_next(lexer_iterator<Iterator> const& next)
         {
@@ -161,309 +157,37 @@ namespace puppet { namespace lexer {
     };
 
     /**
-     * Represents the kinds of tokens returned by the lexer.
-     * Every token returned from the lexer will either have one of these id values or be less than 128.
-     * If the id is less than 128, the token represents a literal character token.
-     */
-    enum class token_id
-    {
-        unknown = boost::spirit::lex::min_token_id,
-        append, // Not supported in grammar, but kept for legacy parsing
-        remove, // Not supported in grammer, but kept for legacy parsing
-        equals,
-        not_equals,
-        match,
-        not_match,
-        greater_equals,
-        less_equals,
-        fat_arrow,
-        plus_arrow,
-        left_shift,
-        left_double_collect,
-        left_collect,
-        right_shift,
-        right_double_collect,
-        right_collect,
-        atat,
-        in_edge,
-        in_edge_sub,
-        out_edge,
-        out_edge_sub,
-        keyword_case,
-        keyword_class,
-        keyword_default,
-        keyword_define,
-        keyword_if,
-        keyword_elsif,
-        keyword_else,
-        keyword_inherits,
-        keyword_node,
-        keyword_and,
-        keyword_or,
-        keyword_undef,
-        keyword_false,
-        keyword_true,
-        keyword_in,
-        keyword_unless,
-        keyword_function,
-        keyword_type,
-        keyword_attr,
-        keyword_private,
-        statement_call,
-        single_quoted_string,
-        double_quoted_string,
-        bare_word,
-        variable,
-        type,
-        name,
-        regex,
-        heredoc,
-        number,
-        array_start,        // Same as '[', but whitespace delimited to force array expression
-        comment,            // Not in token stream
-        whitespace,         // Not in token stream
-        unclosed_quote      // Error token that will not match any grammars
-    };
-
-    /**
-     * Stream insertion operator for token id.
-     * @param os The output stream to write the token id.
-     * @param id The token id to write.
-     * @return Returns the given output stream.
-     */
-    std::ostream& operator<<(std::ostream& os, token_id const& id);
-}}  // namespace puppet::lexer
-
-namespace boost { namespace spirit { namespace qi {
-    /** @cond NOT_DOCUMENTED */
-    /**
-     * Specialization for information for tokens with id type token_id.
-     * @tparam Context The type of context.
-     * @return Returns The boost info for the token.
-     */
-    template <>
-    template <typename Context>
-    info plain_token<puppet::lexer::token_id>::what(Context&) const
-    {
-        return boost::spirit::info("token", boost::lexical_cast<std::string>(id));
-    }
-
-    /**
-     * Specialization for information for tokens with id type char.
-     * @tparam Context The type of context.
-     * @return Returns The boost info for the token.
-     */
-    template <>
-    template <typename Context>
-    info plain_token<char>::what(Context&) const
-    {
-        return boost::spirit::info("token", boost::lexical_cast<std::string>(static_cast<puppet::lexer::token_id>(id)));
-    }
-    /**
-     * Specialization for information for tokens with id type token_id.
-     * @tparam Context The type of context.
-     * @return Returns The boost info for the token.
-     */
-    template <>
-    template <typename Context>
-    info plain_raw_token<puppet::lexer::token_id>::what(Context&) const
-    {
-        return boost::spirit::info("raw_token", boost::lexical_cast<std::string>(id));
-    }
-
-    /**
-     * Specialization for information for tokens with id type char.
-     * @tparam Context The type of context.
-     * @return Returns The boost info for the token.
-     */
-    template <>
-    template <typename Context>
-    info plain_raw_token<char>::what(Context&) const
-    {
-        return boost::spirit::info("raw_token", boost::lexical_cast<std::string>(static_cast<puppet::lexer::token_id>(id)));
-    }
-    /** @endcond */
-}}}  // namespace boost::spirit::qi
-
-namespace puppet { namespace lexer {
-    /**
-     * Represents data about a string token.
-     * Used for heredocs and quoted strings.
-     */
-    struct string_token
-    {
-        /**
-         * Constructs an empty string token.
-         */
-        string_token() :
-            _interpolated(true),
-            _escaped(true)
-        {
-        }
-
-        /**
-         * Constructs a string token.
-         * @param position The position in the input source for the token.
-         * @param text The text for the string.
-         * @param format The format for the string (heredoc only).
-         * @param interpolated True if the string should be interpolated or false if not.
-         * @param escaped True if the $ character should be escaped or false if not.
-         */
-        string_token(
-            token_position position,
-            std::string text,
-            std::string format = std::string(),
-            bool interpolated = true,
-            bool escaped = true) :
-                _position(std::move(position)),
-                _text(std::move(text)),
-                _format(std::move(format)),
-                _interpolated(interpolated),
-                _escaped(escaped)
-        {
-        }
-
-        /**
-         * Gets the position of the token.
-         * @return Returns the position of the token.
-         */
-        token_position const& position() const
-        {
-            return _position;
-        }
-
-        /**
-         * Gets the text of the string token.
-         * @return Returns the text of the string token.
-         */
-        std::string const& text() const
-        {
-            return _text;
-        }
-
-        /**
-         * Gets the text of the string token.
-         * @return Returns the text of the string token.
-         */
-        std::string& text()
-        {
-            return _text;
-        }
-
-        /**
-         * Gets the format of the string token.
-         * An empty format means "regular string".
-         * @return Returns the format of the string token.
-         */
-        std::string const& format() const
-        {
-            return _format;
-        }
-
-        /**
-         * Gets the format of the string token.
-         * An empty format means "regular string".
-         * @return Returns the format of the string token.
-         */
-        std::string& format()
-        {
-            return _format;
-        }
-
-        /**
-         * Gets whether or not the string should be interpolated.
-         * @return Returns whether or not the string should be interpolated.
-         */
-        bool interpolated() const
-        {
-            return _interpolated;
-        }
-
-        /**
-         * Gets whether or not the interpolation character ($) should be escaped.
-         * @return Returns whether or not the interpolation character ($) should be escaped.
-         */
-        bool escaped() const
-        {
-            return _escaped;
-        }
-
-     private:
-        token_position _position;
-        std::string _text;
-        std::string _format;
-        bool _interpolated;
-        bool _escaped;
-    };
-
-    /**
-     * Stream insertion operator for string token.
-     * @param os The output stream to write the token.
-     * @param token The token to write.
-     * @return Returns the given output stream.
-     */
-    std::ostream& operator<<(std::ostream& os, string_token const& token);
-
-}}  // namespace puppet::lexer
-
-namespace boost { namespace spirit { namespace traits
-{
-    /**
-     * Utility for converting iterator ranges into string tokens.
-     */
-    template <typename Iterator>
-    struct assign_to_attribute_from_iterators<puppet::lexer::string_token, Iterator>
-    {
-        /**
-         * Assigns a string token based on an iterator range.
-         * String tokens cannot be assigned from iterator range, only from values.
-         * Calling this function will result in a runtime error.
-         * @param first The first iterator.
-         * @param last The last iterator.
-         * @param attr The resulting string token attribute.
-         */
-        static void call(Iterator const& first, Iterator const& last, puppet::lexer::string_token& attr)
-        {
-            // This should not get called and only exists for the code to compile
-            // Tokens that have string data associated with them should be assigned by value, not iterators
-            throw std::runtime_error("attempt to assign string token from iterators.");
-        }
-    };
-}}}  // namespace boost::spirit::traits
-
-namespace puppet { namespace lexer {
-    /**
      * Implements the lexer for the Puppet language.
      * The lexer is responsible for producing a stream of tokens for parsing.
-     * @tparam Lexer The base lexer type.
+     * @tparam Base The base lexer type.
      */
-    template <typename Lexer>
-    struct lexer : boost::spirit::lex::lexer<Lexer>
+    template <typename Base>
+    struct lexer : boost::spirit::lex::lexer<Base>
     {
         /**
-        * The base type for this lexer type.
-        */
-        typedef typename boost::spirit::lex::lexer<Lexer> base_type;
+         * The base type for this lexer type.
+         */
+        typedef typename boost::spirit::lex::lexer<Base> base_type;
 
         /**
          * The type of token this lexer produces.
          */
-        typedef typename Lexer::token_type token_type;
+        typedef typename Base::token_type token_type;
 
        /**
          * The token id type.
          */
-        typedef typename Lexer::id_type id_type;
+        typedef typename Base::id_type id_type;
 
         /**
          * The type of iterator for the output token stream.
          */
-        typedef typename Lexer::iterator_type iterator_type;
+        typedef typename Base::iterator_type iterator_type;
 
         /**
          * The type of character for the input stream.
          */
-        typedef typename Lexer::char_type char_type;
+        typedef typename Base::char_type char_type;
 
         /**
          * The type of string for the input stream.
@@ -472,13 +196,16 @@ namespace puppet { namespace lexer {
 
         /**
          * Constructs a new lexer.
+         * @param warning_handler The function to call when there are lexer warnings.
          */
-        lexer() :
+        lexer(std::function<void (token_position const&, std::string const&)> warning_handler = nullptr) :
             single_quoted_string("'([^\\\\']|\\\\\\\\|\\\\.)*'",        static_cast<id_type>(token_id::single_quoted_string)),
             double_quoted_string("\\\"([^\\\\\"]|\\\\\\\\|\\\\.)*\\\"", static_cast<id_type>(token_id::double_quoted_string)),
-            heredoc(HEREDOC_PATTERN,                                    static_cast<id_type>(token_id::heredoc))
+            heredoc(HEREDOC_PATTERN,                                    static_cast<id_type>(token_id::heredoc)),
+            _warning_handler(warning_handler)
         {
             namespace lex = boost::spirit::lex;
+            using namespace std::placeholders;
 
             // The following are lexer states that are used to parse regular expressions.
             // This solves the ambiguity between having multiple division operators on a single line (e.g. "1 / 2 / 3")
@@ -587,17 +314,22 @@ namespace puppet { namespace lexer {
 
             // Variables, bare words, numbers, class references, names, regexes, strings, comments, and whitespace
             this->self +=
-                lex::token_def<>("\\s+\\[",                                                       static_cast<id_type>(token_id::array_start)) [ use_last ] |
-                lex::token_def<>("(0[xX][0-9A-Fa-f]+)|(0[0-7]+)|(0?\\d+(\\.\\d+)?([eE]-?\\d+)?)", static_cast<id_type>(token_id::number))      [ no_regex ] |
-                lex::token_def<>("((::){0,1}[A-Z][\\w]*)+",                                       static_cast<id_type>(token_id::type))        [ no_regex ] |
-                lex::token_def<>("((::)?[a-z][\\w]*)(::[a-z][\\w]*)*",                            static_cast<id_type>(token_id::name))        [ no_regex ] |
-                lex::token_def<>("[a-z_]([\\w\\-]*[\\w])?",                                       static_cast<id_type>(token_id::bare_word))   [ no_regex ] |
-                lex::token_def<>("(\\/\\/)|(\\/[^*][^/\\n]*\\/)",                                 static_cast<id_type>(token_id::regex))       [ no_regex ] |
-                single_quoted_string                                                                                                           [ parse_single_quoted_string ] |
-                double_quoted_string                                                                                                           [ parse_double_quoted_string ] |
-                heredoc                                                                                                                        [ parse_heredoc ] |
-                lex::token_def<>("(#[^\\n]*)|(\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/)",              static_cast<id_type>(token_id::comment))     [ lex::_pass = lex::pass_flags::pass_ignore ] |
-                lex::token_def<>("\\s+",                                                          static_cast<id_type>(token_id::whitespace))  [ lex::_pass = lex::pass_flags::pass_ignore ];
+                lex::token_def<>("\\s+\\[",                                             static_cast<id_type>(token_id::array_start))    [ use_last ] |
+                lex::token_def<>("0[xX][0-9A-Fa-f]+[a-zA-Z]+",                          static_cast<id_type>(token_id::invalid_number)) [ no_regex ] |
+                lex::token_def<>("0[xX][0-9A-Fa-f]+",                                   static_cast<id_type>(token_id::number))         [ no_regex ] |
+                lex::token_def<>("0[0-7]+[a-zA-Z]+",                                    static_cast<id_type>(token_id::invalid_number)) [ no_regex ] |
+                lex::token_def<>("0[0-7]+",                                             static_cast<id_type>(token_id::number))         [ no_regex ] |
+                lex::token_def<>("\\d+(\\.\\d+)?([eE]-?\\d+)?[a-zA-Z]+",                static_cast<id_type>(token_id::invalid_number)) [ no_regex ] |
+                lex::token_def<>("\\d+(\\.\\d+)?([eE]-?\\d+)?",                         static_cast<id_type>(token_id::number))         [ no_regex ] |
+                lex::token_def<>("((::)?[A-Z][\\w]*)+",                                 static_cast<id_type>(token_id::type))           [ no_regex ] |
+                lex::token_def<>("((::)?[a-z][\\w]*)(::[a-z][\\w]*)*",                  static_cast<id_type>(token_id::name))           [ no_regex ] |
+                lex::token_def<>("[a-z_]([\\w\\-]*[\\w])?",                             static_cast<id_type>(token_id::bare_word))      [ no_regex ] |
+                lex::token_def<>("(\\/\\/)|(\\/[^*][^/\\n]*\\/)",                       static_cast<id_type>(token_id::regex))          [ no_regex ] |
+                single_quoted_string                                                                                                    [ bind(&lexer::parse_single_quoted_string, this, _1, _2, _3, _4, _5) ] |
+                double_quoted_string                                                                                                    [ bind(&lexer::parse_double_quoted_string, this, _1, _2, _3, _4, _5) ] |
+                heredoc                                                                                                                 [ bind(&lexer::parse_heredoc, this, _1, _2, _3, _4, _5) ] |
+                lex::token_def<>("(#[^\\n]*)|(\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/)",    static_cast<id_type>(token_id::comment))        [ lex::_pass = lex::pass_flags::pass_ignore ] |
+                lex::token_def<>("\\s+",                                                static_cast<id_type>(token_id::whitespace))     [ lex::_pass = lex::pass_flags::pass_ignore ];
             this->self.add
                 ("\\$(::)?(\\w+::)*\\w+",   static_cast<id_type>(token_id::variable));
 
@@ -626,7 +358,7 @@ namespace puppet { namespace lexer {
         typedef typename token_type::iterator_type input_iterator_type;
         typedef typename iterator_type::shared_functor_type context_type;
 
-        static string_type extract_string(input_iterator_type const& start, input_iterator_type const& end, string_type const& escapes = string_type(), bool warn = true, int margin = 0)
+        string_type extract_string(input_iterator_type const& start, input_iterator_type const& end, string_type const& escapes = string_type(), bool warn = true, int margin = 0)
         {
             std::basic_ostringstream<char_type> ss;
 
@@ -695,9 +427,8 @@ namespace puppet { namespace lexer {
                         it = next;
                         continue;
                     } else if (next != end) {
-                        if (warn && *next != '$') {
-                            // TODO: warn of invalid sequence instead of throwing
-                            throw lexer_exception<input_iterator_type>(it, (boost::format("unexpected escape sequence \\%1%.") % *next).str());
+                        if (warn && _warning_handler && *next != '$') {
+                            _warning_handler(it.position(), (boost::format("unexpected escape sequence '\\%1%'; it will be replaced with '%1%'.") % *next).str());
                         }
                     }
                 } else if (*it == '\n') {
@@ -710,7 +441,7 @@ namespace puppet { namespace lexer {
             return ss.str();
         }
 
-        static void parse_heredoc(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        void parse_heredoc(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             static boost::regex pattern(HEREDOC_PATTERN);
 
@@ -770,7 +501,7 @@ namespace puppet { namespace lexer {
                 } else {
                     // Verify the escapes
                     if (!boost::all(escapes, boost::is_any_of(HEREDOC_ESCAPES))) {
-                        throw lexer_exception<input_iterator_type>(start, (boost::format("invalid heredoc escapes \"%1%\": only t, r, n, s, u, L, and $ are allowed.") % escapes).str());
+                        throw lexer_exception<input_iterator_type>(start, (boost::format("invalid heredoc escapes '%1%': only t, r, n, s, u, L, and $ are allowed.") % escapes).str());
                     }
                     // TODO: verify uniqueness of each character (i.e. is this really important)?
 
@@ -871,7 +602,7 @@ namespace puppet { namespace lexer {
             context.set_value(string_token(start.position(), text, format, interpolated, escaped));
         }
 
-        static void parse_single_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        void parse_single_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
@@ -881,7 +612,7 @@ namespace puppet { namespace lexer {
             context.set_value(string_token(start.position(), text, {}, false));
         }
 
-        static void parse_double_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        void parse_double_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
@@ -923,18 +654,20 @@ namespace puppet { namespace lexer {
         static const char* const FORCE_SLASH_STATE;
         static const char* const SLASH_CHECK_STATE;
         static const char* const SLASH_CHECK_PATTERN;
+
+        std::function<void (token_position const&, std::string const&)> _warning_handler;
     };
 
-    template<typename Lexer>
-    char const* const lexer<Lexer>::HEREDOC_PATTERN = "@\\(\\s*([^):/\\r\\n]+)\\s*(:\\s*([a-z][a-zA-Z0-9_+]+))?\\s*(\\/\\s*([\\w|$]*)\\s*)?\\)";
-    template<typename Lexer>
-    char const* const lexer<Lexer>::HEREDOC_ESCAPES = "trnsuL$";
-    template<typename Lexer>
-    char const* const lexer<Lexer>::FORCE_SLASH_STATE = "FS";
-    template<typename Lexer>
-    char const* const lexer<Lexer>::SLASH_CHECK_STATE = "SC";
-    template<typename Lexer>
-    char const* const lexer<Lexer>::SLASH_CHECK_PATTERN = "\\s*(\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/\\s*)*\\/";
+    template<typename Base>
+    char const* const lexer<Base>::HEREDOC_PATTERN = "@\\(\\s*([^):/\\r\\n]+)\\s*(:\\s*([a-z][a-zA-Z0-9_+]+))?\\s*(\\/\\s*([\\w|$]*)\\s*)?\\)";
+    template<typename Base>
+    char const* const lexer<Base>::HEREDOC_ESCAPES = "trnsuL$";
+    template<typename Base>
+    char const* const lexer<Base>::FORCE_SLASH_STATE = "FS";
+    template<typename Base>
+    char const* const lexer<Base>::SLASH_CHECK_STATE = "SC";
+    template<typename Base>
+    char const* const lexer<Base>::SLASH_CHECK_PATTERN = "\\s*(\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/\\s*)*\\/";
 
     /**
      * The input iterator for files.
@@ -949,8 +682,8 @@ namespace puppet { namespace lexer {
      * The token type for the lexer.
      * @tparam Iterator The input iterator for the token.
      */
-	template <typename Iterator>
-	using lexer_token = boost::spirit::lex::lexertl::token<Iterator, boost::mpl::vector<string_token>>;
+    template <typename Iterator>
+    using lexer_token = boost::spirit::lex::lexertl::token<Iterator, boost::mpl::vector<string_token>>;
 
     /**
      * The lexer to use for files.
@@ -1009,6 +742,29 @@ namespace puppet { namespace lexer {
     std::tuple<std::string, std::size_t> get_line_and_column(std::ifstream& fs, std::size_t position, std::size_t tab_width = LEXER_TAB_WIDTH);
 
     /**
+     * Gets the line of text and column for the given position in a string.
+     * @param input The input string to get the line and position in.
+     * @param position The position inside the string.
+     * @param tab_width Specifies the width of a tab character for column calculations.
+     * @return Returns a tuple of the line in the file and the column of the position.
+     */
+    std::tuple<std::string, std::size_t> get_line_and_column(std::string const& input, std::size_t position, std::size_t tab_width = LEXER_TAB_WIDTH);
+
+    /**
+     * Gets the last position for the given file stream.
+     * @param input The input file stream.
+     * @return Returns the last position in the file stream.
+     */
+    token_position get_last_position(std::ifstream& input);
+
+    /**
+     * Gets the last position for the given input string.
+     * @param input The input string.
+     * @return Returns the last position in the input string.
+     */
+    token_position get_last_position(std::string const& input);
+
+    /**
      * Utility type for visiting tokens for position and line information.
      * @tparam Token The type of token.
      */
@@ -1039,39 +795,17 @@ namespace puppet { namespace lexer {
 
     /**
      * Gets the given token's position.
+     * @tparam Input The input type.
      * @tparam Token The type of token.
-     * @param file The file containing the token, used if the token is the EOI token.
+     * @param input The input to use when calculating the last token position.
      * @param token The token to get the position for.
      * @return Returns the token's position.
      */
-    template <typename Token>
-    token_position get_position(std::ifstream& file, Token const& token)
+    template <typename Input, typename Token>
+    token_position get_position(Input& input, Token const& token)
     {
         if (token == Token()) {
-            // The token is the EOI token
-            // HACK: since we have no position information for this token, we read the entire file to count new lines
-            // and find the last position in the file
-            auto pos = file.tellg();
-            file.seekg(0);
-
-            std::size_t position = 0, lines = 1;
-            bool last_is_newline = false;
-            for (std::istreambuf_iterator<char> it(file), end; it != end; ++it) {
-                last_is_newline = *it == '\n';
-                if (last_is_newline) {
-                    ++lines;
-                }
-                ++position;
-            }
-
-            // If the last character in the file is a newline, point at the character before it
-            if (last_is_newline) {
-                --lines;
-                --position;
-            }
-
-            file.seekg(pos);
-            return std::make_tuple(position, lines);
+            return get_last_position(input);
         }
         return boost::apply_visitor(token_position_visitor<Token>(), token.value());
     }

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/lexer.hpp"
+#include "../lexer/token_position.hpp"
 #include "expression.hpp"
 #include "type.hpp"
 #include "variable.hpp"

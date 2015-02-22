@@ -5,7 +5,8 @@
  */
 #pragma once
 
-#include "../lexer/lexer.hpp"
+#include "../lexer/token_position.hpp"
+#include "../lexer/token_id.hpp"
 #include "../ast/manifest.hpp"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/phoenix.hpp>
@@ -14,11 +15,11 @@ namespace puppet { namespace parser {
 
     /**
      * Lazy-evaluated helper for getting the position of a token.
-     * @tparam Iterator The underlying iterator type of the token.
+     * @tparam iterator_type The underlying iterator type of the token.
      * @param range The token iterator range.
      */
-    template <typename Iterator>
-    puppet::lexer::token_position get_iter_position(boost::iterator_range<Iterator> const& range)
+    template <typename iterator_type>
+    puppet::lexer::token_position get_iter_position(boost::iterator_range<iterator_type> const& range)
     {
         return range.begin().position();
     }
@@ -31,26 +32,30 @@ namespace puppet { namespace parser {
     /**
      * Represents the Puppet language grammar.
      * The grammar is responsible for transforming a stream of tokens into a AST manifest.
-     * @tparam Iterator The token iterator type.
+     * @tparam Lexer The lexer type to use for token definitions.
      */
-    template <typename Iterator>
-    struct grammar : boost::spirit::qi::grammar<Iterator, puppet::ast::manifest()>
+    template <typename Lexer>
+    struct grammar : boost::spirit::qi::grammar<typename Lexer::iterator_type, puppet::ast::manifest()>
     {
+        /**
+         * The token iterator type of the grammar.
+         */
+        typedef typename Lexer::iterator_type iterator_type;
+
         /**
          * Constructs a Puppet language grammar for the given lexer.
          * @tparam Lexer The lexer type to use for token definitions.
          * @param lexer The lexer to use for token definitions.
          */
-        template <typename Lexer>
         grammar(Lexer const& lexer) :
-            boost::spirit::qi::grammar<Iterator, puppet::ast::manifest()>(manifest)
+            boost::spirit::qi::grammar<iterator_type, puppet::ast::manifest()>(manifest)
         {
             using namespace boost::spirit::qi;
             using namespace puppet::lexer;
             namespace phx = boost::phoenix;
             namespace ast = puppet::ast;
 
-            // TODO: improve semantic action readibility
+            // TODO: improve semantic action readability
 
             // A manifest is a sequence of statements
             manifest =
@@ -469,83 +474,83 @@ namespace puppet { namespace parser {
 
      private:
         // Manifest
-        boost::spirit::qi::rule<Iterator, puppet::ast::manifest()> manifest;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::manifest()> manifest;
 
         // Statements
-        boost::spirit::qi::rule<Iterator, boost::optional<std::vector<puppet::ast::expression>>()> statements;
-        boost::spirit::qi::rule<Iterator, puppet::ast::expression()> statement;
-        boost::spirit::qi::rule<Iterator, puppet::ast::primary_expression()> statement_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::binary_expression()> binary_statement;
+        boost::spirit::qi::rule<iterator_type, boost::optional<std::vector<puppet::ast::expression>>()> statements;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::expression()> statement;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression()> statement_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_expression()> binary_statement;
 
         // Expressions
-        boost::spirit::qi::rule<Iterator, std::vector<puppet::ast::expression>()> expressions;
-        boost::spirit::qi::rule<Iterator, puppet::ast::expression()> expression;
+        boost::spirit::qi::rule<iterator_type, std::vector<puppet::ast::expression>()> expressions;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::expression()> expression;
 
         // Primary expression
-        boost::spirit::qi::rule<Iterator, puppet::ast::primary_expression(), boost::spirit::qi::locals<puppet::ast::primary_expression>> primary_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression(), boost::spirit::qi::locals<puppet::ast::primary_expression>> primary_expression;
 
         // Basic expressions
-        boost::spirit::qi::rule<Iterator, puppet::ast::basic_expression()> basic_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::undef()> undef;
-        boost::spirit::qi::rule<Iterator, puppet::ast::boolean()> boolean;
-        boost::spirit::qi::rule<Iterator, puppet::ast::number()> number;
-        boost::spirit::qi::rule<Iterator, puppet::ast::string()> string;
-        boost::spirit::qi::rule<Iterator, puppet::ast::regex()> regex;
-        boost::spirit::qi::rule<Iterator, puppet::ast::variable()> variable;
-        boost::spirit::qi::rule<Iterator, puppet::ast::name()> name;
-        boost::spirit::qi::rule<Iterator, puppet::ast::type()> type;
-        boost::spirit::qi::rule<Iterator, puppet::ast::array()> array;
-        boost::spirit::qi::rule<Iterator, puppet::ast::hash()> hash;
-        boost::spirit::qi::rule<Iterator, puppet::ast::hash_pair()> hash_pair;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::basic_expression()> basic_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::undef()> undef;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::boolean()> boolean;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::number()> number;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::string()> string;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::regex()> regex;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::variable()> variable;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::name()> name;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::type()> type;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::array()> array;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::hash()> hash;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::hash_pair()> hash_pair;
 
         // Control-flow expressions
-        boost::spirit::qi::rule<Iterator, puppet::ast::control_flow_expression()> control_flow_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::selector_case_expression()> selector_case_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::case_expression()> case_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::case_proposition()> case_proposition;
-        boost::spirit::qi::rule<Iterator, puppet::ast::if_expression()> if_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::elsif_expression()> elsif_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::else_expression()> else_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::unless_expression()> unless_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::function_call_expression()> function_call_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::function_call_expression()> statement_call_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::lambda()> lambda;
-        boost::spirit::qi::rule<Iterator, puppet::ast::parameter()> parameter;
-        boost::spirit::qi::rule<Iterator, puppet::ast::parameter_type()> parameter_type;
-        boost::spirit::qi::rule<Iterator, puppet::ast::method_call_expression()> method_call_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::method_call()> method_call;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::control_flow_expression()> control_flow_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::selector_case_expression()> selector_case_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::case_expression()> case_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::case_proposition()> case_proposition;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::if_expression()> if_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::elsif_expression()> elsif_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::else_expression()> else_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::unless_expression()> unless_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::function_call_expression()> function_call_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::function_call_expression()> statement_call_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::lambda()> lambda;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::parameter()> parameter;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::parameter_type()> parameter_type;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::method_call_expression()> method_call_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::method_call()> method_call;
 
         // Catalog expressions
-        boost::spirit::qi::rule<Iterator, puppet::ast::catalog_expression()> catalog_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::resource_expression()> resource_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::expression()> resource_type;
-        boost::spirit::qi::rule<Iterator, puppet::ast::resource_body()> resource_body;
-        boost::spirit::qi::rule<Iterator, puppet::ast::attribute_expression()> attribute_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::attribute_operator()> attribute_operator;
-        boost::spirit::qi::rule<Iterator, puppet::ast::name()> attribute_name;
-        boost::spirit::qi::rule<Iterator, puppet::ast::resource_defaults_expression()> resource_defaults_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::resource_override_expression()> resource_override_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::expression()> resource_reference;
-        boost::spirit::qi::rule<Iterator, puppet::ast::class_definition_expression()> class_definition_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::defined_type_expression()> defined_type_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::node_definition_expression()> node_definition_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::hostname()> hostname;
-        boost::spirit::qi::rule<Iterator, puppet::ast::collection_expression()> collection_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::binary_query_expression()> binary_query_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::binary_query_operator()> binary_query_operator;
-        boost::spirit::qi::rule<Iterator, puppet::ast::query()> query;
-        boost::spirit::qi::rule<Iterator, puppet::ast::attribute_query_operator()> attribute_query_operator;
-        boost::spirit::qi::rule<Iterator, puppet::ast::basic_expression()> attribute_query_value;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::catalog_expression()> catalog_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::resource_expression()> resource_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::expression()> resource_type;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::resource_body()> resource_body;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_expression()> attribute_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_operator()> attribute_operator;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::name()> attribute_name;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::resource_defaults_expression()> resource_defaults_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::resource_override_expression()> resource_override_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::expression()> resource_reference;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::class_definition_expression()> class_definition_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::defined_type_expression()> defined_type_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::node_definition_expression()> node_definition_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::hostname()> hostname;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::collection_expression()> collection_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_query_expression()> binary_query_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_query_operator()> binary_query_operator;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::query()> query;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_query_operator()> attribute_query_operator;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::basic_expression()> attribute_query_value;
 
         // Unary expressions
-        boost::spirit::qi::rule<Iterator, puppet::ast::unary_expression()> unary_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::unary_expression()> unary_expression;
 
         // Binary expressions
-        boost::spirit::qi::rule<Iterator, puppet::ast::binary_expression()> binary_expression;
-        boost::spirit::qi::rule<Iterator, puppet::ast::binary_operator()> binary_operator;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_expression()> binary_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_operator()> binary_operator;
 
         // Access expression
-        boost::spirit::qi::rule<Iterator, puppet::ast::access()> access;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::access()> access;
     };
 
 }}  // namespace puppet::parser

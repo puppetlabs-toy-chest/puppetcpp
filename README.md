@@ -22,10 +22,17 @@ functions called in the manifest are not being executed.
 The output of `puppetcpp` is currently the representation of the AST that was parsed.
 Eventually it will output a catalog.
 
+Currently not implemented in the parser:
+
+* Unicode escape sequences (\uXXXX)
+* A parser for string interpolation (needed for AST evaluation)
+* A parser for Embedded Puppet Templates, EPP (needed for AST evaluation)
+* A check for ANSI color codes being supported (non-Windows and istty)
+
 Build Requirements
 ------------------
 
-* GCC >= 4.8 or Clang >= 5.0
+* GCC >= 4.8 or Clang >= 3.4
 * CMake >= 2.8.12
 * Boost Libraries >= 1.57
 
