@@ -6,6 +6,9 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+include(cotire)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Werror -Wno-unused-parameter")
 
 find_package(Boost 1.57.0 COMPONENTS regex)
@@ -58,3 +61,4 @@ add_executable(puppetcpp
     utility/error_reporter.cc
 )
 target_link_libraries(puppetcpp ${Boost_LIBRARIES})
+cotire(puppetcpp)
