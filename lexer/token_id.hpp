@@ -69,11 +69,13 @@ namespace puppet { namespace lexer {
         regex,
         heredoc,
         number,
-        array_start,        // Same as '[', but whitespace delimited to force array expression
-        comment,            // Not in token stream
-        whitespace,         // Not in token stream
-        unclosed_quote,     // Error token that will not match any grammars
-        invalid_number      // Error token that will not match any grammars
+        array_start,          // Same as '[', but whitespace delimited to force array expression
+        comment,              // Not in token stream
+        whitespace,           // Not in token stream
+        unclosed_quote,       // Error token that will not match any grammars
+        invalid_hex_number,   // Error token that will not match any grammars
+        invalid_octal_number, // Error token that will not match any grammars
+        invalid_number        // Error token that will not match any grammars
     };
 
     /**

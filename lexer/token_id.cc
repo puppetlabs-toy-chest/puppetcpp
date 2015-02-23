@@ -63,6 +63,8 @@ namespace puppet { namespace lexer {
             { token_id::comment,                "comment" },
             { token_id::whitespace,             "whitespace" },
             { token_id::unclosed_quote,         "unclosed quote" },
+            { token_id::invalid_hex_number,     "invalid hexadecimal number" },
+            { token_id::invalid_octal_number,   "invalid octal number" },
             { token_id::invalid_number,         "invalid number" },
         };
 

@@ -314,13 +314,13 @@ namespace puppet { namespace lexer {
 
             // Variables, bare words, numbers, class references, names, regexes, strings, comments, and whitespace
             this->self +=
-                lex::token_def<>("\\s+\\[",                                             static_cast<id_type>(token_id::array_start))    [ use_last ] |
-                lex::token_def<>("0[xX][0-9A-Fa-f]+[a-zA-Z]+",                          static_cast<id_type>(token_id::invalid_number)) [ no_regex ] |
-                lex::token_def<>("0[xX][0-9A-Fa-f]+",                                   static_cast<id_type>(token_id::number))         [ no_regex ] |
-                lex::token_def<>("0[0-7]+[a-zA-Z]+",                                    static_cast<id_type>(token_id::invalid_number)) [ no_regex ] |
-                lex::token_def<>("0[0-7]+",                                             static_cast<id_type>(token_id::number))         [ no_regex ] |
-                lex::token_def<>("\\d+(\\.\\d+)?([eE]-?\\d+)?[a-zA-Z]+",                static_cast<id_type>(token_id::invalid_number)) [ no_regex ] |
-                lex::token_def<>("\\d+(\\.\\d+)?([eE]-?\\d+)?",                         static_cast<id_type>(token_id::number))         [ no_regex ] |
+                lex::token_def<>("\\s+\\[",                                             static_cast<id_type>(token_id::array_start))          [ use_last ] |
+                lex::token_def<>("0[xX]([0-9A-Fa-f]*[g-zG-Z]\\w*)?",                    static_cast<id_type>(token_id::invalid_hex_number))   [ no_regex ] |
+                lex::token_def<>("0[xX][0-9A-Fa-f]+",                                   static_cast<id_type>(token_id::number))               [ no_regex ] |
+                lex::token_def<>("0[0-7]*[8-9a-zA-Z]\\w*",                              static_cast<id_type>(token_id::invalid_octal_number)) [ no_regex ] |
+                lex::token_def<>("0[0-7]*",                                             static_cast<id_type>(token_id::number))         [ no_regex ] |
+                lex::token_def<>("[1-9]\\d*(\\.\\d+)?([eE]-?\\d+)?[a-zA-Z]\\w*",        static_cast<id_type>(token_id::invalid_number)) [ no_regex ] |
+                lex::token_def<>("[1-9]\\d*(\\.\\d+)?([eE]-?\\d+)?",                    static_cast<id_type>(token_id::number))         [ no_regex ] |
                 lex::token_def<>("((::)?[A-Z][\\w]*)+",                                 static_cast<id_type>(token_id::type))           [ no_regex ] |
                 lex::token_def<>("((::)?[a-z][\\w]*)(::[a-z][\\w]*)*",                  static_cast<id_type>(token_id::name))           [ no_regex ] |
                 lex::token_def<>("[a-z_]([\\w\\-]*[\\w])?",                             static_cast<id_type>(token_id::bare_word))      [ no_regex ] |
