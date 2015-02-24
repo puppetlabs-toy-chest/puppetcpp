@@ -5,11 +5,11 @@ This is a (very early) attempt to write a Puppet 4 compiler in C++11.
 
 Status:
 
-* ~~Puppet 4 compliant lexer~~ [done]
-* ~~Puppet 4 compliant parser~~ [done]
-* ~~AST construction~~ [done]
-* Puppet 4 evaluator [not started]
-* Catalog compilation [not started]
+* [x] Puppet 4 compliant lexer
+* [x] Puppet 4 compliant parser
+* [x] AST construction
+* [ ] Puppet 4 evaluator
+* [ ] Catalog compilation
 
 Currently, `puppetcpp` will parse manifest files and perform syntax checking.
 Semantic analysis is not performed, so the compiler will only error if the
@@ -24,7 +24,6 @@ Eventually it will output a catalog.
 
 Currently not implemented in the parser:
 
-* Unicode escape sequences (\uXXXX)
 * A parser for string interpolation (needed for AST evaluation)
 * A parser for Embedded Puppet Templates, EPP (needed for AST evaluation)
 * A check for ANSI color codes being supported (non-Windows and istty)

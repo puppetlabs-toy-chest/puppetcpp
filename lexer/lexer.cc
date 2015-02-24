@@ -25,10 +25,30 @@ namespace puppet { namespace lexer {
         return lexer_string_iterator(typename lexer_string_iterator::base_type(str.end()));
     }
 
+    struct scoped_file_position
+    {
+        scoped_file_position(ifstream& fs) :
+            _fs(fs),
+            _position(fs.tellg())
+        {
+        }
+
+        ~scoped_file_position()
+        {
+            _fs.seekg(_position);
+        }
+
+     private:
+        ifstream& _fs;
+        size_t _position;
+    };
+
     tuple<string, size_t> get_line_and_column(ifstream& fs, size_t position, size_t tab_width)
     {
         const size_t READ_SIZE = 4096;
         char buf[READ_SIZE];
+
+        scoped_file_position guard(fs);
 
         // Read backwards in chunks looking for the closest newline before the given position
         size_t start;
@@ -108,8 +128,7 @@ namespace puppet { namespace lexer {
     token_position get_last_position(ifstream& input)
     {
         // We need to read the entire file looking for new lines
-        auto pos = input.tellg();
-        input.seekg(0);
+        scoped_file_position guard(input);
 
         std::size_t position = 0, lines = 1;
         for (std::istreambuf_iterator<char> it(input), end; it != end; ++it) {
@@ -118,8 +137,6 @@ namespace puppet { namespace lexer {
             }
             ++position;
         }
-
-        input.seekg(pos);
         return make_tuple(position, lines);
     }
 

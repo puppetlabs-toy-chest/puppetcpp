@@ -17,6 +17,8 @@
 #include <exception>
 #include <tuple>
 #include <functional>
+#include <codecvt>
+#include <cctype>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/spirit/include/lex_lexer.hpp>
 #include <boost/spirit/include/lex_lexertl.hpp>
@@ -393,6 +395,7 @@ namespace puppet { namespace lexer {
                         ++next;
                     }
                     if (next != end && escapes.find(*next) != string_type::npos) {
+                        bool success = true;
                         switch (*next) {
                             case 'r':
                                 ss << '\r';
@@ -411,8 +414,7 @@ namespace puppet { namespace lexer {
                                 break;
 
                             case 'u':
-                                // TODO: implement unicode escape sequences
-                                throw lexer_exception<input_iterator_type>(it, "unicode escape sequences are not yet supported.");
+                                success = write_unicode_escape_sequence(++next, end, ss);
                                 break;
 
                             case '\n':
@@ -424,8 +426,10 @@ namespace puppet { namespace lexer {
                                 ss << *next;
                                 break;
                         }
-                        it = next;
-                        continue;
+                        if (success) {
+                            it = next;
+                            continue;
+                        }
                     } else if (next != end) {
                         if (warn && _warning_handler && *next != '$') {
                             _warning_handler(it.position(), (boost::format("unexpected escape sequence '\\%1%'; it will be replaced with '%1%'.") % *next).str());
@@ -607,7 +611,7 @@ namespace puppet { namespace lexer {
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
 
-            auto text = extract_string(start, end, "\\'", true);
+            auto text = extract_string(start, end, "\\'", false);
             boost::trim_if(text, boost::is_any_of("'"));
             context.set_value(string_token(start.position(), text, {}, false));
         }
@@ -647,6 +651,78 @@ namespace puppet { namespace lexer {
                 last = current;
             }
             start = last;
+        }
+
+        template <typename Value>
+        struct hex_to
+        {
+            operator Value() const
+            {
+                return value;
+            }
+
+            friend std::istream& operator>>(std::istream& in, hex_to& out)
+            {
+                in >> std::hex >> out.value;
+                return in;
+            }
+
+         private:
+            Value value;
+        };
+
+        bool write_unicode_escape_sequence(input_iterator_type& begin, input_iterator_type const& end, std::ostream& output, bool four_characters = true)
+        {
+            using namespace std;
+
+            auto position = begin.position();
+
+            size_t count = four_characters ? 4 : 8;
+
+            // Use a buffer that can store up to 8 characters (nnnn or nnnnnnnn)
+            char buffer[9] = {};
+            size_t read = 0;
+            for (; begin != end; ++begin) {
+                if (!isxdigit(*begin)) {
+                    break;
+                }
+                buffer[read] = *begin;
+                if (++read == 4) {
+                    break;
+                }
+            }
+            if (read != count) {
+                _warning_handler(position, (boost::format("expected %1% hexadecimal digits but found %2% for unicode escape sequence.") % count % read).str());
+                return false;
+            }
+
+            // Convert the input to a utf32 character (suports both four or eight hex characters)
+            char32_t from;
+            try {
+                from = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(buffer));
+            } catch (boost::bad_lexical_cast const&) {
+                _warning_handler(position, "invalid unicode escape sequence.");
+                return false;
+            }
+
+            // Convert the utf32 character to utf8 bytes (maximum is 4 bytes)
+            codecvt_utf8<char32_t> converter;
+            char32_t const* next_from = nullptr;
+            char* next_to = nullptr;
+            auto state = mbstate_t();
+            converter.out(state, &from, &from + 1, next_from, buffer, &buffer[0] + 4, next_to);
+
+            // Ensure all characters were converted (there was only one)
+            if (next_from != &from + 1) {
+                _warning_handler(position, "invalid unicode code point.");
+                return false;
+            }
+
+            // Output the number of bytes converted
+            for (size_t i = 0; (&buffer[0] + i) < next_to; ++i) {
+                output << buffer[i];
+            }
+            return true;
         }
 
         static const char* const HEREDOC_PATTERN;
