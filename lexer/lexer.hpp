@@ -692,7 +692,9 @@ namespace puppet { namespace lexer {
                 }
             }
             if (read != count) {
-                _warning_handler(position, (boost::format("expected %1% hexadecimal digits but found %2% for unicode escape sequence.") % count % read).str());
+                if (_warning_handler) {
+                    _warning_handler(position, (boost::format("expected %1% hexadecimal digits but found %2% for unicode escape sequence.") % count % read).str());
+                }
                 return false;
             }
 
@@ -701,7 +703,9 @@ namespace puppet { namespace lexer {
             try {
                 from = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(buffer));
             } catch (boost::bad_lexical_cast const&) {
-                _warning_handler(position, "invalid unicode escape sequence.");
+                if (_warning_handler) {
+                    _warning_handler(position, "invalid unicode escape sequence.");
+                }
                 return false;
             }
 
@@ -714,7 +718,9 @@ namespace puppet { namespace lexer {
 
             // Ensure all characters were converted (there was only one)
             if (next_from != &from + 1) {
-                _warning_handler(position, "invalid unicode code point.");
+                if (_warning_handler) {
+                    _warning_handler(position, "invalid unicode code point.");
+                }
                 return false;
             }
 

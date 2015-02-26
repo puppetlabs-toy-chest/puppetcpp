@@ -68,28 +68,56 @@ To build puppetcpp with debug information:
 Run
 ---
 
-You can run puppetcpp from where it was built:
+You can run puppetcpp from its output directory:
 
-`$ release/puppetcpp <manifest>`
+`$ release/bin/puppetcpp <manifest>`
 
 For a debug build:
 
-`$ debug/puppetcpp <manifest>`
+`$ debug/bin/puppetcpp <manifest>`
 
 Test
 ----
 
-Unit tests are not currently implemented.
+You can run puppetcpp tests using the test target:
+
+    $ cd release
+    $ make test
+
+For a debug build:
+
+    $ cd debug
+    $ make test
+
+For verbose test output, run `ctest` instead of using the test target:
+
+    $ cd release
+    $ ctest -V
 
 Install
 -------
 
-An install target is not currently implemented.
+You can install puppetcpp into your system:
+
+    $ cd release
+    $ make && sudo make install
+
+By default, puppetcpp will install files into `/usr/local/bin`, `/usr/local/lib`, and `/usr/local/include`.
+
+To install to a different location, set the install prefix:
+
+    $ cd release
+    $ cmake -DCMAKE_INSTALL_PREFIX=~/puppetcpp ..
+    $ make clean install
+
+This would install puppetcpp into `~/puppetcpp/bin`, `~/puppetcpp/lib`, and `~/puppetcpp/include`.
 
 Uninstall
 ---------
 
-An install target is not currently implemented.
+Run the following command to remove files that were previously installed:
+
+    $ sudo xargs rm < release/install_manifest.txt
 
 Documentation
 -------------

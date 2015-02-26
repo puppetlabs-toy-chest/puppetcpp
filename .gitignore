@@ -1,3 +1,7 @@
+# Annoying files
+.DS_Store
+*.swp
+
 # Compiled Object files
 *.slo
 *.lo
