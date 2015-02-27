@@ -35,7 +35,7 @@
 .idea/
 
 # Generated files
-lexer/static_lexer.hpp
+lib/include/puppet/lexer/static_lexer.hpp
 html/
 
 # Build directories

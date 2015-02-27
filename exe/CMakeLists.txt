@@ -1,3 +1,8 @@
+include_directories(
+    ../lib/include/
+    ${Boost_INCLUDE_DIRS}
+)
+
 add_executable(puppetcpp
     main.cc
 )

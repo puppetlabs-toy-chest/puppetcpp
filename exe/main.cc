@@ -1,7 +1,7 @@
 // The static lexer header must be included prior to including the lexer header
-#include "../lexer/static_lexer.hpp"
-#include "../parser/parser.hpp"
-#include "../utility/error_reporter.hpp"
+#include <puppet/lexer/static_lexer.hpp>
+#include <puppet/parser/parser.hpp>
+#include <puppet/utility/error_reporter.hpp>
 #include <iostream>
 
 using namespace std;
