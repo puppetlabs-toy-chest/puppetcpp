@@ -432,7 +432,7 @@ namespace puppet { namespace lexer {
                         }
                     } else if (next != end) {
                         if (warn && _warning_handler && *next != '$') {
-                            _warning_handler(it.position(), (boost::format("unexpected escape sequence '\\%1%'; it will be replaced with '%1%'.") % *next).str());
+                            _warning_handler(it.position(), (boost::format("unexpected escape sequence '\\%1%'.") % *next).str());
                         }
                     }
                 } else if (*it == '\n') {
@@ -606,24 +606,24 @@ namespace puppet { namespace lexer {
             context.set_value(string_token(start.position(), text, format, interpolated, escaped));
         }
 
-        void parse_single_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        void parse_single_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
 
-            auto text = extract_string(start, end, "\\'", false);
-            boost::trim_if(text, boost::is_any_of("'"));
+            auto text = extract_string(++start, end, "\\'", false);
+            text.pop_back();
             context.set_value(string_token(start.position(), text, {}, false));
         }
 
-        void parse_double_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
 
             // Don't include $ in the escape list; it'll be handled during interpolation
-            auto text = extract_string(start, end, "\\\"'nrtsu", true);
-            boost::trim_if(text, boost::is_any_of("\""));
+            auto text = extract_string(++start, end, "\\\"'nrtsu", true);
+            text.pop_back();
             context.set_value(string_token(start.position(), text, {}, true));
         }
 
