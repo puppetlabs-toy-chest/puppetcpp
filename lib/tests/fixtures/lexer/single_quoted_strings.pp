@@ -2,15 +2,15 @@
 
 'this is a string'
 
-'this string has a back\slash'
-
-'this string has an escaped \''
-
 '\' this string is quoted \''
 
-'this \\ is escaped'
+'this back\slash is not escaped'
+
+'this back\\slash is escaped'
 
 ' this line
  has a
  break!
 '
+
+'missing endquote\'

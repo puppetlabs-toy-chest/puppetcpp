@@ -483,9 +483,10 @@ namespace puppet { namespace lexer {
 
             // Check for interpolation
             bool interpolated = false;
-            bool escaped = true;
+            bool escaped = false;
             if (boost::starts_with(tag, "\"") && boost::ends_with(tag, "\"")) {
                 interpolated = true;
+                escaped = true;
                 boost::trim_if(tag, boost::is_any_of("\""));
             }
 
@@ -508,15 +509,19 @@ namespace puppet { namespace lexer {
                         throw lexer_exception<input_iterator_type>(start, (boost::format("invalid heredoc escapes '%1%': only t, r, n, s, u, L, and $ are allowed.") % escapes).str());
                     }
                     // TODO: verify uniqueness of each character (i.e. is this really important)?
-
-                    // If the list contains $, we'll escape it when the string gets interpolated, so remove it now
-                    if (boost::contains(escapes, "$")) {
-                        boost::replace_all(escapes, "$", "");
-                    } else {
-                        escaped = false;
-                    }
                 }
+
+                // If the list contains $, we'll escape it when the string gets interpolated, so remove it now
+                if (interpolated && boost::contains(escapes, "$")) {
+                    boost::replace_all(escapes, "$", "");
+                } else {
+                    escaped = false;
+                }
+
+                // Treat L as "escaping newlines"
                 boost::replace_all(escapes, "L", "\n");
+
+                // Escaping automatically adds '\' to the list
                 escapes += "\\";
             }
 
@@ -591,7 +596,7 @@ namespace puppet { namespace lexer {
             end.set_next(next);
 
             // Extract the heredoc text from the iterators, handling margin and escape characters
-            auto text = extract_string(doc_begin, doc_end, escapes, true, has_margin ? margin : 0);
+            auto text = extract_string(doc_begin, doc_end, escapes, false, has_margin ? margin : 0);
 
             // Remove the trailing line break if instructed to do so
             if (remove_break) {
@@ -613,7 +618,7 @@ namespace puppet { namespace lexer {
 
             auto text = extract_string(++start, end, "\\'", false);
             text.pop_back();
-            context.set_value(string_token(start.position(), text, {}, false));
+            context.set_value(string_token(start.position(), text, {}, false, false));
         }
 
         void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -624,7 +629,7 @@ namespace puppet { namespace lexer {
             // Don't include $ in the escape list; it'll be handled during interpolation
             auto text = extract_string(++start, end, "\\\"'nrtsu", true);
             text.pop_back();
-            context.set_value(string_token(start.position(), text, {}, true));
+            context.set_value(string_token(start.position(), text));
         }
 
         static void no_regex(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)

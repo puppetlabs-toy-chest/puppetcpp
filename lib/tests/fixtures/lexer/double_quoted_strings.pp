@@ -26,3 +26,5 @@
    "
 
 "this \f is not a valid escape"
+
+"missing endquote\"
