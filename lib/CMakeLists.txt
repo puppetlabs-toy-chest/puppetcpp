@@ -12,7 +12,7 @@ add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc)
 target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
 
 # Add the command to generate the static lexer
-add_custom_command(COMMAND generate_static_lexer WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/lexer OUTPUT ${CMAKE_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp DEPENDS include/puppet/lexer/lexer.hpp)
+add_custom_command(COMMAND generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp DEPENDS include/puppet/lexer/lexer.hpp)
 
 add_library(puppet SHARED
     include/puppet/lexer/static_lexer.hpp
