@@ -8,7 +8,7 @@ include_directories(
 )
 
 # Add the executable for generating the static lexer
-add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc)
+add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc src/lexer/number_token.cc src/lexer/string_token.cc)
 target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
 
 # Add the command to generate the static lexer
@@ -17,6 +17,7 @@ add_custom_command(COMMAND generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRE
 add_library(puppet SHARED
     include/puppet/lexer/static_lexer.hpp
     src/lexer/lexer.cc
+    src/lexer/number_token.cc
     src/lexer/string_token.cc
     src/lexer/token_id.cc
     src/ast/access_expression.cc

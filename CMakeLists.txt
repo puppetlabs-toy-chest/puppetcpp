@@ -23,7 +23,7 @@ endif()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-find_package(Boost 1.57.0 COMPONENTS regex)
+find_package(Boost 1.57.0 REQUIRED)
 set(CATCH_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/catch/include")
 
 add_subdirectory(exe)

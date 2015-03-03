@@ -31,8 +31,8 @@ Currently not implemented in the parser:
 Build Requirements
 ------------------
 
-* GCC >= 4.8 or Clang >= 3.4
-* CMake >= 2.8.12
+* GCC >= 4.9 or Clang >= 3.4
+* CMake >= 3.0
 * Boost Libraries >= 1.57
 
 Pre-Build

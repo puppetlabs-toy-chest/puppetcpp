@@ -9,12 +9,18 @@ namespace puppet { namespace ast {
     {
     }
 
-    string const& number::value() const
+    number::number(number_token const& token) :
+        _position(token.position()),
+        _value(token.value())
+    {
+    }
+
+    number::value_type const& number::value() const
     {
         return _value;
     }
 
-    string& number::value()
+    number::value_type& number::value()
     {
         return _value;
     }

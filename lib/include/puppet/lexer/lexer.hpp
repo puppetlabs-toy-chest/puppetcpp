@@ -8,6 +8,7 @@
 
 #include "token_id.hpp"
 #include "string_token.hpp"
+#include "number_token.hpp"
 #include <string>
 #include <locale>
 #include <iostream>
@@ -19,6 +20,8 @@
 #include <functional>
 #include <codecvt>
 #include <cctype>
+#include <regex>
+#include <limits>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/spirit/include/lex_lexer.hpp>
 #include <boost/spirit/include/lex_lexertl.hpp>
@@ -26,7 +29,6 @@
 #include <boost/spirit/include/lex_static_lexertl.hpp>
 #include <boost/spirit/include/support_multi_pass.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 
@@ -204,6 +206,7 @@ namespace puppet { namespace lexer {
             single_quoted_string("'([^\\\\']|\\\\\\\\|\\\\.)*'",        static_cast<id_type>(token_id::single_quoted_string)),
             double_quoted_string("\\\"([^\\\\\"]|\\\\\\\\|\\\\.)*\\\"", static_cast<id_type>(token_id::double_quoted_string)),
             heredoc(HEREDOC_PATTERN,                                    static_cast<id_type>(token_id::heredoc)),
+            number("\\d\\w*(\\.\\d\\w*)?([eE]-?\\w*)?",                 static_cast<id_type>(token_id::number)),
             _warning_handler(warning_handler)
         {
             namespace lex = boost::spirit::lex;
@@ -294,6 +297,9 @@ namespace puppet { namespace lexer {
                 ("type",     static_cast<id_type>(token_id::keyword_type))
                 ("attr",     static_cast<id_type>(token_id::keyword_attr))
                 ("private",  static_cast<id_type>(token_id::keyword_private));
+            this->self +=
+                lex::token_def<>("true",  static_cast<id_type>(token_id::keyword_true)) [ no_regex ] |
+                lex::token_def<>("false", static_cast<id_type>(token_id::keyword_false)) [ no_regex ];
 
             // Add the statement calls
             this->self.add
@@ -310,19 +316,9 @@ namespace puppet { namespace lexer {
                 ("fail",    static_cast<id_type>(token_id::statement_call))
                 ("import",  static_cast<id_type>(token_id::statement_call));
 
-            this->self +=
-                lex::token_def<>("true",  static_cast<id_type>(token_id::keyword_true)) [ no_regex ] |
-                lex::token_def<>("false", static_cast<id_type>(token_id::keyword_false)) [ no_regex ];
-
             // Variables, bare words, numbers, class references, names, regexes, strings, comments, and whitespace
             this->self +=
-                lex::token_def<>("\\s+\\[",                                             static_cast<id_type>(token_id::array_start))          [ use_last ] |
-                lex::token_def<>("0[xX]([0-9A-Fa-f]*[g-zG-Z]\\w*)?",                    static_cast<id_type>(token_id::invalid_hex_number))   [ no_regex ] |
-                lex::token_def<>("0[xX][0-9A-Fa-f]+",                                   static_cast<id_type>(token_id::number))               [ no_regex ] |
-                lex::token_def<>("0[0-7]*[8-9a-zA-Z]\\w*",                              static_cast<id_type>(token_id::invalid_octal_number)) [ no_regex ] |
-                lex::token_def<>("0[0-7]*",                                             static_cast<id_type>(token_id::number))         [ no_regex ] |
-                lex::token_def<>("[1-9]\\d*(\\.\\d+)?([eE]-?\\d+)?[a-zA-Z]\\w*",        static_cast<id_type>(token_id::invalid_number)) [ no_regex ] |
-                lex::token_def<>("[1-9]\\d*(\\.\\d+)?([eE]-?\\d+)?",                    static_cast<id_type>(token_id::number))         [ no_regex ] |
+                lex::token_def<>("\\s+\\[",                                             static_cast<id_type>(token_id::array_start))    [ use_last ] |
                 lex::token_def<>("((::)?[A-Z][\\w]*)+",                                 static_cast<id_type>(token_id::type))           [ no_regex ] |
                 lex::token_def<>("((::)?[a-z][\\w]*)(::[a-z][\\w]*)*",                  static_cast<id_type>(token_id::name))           [ no_regex ] |
                 lex::token_def<>("[a-z_]([\\w\\-]*[\\w])?",                             static_cast<id_type>(token_id::bare_word))      [ no_regex ] |
@@ -330,10 +326,11 @@ namespace puppet { namespace lexer {
                 single_quoted_string                                                                                                    [ bind(&lexer::parse_single_quoted_string, this, _1, _2, _3, _4, _5) ] |
                 double_quoted_string                                                                                                    [ bind(&lexer::parse_double_quoted_string, this, _1, _2, _3, _4, _5) ] |
                 heredoc                                                                                                                 [ bind(&lexer::parse_heredoc, this, _1, _2, _3, _4, _5) ] |
+                number                                                                                                                  [ parse_number ] |
                 lex::token_def<>("(#[^\\n]*)|(\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/)",    static_cast<id_type>(token_id::comment))        [ lex::_pass = lex::pass_flags::pass_ignore ] |
                 lex::token_def<>("\\s+",                                                static_cast<id_type>(token_id::whitespace))     [ lex::_pass = lex::pass_flags::pass_ignore ];
             this->self.add
-                ("\\$(::)?(\\w+::)*\\w+",   static_cast<id_type>(token_id::variable));
+                ("\\$(::)?(\\w+::)*\\w+",                                               static_cast<id_type>(token_id::variable));
 
             // Lastly, a catch for unclosed quotes and unknown tokens
             this->self.add
@@ -355,6 +352,11 @@ namespace puppet { namespace lexer {
          * The token representing heredocs.
          */
         boost::spirit::lex::token_def<string_token> heredoc;
+
+        /**
+         * The token representing numbers.
+         */
+        boost::spirit::lex::token_def<number_token> number;
 
     private:
         typedef typename token_type::iterator_type input_iterator_type;
@@ -447,7 +449,9 @@ namespace puppet { namespace lexer {
 
         void parse_heredoc(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            static boost::regex pattern(HEREDOC_PATTERN);
+            using namespace std;
+
+            static regex pattern(HEREDOC_PATTERN);
 
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
@@ -468,12 +472,12 @@ namespace puppet { namespace lexer {
                 return true;
             };
 
-            // Boost.Regex needs bi-directional iterators, so we need to copy the token range (just the @(...) part)
+            // regex needs bi-directional iterators, so we need to copy the token range (just the @(...) part)
             string_type token(start, end);
 
             // Extract the tag, format, and escapes from the token
-            boost::match_results<typename string_type::const_iterator> match;
-            if (!boost::regex_match(token, match, pattern) || match.size() != 6) {
+            match_results<typename string_type::const_iterator> match;
+            if (!regex_match(token, match, pattern) || match.size() != 6) {
                 throw lexer_exception<input_iterator_type>(start, "unexpected heredoc format.");
             }
 
@@ -608,7 +612,7 @@ namespace puppet { namespace lexer {
                 }
             }
 
-            context.set_value(string_token(start.position(), text, format, interpolated, escaped));
+            context.set_value(string_token(start.position(), std::move(text), std::move(format), interpolated, escaped));
         }
 
         void parse_single_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -618,7 +622,7 @@ namespace puppet { namespace lexer {
 
             auto text = extract_string(++start, end, "\\'", false);
             text.pop_back();
-            context.set_value(string_token(start.position(), text, {}, false, false));
+            context.set_value(string_token(start.position(), std::move(text), {}, false, false));
         }
 
         void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -629,7 +633,65 @@ namespace puppet { namespace lexer {
             // Don't include $ in the escape list; it'll be handled during interpolation
             auto text = extract_string(++start, end, "\\\"'nrtsu", true);
             text.pop_back();
-            context.set_value(string_token(start.position(), text));
+            context.set_value(string_token(start.position(), std::move(text)));
+        }
+
+        static void parse_number(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            using namespace std;
+
+            static regex hex_pattern("0[xX][0-9A-Fa-f]+");
+            static regex octal_pattern("0[0-7]+");
+            static regex decimal_pattern("0|([1-9]\\d*)");
+            static regex double_pattern("[1-9]\\d*(\\.\\d+)?([eE]-?\\d+)?)");
+
+            // Force any following '/' to be interpreted as a '/' token
+            force_slash(context);
+
+            // regex needs bi-directional iterators, so we need to copy the token range
+            string_type token(start, end);
+
+            // Match integral numbers
+            int base = 0;
+            if (regex_match(token, hex_pattern)) {
+                base = 16;
+            } else if (regex_match(token, octal_pattern)) {
+                base = 8;
+            } else if (regex_match(token, decimal_pattern)) {
+                base = 10;
+            }
+
+            if (base != 0) {
+                try {
+                    context.set_value(number_token(start.position(), stoll(token, 0, base), base == 16 ? numeric_base::hexadecimal : (base == 8 ? numeric_base::octal : numeric_base::decimal)));
+                } catch (out_of_range const& ex) {
+                    throw lexer_exception<input_iterator_type>(start,
+                        (boost::format("'%1%' is not in the range of %2% to %3%.") %
+                            token %
+                            numeric_limits<int64_t>::min() %
+                            numeric_limits<int64_t>::max()
+                        ).str());
+                }
+                return;
+            }
+
+            // Match double
+            if (regex_match(token, double_pattern)) {
+                try {
+                    context.set_value(number_token(start.position(), stold(token, 0)));
+                } catch (out_of_range const& ex) {
+                    throw lexer_exception<input_iterator_type>(start,
+                        (boost::format("'%1%' is not in the range of %2% to %3%.") %
+                            token %
+                            numeric_limits<long double>::min() %
+                            numeric_limits<long double>::max()
+                        ).str());
+                }
+                return;
+            }
+
+            // Not a valid number
+            throw lexer_exception<input_iterator_type>(start, (boost::format("'%1%' is not a valid number.") % token).str());
         }
 
         static void no_regex(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -770,7 +832,7 @@ namespace puppet { namespace lexer {
      * @tparam Iterator The input iterator for the token.
      */
     template <typename Iterator>
-    using lexer_token = boost::spirit::lex::lexertl::token<Iterator, boost::mpl::vector<string_token>>;
+    using lexer_token = boost::spirit::lex::lexertl::token<Iterator, boost::mpl::vector<string_token, number_token>>;
 
     /**
      * The lexer to use for files.
@@ -853,15 +915,13 @@ namespace puppet { namespace lexer {
 
     /**
      * Utility type for visiting tokens for position and line information.
-     * @tparam Token The type of token.
      */
-    template <typename Token>
     struct token_position_visitor : boost::static_visitor<token_position>
     {
         /**
          * Called for tokens that contain iterator ranges.
          * @param range The iterator range of the token.
-         * @return Returns the tuple of position and line.
+         * @return Returns the token position.
          */
         template <typename Iterator>
         result_type operator()(boost::iterator_range<Iterator> const& range) const
@@ -870,11 +930,13 @@ namespace puppet { namespace lexer {
         }
 
         /**
-         * Called for string tokens.
-         * @param token The string token.
-         * @return Returns the tuple of position and line.
+         * Called for custom tokens.
+         * @tparam Token The type of token.
+         * @param token The custom token.
+         * @return Returns the token position.
          */
-        result_type operator()(string_token const& token) const
+        template <typename Token>
+        result_type operator()(Token const& token) const
         {
             return token.position();
         }
@@ -894,7 +956,7 @@ namespace puppet { namespace lexer {
         if (token == Token()) {
             return get_last_position(input);
         }
-        return boost::apply_visitor(token_position_visitor<Token>(), token.value());
+        return boost::apply_visitor(token_position_visitor(), token.value());
     }
 
 }}  // namespace puppet::lexer

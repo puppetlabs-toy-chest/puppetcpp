@@ -73,9 +73,6 @@ namespace puppet { namespace lexer {
         comment,              // Not in token stream
         whitespace,           // Not in token stream
         unclosed_quote,       // Error token that will not match any grammars
-        invalid_hex_number,   // Error token that will not match any grammars
-        invalid_octal_number, // Error token that will not match any grammars
-        invalid_number        // Error token that will not match any grammars
     };
 
     /**

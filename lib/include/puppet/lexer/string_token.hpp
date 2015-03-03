@@ -20,11 +20,7 @@ namespace puppet { namespace lexer {
         /**
          * Constructs an empty string token.
          */
-        string_token() :
-            _interpolated(true),
-            _escaped(true)
-        {
-        }
+        string_token();
 
         /**
          * Constructs a string token.
@@ -34,84 +30,38 @@ namespace puppet { namespace lexer {
          * @param interpolated True if the string should be interpolated or false if not.
          * @param escaped True if the $ character should be escaped or false if not.
          */
-        string_token(
-            token_position position,
-            std::string text,
-            std::string format = std::string(),
-            bool interpolated = true,
-            bool escaped = true) :
-                _position(std::move(position)),
-                _text(std::move(text)),
-                _format(std::move(format)),
-                _interpolated(interpolated),
-                _escaped(escaped)
-        {
-        }
+        string_token(token_position position, std::string text, std::string format = std::string(), bool interpolated = true, bool escaped = true);
 
         /**
          * Gets the position of the token.
          * @return Returns the position of the token.
          */
-        token_position const& position() const
-        {
-            return _position;
-        }
+        token_position const& position() const;
 
         /**
          * Gets the text of the string token.
          * @return Returns the text of the string token.
          */
-        std::string const& text() const
-        {
-            return _text;
-        }
-
-        /**
-         * Gets the text of the string token.
-         * @return Returns the text of the string token.
-         */
-        std::string& text()
-        {
-            return _text;
-        }
+        std::string const& text() const;
 
         /**
          * Gets the format of the string token.
          * An empty format means "regular string".
          * @return Returns the format of the string token.
          */
-        std::string const& format() const
-        {
-            return _format;
-        }
-
-        /**
-         * Gets the format of the string token.
-         * An empty format means "regular string".
-         * @return Returns the format of the string token.
-         */
-        std::string& format()
-        {
-            return _format;
-        }
+        std::string const& format() const;
 
         /**
          * Gets whether or not the string should be interpolated.
          * @return Returns whether or not the string should be interpolated.
          */
-        bool interpolated() const
-        {
-            return _interpolated;
-        }
+        bool interpolated() const;
 
         /**
          * Gets whether or not the interpolation character ($) should be escaped.
          * @return Returns whether or not the interpolation character ($) should be escaped.
          */
-        bool escaped() const
-        {
-            return _escaped;
-        }
+        bool escaped() const;
 
      private:
         token_position _position;

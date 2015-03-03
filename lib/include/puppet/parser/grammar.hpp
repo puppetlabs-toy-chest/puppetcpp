@@ -123,7 +123,7 @@ namespace puppet { namespace parser {
                 token(token_id::keyword_true)  [ _val = phx::construct<ast::boolean>(get_iter_position(_1), true) ] |
                 token(token_id::keyword_false) [ _val = phx::construct<ast::boolean>(get_iter_position(_1), false) ];
             number =
-                token(token_id::number) [ _val = phx::construct<ast::number>(_1) ];
+                lexer.number [ _val = phx::construct<ast::number>(_1) ];
             string =
                 token(token_id::bare_word)                                                [ _val = phx::construct<ast::string>(_1) ] |
                 (lexer.single_quoted_string | lexer.double_quoted_string | lexer.heredoc) [ _val = phx::construct<ast::string>(_1) ];

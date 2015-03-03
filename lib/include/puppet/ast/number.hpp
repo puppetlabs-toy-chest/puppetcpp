@@ -4,8 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
-#include <boost/range.hpp>
+#include "../lexer/number_token.hpp"
 #include <iostream>
 #include <string>
 
@@ -17,33 +16,32 @@ namespace puppet { namespace ast {
     struct number
     {
         /**
+         * The type for the numeric value.
+         */
+        typedef typename lexer::number_token::value_type value_type;
+
+        /**
          * Default constructor for number.
          */
         number();
 
         /**
          * Constructs a number from a token.
-         * @tparam Iterator The underlying iterator type for the token.
          * @param token The token representing the number.
          */
-        template <typename Iterator>
-        explicit number(boost::iterator_range<Iterator> const& token) :
-            _position(token.begin().position()),
-            _value(token.begin(), token.end())
-        {
-        }
+        explicit number(lexer::number_token const& token);
 
         /**
          * Gets the value of the number.
          * @return Returns the value of the number.
          */
-        std::string const& value() const;
+        value_type const& value() const;
 
         /**
          * Gets the value of the number.
          * @return Returns the value of the number.
          */
-        std::string& value();
+        value_type& value();
 
         /**
          * Gets the position of the number.
@@ -53,7 +51,7 @@ namespace puppet { namespace ast {
 
      private:
         lexer::token_position _position;
-        std::string _value;
+        value_type _value;
     };
 
     /**
