@@ -130,23 +130,42 @@ namespace puppet { namespace lexer {
         // We need to read the entire file looking for new lines
         scoped_file_position guard(input);
 
-        std::size_t position = 0, lines = 1;
+        input.seekg(0);
+
+        std::size_t position = 0, line = 1;
+        std::size_t current_position = 0, current_line = 1;
         for (std::istreambuf_iterator<char> it(input), end; it != end; ++it) {
             if (*it == '\n') {
-                ++lines;
+                ++current_line;
             }
-            ++position;
+            ++current_position;
+
+            // If not whitespace, point the last position to that location
+            if (!isspace(*it)) {
+                position = current_position;
+                line = current_line;
+            }
         }
-        return make_tuple(position, lines);
+        return make_tuple(position, line);
     }
 
     token_position get_last_position(string const& input)
     {
-        // Count the number of lines in the input
-        return make_tuple(
-            input.size(),
-            count(input.begin(), input.end(), '\n') + 1
-        );
+        std::size_t position = 0, line = 1;
+        std::size_t current_position = 0, current_line = 1;
+        for (auto it = input.begin(); it != input.end(); ++it) {
+            if (*it == '\n') {
+                ++current_line;
+            }
+            ++current_position;
+
+            // If not whitespace, point the last position to that location
+            if (!isspace(*it)) {
+                position = current_position;
+                line = current_line;
+            }
+        }
+        return make_tuple(position, line);
     }
 
 }}  // namespace puppet::lexer
