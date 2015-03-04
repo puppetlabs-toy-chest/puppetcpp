@@ -31,9 +31,15 @@ Currently not implemented in the parser:
 Build Requirements
 ------------------
 
-* GCC >= 4.9 or Clang >= 3.4
+* GCC >= 5.0 or Clang >= 3.4 (with libc++)
 * CMake >= 3.0
 * Boost Libraries >= 1.57
+
+As of this writing, GCC 5 is not yet released.  However, its stdlib implementation (libstdc++) should fully support C++11 (e.g. `codecvt`).
+
+If using Clang on platforms where libc++ is not the default, configure the build with the following additional CMake options:
+
+    $ cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_CXX_FLAGS="-std=c++11 -stdlib=libc++" CMAKE_EXE_LINKER_FLAGS=-lc++abi CMAKE_SHARED_LINKER_FLAGS=-lc++abi ..
 
 Pre-Build
 ---------
