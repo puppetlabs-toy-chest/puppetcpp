@@ -643,7 +643,7 @@ namespace puppet { namespace lexer {
             static regex hex_pattern("0[xX][0-9A-Fa-f]+");
             static regex octal_pattern("0[0-7]+");
             static regex decimal_pattern("0|([1-9]\\d*)");
-            static regex double_pattern("[1-9]\\d*(\\.\\d+)?([eE]-?\\d+)?)");
+            static regex double_pattern("[0-9]\\d*(\\.\\d+)?([eE]-?\\d+)?)");
 
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);

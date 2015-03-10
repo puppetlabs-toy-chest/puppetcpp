@@ -48,8 +48,12 @@ add_library(puppet SHARED
     src/ast/type.cc
     src/ast/unless_expression.cc
     src/ast/variable.cc
-    src/ast/visitors.cc
     src/parser/parser.cc
+    src/runtime/context.cc
+    src/runtime/expression_evaluator.cc
+    src/runtime/operators.cc
+    src/runtime/scope.cc
+    src/runtime/value.cc
     src/utility/error_reporter.cc
 )
 

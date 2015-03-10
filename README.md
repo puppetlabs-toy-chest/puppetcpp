@@ -3,30 +3,64 @@ Puppet Compiler in C++
 
 This is a (very early) attempt to write a Puppet 4 compiler in C++11.
 
-Status:
+Parser status:
 
 * [x] Puppet 4 compliant lexer
 * [x] Puppet 4 compliant parser
 * [x] AST construction
-* [ ] Puppet 4 evaluator
-* [ ] Catalog compilation
 
-Currently, `puppetcpp` will parse manifest files and perform syntax checking.
-Semantic analysis is not performed, so the compiler will only error if the
-input manifest does not conform to the Puppet 4 grammar.
+Expression evaluator status:
 
-Only the given manifest will be parsed; manifests that are included/required from the input manifest
-will not be parsed as there currently isn't any evaluation of the AST.  This means that
-functions called in the manifest are not being executed.
+* [x] literal expressions
+* [x] variable assignment
+* [x] + operator
+* [x] - operator (binary)
+* [x] - operator (unary)
+* [x] * operator (binary)
+* [ ] * operator (unary)
+* [x] / operator
+* [x] % operator
+* [x] << operator
+* [x] >> operator
+* [x] logical and
+* [x] logical or
+* [x] logical not
+* [x] == operator
+* [x] != operator
+* [ ] =~ operator (implemented for all but Type operands)
+* [ ] !~ operator (implemented for all but Type operands)
+* [ ] < operator (implemented for all but Type operands)
+* [ ] <= operator (implemented for all but Type operands)
+* [ ] > operator (implemented for all but Type operands)
+* [ ] >= operator (implemented for all but Type operands)
+* [ ] -> operator
+* [ ] ~> operator
+* [ ] <- operator
+* [ ] <~ operator
+* [ ] "in" operator (implemented for all but Type operands)
+* [x] if expressions
+* [x] unless expressions
+* [ ] selector expressions
+* [ ] case expressions
+* [ ] method call expressions
+* [ ] function call expressions (a temporary 'notice' implementation is present)
+* [ ] catalog expressions
+* [ ] access expressions
+* [x] global scope
+* [ ] local scope
+* [ ] node scope
+* [ ] string interpolation
+* [ ] EPP support
 
-The output of `puppetcpp` is currently the representation of the AST that was parsed.
-Eventually it will output a catalog.
+Compiler status:
 
-Currently not implemented in the parser:
+* [ ] Node definition (fact gathering)
+* [ ] Catalog compilation from evaluation context
 
-* A parser for string interpolation (needed for AST evaluation)
-* A parser for Embedded Puppet Templates, EPP (needed for AST evaluation)
-* A check for ANSI color codes being supported (non-Windows and istty)
+The output of `puppetcpp` is currently the representation of the AST and its evaluation.
+Eventually it will output a JSON representation of a compiled catalog.
+
+Note: colorized output is currently always written, even if not supported.
 
 Build Requirements
 ------------------

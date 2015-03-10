@@ -125,6 +125,11 @@ namespace puppet { namespace utility {
          */
         size_t errors() const;
 
+        /**
+         * Resets the error and warning counts.
+         */
+        void reset();
+
     private:
         void log(bool warning, std::string const& path, std::string const& line, size_t line_number, size_t column, std::string const& message);
         void log(bool warning, std::string const& path, std::string const& line, size_t line_number, size_t column, boost::format& message);

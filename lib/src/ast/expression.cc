@@ -5,6 +5,70 @@ using namespace puppet::lexer;
 
 namespace puppet { namespace ast {
 
+    struct position_visitor : boost::static_visitor<lexer::token_position const&>
+    {
+        result_type operator()(boost::blank const&) const
+        {
+            return default_position;
+        }
+
+        result_type operator()(basic_expression const& expr) const
+        {
+            return get_position(expr);
+        }
+
+        result_type operator()(control_flow_expression const& expr) const
+        {
+            return get_position(expr);
+        }
+
+        result_type operator()(catalog_expression const& expr) const
+        {
+            return get_position(expr);
+        }
+
+        result_type operator()(primary_expression const& expr) const
+        {
+            return get_position(expr);
+        }
+
+        template <typename T>
+        result_type operator()(T const& element) const
+        {
+            return element.position();
+        }
+
+     private:
+        static lexer::token_position default_position;
+    };
+
+    lexer::token_position position_visitor::default_position;
+
+    lexer::token_position const& get_position(basic_expression const& expr)
+    {
+        return boost::apply_visitor(position_visitor(), expr);
+    }
+
+    lexer::token_position const& get_position(control_flow_expression const& expr)
+    {
+        return boost::apply_visitor(position_visitor(), expr);
+    }
+
+    lexer::token_position const& get_position(catalog_expression const& expr)
+    {
+        return boost::apply_visitor(position_visitor(), expr);
+    }
+
+    lexer::token_position const& get_position(primary_expression const& expr)
+    {
+        return boost::apply_visitor(position_visitor(), expr);
+    }
+
+    bool is_blank(primary_expression const& expr)
+    {
+        return expr.which() == 0;
+    }
+
     ostream& operator<<(ostream& os, unary_operator op)
     {
         switch (op) {
@@ -190,7 +254,7 @@ namespace puppet { namespace ast {
 
     token_position const& binary_expression::position() const
     {
-        return _operand.position();
+        return get_position(_operand);
     }
 
     ostream& operator<<(ostream& os, binary_expression const& expr)
@@ -234,12 +298,12 @@ namespace puppet { namespace ast {
 
     token_position const& expression::position() const
     {
-        return _first.position();
+        return get_position(_first);
     }
 
     bool expression::blank() const
     {
-        return _first.blank();
+        return is_blank(_first);
     }
 
     ostream& operator<<(ostream& os, expression const& expr)

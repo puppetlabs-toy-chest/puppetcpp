@@ -73,12 +73,12 @@ namespace puppet { namespace ast {
 
     token_position const& access_expression::position() const
     {
-        return _target.position();
+        return get_position(_target);
     }
 
     ostream& operator<<(ostream& os, access_expression const& expr)
     {
-        if (expr.target().blank() || expr.accesses().empty()) {
+        if (is_blank(expr.target()) || expr.accesses().empty()) {
             return os;
         }
         os << expr.target();

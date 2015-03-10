@@ -28,9 +28,12 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit variable(boost::iterator_range<Iterator> const& token) :
-            _position(token.begin().position()),
-            _name(token.begin(), token.end())
+            _position(token.begin().position())
         {
+            // Remove the $ from the name
+            auto it = token.begin();
+            ++it;
+            _name.assign(it, token.end());
         }
 
         /**

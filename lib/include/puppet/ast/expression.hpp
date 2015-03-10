@@ -12,7 +12,6 @@
 #include "variable.hpp"
 #include "type.hpp"
 #include "name.hpp"
-#include "visitors.hpp"
 #include <boost/variant.hpp>
 #include <iostream>
 #include <vector>
@@ -40,168 +39,92 @@ namespace puppet { namespace ast {
     struct expression;
 
     /**
-     * Represents an AST subexpression.
-     * @tparam Type The underlying type of the subexpression.
-     */
-    template <typename Type>
-    struct subexpression
-    {
-        /**
-         * The underlying type of the subexpression.
-         */
-        typedef Type type;
-
-        /**
-         * Default constructor for subexpression.
-         */
-        subexpression()
-        {
-        };
-
-        /**
-         * Constructs a subexpression with the given value.
-         * @param value The value of the subexpression.
-         */
-        explicit subexpression(Type value) :
-            _value(value)
-        {
-        }
-
-        /**
-         * Gets the value of the subexpression.
-         * @return Returns the value of the subexpression.
-         */
-        Type const& value() const
-        {
-            return _value;
-        }
-
-        /**
-         * Gets the value of the subexpression.
-         * @return Returns the value of the subexpression.
-         */
-        Type& value()
-        {
-            return _value;
-        }
-
-        /**
-         * Gets the token position for the subexpression.
-         * @return Returns the position for the subexpression.
-         */
-        lexer::token_position const& position() const
-        {
-            return boost::apply_visitor(position_visitor(), _value);
-        }
-
-     protected:
-        /**
-         * The underlying value of the subexpression.
-         */
-        Type _value;
-    };
-
-    /**
-     * Stream insertion operator for AST subexpression.
-     * @tparam Type The underlying type of the subexpression.
-     * @param os The output stream to write the expression to.
-     * @param expr The expression to write.
-     * @return Returns the given output stream.
-     */
-    template <typename Type>
-    std::ostream& operator<<(std::ostream& os, subexpression<Type> const& expr)
-    {
-        return boost::apply_visitor(insertion_visitor(os), expr.value());
-    }
-
-    /**
      * Represents a basic expression.
      */
-    typedef subexpression<
-        boost::variant<
-            undef,
-            boolean,
-            number,
-            string,
-            regex,
-            variable,
-            name,
-            ast::type,
-            boost::recursive_wrapper<array>,
-            boost::recursive_wrapper<hash>
-        >
+    typedef boost::variant<
+        undef,
+        boolean,
+        number,
+        string,
+        regex,
+        variable,
+        name,
+        ast::type,
+        boost::recursive_wrapper<array>,
+        boost::recursive_wrapper<hash>
     > basic_expression;
+
+    /**
+     * Gets the position of the basic expression.
+     * @param expr The basic expression to get the position of.
+     * @return Returns the position of the basic expression.
+     */
+    lexer::token_position const& get_position(basic_expression const& expr);
 
     /**
      * Represents a control-flow expression.
      */
-    typedef subexpression<
-        boost::variant<
-            boost::recursive_wrapper<selector_expression>,
-            boost::recursive_wrapper<case_expression>,
-            boost::recursive_wrapper<if_expression>,
-            boost::recursive_wrapper<unless_expression>,
-            boost::recursive_wrapper<method_call_expression>,
-            boost::recursive_wrapper<function_call_expression>
-        >
+    typedef boost::variant<
+        boost::recursive_wrapper<selector_expression>,
+        boost::recursive_wrapper<case_expression>,
+        boost::recursive_wrapper<if_expression>,
+        boost::recursive_wrapper<unless_expression>,
+        boost::recursive_wrapper<method_call_expression>,
+        boost::recursive_wrapper<function_call_expression>
     > control_flow_expression;
+
+    /**
+     * Gets the position of the control flow expression.
+     * @param expr The control flow expression to get the position of.
+     * @return Returns the position of the control flow expression.
+     */
+    lexer::token_position const& get_position(control_flow_expression const& expr);
 
     /**
      * Represents a catalog expression.
      */
-    typedef subexpression<
-        boost::variant<
-            boost::recursive_wrapper<resource_expression>,
-            boost::recursive_wrapper<resource_defaults_expression>,
-            boost::recursive_wrapper<resource_override_expression>,
-            boost::recursive_wrapper<class_definition_expression>,
-            boost::recursive_wrapper<defined_type_expression>,
-            boost::recursive_wrapper<node_definition_expression>,
-            boost::recursive_wrapper<collection_expression>
-        >
+    typedef boost::variant<
+        boost::recursive_wrapper<resource_expression>,
+        boost::recursive_wrapper<resource_defaults_expression>,
+        boost::recursive_wrapper<resource_override_expression>,
+        boost::recursive_wrapper<class_definition_expression>,
+        boost::recursive_wrapper<defined_type_expression>,
+        boost::recursive_wrapper<node_definition_expression>,
+        boost::recursive_wrapper<collection_expression>
     > catalog_expression;
+
+    /**
+     * Gets the position of the catalog expression.
+     * @param expr The catalog expression to get the position of.
+     * @return Returns the position of the catalog expression.
+     */
+    lexer::token_position const& get_position(catalog_expression const& expr);
 
     /**
      * Represents a primary expression.
      */
-    struct primary_expression :
-        subexpression<
-            boost::variant<
-                boost::blank,
-                basic_expression,
-                control_flow_expression,
-                catalog_expression,
-                boost::recursive_wrapper<unary_expression>,
-                boost::recursive_wrapper<access_expression>,
-                boost::recursive_wrapper<expression>
-            >
-        >
-    {
-        /**
-         * Default constructor for primary_expression.
-         */
-        primary_expression()
-        {
-        }
+    typedef boost::variant<
+        boost::blank,
+        basic_expression,
+        control_flow_expression,
+        catalog_expression,
+        boost::recursive_wrapper<unary_expression>,
+        boost::recursive_wrapper<access_expression>,
+        boost::recursive_wrapper<expression>
+    > primary_expression;
 
-        /**
-         * Constructs a primary expression with the given value.
-         * @param value The value that makes up the primary expression.
-         */
-        primary_expression(type value) :
-            subexpression(std::move(value))
-        {
-        }
+    /**
+     * Gets the position of the primary expression.
+     * @param expr The primary expression to get the position of.
+     * @return Returns the position of the primary expression.
+     */
+    lexer::token_position const& get_position(primary_expression const& expr);
 
-        /**
-         * Determines if the expression is blank.
-         * @return Returns true if the expression is blank or false if not.
-         */
-        bool blank() const
-        {
-            return _value.which() == 0;
-        }
-    };
+    /**
+     * Determines if the expression is blank.
+     * @return Returns true if the expression is blank or false if not.
+     */
+    bool is_blank(primary_expression const& expr);
 
     /**
      * Represents a unary operator.
