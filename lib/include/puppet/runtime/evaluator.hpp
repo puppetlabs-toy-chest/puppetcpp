@@ -21,7 +21,7 @@ namespace puppet { namespace runtime {
          * @param reporter The error reporter to use during evaluation.
          * @param manifest The manifest to evaluate.
          * @param path The path to the manifest file.
-         * @parma input The manifest file's input stream.
+         * @param input The manifest file's input stream.
          */
         template <typename ErrorReporter>
         void evaluate(ErrorReporter& reporter, ast::manifest& manifest, std::string const& path, std::ifstream& input)

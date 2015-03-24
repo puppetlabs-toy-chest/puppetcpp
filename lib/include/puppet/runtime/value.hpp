@@ -203,30 +203,50 @@ namespace puppet { namespace runtime {
      */
     std::ostream& operator<<(std::ostream& os, type_kind kind);
 
+    /**
+     * Represents a runtime type (instance of a Type).
+     * @tparam ValueType The type of value.
+     */
     template <typename ValueType>
     struct runtime_type
     {
+        /**
+         * Constructs a runtime type with the given type kind.
+         * @param kind The type kind.
+         */
         explicit runtime_type(type_kind kind) :
             _kind(kind)
         {
         }
 
+        /**
+         * Gets the kind of runtime type.
+         * @return Returns the kind of the runtime type.
+         */
         type_kind kind() const
         {
             return _kind;
         }
 
+        /**
+         * Gets the runtime type's parameters.
+         * @return Returns the runtime type's parameters.
+         */
         std::vector<ValueType> const& parameters() const
         {
             return _parameters;
         }
 
+        /**
+         * Adds a parameter to the runtime type.
+         * @param parameter The parameter to add.
+         */
         void add_parameter(ValueType parameter)
         {
+            // TODO: implement for use with access operator
         }
 
     private:
-
         type_kind _kind;
         std::vector<ValueType> _parameters;
     };
