@@ -269,6 +269,65 @@ namespace puppet { namespace runtime {
             return target.substr(static_cast<size_t>(index), static_cast<size_t>(count));
         }
 
+        result_type operator()(array const& target) const
+        {
+            if (_expressions.size() > 2) {
+                throw evaluation_exception(_expressions[2].position(), "expected at most two expressions when accessing an Array.");
+            }
+
+            // Get the index
+            value result = _evaluator.evaluate(_expressions[0]);
+            auto ptr = boost::get<int64_t>(&result);
+            if (!ptr) {
+                throw evaluation_exception(_expressions[0].position(), (boost::format("expected Integer for start index but found %1%.") % get_type(result)).str());
+            }
+
+            // If the index is negative, it's from the end of the array
+            int64_t index = *ptr;
+            if (index < 0) {
+                index += static_cast<int64_t>(target.size());
+            }
+
+            // Get the count
+            int64_t count = 1;
+            if (_expressions.size() == 2) {
+                result = _evaluator.evaluate(_expressions[1]);
+                ptr = boost::get<int64_t>(&result);
+                if (!ptr) {
+                    throw evaluation_exception(_expressions[1].position(), (boost::format("expected Integer for count but found %1%.") % get_type(result)).str());
+                }
+                count = *ptr;
+
+                // A negative count denotes an end index (inclusive)
+                if (count < 0) {
+                    count += (target.size() + 1 - index);
+                }
+            } else {
+                // Only the index given; return the element itself
+                if (static_cast<size_t>(index) >= target.size()) {
+                    return value();
+                }
+                return target[index];
+            }
+
+            // If the index is still to the "left" of the start of the array, adjust the count and start at index 0
+            if (index < 0) {
+                count += index;
+                index = 0;
+            }
+            if (count <= 0) {
+                return array();
+            }
+
+            // Create the subarray
+            array subarray;
+            subarray.reserve(count);
+            for (int64_t i = 0; i < count && static_cast<size_t>(i + index) < target.size(); ++i) {
+                subarray.emplace_back(target[i + index]);
+            }
+            return subarray;
+        }
+
         template <typename T>
         result_type operator()(T const& target) const
         {
