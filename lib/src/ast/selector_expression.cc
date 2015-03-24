@@ -97,7 +97,7 @@ namespace puppet { namespace ast {
 
     token_position const& selector_expression::position() const
     {
-        return _conditional.position();
+        return get_position(_conditional);
     }
 
     ostream& operator<<(ostream& os, selector_expression const& expr)

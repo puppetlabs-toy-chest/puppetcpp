@@ -26,7 +26,7 @@ namespace puppet { namespace ast {
 
     ostream& operator<<(ostream& os, variable const& var)
     {
-        os << var.name();
+        os << "$" << var.name();
         return os;
     }
 

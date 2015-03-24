@@ -94,4 +94,9 @@ namespace puppet { namespace utility {
         return _errors;
     }
 
+    void error_reporter::reset()
+    {
+        _errors = _warnings = 0;
+    }
+
 }}  // namespace puppet::parser

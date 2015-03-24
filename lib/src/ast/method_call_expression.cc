@@ -100,12 +100,12 @@ namespace puppet { namespace ast {
 
     token_position const& method_call_expression::position() const
     {
-        return _target.position();
+        return get_position(_target);
     }
 
     ostream& operator<<(ostream& os, method_call_expression const& expr)
     {
-        if (expr.target().blank() || expr.calls().empty()) {
+        if (is_blank(expr.target()) || expr.calls().empty()) {
             return os;
         }
         os << expr.target();

@@ -1,6 +1,5 @@
 #include <puppet/ast/resource_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
-#include <puppet/ast/visitors.hpp>
 #include <puppet/ast/utility.hpp>
 
 using namespace std;

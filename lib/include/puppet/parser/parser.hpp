@@ -19,19 +19,14 @@ namespace puppet { namespace parser {
          * Parses the given manifest file into an AST manifest.
          * @tparam ErrorReporter The error reporter type.
          * @param reporter The error reporter to use for warnings and errors.
-         * @param path The path to the manifest file to parse.
+         * @param input The input file to parse.
+         * @param path The path to the manifest file begin parsed.
          * @return Returns the AST manifest if parsing succeeds or nullptr if not.
          */
         template <typename ErrorReporter>
-        static boost::optional<ast::manifest> parse_manifest_file(ErrorReporter& reporter, std::string const& path)
+        static boost::optional<ast::manifest> parse_manifest_file(ErrorReporter& reporter, std::ifstream& input, std::string const& path)
         {
-            std::ifstream file(path);
-            if (!file) {
-                reporter.error("could not open file '%1%'.", path);
-                return nullptr;
-            }
-
-            return parse_manifest<lexer::file_static_lexer>(reporter, file, path);
+            return parse_manifest<lexer::file_static_lexer>(reporter, input, path);
         }
 
         /**
