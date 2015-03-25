@@ -269,10 +269,12 @@ namespace puppet { namespace runtime {
          * Constructs a variable reference.
          * @param name The name of the variable.
          * @param val The current value of the variable.
+         * @param match The variable is a match variable.
          */
-        variable_reference(std::string name, value_type const* val) :
+        variable_reference(std::string name, value_type const* val, bool match) :
             _name(std::move(name)),
-            _value(val)
+            _value(val),
+            _match(match)
         {
         }
 
@@ -296,6 +298,15 @@ namespace puppet { namespace runtime {
         }
 
         /**
+         * Determines if the variable is a match variable.
+         * @return Returns true if the variable is a match variable or false if not.
+         */
+        bool match() const
+        {
+            return _match;
+        }
+
+        /**
          * Updates the value of the variable.
          * @param ptr The pointer to the variable's value.
          */
@@ -307,6 +318,7 @@ namespace puppet { namespace runtime {
      private:
         std::string _name;
         value_type const* _value;
+        bool _match;
     };
 
     namespace hack {

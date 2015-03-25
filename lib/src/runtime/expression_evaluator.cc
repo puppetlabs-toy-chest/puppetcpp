@@ -8,6 +8,23 @@ using namespace puppet::lexer;
 
 namespace puppet { namespace runtime {
 
+    struct match_variable_scope
+    {
+        explicit match_variable_scope(scope& s) :
+            _scope(s)
+        {
+            _scope.push_matches();
+        }
+
+        ~match_variable_scope()
+        {
+            _scope.pop_matches();
+        }
+
+     private:
+        scope& _scope;
+    };
+
     evaluation_exception::evaluation_exception(token_position position, string const& message) :
         runtime_error(message),
         _position(std::move(position))
@@ -67,8 +84,24 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::variable& var) const
         {
-            auto val = _evaluator.context().lookup(var.name());
-            return variable(move(var.name()), val);
+            static std::regex match_variable_patterh("^\\d+$");
+
+            string& name = var.name();
+
+            bool match = false;
+            value const* val = nullptr;
+            if (regex_match(name, match_variable_patterh)) {
+                // Check for invalid match name
+                if (name.size() > 1 && name[0] == '0') {
+                    throw evaluation_exception(var.position(), (boost::format("variable name $%1% is not a valid match variable name.") % var.name()).str());
+                }
+                // Look up the match
+                val = _evaluator.context().current().get(stoi(name));
+                match = true;
+            } else {
+                val = _evaluator.context().lookup(name);
+            }
+            return variable(move(name), val, match);
         }
 
         result_type operator()(ast::name& name) const
@@ -135,29 +168,35 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::if_expression& expr) const
         {
+            // If expressions create a new match scope
+            match_variable_scope match_scope(_evaluator.context().current());
+
             if (is_truthy(_evaluator.evaluate(expr.conditional()))) {
-                return execute(expr.body());
+                return execute_block(expr.body());
             }
             if (expr.elsifs()) {
                 for (auto& elsif : *expr.elsifs()) {
                     if (is_truthy(_evaluator.evaluate(elsif.conditional()))) {
-                        return execute(elsif.body());
+                        return execute_block(elsif.body());
                     }
                 }
             }
             if (expr.else_()) {
-                return execute(expr.else_()->body());
+                return execute_block(expr.else_()->body());
             }
             return value();
         }
 
         result_type operator()(ast::unless_expression& expr) const
         {
+            // Unless expressions create a new match scope
+            match_variable_scope match_scope(_evaluator.context().current());
+
             if (!is_truthy(_evaluator.evaluate(expr.conditional()))) {
-                return execute(expr.body());
+                return execute_block(expr.body());
             }
             if (expr.else_()) {
-                return execute(expr.else_()->body());
+                return execute_block(expr.else_()->body());
             }
             return value();
         }
@@ -200,7 +239,7 @@ namespace puppet { namespace runtime {
         }
 
      private:
-        result_type execute(boost::optional<vector<ast::expression>>& expressions) const
+        result_type execute_block(boost::optional<vector<ast::expression>>& expressions) const
         {
             value result;
             if (expressions) {

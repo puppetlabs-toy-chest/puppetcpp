@@ -8,6 +8,8 @@ namespace puppet { namespace runtime {
         _name(std::move(name)),
         _parent(std::move(parent))
     {
+        // Emplace an empty set of matches to start
+        _matches.emplace_front();
     }
 
     string const& scope::name() const
@@ -31,11 +33,7 @@ namespace puppet { namespace runtime {
         if (it != _variables.end()) {
             return &std::get<0>(it->second);
         }
-        auto match = _matches.find(name);
-        if (match != _matches.end()) {
-            return &match->second;
-        }
-        return nullptr;
+        return _parent ? _parent->get(name) : nullptr;
     }
 
     boost::optional<uint32_t> scope::where(string const& name) const
@@ -54,11 +52,43 @@ namespace puppet { namespace runtime {
 
     void scope::set(smatch const& matches)
     {
-        _matches.clear();
+        auto& current = _matches.front();
+        current.clear();
 
         // Set the match variables
         for (size_t i = 0; i < matches.size(); ++i) {
-            _matches[to_string(i)] = matches.str(i);
+            current.emplace_back(matches.str(i));
+        }
+    }
+
+    value const* scope::get(size_t index) const
+    {
+        // Look for a non-empty set of matches
+        // The first non-empty set wins
+        for (auto const& matches : _matches) {
+            if (matches.empty()) {
+                continue;
+            }
+            if (index >= matches.size()) {
+                return nullptr;
+            }
+            return &matches[index];
+        }
+
+        // Check the parent scope
+        return _parent ? _parent->get(index) : nullptr;
+    }
+
+    void scope::push_matches()
+    {
+        _matches.emplace_front();
+    }
+
+    void scope::pop_matches()
+    {
+        // Pop all but the "top" set
+        if (_matches.size() > 1) {
+            _matches.pop_front();
         }
     }
 
