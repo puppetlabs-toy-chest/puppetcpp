@@ -45,7 +45,7 @@ Expression evaluator status:
 * [ ] method call expressions
 * [ ] function call expressions (a temporary 'notice' implementation is present)
 * [ ] catalog expressions
-* [ ] access expressions
+* [ ] access expressions (implemented for all but Type and resource operands)
 * [x] global scope
 * [ ] local scope
 * [ ] node scope

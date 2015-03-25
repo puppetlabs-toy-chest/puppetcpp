@@ -385,9 +385,9 @@ namespace puppet { namespace runtime {
         }
 
         template <
-                typename Right,
-                typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
-                typename = typename enable_if<!is_same<Right, long double>::value>::type
+            typename Right,
+            typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
+            typename = typename enable_if<!is_same<Right, long double>::value>::type
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
@@ -395,9 +395,9 @@ namespace puppet { namespace runtime {
         }
 
         template <
-                typename Right,
-                typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
-                typename = typename enable_if<!is_same<Right, long double>::value>::type
+            typename Right,
+            typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
+            typename = typename enable_if<!is_same<Right, long double>::value>::type
         >
         result_type operator()(long double const&, Right const& right) const
         {

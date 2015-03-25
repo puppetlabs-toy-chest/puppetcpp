@@ -303,8 +303,8 @@ namespace puppet { namespace runtime {
                     count += (target.size() + 1 - index);
                 }
             } else {
-                // Only the index given; return the element itself
-                if (static_cast<size_t>(index) >= target.size()) {
+                // Only the index given; return the element itself if in range
+                if (index < 0 || static_cast<size_t>(index) >= target.size()) {
                     return value();
                 }
                 return target[index];
@@ -326,6 +326,36 @@ namespace puppet { namespace runtime {
                 subarray.emplace_back(target[i + index]);
             }
             return subarray;
+        }
+
+        result_type operator()(hash const& target) const
+        {
+            if (_expressions.size() == 1) {
+                // Lookup by key
+                auto it = target.find(_evaluator.evaluate(_expressions[0]));
+                if (it == target.end()) {
+                    return value();
+                }
+                return it->second;
+            }
+
+            // Otherwise, build an array of values
+            array result;
+            for (auto& expr : _expressions) {
+                // Lookup by key
+                auto it = target.find(_evaluator.evaluate(expr));
+                if (it == target.end()) {
+                    continue;
+                }
+                result.emplace_back(it->second);
+            }
+            return result;
+        }
+
+        result_type operator()(type const& target) const
+        {
+            // TODO: implement
+            throw evaluation_exception(_position, "access operator on Type not yet implemented.");
         }
 
         template <typename T>
@@ -390,7 +420,7 @@ namespace puppet { namespace runtime {
         {
             value target = boost::apply_visitor(*this, expr.target());
             for (auto& access : expr.accesses()) {
-                target = boost::apply_visitor(access_expression_evaluator(_evaluator, access.arguments(), ast::get_position(expr.target())), target);
+                target = boost::apply_visitor(access_expression_evaluator(_evaluator, access.arguments(), ast::get_position(expr.target())), dereference(target));
             }
             return target;
         }
