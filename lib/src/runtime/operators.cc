@@ -569,7 +569,7 @@ namespace puppet { namespace runtime {
         int64_t divide(int64_t left, int64_t right) const
         {
             if (right == 0) {
-                throw evaluation_exception(_right_position, (boost::format("cannot divide by zero.") % right).str());
+                throw evaluation_exception(_right_position, "cannot divide by zero.");
             }
             int64_t result = left / right;
             if (left != 0 && (result * left) != right) {
