@@ -93,23 +93,23 @@ namespace puppet { namespace ast {
         selector_expression();
 
         /**
-         * Constructs a selector expression with the given conditional expression and cases.
-         * @param conditional The conditional being selected upon.
+         * Constructs a selector expression with the given value expression and cases.
+         * @param value The value being selected upon.
          * @param cases The selector cases.
          */
-        selector_expression(primary_expression conditional, std::vector<selector_case_expression> cases);
+        selector_expression(primary_expression value, std::vector<selector_case_expression> cases);
 
         /**
-         * Gets the conditional of the selector expression.
-         * @return Returns the conditional of the selector expression.
+         * Gets the value of the selector expression.
+         * @return Returns the value of the selector expression.
          */
-        primary_expression const& conditional() const;
+        primary_expression const& value() const;
 
         /**
-         * Gets the conditional of the selector expression.
-         * @return Returns the conditional of the selector expression.
+         * Gets the value of the selector expression.
+         * @return Returns the value of the selector expression.
          */
-        primary_expression& conditional();
+        primary_expression& value();
 
         /**
          * Gets the selector case expressions.
@@ -130,7 +130,7 @@ namespace puppet { namespace ast {
         lexer::token_position const& position() const;
 
      private:
-        primary_expression _conditional;
+        primary_expression _value;
         std::vector<selector_case_expression> _cases;
     };
 

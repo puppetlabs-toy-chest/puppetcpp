@@ -40,8 +40,8 @@ Expression evaluator status:
 * [ ] "in" operator (implemented for all but Type operands)
 * [x] if expressions
 * [x] unless expressions
-* [ ] selector expressions
-* [ ] case expressions
+* [x] selector expressions
+* [x] case expressions
 * [ ] method call expressions
 * [ ] function call expressions (a temporary 'notice' implementation is present)
 * [ ] catalog expressions

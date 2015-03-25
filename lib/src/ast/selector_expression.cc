@@ -69,20 +69,20 @@ namespace puppet { namespace ast {
     {
     }
 
-    selector_expression::selector_expression(primary_expression conditional, vector<selector_case_expression> cases) :
-        _conditional(std::move(conditional)),
+    selector_expression::selector_expression(primary_expression value, vector<selector_case_expression> cases) :
+        _value(std::move(value)),
         _cases(std::move(cases))
     {
     }
 
-    primary_expression const& selector_expression::conditional() const
+    primary_expression const& selector_expression::value() const
     {
-        return _conditional;
+        return _value;
     }
 
-    primary_expression& selector_expression::conditional()
+    primary_expression& selector_expression::value()
     {
-        return _conditional;
+        return _value;
     }
 
     vector<selector_case_expression> const& selector_expression::cases() const
@@ -97,12 +97,12 @@ namespace puppet { namespace ast {
 
     token_position const& selector_expression::position() const
     {
-        return get_position(_conditional);
+        return get_position(_value);
     }
 
     ostream& operator<<(ostream& os, selector_expression const& expr)
     {
-        os << expr.conditional() << " ? { ";
+        os << expr.value() << " ? { ";
         pretty_print(os, expr.cases(), ", ");
         os << " }";
         return os;

@@ -31,6 +31,9 @@ namespace puppet { namespace runtime {
     {
     }
 
+    // Forward declaration for evaluating primarye expressions
+    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression& expr);
+
     token_position const& evaluation_exception::position() const
     {
         return _position;
@@ -156,14 +159,103 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::selector_expression& expr) const
         {
-            // TODO: implement
-            throw evaluation_exception(expr.position(), "selector expression not yet implemented");
+            // Selector expressions create a new match scope
+            match_variable_scope match_scope(_evaluator.context().current());
+
+            // Evaluate the selector's value
+            value result = evaluate_primary_expression(_evaluator, expr.value());
+
+            boost::optional<size_t> default_index;
+
+            auto& cases = expr.cases();
+            for (size_t i = 0; i < cases.size(); ++i) {
+                auto& selector_case = cases[i];
+                if (selector_case.is_default()) {
+                    // Remember where the default case is and keep going
+                    default_index = i;
+                    continue;
+                }
+
+                // Evaluate the case selector
+                value selector = _evaluator.evaluate(selector_case.selector());
+
+                // If the selector is a regex, use match
+                auto regex = boost::get<runtime::regex>(&dereference(selector));
+                if (regex) {
+                    // Only match against strings
+                    if (boost::get<string>(&dereference(result))) {
+                        if (is_truthy(match(result, selector, expr.position(), selector_case.position(), _evaluator.context()))) {
+                            return _evaluator.evaluate(selector_case.result());
+                        }
+                    }
+                    continue;
+                }
+
+                // Otherwise, use equals
+                if (equals(result, selector)) {
+                    return _evaluator.evaluate(selector_case.result());
+                }
+            }
+
+            // Handle no matching case
+            if (!default_index) {
+                throw evaluation_exception(expr.position(), (boost::format("no matching selector case for value '%1%'.") % result).str());
+            }
+
+            // Evaluate the default case
+            return _evaluator.evaluate(cases[*default_index].result());
         }
 
         result_type operator()(ast::case_expression& expr) const
         {
-            // TODO: implement
-            throw evaluation_exception(expr.position(), "case expression not yet implemented");
+            // Case expressions create a new match scope
+            match_variable_scope match_scope(_evaluator.context().current());
+
+            // Evaluate the case's expression
+            value result = _evaluator.evaluate(expr.expression());
+
+            boost::optional<size_t> default_index;
+
+            auto& propositions = expr.propositions();
+            for (size_t i = 0; i < propositions.size(); ++i) {
+                auto& proposition = propositions[i];
+                if (proposition.is_default()) {
+                    // Remember where the default is and keep going
+                    default_index = i;
+                    continue;
+                }
+
+                // Look for a match in the options
+                for (auto& option : proposition.options()) {
+                    // Evaluate the option
+                    value option_value = _evaluator.evaluate(option);
+
+                    // If the option is a regex, use match
+                    auto regex = boost::get<runtime::regex>(&dereference(option_value));
+                    if (regex) {
+                        // Only match against strings
+                        if (boost::get<string>(&dereference(result))) {
+                            if (is_truthy(match(result, option_value, expr.position(), proposition.position(), _evaluator.context()))) {
+                                return execute_block(proposition.body());
+                            }
+                        }
+                        continue;
+                    }
+
+                    // Otherwise, use equals
+                    if (equals(result, option_value)) {
+                        return execute_block(proposition.body());
+                    }
+                }
+            }
+
+            // Handle no matching case
+            if (default_index) {
+                return execute_block(propositions[*default_index].body());
+            }
+
+            // Nothing matched, return undef
+            return value();
         }
 
         result_type operator()(ast::if_expression& expr) const
@@ -473,6 +565,11 @@ namespace puppet { namespace runtime {
         expression_evaluator& _evaluator;
     };
 
+    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression& expr)
+    {
+        return boost::apply_visitor(expression_visitor(evaluator), expr);
+    }
+
     expression_evaluator::expression_evaluator(runtime::context& ctx) :
         _context(ctx)
     {
@@ -485,7 +582,7 @@ namespace puppet { namespace runtime {
         }
 
         // Evaluate the first sub-expression
-        auto result = boost::apply_visitor(expression_visitor(*this), expr.first());
+        auto result = evaluate_primary_expression(*this, expr.first());
         auto position = expr.position();
 
         // Climb the remainder of the expression
@@ -523,7 +620,7 @@ namespace puppet { namespace runtime {
             ++begin;
 
             // Evaluate the right side
-            value right = boost::apply_visitor(expression_visitor(*this), operand);
+            value right = evaluate_primary_expression(*this, operand);
 
             // Recurse and climb the expression
             uint8_t next_precdence = precedence + (is_right_associative(op) ? static_cast<uint8_t>(0) : static_cast<uint8_t>(1));
