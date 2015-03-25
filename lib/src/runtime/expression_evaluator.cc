@@ -4,16 +4,34 @@
 #include <boost/format.hpp>
 
 using namespace std;
+using namespace puppet::lexer;
 
 namespace puppet { namespace runtime {
 
-    evaluation_exception::evaluation_exception(lexer::token_position position, string const& message) :
+    struct match_variable_scope
+    {
+        explicit match_variable_scope(scope& s) :
+            _scope(s)
+        {
+            _scope.push_matches();
+        }
+
+        ~match_variable_scope()
+        {
+            _scope.pop_matches();
+        }
+
+     private:
+        scope& _scope;
+    };
+
+    evaluation_exception::evaluation_exception(token_position position, string const& message) :
         runtime_error(message),
         _position(std::move(position))
     {
     }
 
-    lexer::token_position const& evaluation_exception::position() const
+    token_position const& evaluation_exception::position() const
     {
         return _position;
     }
@@ -66,8 +84,24 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::variable& var) const
         {
-            auto val = _evaluator.context().lookup(var.name());
-            return variable(move(var.name()), val);
+            static std::regex match_variable_patterh("^\\d+$");
+
+            string& name = var.name();
+
+            bool match = false;
+            value const* val = nullptr;
+            if (regex_match(name, match_variable_patterh)) {
+                // Check for invalid match name
+                if (name.size() > 1 && name[0] == '0') {
+                    throw evaluation_exception(var.position(), (boost::format("variable name $%1% is not a valid match variable name.") % var.name()).str());
+                }
+                // Look up the match
+                val = _evaluator.context().current().get(stoi(name));
+                match = true;
+            } else {
+                val = _evaluator.context().lookup(name);
+            }
+            return variable(move(name), val, match);
         }
 
         result_type operator()(ast::name& name) const
@@ -134,29 +168,35 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::if_expression& expr) const
         {
+            // If expressions create a new match scope
+            match_variable_scope match_scope(_evaluator.context().current());
+
             if (is_truthy(_evaluator.evaluate(expr.conditional()))) {
-                return execute(expr.body());
+                return execute_block(expr.body());
             }
             if (expr.elsifs()) {
                 for (auto& elsif : *expr.elsifs()) {
                     if (is_truthy(_evaluator.evaluate(elsif.conditional()))) {
-                        return execute(elsif.body());
+                        return execute_block(elsif.body());
                     }
                 }
             }
             if (expr.else_()) {
-                return execute(expr.else_()->body());
+                return execute_block(expr.else_()->body());
             }
             return value();
         }
 
         result_type operator()(ast::unless_expression& expr) const
         {
+            // Unless expressions create a new match scope
+            match_variable_scope match_scope(_evaluator.context().current());
+
             if (!is_truthy(_evaluator.evaluate(expr.conditional()))) {
-                return execute(expr.body());
+                return execute_block(expr.body());
             }
             if (expr.else_()) {
-                return execute(expr.else_()->body());
+                return execute_block(expr.else_()->body());
             }
             return value();
         }
@@ -199,7 +239,7 @@ namespace puppet { namespace runtime {
         }
 
      private:
-        result_type execute(boost::optional<vector<ast::expression>>& expressions) const
+        result_type execute_block(boost::optional<vector<ast::expression>>& expressions) const
         {
             value result;
             if (expressions) {
@@ -211,6 +251,162 @@ namespace puppet { namespace runtime {
         }
 
         expression_evaluator& _evaluator;
+    };
+
+    struct access_expression_evaluator : boost::static_visitor<value>
+    {
+        access_expression_evaluator(expression_evaluator& evaluator, vector<ast::expression>& expressions, token_position const& position) :
+            _evaluator(evaluator),
+            _expressions(expressions),
+            _position(position)
+        {
+        }
+
+        result_type operator()(string const& target) const
+        {
+            if (_expressions.size() > 2) {
+                throw evaluation_exception(_expressions[2].position(), "expected at most two expressions when accessing a String.");
+            }
+
+            // Get the index
+            value result = _evaluator.evaluate(_expressions[0]);
+            auto ptr = boost::get<int64_t>(&result);
+            if (!ptr) {
+                throw evaluation_exception(_expressions[0].position(), (boost::format("expected Integer for start index but found %1%.") % get_type(result)).str());
+            }
+
+            // If the index is negative, it's from the end of the string
+            int64_t index = *ptr;
+            if (index < 0) {
+                index += static_cast<int64_t>(target.size());
+            }
+
+            // Get the count
+            int64_t count = 1;
+            if (_expressions.size() == 2) {
+                result = _evaluator.evaluate(_expressions[1]);
+                ptr = boost::get<int64_t>(&result);
+                if (!ptr) {
+                    throw evaluation_exception(_expressions[1].position(), (boost::format("expected Integer for count but found %1%.") % get_type(result)).str());
+                }
+                count = *ptr;
+
+                // A negative count denotes an end index (inclusive)
+                if (count < 0) {
+                    count += (target.size() + 1 - index);
+                }
+            }
+
+            // If the index is still to the "left" of the start of the string, adjust the count and start at index 0
+            if (index < 0) {
+                count += index;
+                index = 0;
+            }
+            if (count <= 0) {
+                return string();
+            }
+            return target.substr(static_cast<size_t>(index), static_cast<size_t>(count));
+        }
+
+        result_type operator()(array const& target) const
+        {
+            if (_expressions.size() > 2) {
+                throw evaluation_exception(_expressions[2].position(), "expected at most two expressions when accessing an Array.");
+            }
+
+            // Get the index
+            value result = _evaluator.evaluate(_expressions[0]);
+            auto ptr = boost::get<int64_t>(&result);
+            if (!ptr) {
+                throw evaluation_exception(_expressions[0].position(), (boost::format("expected Integer for start index but found %1%.") % get_type(result)).str());
+            }
+
+            // If the index is negative, it's from the end of the array
+            int64_t index = *ptr;
+            if (index < 0) {
+                index += static_cast<int64_t>(target.size());
+            }
+
+            // Get the count
+            int64_t count = 1;
+            if (_expressions.size() == 2) {
+                result = _evaluator.evaluate(_expressions[1]);
+                ptr = boost::get<int64_t>(&result);
+                if (!ptr) {
+                    throw evaluation_exception(_expressions[1].position(), (boost::format("expected Integer for count but found %1%.") % get_type(result)).str());
+                }
+                count = *ptr;
+
+                // A negative count denotes an end index (inclusive)
+                if (count < 0) {
+                    count += (target.size() + 1 - index);
+                }
+            } else {
+                // Only the index given; return the element itself if in range
+                if (index < 0 || static_cast<size_t>(index) >= target.size()) {
+                    return value();
+                }
+                return target[index];
+            }
+
+            // If the index is still to the "left" of the start of the array, adjust the count and start at index 0
+            if (index < 0) {
+                count += index;
+                index = 0;
+            }
+            if (count <= 0) {
+                return array();
+            }
+
+            // Create the subarray
+            array subarray;
+            subarray.reserve(count);
+            for (int64_t i = 0; i < count && static_cast<size_t>(i + index) < target.size(); ++i) {
+                subarray.emplace_back(target[i + index]);
+            }
+            return subarray;
+        }
+
+        result_type operator()(hash const& target) const
+        {
+            if (_expressions.size() == 1) {
+                // Lookup by key
+                auto it = target.find(_evaluator.evaluate(_expressions[0]));
+                if (it == target.end()) {
+                    return value();
+                }
+                return it->second;
+            }
+
+            // Otherwise, build an array of values
+            array result;
+            for (auto& expr : _expressions) {
+                // Lookup by key
+                auto it = target.find(_evaluator.evaluate(expr));
+                if (it == target.end()) {
+                    continue;
+                }
+                result.emplace_back(it->second);
+            }
+            return result;
+        }
+
+        result_type operator()(type const& target) const
+        {
+            // TODO: implement
+            throw evaluation_exception(_position, "access operator on Type not yet implemented.");
+        }
+
+        template <typename T>
+        result_type operator()(T const& target) const
+        {
+            throw evaluation_exception(_position, (boost::format("access operator cannot be applied to a %1%.") % get_type(target)).str());
+        }
+
+     private:
+        expression_evaluator& _evaluator;
+        vector<ast::expression>& _expressions;
+        token_position const& _position;
     };
 
     struct expression_visitor : boost::static_visitor<value>
@@ -261,8 +457,11 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::access_expression& expr) const
         {
-            // TODO: implement
-            throw evaluation_exception(expr.position(), "access expression not yet implemented");
+            value target = boost::apply_visitor(*this, expr.target());
+            for (auto& access : expr.accesses()) {
+                target = boost::apply_visitor(access_expression_evaluator(_evaluator, access.arguments(), ast::get_position(expr.target())), dereference(target));
+            }
+            return target;
         }
 
         result_type operator()(ast::expression& expr) const
@@ -309,7 +508,7 @@ namespace puppet { namespace runtime {
 
     void expression_evaluator::climb_expression(
         value& left,
-        lexer::token_position& left_position,
+        token_position& left_position,
         uint8_t min_precedence,
         vector<ast::binary_expression>::iterator& begin,
         vector<ast::binary_expression>::iterator const& end)
@@ -337,10 +536,10 @@ namespace puppet { namespace runtime {
 
     void expression_evaluator::evaluate(
         value& left,
-        lexer::token_position const& left_position,
+        token_position const& left_position,
         ast::binary_operator op,
         value& right,
-        lexer::token_position& right_position)
+        token_position& right_position)
     {
         switch (op) {
             case ast::binary_operator::in:

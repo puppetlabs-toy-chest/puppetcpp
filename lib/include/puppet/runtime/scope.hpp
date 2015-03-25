@@ -11,6 +11,7 @@
 #include <tuple>
 #include <cstdint>
 #include <regex>
+#include <deque>
 #include <boost/optional.hpp>
 
 namespace puppet { namespace runtime {
@@ -69,11 +70,28 @@ namespace puppet { namespace runtime {
          */
         void set(std::smatch const& matches);
 
+        /**
+         * Gets a match variable by index.
+         * @param index The index of the match variable.
+         * @return Returns the match variable's value or nullptr if the index is not in range.
+         */
+        value const* get(size_t index) const;
+
+        /**
+         * Pushes the current match variables.
+         */
+        void push_matches();
+
+        /**
+         * Pops the current match variables.
+         */
+        void pop_matches();
+
      private:
         std::string _name;
         std::shared_ptr<scope> _parent;
         std::unordered_map<std::string, std::tuple<value, std::uint32_t>> _variables;
-        std::unordered_map<std::string, value> _matches;
+        std::deque<std::vector<value>> _matches;
     };
 
     /**

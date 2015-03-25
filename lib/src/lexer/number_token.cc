@@ -54,9 +54,11 @@ namespace puppet { namespace lexer {
                 case numeric_base::decimal:
                     _os << value;
                     break;
+
                 case numeric_base::octal:
                     _os << "0" << oct << value << dec;
                     break;
+
                 case numeric_base::hexadecimal:
                     _os << "0x" << hex << value << dec;
                     break;

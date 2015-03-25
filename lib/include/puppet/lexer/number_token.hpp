@@ -47,7 +47,7 @@ namespace puppet { namespace lexer {
          */
         number_token();
 
-        /*
+        /**
          * Constructs a number token with the given position and integral value.
          * @param position The position of the token.
          * @param value The integral value of the token.
@@ -55,7 +55,7 @@ namespace puppet { namespace lexer {
          */
         number_token(token_position position, std::int64_t value, numeric_base base);
 
-        /*
+        /**
          * Constructs a number token with the given position and floating point value.
          * @param position The position of the token.
          * @param value The floating point value of the token.

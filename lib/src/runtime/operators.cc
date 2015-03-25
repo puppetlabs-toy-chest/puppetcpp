@@ -91,18 +91,25 @@ namespace puppet { namespace runtime {
 
     void assign(value& left, value& right, context& ctx, token_position const& position)
     {
-        static std::regex match_variable_name("^\\d+$");
         auto var = boost::get<variable>(&left);
         if (!var) {
             throw evaluation_exception(position, (boost::format("cannot assign to %1%: assignment can only be performed on variables.") % get_type(left)).str());
         }
-        // Can't assign to numeric names (reserved for match variables)
-        if (regex_match(var->name(), match_variable_name)) {
-            throw evaluation_exception(position, (boost::format("cannot assign to $%1%: name is reserved for match variables.") % var->name()).str());
+        // Can't assign to match variables
+        if (var->match()) {
+            throw evaluation_exception(position, (boost::format("cannot assign to $%1%: variable name is reserved for match variables.") % var->name()).str());
         }
         if (var->name().find(':') != string::npos) {
             throw evaluation_exception(position, (boost::format("cannot assign to $%1%: assignment can only be performed on variables local to the current scope.") % var->name()).str());
         }
+
+        // If the RHS is a match variable, we need to copy the value because it is temporary
+        auto var_right = boost::get<variable>(&right);
+        if (var_right && var_right->match()) {
+            right = var_right->value();
+        }
+
+        // Set the value in the current scope
         auto value = ctx.current().set(var->name(), std::move(right), get<1>(position));
         if (!value) {
             auto where = ctx.current().where(var->name());
@@ -385,9 +392,9 @@ namespace puppet { namespace runtime {
         }
 
         template <
-                typename Right,
-                typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
-                typename = typename enable_if<!is_same<Right, long double>::value>::type
+            typename Right,
+            typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
+            typename = typename enable_if<!is_same<Right, long double>::value>::type
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
@@ -395,9 +402,9 @@ namespace puppet { namespace runtime {
         }
 
         template <
-                typename Right,
-                typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
-                typename = typename enable_if<!is_same<Right, long double>::value>::type
+            typename Right,
+            typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
+            typename = typename enable_if<!is_same<Right, long double>::value>::type
         >
         result_type operator()(long double const&, Right const& right) const
         {
