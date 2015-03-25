@@ -41,7 +41,7 @@ Expression evaluator status:
 * [x] if expressions
 * [x] unless expressions
 * [x] selector expressions
-* [ ] case expressions
+* [x] case expressions
 * [ ] method call expressions
 * [ ] function call expressions (a temporary 'notice' implementation is present)
 * [ ] catalog expressions

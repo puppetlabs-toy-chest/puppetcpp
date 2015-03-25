@@ -163,7 +163,7 @@ namespace puppet { namespace runtime {
             match_variable_scope match_scope(_evaluator.context().current());
 
             // Evaluate the selector's value
-            value v = evaluate_primary_expression(_evaluator, expr.value());
+            value result = evaluate_primary_expression(_evaluator, expr.value());
 
             boost::optional<size_t> default_index;
 
@@ -180,11 +180,11 @@ namespace puppet { namespace runtime {
                 value selector = _evaluator.evaluate(selector_case.selector());
 
                 // If the selector is a regex, use match
-                auto regex = boost::get<runtime::regex>(&selector);
+                auto regex = boost::get<runtime::regex>(&dereference(selector));
                 if (regex) {
                     // Only match against strings
-                    if (boost::get<string>(&v)) {
-                        if (is_truthy(match(v, selector, expr.position(), selector_case.position(), _evaluator.context()))) {
+                    if (boost::get<string>(&dereference(result))) {
+                        if (is_truthy(match(result, selector, expr.position(), selector_case.position(), _evaluator.context()))) {
                             return _evaluator.evaluate(selector_case.result());
                         }
                     }
@@ -192,14 +192,14 @@ namespace puppet { namespace runtime {
                 }
 
                 // Otherwise, use equals
-                if (equals(v, selector)) {
+                if (equals(result, selector)) {
                     return _evaluator.evaluate(selector_case.result());
                 }
             }
 
             // Handle no matching case
             if (!default_index) {
-                throw evaluation_exception(expr.position(), (boost::format("no matching selector case for value '%1%'.") % v).str());
+                throw evaluation_exception(expr.position(), (boost::format("no matching selector case for value '%1%'.") % result).str());
             }
 
             // Evaluate the default case
@@ -208,8 +208,54 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::case_expression& expr) const
         {
-            // TODO: implement
-            throw evaluation_exception(expr.position(), "case expression not yet implemented");
+            // Case expressions create a new match scope
+            match_variable_scope match_scope(_evaluator.context().current());
+
+            // Evaluate the case's expression
+            value result = _evaluator.evaluate(expr.expression());
+
+            boost::optional<size_t> default_index;
+
+            auto& propositions = expr.propositions();
+            for (size_t i = 0; i < propositions.size(); ++i) {
+                auto& proposition = propositions[i];
+                if (proposition.is_default()) {
+                    // Remember where the default is and keep going
+                    default_index = i;
+                    continue;
+                }
+
+                // Look for a match in the options
+                for (auto& option : proposition.options()) {
+                    // Evaluate the option
+                    value option_value = _evaluator.evaluate(option);
+
+                    // If the option is a regex, use match
+                    auto regex = boost::get<runtime::regex>(&dereference(option_value));
+                    if (regex) {
+                        // Only match against strings
+                        if (boost::get<string>(&dereference(result))) {
+                            if (is_truthy(match(result, option_value, expr.position(), proposition.position(), _evaluator.context()))) {
+                                return execute_block(proposition.body());
+                            }
+                        }
+                        continue;
+                    }
+
+                    // Otherwise, use equals
+                    if (equals(result, option_value)) {
+                        return execute_block(proposition.body());
+                    }
+                }
+            }
+
+            // Handle no matching case
+            if (default_index) {
+                return execute_block(propositions[*default_index].body());
+            }
+
+            // Nothing matched, return undef
+            return value();
         }
 
         result_type operator()(ast::if_expression& expr) const
