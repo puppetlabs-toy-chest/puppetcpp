@@ -5,10 +5,12 @@
 #pragma once
 
 #include "scope.hpp"
+#include "../lexer/token_position.hpp"
 #include <memory>
 #include <stack>
 #include <string>
 #include <unordered_map>
+#include <functional>
 
 namespace puppet { namespace runtime {
 
@@ -19,8 +21,9 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluation context.
+         * @param warn The warning callback to use.
          */
-        context();
+        explicit context(std::function<void(lexer::token_position const&, std::string const&)> warn = nullptr);
 
         /**
          * Pushes a new scope onto the evaluation context.
@@ -55,10 +58,18 @@ namespace puppet { namespace runtime {
          */
         scope& current();
 
+        /**
+         * Emits a warning with the given position and message.
+         * @param position The position of the warning.
+         * @param message The warning message.
+         */
+        void warn(lexer::token_position const& position, std::string const& message) const;
+
     private:
         std::unordered_map<std::string, std::shared_ptr<scope>> _scopes;
         std::stack<std::shared_ptr<scope>> _stack;
         std::shared_ptr<scope> _top;
+        std::function<void(lexer::token_position const&, std::string const&)> _warn;
     };
 
 }}  // puppet::runtime

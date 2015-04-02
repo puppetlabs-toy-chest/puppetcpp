@@ -1,14 +1,13 @@
-// The static lexer header must be included prior to including the lexer header
-#include <puppet/lexer/static_lexer.hpp>
 #include <puppet/parser/parser.hpp>
-#include <puppet/runtime/evaluator.hpp>
-#include <puppet/utility/error_reporter.hpp>
+#include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/logging/logger.hpp>
 #include <iostream>
 
 using namespace std;
+using namespace puppet::lexer;
 using namespace puppet::parser;
 using namespace puppet::runtime;
-using namespace puppet::utility;
+using namespace puppet::logging;
 namespace ast = puppet::ast;
 
 int main(int argc, char* argv[])
@@ -18,46 +17,54 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    error_reporter reporter(cerr);
-    boost::optional<ast::manifest> manifest;
+    stream_logger logger(cerr);
 
-    std::ifstream file(argv[1]);
+    ifstream file(argv[1]);
     if (!file) {
-        reporter.error("could not open file '%1%'.", argv[1]);
+        logger.log(level::error, "could not open file '%1%'.", argv[1]);
         return EXIT_FAILURE;
     }
 
-    size_t errors = 0;
-    size_t warnings = 0;
     try {
-        manifest = parser::parse_manifest_file(reporter, file, argv[1]);
+        auto manifest = parser::parse(file);
 
-        errors = reporter.errors();
-        warnings = reporter.warnings();
-        reporter.reset();
+        cout << "parsed AST:\n" << manifest << endl;
+        cout << "\nevaluating:\n";
 
-        cout << "parsing " << (errors > 0 ? "failed" : "succeeded") << " with " <<
-                errors << " error" << (errors != 1 ? "s" : "") <<
-                " and " << warnings << " warning" << (warnings != 1 ? "s.\n" : ".\n");
-
-        if (manifest) {
-            cout << "\nparsed AST:\n" << *manifest << endl;
-            cout << "\nevaluating:\n";
-
-            evaluator e;
-            e.evaluate(reporter, *manifest, argv[1], file);
-
-            errors = reporter.errors();
-            warnings = reporter.warnings();
-            reporter.reset();
-
-            cout << "evaluation " << (errors > 0 ? "failed" : "succeeded") << " with " <<
-                    errors << " error" << (errors != 1 ? "s" : "") <<
-                    " and " << warnings << " warning" << (warnings != 1 ? "s.\n" : ".\n");
+        if (manifest.body()) {
+            // Evaluate all expressions in the manifest's body
+            context ctx([&](token_position const& position, string const& message) {
+                string text;
+                size_t column;
+                tie(text, column) = get_text_and_column(file, get<0>(position));
+                logger.log(level::warning, get<1>(position), column, text, argv[1], message);
+            });
+            expression_evaluator evaluator(ctx);
+            for (auto &expression : *manifest.body()) {
+                evaluator.evaluate(expression);
+            }
         }
+
+    } catch (parse_exception const& ex) {
+        string text;
+        size_t column;
+        tie(text, column) = get_text_and_column(file, get<0>(ex.position()));
+        logger.log(level::error, get<1>(ex.position()), column, text, argv[1], ex.what());
+    } catch (evaluation_exception const& ex) {
+        string text;
+        size_t column;
+        tie(text, column) = get_text_and_column(file, get<0>(ex.position()));
+        logger.log(level::error, get<1>(ex.position()), column, text, argv[1], ex.what());
+    } catch (exception const& ex) {
+        logger.log(level::fatal, "unhandled exception: %1%", ex.what());
     }
-    catch (exception const& ex) {
-        reporter.error("unhandled exception: %1%", ex.what());
-    }
+
+    auto errors = logger.errors();
+    auto warnings = logger.warnings();
+
+    cout << "compilation " << (errors > 0 ? "failed" : "succeeded") << " with "
+         << errors << " error" << (errors != 1 ? "s" : "")
+         << " and " << warnings << " warning" << (warnings != 1 ? "s.\n" : ".\n");
+
     return errors > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

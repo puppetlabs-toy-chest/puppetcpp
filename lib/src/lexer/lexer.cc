@@ -25,6 +25,16 @@ namespace puppet { namespace lexer {
         return lexer_string_iterator(typename lexer_string_iterator::base_type(str.end()));
     }
 
+    lexer_string_iterator lex_begin(boost::iterator_range<lexer_string_iterator> const& range)
+    {
+        return range.begin();
+    }
+
+    lexer_string_iterator lex_end(boost::iterator_range<lexer_string_iterator> const& range)
+    {
+        return range.end();
+    }
+
     struct scoped_file_position
     {
         scoped_file_position(ifstream& fs) :
@@ -43,7 +53,7 @@ namespace puppet { namespace lexer {
         size_t _position;
     };
 
-    tuple<string, size_t> get_line_and_column(ifstream& fs, size_t position, size_t tab_width)
+    tuple<string, size_t> get_text_and_column(ifstream& fs, size_t position, size_t tab_width)
     {
         const size_t READ_SIZE = 4096;
         char buf[READ_SIZE];
@@ -88,24 +98,24 @@ namespace puppet { namespace lexer {
             ++end;
         }
 
-        // Read the line
+        // Read the line's text
         size_t size = end - start;
         fs.seekg(start);
-        vector<char> line_buffer(size);
-        if (!fs.read(line_buffer.data(), line_buffer.size())) {
+        vector<char> buffer(size);
+        if (!fs.read(buffer.data(), buffer.size())) {
             return make_tuple("", 1);
         }
 
         // Convert tabs to spaces
-        string line = string(line_buffer.data(), line_buffer.size());
+        string text = string(buffer.data(), buffer.size());
         if (tab_width > 1) {
-            column += count(line.begin(), line.begin() + column, '\t') * (tab_width - 1);
+            column += count(text.begin(), text.begin() + column, '\t') * (tab_width - 1);
         }
 
-        return make_tuple(move(line), column);
+        return make_tuple(move(text), column);
     }
 
-    tuple<string, size_t> get_line_and_column(string const& input, size_t position, size_t tab_width)
+    tuple<string, size_t> get_text_and_column(string const& input, size_t position, size_t tab_width)
     {
         auto start = input.rfind('\n', position);
         if (start == string::npos) {
@@ -114,15 +124,15 @@ namespace puppet { namespace lexer {
             ++start;
         }
 
-        string line = input.substr(start, input.find('\n', start));
+        string text = input.substr(start, input.find('\n', start));
 
         // Convert tabs to spaces
         size_t column = (position - start) + 1;
         if (tab_width > 1) {
-            column += count(line.begin(), line.begin() + column, '\t') * (tab_width - 1);
+            column += count(text.begin(), text.begin() + column, '\t') * (tab_width - 1);
         }
 
-        return make_tuple(move(line), column);
+        return make_tuple(move(text), column);
     }
 
     token_position get_last_position(ifstream& input)
@@ -166,6 +176,16 @@ namespace puppet { namespace lexer {
             }
         }
         return make_tuple(position, line);
+    }
+
+    token_position get_last_position(boost::iterator_range<lexer_string_iterator> const& range)
+    {
+        // Get the last position in the range (end is non-inclusive)
+        auto last = range.begin();
+        for (auto it = range.begin(); it != range.end(); ++it) {
+            last = it;
+        }
+        return last.position();
     }
 
 }}  // namespace puppet::lexer

@@ -9,33 +9,19 @@ namespace puppet { namespace ast {
     {
     }
 
-    string::string(string_token& token) :
-        _position(token.position()),
-        _value(std::move(token.text())),
-        _format(std::move(token.format())),
-        _interpolated(token.interpolated()),
-        _escaped(token.escaped())
-    {
-    }
-
     std::string const& string::value() const
     {
         return _value;
     }
 
-    std::string& string::value()
+    std::string const& string::escapes() const
     {
-        return _value;
+        return _escapes;
     }
 
-    std::string const& string::format() const
+    char string::quote() const
     {
-        return _format;
-    }
-
-    std::string& string::format()
-    {
-        return _format;
+        return _quote;
     }
 
     bool string::interpolated() const
@@ -43,19 +29,19 @@ namespace puppet { namespace ast {
         return _interpolated;
     }
 
-    bool& string::interpolated()
+    std::string const& string::format() const
     {
-        return _interpolated;
+        return _format;
     }
 
-    bool string::escaped() const
+    int string::margin() const
     {
-        return _escaped;
+        return _margin;
     }
 
-    bool& string::escaped()
+    bool string::remove_break() const
     {
-        return _escaped;
+        return _remove_break;
     }
 
     token_position const& string::position() const
@@ -65,9 +51,7 @@ namespace puppet { namespace ast {
 
     ostream& operator<<(ostream& os, string const& str)
     {
-        os << (str.interpolated() ? '"' : '\'');
-        os << str.value();
-        os << (str.interpolated() ? '"' : '\'');
+        os << (str.interpolated() ? '"' : '\'') << str.value() << (str.interpolated() ? '"' : '\'');
         return os;
     }
 

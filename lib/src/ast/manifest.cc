@@ -11,8 +11,9 @@ namespace puppet { namespace ast {
     {
     }
 
-    manifest::manifest(optional<vector<expression>> body) :
-        _body(std::move(body))
+    manifest::manifest(optional<vector<expression>> body, lexer::token_position end) :
+        _body(std::move(body)),
+        _end(std::move(end))
     {
     }
 
@@ -24,6 +25,11 @@ namespace puppet { namespace ast {
     optional<vector<expression>>& manifest::body()
     {
         return _body;
+    }
+
+    lexer::token_position const& manifest::end() const
+    {
+        return _end;
     }
 
     ostream& operator<<(ostream& os, ast::manifest const& manifest)

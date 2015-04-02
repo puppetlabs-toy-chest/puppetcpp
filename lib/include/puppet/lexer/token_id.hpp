@@ -39,6 +39,7 @@ namespace puppet { namespace lexer {
         in_edge_sub,
         out_edge,
         out_edge_sub,
+        first_keyword,      // Add keywords after this id
         keyword_case,
         keyword_class,
         keyword_default,
@@ -59,6 +60,7 @@ namespace puppet { namespace lexer {
         keyword_type,
         keyword_attr,
         keyword_private,
+        last_keyword,       // Add new keywords before this id
         statement_call,
         single_quoted_string,
         double_quoted_string,
@@ -74,6 +76,13 @@ namespace puppet { namespace lexer {
         whitespace,           // Not in token stream
         unclosed_quote,       // Error token that will not match any grammars
     };
+
+    /**
+     * Determines if the token id is for a keyword.
+     * @param id The token id.
+     * @return Returns true if the id is for a keyword or false if not.
+     */
+    bool is_keyword(token_id id);
 
     /**
      * Stream insertion operator for token id.

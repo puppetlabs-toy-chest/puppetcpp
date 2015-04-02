@@ -15,19 +15,20 @@ namespace puppet { namespace parser {
 
     /**
      * Lazy-evaluated helper for getting the position of a token.
-     * @tparam iterator_type The underlying iterator type of the token.
+     * @tparam Iterator The underlying iterator type of the token.
      * @param range The token iterator range.
+     * @return Returns the token's position.
      */
-    template <typename iterator_type>
-    puppet::lexer::token_position get_iter_position(boost::iterator_range<iterator_type> const& range)
+    template <typename Iterator>
+    puppet::lexer::token_position get_token_position(boost::iterator_range<Iterator> const& range)
     {
         return range.begin().position();
     }
 
     /**
-     * Adapts the get_iter_position function for binding with Boost.Phoenix.
+     * Adapts the get_token_position function for binding with Boost.Phoenix.
      */
-    BOOST_PHOENIX_ADAPT_FUNCTION(puppet::lexer::token_position, get_iter_position, get_iter_position, 1);
+    BOOST_PHOENIX_ADAPT_FUNCTION(puppet::lexer::token_position, get_token_position, get_token_position, 1);
 
     /**
      * Represents the Puppet language grammar.
@@ -44,10 +45,10 @@ namespace puppet { namespace parser {
 
         /**
          * Constructs a Puppet language grammar for the given lexer.
-         * @tparam Lexer The lexer type to use for token definitions.
          * @param lexer The lexer to use for token definitions.
+         * @param interpolation True if the grammar is being used for string interpolation or false if not.
          */
-        grammar(Lexer const& lexer) :
+        grammar(Lexer const& lexer, bool interpolation = false) :
             boost::spirit::qi::grammar<iterator_type, puppet::ast::manifest()>(manifest)
         {
             using namespace boost::spirit::qi;
@@ -58,8 +59,14 @@ namespace puppet { namespace parser {
             // TODO: improve semantic action readability
 
             // A manifest is a sequence of statements
-            manifest =
-                statements [ _val = phx::construct<ast::manifest>(_1) ];
+            // For string interpolation, end at the first '}' token that isn't part of the grammar
+            if (interpolation) {
+                manifest =
+                    (raw_token('{') > statements > token('}')) [_val = phx::construct<ast::manifest>(_1, get_token_position(_2))];
+            } else {
+                manifest =
+                    statements [ _val = phx::construct<ast::manifest>(_1) ];
+            }
 
             // Statements
             // The Puppet language doesn't really have "statements" in a pedantic sense of the word
@@ -118,10 +125,10 @@ namespace puppet { namespace parser {
                     hash
                 ) [ _val = phx::construct<ast::basic_expression>(_1) ];
             undef =
-                token(token_id::keyword_undef) [ _val = phx::construct<ast::undef>(get_iter_position(_1)) ];
+                token(token_id::keyword_undef) [ _val = phx::construct<ast::undef>(get_token_position(_1)) ];
             boolean =
-                token(token_id::keyword_true)  [ _val = phx::construct<ast::boolean>(get_iter_position(_1), true) ] |
-                token(token_id::keyword_false) [ _val = phx::construct<ast::boolean>(get_iter_position(_1), false) ];
+                token(token_id::keyword_true)  [ _val = phx::construct<ast::boolean>(get_token_position(_1), true) ] |
+                token(token_id::keyword_false) [ _val = phx::construct<ast::boolean>(get_token_position(_1), false) ];
             number =
                 lexer.number [ _val = phx::construct<ast::number>(_1) ];
             string =
@@ -136,9 +143,9 @@ namespace puppet { namespace parser {
             type =
                 token(token_id::type) [ _val = phx::construct<ast::type>(_1) ];
             array =
-                ((token('[') | token(token_id::array_start)) > -expressions > raw_token(']'))                   [ _val = phx::construct<ast::array>(get_iter_position(_1), _2) ];
+                ((token('[') | token(token_id::array_start)) > -expressions > raw_token(']'))                   [ _val = phx::construct<ast::array>(get_token_position(_1), _2) ];
             hash =
-                (token('{') > -(hash_pair % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::hash>(get_iter_position(_1), _2) ];
+                (token('{') > -(hash_pair % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::hash>(get_token_position(_1), _2) ];
             hash_pair =
                 (expression > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::hash_pair>(_1, _2) ];
 
@@ -154,26 +161,26 @@ namespace puppet { namespace parser {
                 ) [ _val = phx::construct<ast::control_flow_expression>(_1) ];
             selector_case_expression =
                 (expression > raw_token(token_id::fat_arrow) > expression)                       [ _val = phx::construct<ast::selector_case_expression>(_1, _2) ] |
-                (token(token_id::keyword_default) > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::selector_case_expression>(get_iter_position(_1), _2) ];
+                (token(token_id::keyword_default) > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::selector_case_expression>(get_token_position(_1), _2) ];
             case_expression =
-                (token(token_id::keyword_case) > expression > raw_token('{') > +case_proposition > raw_token('}')) [ _val = phx::construct<ast::case_expression>(get_iter_position(_1), _2, _3) ];
+                (token(token_id::keyword_case) > expression > raw_token('{') > +case_proposition > raw_token('}')) [ _val = phx::construct<ast::case_expression>(get_token_position(_1), _2, _3) ];
             case_proposition =
                 (expressions > raw_token(':') > raw_token('{') > statements > raw_token('}'))                      [ _val = phx::construct<ast::case_proposition>(_1, _2) ] |
-                (token(token_id::keyword_default) > raw_token(':') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::case_proposition>(get_iter_position(_1), _2) ];
+                (token(token_id::keyword_default) > raw_token(':') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::case_proposition>(get_token_position(_1), _2) ];
             if_expression =
-                (token(token_id::keyword_if) > expression > raw_token('{') > statements > raw_token('}') > *elsif_expression > -else_expression) [ _val = phx::construct<ast::if_expression>(get_iter_position(_1), _2, _3, _4, _5) ];
+                (token(token_id::keyword_if) > expression > raw_token('{') > statements > raw_token('}') > *elsif_expression > -else_expression) [ _val = phx::construct<ast::if_expression>(get_token_position(_1), _2, _3, _4, _5) ];
             elsif_expression =
-                (token(token_id::keyword_elsif) > expression > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::elsif_expression>(get_iter_position(_1), _2, _3) ];
+                (token(token_id::keyword_elsif) > expression > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::elsif_expression>(get_token_position(_1), _2, _3) ];
             else_expression =
-                (token(token_id::keyword_else) > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::else_expression>(get_iter_position(_1), _2) ];
+                (token(token_id::keyword_else) > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::else_expression>(get_token_position(_1), _2) ];
             unless_expression =
-                (token(token_id::keyword_unless) > expression > raw_token('{') > statements > raw_token('}') > -else_expression) [ _val = phx::construct<ast::unless_expression>(get_iter_position(_1), _2, _3, _4) ];
+                (token(token_id::keyword_unless) > expression > raw_token('{') > statements > raw_token('}') > -else_expression) [ _val = phx::construct<ast::unless_expression>(get_token_position(_1), _2, _3, _4) ];
             function_call_expression =
                 ((name >> raw_token('(')) > -expressions > raw_token(')') > -lambda) [ _val = phx::construct<ast::function_call_expression>(_1, _2, _3) ];
             statement_call_expression =
                 (token(token_id::statement_call) >> !raw_token('(') >> expressions >> -lambda) [ _val = phx::construct<ast::function_call_expression>(phx::construct<ast::name>(_1), _2, _3) ];
             lambda =
-                (token('|') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token('|') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::lambda>(get_iter_position(_1), _2, _3) ];
+                (token('|') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token('|') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::lambda>(get_token_position(_1), _2, _3) ];
             parameter =
                 (parameter_type > -token('*') > variable > -(raw_token('=') > expression)) [ _val = phx::construct<ast::parameter>(_1, phx::static_cast_<bool>(_2), _3, _4) ] |
                 (raw_token('*') > variable > -(raw_token('=') > expression))               [ _val = phx::construct<ast::parameter>(nullptr, true, _1, _2) ] |
@@ -242,14 +249,14 @@ namespace puppet { namespace parser {
                 variable              [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1))) ] |
                 (type >> +access)     [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::access_expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1)), _2))) ];
             class_definition_expression =
-                (token(token_id::keyword_class) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > -(raw_token(token_id::keyword_inherits) > name) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::class_definition_expression>(get_iter_position(_1), _2, _3, _4, _5) ];
+                (token(token_id::keyword_class) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > -(raw_token(token_id::keyword_inherits) > name) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::class_definition_expression>(get_token_position(_1), _2, _3, _4, _5) ];
             defined_type_expression =
-                (token(token_id::keyword_define) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::defined_type_expression>(get_iter_position(_1), _2, _3, _4) ];
+                (token(token_id::keyword_define) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::defined_type_expression>(get_token_position(_1), _2, _3, _4) ];
             node_definition_expression =
-                (token(token_id::keyword_node) > (hostname % ',') > -raw_token(',') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::node_definition_expression>(get_iter_position(_1), _2, _3) ];
+                (token(token_id::keyword_node) > (hostname % ',') > -raw_token(',') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::node_definition_expression>(get_token_position(_1), _2, _3) ];
             hostname =
                 string                             [ _val = phx::construct<ast::hostname>(_1) ] |
-                token(token_id::keyword_default)   [ _val = phx::construct<ast::hostname>(get_iter_position(_1)) ] |
+                token(token_id::keyword_default)   [ _val = phx::construct<ast::hostname>(get_token_position(_1)) ] |
                 regex                              [ _val = phx::construct<ast::hostname>(_1) ] |
                 ((name | number) % raw_token('.')) [ _val = phx::construct<ast::hostname>(_1) ];
             collection_expression =
@@ -276,9 +283,9 @@ namespace puppet { namespace parser {
 
             // Unary expressions
             unary_expression =
-                (token('-') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_iter_position(_1), ast::unary_operator::negate, _2) ] |
-                (token('*') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_iter_position(_1), ast::unary_operator::splat, _2) ]  |
-                (token('!') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_iter_position(_1), ast::unary_operator::logical_not, _2) ];
+                (token('-') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_token_position(_1), ast::unary_operator::negate, _2) ] |
+                (token('*') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_token_position(_1), ast::unary_operator::splat, _2) ]  |
+                (token('!') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_token_position(_1), ast::unary_operator::logical_not, _2) ];
 
             // Binary expression
             binary_expression =
@@ -310,7 +317,7 @@ namespace puppet { namespace parser {
 
             // Access expression
             access =
-                (token('[') > expressions > raw_token(']')) [ _val = phx::construct<ast::access>(get_iter_position(_1), _2) ];
+                (token('[') > expressions > raw_token(']')) [ _val = phx::construct<ast::access>(get_token_position(_1), _2) ];
 
             // Manifest
             manifest.name("manifest");

@@ -4,8 +4,9 @@ using namespace std;
 
 namespace puppet { namespace runtime {
 
-    context::context() :
-        _top(make_shared<scope>("Class[main]"))
+    context::context(function<void(lexer::token_position const&, string const&)> warn) :
+        _top(make_shared<scope>("Class[main]")),
+        _warn(std::move(warn))
     {
     }
 
@@ -70,6 +71,13 @@ namespace puppet { namespace runtime {
     scope& context::current()
     {
         return _stack.empty() ? *_top : *_stack.top();
+    }
+
+    void context::warn(lexer::token_position const& position, string const& message) const
+    {
+        if (_warn) {
+            _warn(position, message);
+        }
     }
 
 }}  // namespace puppet::runtime

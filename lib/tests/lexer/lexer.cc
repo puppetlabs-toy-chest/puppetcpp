@@ -9,64 +9,17 @@ using namespace puppet::lexer;
 
 struct token_value_visitor : boost::static_visitor<string>
 {
-    template <typename Iterator>
-    result_type operator()(boost::iterator_range<Iterator> const& range) const
-    {
-        return string(range.begin(), range.end());
-    }
-
-    result_type operator()(string_token const& token) const
-    {
-        return token.text();
-    }
-
     result_type operator()(number_token const& token) const
     {
         ostringstream os;
         os << token;
         return os.str();
     }
-};
 
-struct string_token_visitor : boost::static_visitor<string_token const&>
-{
-    template <typename Iterator>
-    result_type operator()(boost::iterator_range<Iterator> const& range) const
+    template <typename T>
+    result_type operator()(T const& token) const
     {
-        FAIL("not a string token");
-        throw runtime_error("not a string token");
-    }
-
-    result_type operator()(string_token const& token) const
-    {
-        return token;
-    }
-
-    result_type operator()(number_token const& token) const
-    {
-        FAIL("not a string token");
-        throw runtime_error("not a string token");
-    }
-};
-
-struct number_token_visitor : boost::static_visitor<number_token const&>
-{
-    template <typename Iterator>
-    result_type operator()(boost::iterator_range<Iterator> const& range) const
-    {
-        FAIL("not a number token");
-        throw runtime_error("not a number token");
-    }
-
-    result_type operator()(string_token const& token) const
-    {
-        FAIL("not a number token");
-        throw runtime_error("not a number token");
-    }
-
-    result_type operator()(number_token const& token) const
-    {
-        return token;
+        return string(token.begin(), token.end());
     }
 };
 
@@ -92,9 +45,12 @@ void require_string_token(
     Iterator const& end,
     token_id expected_id,
     string const& expected_value,
-    string const& expected_format = string(),
+    string const& expected_escapes,
+    char expected_quote,
     bool expected_interpolated = true,
-    bool expected_escaped = true)
+    string const& expected_format = string(),
+    int expected_margin = 0,
+    bool expected_remove_break = false)
 {
     CAPTURE(expected_id);
     CAPTURE(expected_value);
@@ -103,11 +59,16 @@ void require_string_token(
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == expected_id);
 
-    auto const& value = boost::apply_visitor(string_token_visitor(), token->value());
-    REQUIRE(value.text() == expected_value);
-    REQUIRE(value.format() == expected_format);
-    REQUIRE(value.interpolated() == expected_interpolated);
-    REQUIRE(value.escaped() == expected_escaped);
+    auto value = boost::get<string_token<typename Iterator::value_type::iterator_type>>(&token->value());
+    REQUIRE(value);
+    string text(value->begin(), value->end());
+    REQUIRE(text == expected_value);
+    REQUIRE(value->escapes() == expected_escapes);
+    REQUIRE(value->quote() == expected_quote);
+    REQUIRE(value->interpolated() == expected_interpolated);
+    REQUIRE(value->format() == expected_format);
+    REQUIRE(value->margin() == expected_margin);
+    REQUIRE(value->remove_break() == expected_remove_break);
 
     ++token;
 }
@@ -121,13 +82,14 @@ void require_number_token(Iterator& token, Iterator const& end, int64_t expected
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::number);
 
-    auto const& value = boost::apply_visitor(number_token_visitor(), token->value());
-    REQUIRE(value.value().which() == 0);
-    REQUIRE(boost::get<int64_t>(value.value()) == expected_value);
-    REQUIRE(value.base() == expected_base);
+    auto num_token = boost::get<number_token>(&token->value());
+    REQUIRE(num_token);
+    REQUIRE(num_token->value().which() == 0);
+    REQUIRE(boost::get<int64_t>(num_token->value()) == expected_value);
+    REQUIRE(num_token->base() == expected_base);
 
     ostringstream ss;
-    ss << value;
+    ss << *num_token;
     REQUIRE(ss.str() == expected_string);
 
     ++token;
@@ -142,13 +104,14 @@ void require_number_token(Iterator& token, Iterator const& end, long double expe
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::number);
 
-    auto const& value = boost::apply_visitor(number_token_visitor(), token->value());
-    REQUIRE(value.value().which() == 1);
-    REQUIRE(boost::get<long double>(value.value()) == Approx(expected_value));
-    REQUIRE(value.base() == numeric_base::decimal);
+    auto num_token = boost::get<number_token>(&token->value());
+    REQUIRE(num_token);
+    REQUIRE(num_token->value().which() == 1);
+    REQUIRE(boost::get<long double>(num_token->value()) == Approx(expected_value));
+    REQUIRE(num_token->base() == numeric_base::decimal);
 
     ostringstream ss;
-    ss << value;
+    ss << *num_token;
     REQUIRE(ss.str() == expected_string);
 
     ++token;
@@ -156,6 +119,7 @@ void require_number_token(Iterator& token, Iterator const& end, long double expe
 
 void lex_bad_string(string const& input, size_t expected_offset, size_t expected_line, string const& expected_message)
 {
+    CAPTURE(expected_message);
     try
     {
         auto input_begin = lex_begin(input);
@@ -179,17 +143,16 @@ SCENARIO("lexing single quoted strings")
     auto input_begin = lex_begin(input);
     auto input_end = lex_end(input);
 
-    file_static_lexer lexer([&](token_position const& position, string const& message) {
-        FAIL("unexpected warning");
-    });
+    file_static_lexer lexer;
     auto token = lexer.begin(input_begin, input_end);
     auto end = lexer.end();
-    require_string_token(token, end, token_id::single_quoted_string, {}, {}, false, false);
-    require_string_token(token, end, token_id::single_quoted_string, "this is a string", {}, false, false);
-    require_string_token(token, end, token_id::single_quoted_string, "\' this string is quoted \'", {}, false, false);
-    require_string_token(token, end, token_id::single_quoted_string, "this back\\slash is not escaped", {}, false, false);
-    require_string_token(token, end, token_id::single_quoted_string, "this back\\slash is escaped", {}, false, false);
-    require_string_token(token, end, token_id::single_quoted_string, " this line\n has a\n break!\n", {}, false, false);
+    const string escapes = "\\'";
+    require_string_token(token, end, token_id::single_quoted_string, "", escapes, '\'', false);
+    require_string_token(token, end, token_id::single_quoted_string, "this is a string", escapes, '\'', false);
+    require_string_token(token, end, token_id::single_quoted_string, "\\' this string is quoted \\'", escapes, '\'', false);
+    require_string_token(token, end, token_id::single_quoted_string, "this back\\slash is not escaped", escapes, '\'', false);
+    require_string_token(token, end, token_id::single_quoted_string, "this back\\\\slash is escaped", escapes, '\'', false);
+    require_string_token(token, end, token_id::single_quoted_string, " this line\n has a\n break!\n", escapes, '\'', false);
     require_token(token, end, token_id::unclosed_quote, "'");
     require_token(token, end, token_id::name, "missing");
     require_token(token, end, token_id::name, "endquote");
@@ -206,39 +169,28 @@ SCENARIO("lexing double quoted strings")
     auto input_begin = lex_begin(input);
     auto input_end = lex_end(input);
 
-    bool warning = false;
-    file_static_lexer lexer([&](token_position const& position, string const& message) {
-        REQUIRE_FALSE(warning);
-        string line;
-        size_t column;
-        tie(line, column) = get_line_and_column(input, get<0>(position));
-        REQUIRE(line == "\"this \\f is not a valid escape\"");
-        REQUIRE(get<1>(position) == 28);
-        REQUIRE(column == 7);
-        REQUIRE(message == "unexpected escape sequence '\\f'.");
-        warning = true;
-    });
+    file_static_lexer lexer;
     auto token = lexer.begin(input_begin, input_end);
     auto end = lexer.end();
-    require_string_token(token, end, token_id::double_quoted_string, "");
-    require_string_token(token, end, token_id::double_quoted_string, "this is a string");
-    require_string_token(token, end, token_id::double_quoted_string, "\" this string is quoted \"");
-    require_string_token(token, end, token_id::double_quoted_string, "this ' is escaped");
-    require_string_token(token, end, token_id::double_quoted_string, "this \\ is escaped");
-    require_string_token(token, end, token_id::double_quoted_string, "this \" is escaped");
-    require_string_token(token, end, token_id::double_quoted_string, "this \n is escaped");
-    require_string_token(token, end, token_id::double_quoted_string, "this \r is escaped");
-    require_string_token(token, end, token_id::double_quoted_string, "this \t is escaped");
-    require_string_token(token, end, token_id::double_quoted_string, "this ' ' is escaped");
-    require_string_token(token, end, token_id::double_quoted_string, "this \u263A is a unicode character");
-    require_string_token(token, end, token_id::double_quoted_string, "this string\n   has a\n   line break!\n   ");
-    require_string_token(token, end, token_id::double_quoted_string, "this \\f is not a valid escape");
+    const string escapes = "\\\"'nrtsu$";
+    require_string_token(token, end, token_id::double_quoted_string, "", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this is a string", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "\\\" this string is quoted \\\"", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this \\' is escaped", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this \\\\ is escaped", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this \\\" is escaped", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this \\n is escaped", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this \\r is escaped", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this \\t is escaped", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this '\\s' is escaped", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this \\u263A is a unicode character", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this string\n   has a\n   line break!\n   ", escapes, '"');
+    require_string_token(token, end, token_id::double_quoted_string, "this \\f is not a valid escape", escapes, '"');
     require_token(token, end, token_id::unclosed_quote, "\"");
     require_token(token, end, token_id::name, "missing");
     require_token(token, end, token_id::name, "endquote");
     require_token(token, end, token_id::unknown, "\\");
     require_token(token, end, token_id::unclosed_quote, "\"");
-    REQUIRE(warning);
     REQUIRE(token == end);
 }
 
@@ -250,40 +202,39 @@ SCENARIO("lexing heredocs")
     auto input_begin = lex_begin(input);
     auto input_end = lex_end(input);
 
-    file_static_lexer lexer([&](token_position const& position, string const& message) {
-        FAIL("unexpected warning");
-    });
+    file_static_lexer lexer;
     auto token = lexer.begin(input_begin, input_end);
     auto end = lexer.end();
-    require_string_token(token, end, token_id::heredoc, "", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "this\nis\na\nheredoc\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first\n", {}, false, false);
-    require_string_token(token, end, token_id::single_quoted_string, "hello", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "second\n", {}, false, false);
-    require_string_token(token, end, token_id::single_quoted_string, "world", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "third\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "{\n  \"hello\": \"world\"\n}\n", "json", false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\t \\r\\n\\u263A\\$\\\nsecond!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\t \r\\n\\u263A\\$\\\nsecond!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\t \r\n\\u263A\\$\\\nsecond!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\t \r\n\u263A\\$\\\nsecond!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\t \r\n\u263A$\\\nsecond!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\t \r\n\u263A$second!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "first: \\\t \r\n\u263A$second!\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "$hello \\$world\n");
-    require_string_token(token, end, token_id::heredoc, "$hello \\$world\n");
-    require_string_token(token, end, token_id::heredoc, "$hello \\$world\n");
-    require_string_token(token, end, token_id::heredoc, "$hello \\$world\n", {}, true, false);
-    require_string_token(token, end, token_id::heredoc, "this is NOT the end\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "this is one line", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "this text\n is\n  aligned\n", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "this text\n is\n  aligned", {}, false, false);
-    require_string_token(token, end, token_id::heredoc, "this \\$text\nis\n aligned", "json", true, true);
+    require_string_token(token, end, token_id::heredoc, "", "", 0, false);
+    require_string_token(token, end, token_id::heredoc, "this\nis\na\nheredoc\n", "", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first\n", "", 0, false);
+    require_string_token(token, end, token_id::single_quoted_string, "hello", "\\'", '\'', false);
+    require_string_token(token, end, token_id::heredoc, "second\n", "", 0, false);
+    require_string_token(token, end, token_id::single_quoted_string, "world", "\\'", '\'', false);
+    require_string_token(token, end, token_id::heredoc, "third\n", "", 0, false);
+    require_string_token(token, end, token_id::heredoc, "{\n  \"hello\": \"world\"\n}\n", "", 0, false, "json");
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "t\\", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "ts\\", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "tsr\\", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "tsrn\\", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "tsrnu\\", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "tsrnu$\\", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "tsrnu$\n\\", 0, false);
+    require_string_token(token, end, token_id::heredoc, "first: \\\\\\t\\s\\r\\n\\u263A\\$\\\nsecond!\n", "trnsu\n$\\", 0, false);
+    require_string_token(token, end, token_id::heredoc, "$hello \\$world\n", "", 0);
+    require_string_token(token, end, token_id::heredoc, "$hello \\$world\n", "trnsu\n$\\", 0);
+    require_string_token(token, end, token_id::heredoc, "$hello \\$world\n", "$\\", 0);
+    require_string_token(token, end, token_id::heredoc, "$hello \\$world\n", "t\\", 0);
+    require_string_token(token, end, token_id::heredoc, "this is NOT the end\n", "", 0, false);
+    require_string_token(token, end, token_id::heredoc, "this is one line\n", "", 0, false, "", 0, true);
+    require_string_token(token, end, token_id::heredoc, "    this text\n     is\n      aligned\n", "", 0, false, "", 4);
+    require_string_token(token, end, token_id::heredoc, "    this text\n     is\n      aligned\n", "", 0, false, "", 4, true);
+    require_string_token(token, end, token_id::heredoc, "    this \\$text\n     is\n      aligned\n", "t$\\", 0, true, "json", 5, true);
     REQUIRE(token == end);
 
     lex_bad_string("\n   @(MALFORMED)\nthis heredoc is MALFORMED", 4, 2, "unexpected end of input while looking for heredoc end tag 'MALFORMED'.");
+    lex_bad_string("\n   @(MALFORMED/z)\nthis heredoc is\nMALFORMED", 4, 2, "invalid heredoc escapes 'z': only t, r, n, s, u, L, and $ are allowed.");
 }
 
 SCENARIO("lexing symbolic tokens")
@@ -294,9 +245,7 @@ SCENARIO("lexing symbolic tokens")
     auto input_begin = lex_begin(input);
     auto input_end = lex_end(input);
 
-    file_static_lexer lexer([&](token_position const& position, string const& message) {
-        FAIL("unexpected warning");
-    });
+    file_static_lexer lexer;
     auto token = lexer.begin(input_begin, input_end);
     auto end = lexer.end();
     require_token(token, end, token_id::left_double_collect, "<<|");
@@ -354,9 +303,7 @@ SCENARIO("lexing keywords")
     auto input_begin = lex_begin(input);
     auto input_end = lex_end(input);
 
-    file_static_lexer lexer([&](token_position const& position, string const& message) {
-        FAIL("unexpected warning");
-    });
+    file_static_lexer lexer;
     auto token = lexer.begin(input_begin, input_end);
     auto end = lexer.end();
     require_token(token, end, token_id::keyword_case, "case");
@@ -390,9 +337,7 @@ SCENARIO("lexing statement calls")
     auto input_begin = lex_begin(input);
     auto input_end = lex_end(input);
 
-    file_static_lexer lexer([&](token_position const& position, string const& message) {
-        FAIL("unexpected warning");
-    });
+    file_static_lexer lexer;
     auto token = lexer.begin(input_begin, input_end);
     auto end = lexer.end();
     require_token(token, end, token_id::statement_call, "require");
@@ -418,9 +363,7 @@ SCENARIO("lexing numbers")
     auto input_begin = lex_begin(input);
     auto input_end = lex_end(input);
 
-    file_static_lexer lexer([&](token_position const& position, string const& message) {
-        FAIL("unexpected warning");
-    });
+    file_static_lexer lexer;
     auto token = lexer.begin(input_begin, input_end);
     auto end = lexer.end();
     require_number_token(token, end, 0, numeric_base::hexadecimal, "0x0");

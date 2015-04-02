@@ -8,6 +8,7 @@
 #include <boost/range.hpp>
 #include <iostream>
 #include <string>
+#include <exception>
 
 namespace puppet { namespace ast {
 
@@ -27,19 +28,28 @@ namespace puppet { namespace ast {
          * @param range The token representing the string.
          */
         template <typename Iterator>
-        explicit string(boost::iterator_range<Iterator> const& range) :
-            _position(range.begin().position()),
-            _value(range.begin(), range.end()),
-            _interpolated(false),
-            _escaped(false)
+        explicit string(boost::iterator_range<Iterator> const& range)
         {
+            throw std::runtime_error("should not be called");
         }
 
         /**
          * Constructs a string from a string token.
+         * @tparam Iterator The underlying iterator type for the token.
          * @param token The string token to construct the string from.
          */
-        explicit string(puppet::lexer::string_token& token);
+        template <typename Iterator>
+        explicit string(puppet::lexer::string_token<Iterator>& token) :
+            _position(token.position()),
+            _value(token.begin(), token.end()),
+            _escapes(token.escapes()),
+            _quote(token.quote()),
+            _interpolated(token.interpolated()),
+            _format(token.format()),
+            _margin(token.margin()),
+            _remove_break(token.remove_break())
+        {
+        }
 
         /**
          * Gets the value of the string.
@@ -48,46 +58,41 @@ namespace puppet { namespace ast {
         std::string const& value() const;
 
         /**
-         * Gets the value of the string.
-         * @return Returns the value of the string.
+         * Gets the valid escape characters for the string token.
+         * @return Returns the valid escape characters for the string token.
          */
-        std::string& value();
+        std::string const& escapes() const;
 
         /**
-         * Gets the format of the string.
-         * @return Returns the format of the string.
+         * Gets the quote character of the token (null character for heredocs).
+         * @return Returns the quote character of the token.
          */
-        std::string const& format() const;
-
-        /**
-         * Gets the format of the string.
-         * @return Returns the format of the string.
-         */
-        std::string& format();
+        char quote() const;
 
         /**
          * Gets whether or not the string should be interpolated.
-         * @return Returns true if the string should be interpolated or false if not.
+         * @return Returns whether or not the string should be interpolated.
          */
         bool interpolated() const;
 
         /**
-         * Gets whether or not the string should be interpolated.
-         * @return Returns true if the string should be interpolated or false if not.
+         * Gets the format of the string token (heredoc tokens only).
+         * An empty format means "regular string".
+         * @return Returns the format of the string token.
          */
-        bool& interpolated();
+        std::string const& format() const;
 
         /**
-         * Gets whether or not the interpolation character ($) should be escaped.
-         * @return Returns true if the interpolation character should be escaped or false if not.
+         * Gets the margin of the string token (heredoc tokens only)
+         * @return Returns the margin of the string token.
          */
-        bool escaped() const;
+        int margin() const;
 
         /**
-         * Gets whether or not the interpolation character ($) should be escaped.
-         * @return Returns true if the interpolation character should be escaped or false if not.
+         * Gets whether or not a trailing line break should be removed from the string (heredoc tokens only).
+         * @return Returns whether or not to remove a trailing line break.
          */
-        bool& escaped();
+        bool remove_break() const;
 
         /**
          * Gets the position of the string.
@@ -98,9 +103,12 @@ namespace puppet { namespace ast {
      private:
         lexer::token_position _position;
         std::string _value;
-        std::string _format;
+        std::string _escapes;
+        char _quote;
         bool _interpolated;
-        bool _escaped;
+        std::string _format;
+        int _margin;
+        bool _remove_break;
     };
 
     /**

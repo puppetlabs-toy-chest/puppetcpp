@@ -8,7 +8,7 @@ include_directories(
 )
 
 # Add the executable for generating the static lexer
-add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc src/lexer/number_token.cc src/lexer/string_token.cc)
+add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc src/lexer/number_token.cc include/puppet/lexer/token_id.hpp src/lexer/token_id.cc)
 target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
 
 # Add the command to generate the static lexer
@@ -18,7 +18,6 @@ add_library(puppet SHARED
     include/puppet/lexer/static_lexer.hpp
     src/lexer/lexer.cc
     src/lexer/number_token.cc
-    src/lexer/string_token.cc
     src/lexer/token_id.cc
     src/ast/access_expression.cc
     src/ast/array.cc
@@ -48,13 +47,14 @@ add_library(puppet SHARED
     src/ast/type.cc
     src/ast/unless_expression.cc
     src/ast/variable.cc
+    src/logging/logger.cc
     src/parser/parser.cc
     src/runtime/context.cc
     src/runtime/expression_evaluator.cc
     src/runtime/operators.cc
     src/runtime/scope.cc
+    src/runtime/string_interpolator.cc
     src/runtime/value.cc
-    src/utility/error_reporter.cc
 )
 
 set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LIBPUPPET_VERSION_MINOR}.${LIBPUPPET_VERSION_PATCH}" COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY_UNITY")
@@ -65,6 +65,6 @@ target_link_libraries(puppet
 
 install(TARGETS puppet DESTINATION lib)
 
-cotire(puppet)
+#cotire(puppet)
 
 add_subdirectory(tests)

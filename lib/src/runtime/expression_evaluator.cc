@@ -1,5 +1,6 @@
 #include <puppet/runtime/expression_evaluator.hpp>
 #include <puppet/runtime/operators.hpp>
+#include <puppet/runtime/string_interpolator.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <boost/format.hpp>
 
@@ -73,7 +74,8 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::string& str) const
         {
-            return move(str.value());
+            string_interpolator interpolator(_evaluator);
+            return interpolator.interpolate(str.position(), str.value(), str.escapes(), str.quote(), str.interpolated(), str.margin(), str.remove_break());
         }
 
         result_type operator()(ast::regex& regx) const
@@ -87,7 +89,7 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::variable& var) const
         {
-            static std::regex match_variable_patterh("^\\d+$");
+            static const std::regex match_variable_patterh("^\\d+$");
 
             string& name = var.name();
 
@@ -314,17 +316,19 @@ namespace puppet { namespace runtime {
             // TODO: implement real function dispatch
             if (expr.function().value() == "notice") {
                 cout << "Notice: " << _evaluator.context().current() << ": ";
+                ostringstream ss;
                 bool first = true;
                 for (auto const& argument : arguments) {
                     if (first) {
                         first = false;
                     } else {
-                        cout << ' ';
+                        ss << ' ';
                     }
-                    cout << argument;
+                    ss << argument;
                 }
-                cout << endl;
-                return value();
+                string message = ss.str();
+                cout << message << endl;
+                return arguments.empty() ? value() : message;
             } else {
                 throw evaluation_exception(expr.position(), (boost::format("unknown function \"%1%\".") % expr.function().value()).str());
             }

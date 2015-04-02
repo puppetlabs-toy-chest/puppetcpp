@@ -9,6 +9,13 @@ namespace puppet { namespace ast {
     {
     }
 
+    variable::variable(string name, lexer::token_position position) :
+        _position(std::move(position)),
+        _name(std::move(name))
+    {
+
+    }
+
     string const& variable::name() const
     {
         return _name;
