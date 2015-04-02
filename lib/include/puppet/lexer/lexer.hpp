@@ -17,9 +17,6 @@
 #include <sstream>
 #include <exception>
 #include <tuple>
-#include <functional>
-#include <codecvt>
-#include <cctype>
 #include <regex>
 #include <limits>
 #include <boost/iterator/iterator_adaptor.hpp>
@@ -99,12 +96,21 @@ namespace puppet { namespace lexer {
         }
 
         /**
-         * Gets the position of the token.
-         * @return Returns the position of the token.
+         * Gets the position of the iterator.
+         * @return Returns the position of the iterator.
          */
         token_position const& position() const
         {
             return _position;
+        }
+
+        /**
+         * Sets the position of the iterator.
+         * @param position The new position of the iterator.
+         */
+        void position(token_position position)
+        {
+            _position = std::move(position);
         }
 
     private:
@@ -199,15 +205,23 @@ namespace puppet { namespace lexer {
         typedef std::basic_string<char_type> string_type;
 
         /**
-         * Constructs a new lexer.
-         * @param warning_handler The function to call when there are lexer warnings.
+         * The input stream iterator type.
          */
-        lexer(std::function<void (token_position const&, std::string const&)> warning_handler = nullptr) :
+        typedef typename token_type::iterator_type input_iterator_type;
+
+        /**
+         * The string token type.
+         */
+        typedef string_token<input_iterator_type> string_token_type;
+
+        /**
+         * Constructs a new lexer.
+         */
+        lexer() :
             single_quoted_string("'([^\\\\']|\\\\\\\\|\\\\.)*'",        static_cast<id_type>(token_id::single_quoted_string)),
             double_quoted_string("\\\"([^\\\\\"]|\\\\\\\\|\\\\.)*\\\"", static_cast<id_type>(token_id::double_quoted_string)),
             heredoc(HEREDOC_PATTERN,                                    static_cast<id_type>(token_id::heredoc)),
-            number("\\d\\w*(\\.\\d\\w*)?([eE]-?\\w*)?",                 static_cast<id_type>(token_id::number)),
-            _warning_handler(warning_handler)
+            number("\\d\\w*(\\.\\d\\w*)?([eE]-?\\w*)?",                 static_cast<id_type>(token_id::number))
         {
             namespace lex = boost::spirit::lex;
             using namespace std::placeholders;
@@ -341,17 +355,17 @@ namespace puppet { namespace lexer {
         /**
          * The token representing single quoted strings.
          */
-        boost::spirit::lex::token_def<string_token> single_quoted_string;
+        boost::spirit::lex::token_def<string_token_type> single_quoted_string;
 
         /**
          * The token representing double quoted strings.
          */
-        boost::spirit::lex::token_def<string_token> double_quoted_string;
+        boost::spirit::lex::token_def<string_token_type> double_quoted_string;
 
         /**
          * The token representing heredocs.
          */
-        boost::spirit::lex::token_def<string_token> heredoc;
+        boost::spirit::lex::token_def<string_token_type> heredoc;
 
         /**
          * The token representing numbers.
@@ -359,99 +373,13 @@ namespace puppet { namespace lexer {
         boost::spirit::lex::token_def<number_token> number;
 
     private:
-        typedef typename token_type::iterator_type input_iterator_type;
         typedef typename iterator_type::shared_functor_type context_type;
-
-        string_type extract_string(input_iterator_type const& start, input_iterator_type const& end, string_type const& escapes = string_type(), bool warn = true, int margin = 0)
-        {
-            std::basic_ostringstream<char_type> ss;
-
-            int current_margin = margin;
-            for (auto it = start; it != end; ++it) {
-                // This logic handles heredocs with margin specifiers (margin > 0)
-                for (; current_margin > 0 && it != end; ++it) {
-                    // If we've found a non-whitespace character, we're done
-                    if (*it != ' ' && *it != '\t') {
-                        break;
-                    }
-                    // If we've found a tab, decrement by the tab width
-                    if (*it == '\t') {
-                        current_margin -= (current_margin > LEXER_TAB_WIDTH ? LEXER_TAB_WIDTH : current_margin);
-                    } else {
-                        current_margin -= 1;
-                    }
-                }
-                if (it == end) {
-                    break;
-                }
-
-                // No more margin for this line
-                current_margin = 0;
-
-                // Perform escape replacements
-                // Note: $ character escaping is handled when a string is interpolated
-                if (*it == '\\' && !escapes.empty()) {
-                    auto next = it;
-                    ++next;
-                    if (next != end && *next == '\r') {
-                        ++next;
-                    }
-                    if (next != end && escapes.find(*next) != string_type::npos) {
-                        bool success = true;
-                        switch (*next) {
-                            case 'r':
-                                ss << '\r';
-                                break;
-
-                            case 'n':
-                                ss << '\n';
-                                break;
-
-                            case 't':
-                                ss << '\t';
-                                break;
-
-                            case 's':
-                                ss << ' ';
-                                break;
-
-                            case 'u':
-                                success = write_unicode_escape_sequence(++next, end, ss);
-                                break;
-
-                            case '\n':
-                                // Treat as new line, so reset the margin
-                                current_margin = margin;
-                                break;
-
-                            default:
-                                ss << *next;
-                                break;
-                        }
-                        if (success) {
-                            it = next;
-                            continue;
-                        }
-                    } else if (next != end) {
-                        if (warn && _warning_handler && *next != '$') {
-                            _warning_handler(it.position(), (boost::format("unexpected escape sequence '\\%1%'.") % *next).str());
-                        }
-                    }
-                } else if (*it == '\n') {
-                    // Reset the margin
-                    current_margin = margin;
-                }
-
-                ss << *it;
-            }
-            return ss.str();
-        }
 
         void parse_heredoc(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             using namespace std;
 
-            static regex pattern(HEREDOC_PATTERN);
+            static const regex pattern(HEREDOC_PATTERN);
 
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
@@ -487,10 +415,8 @@ namespace puppet { namespace lexer {
 
             // Check for interpolation
             bool interpolated = false;
-            bool escaped = false;
             if (boost::starts_with(tag, "\"") && boost::ends_with(tag, "\"")) {
                 interpolated = true;
-                escaped = true;
                 boost::trim_if(tag, boost::is_any_of("\""));
             }
 
@@ -513,13 +439,6 @@ namespace puppet { namespace lexer {
                         throw lexer_exception<input_iterator_type>(start, (boost::format("invalid heredoc escapes '%1%': only t, r, n, s, u, L, and $ are allowed.") % escapes).str());
                     }
                     // TODO: verify uniqueness of each character (i.e. is this really important)?
-                }
-
-                // If the list contains $, we'll escape it when the string gets interpolated, so remove it now
-                if (interpolated && boost::contains(escapes, "$")) {
-                    boost::replace_all(escapes, "$", "");
-                } else {
-                    escaped = false;
                 }
 
                 // Treat L as "escaping newlines"
@@ -598,52 +517,48 @@ namespace puppet { namespace lexer {
             auto next = doc_end;
             move_next_line(next, eoi);
             end.set_next(next);
-
-            // Extract the heredoc text from the iterators, handling margin and escape characters
-            auto text = extract_string(doc_begin, doc_end, escapes, false, has_margin ? margin : 0);
-
-            // Remove the trailing line break if instructed to do so
-            if (remove_break) {
-                if (boost::ends_with(text, "\n")) {
-                    text.pop_back();
-                }
-                if (boost::ends_with(text, "\r")) {
-                    text.pop_back();
-                }
-            }
-
-            context.set_value(string_token(start.position(), std::move(text), std::move(format), interpolated, escaped));
+            context.set_value(string_token_type(doc_begin.position(), doc_begin, std::move(doc_end), std::move(escapes), 0, interpolated, std::move(format), margin, remove_break));
         }
 
         void parse_single_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
+            auto position = start.position();
+
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
 
-            auto text = extract_string(++start, end, "\\'", false);
-            text.pop_back();
-            context.set_value(string_token(start.position(), std::move(text), {}, false, false));
+            // Find the end of the string, not including the quote
+            auto last = ++start;
+            for (auto current = start; current != end; ++current) {
+                last = current;
+            }
+            context.set_value(string_token_type(position, std::move(start), std::move(last), "\\'", '\'', false));
         }
 
         void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
+            auto position = start.position();
+
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
 
-            // Don't include $ in the escape list; it'll be handled during interpolation
-            auto text = extract_string(++start, end, "\\\"'nrtsu", true);
-            text.pop_back();
-            context.set_value(string_token(start.position(), std::move(text)));
+            // Find the end of the string, not including the quote
+            auto last = ++start;
+            for (auto current = start; current != end; ++current) {
+                last = current;
+            }
+            context.set_value(string_token_type(position, std::move(start), std::move(last), "\\\"'nrtsu$", '"'));
         }
 
         static void parse_number(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             using namespace std;
 
-            static regex hex_pattern("0[xX][0-9A-Fa-f]+");
-            static regex octal_pattern("0[0-7]+");
-            static regex decimal_pattern("0|([1-9]\\d*)");
-            static regex double_pattern("[0-9]\\d*(\\.\\d+)?([eE]-?\\d+)?)");
+            static const regex hex_pattern("0[xX][0-9A-Fa-f]+");
+            static const regex octal_pattern("0\\d+");
+            static const regex valid_octal_pattern("0[0-7]+");
+            static const regex decimal_pattern("0|([1-9]\\d*)");
+            static const regex double_pattern("[0-9]\\d*(\\.\\d+)?([eE]-?\\d+)?)");
 
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
@@ -656,6 +571,10 @@ namespace puppet { namespace lexer {
             if (regex_match(token, hex_pattern)) {
                 base = 16;
             } else if (regex_match(token, octal_pattern)) {
+                // Make sure the number is valid for an octal
+                if (!regex_match(token, valid_octal_pattern)) {
+                    throw lexer_exception<input_iterator_type>(start, (boost::format("'%1%' is not a valid number.") % token).str());
+                }
                 base = 8;
             } else if (regex_match(token, decimal_pattern)) {
                 base = 10;
@@ -720,91 +639,11 @@ namespace puppet { namespace lexer {
             start = last;
         }
 
-        template <typename Value>
-        struct hex_to
-        {
-            operator Value() const
-            {
-                return value;
-            }
-
-            friend std::istream& operator>>(std::istream& in, hex_to& out)
-            {
-                in >> std::hex >> out.value;
-                return in;
-            }
-
-         private:
-            Value value;
-        };
-
-        bool write_unicode_escape_sequence(input_iterator_type& begin, input_iterator_type const& end, std::ostream& output, bool four_characters = true)
-        {
-            using namespace std;
-
-            auto position = begin.position();
-
-            size_t count = four_characters ? 4 : 8;
-
-            // Use a buffer that can store up to 8 characters (nnnn or nnnnnnnn)
-            char buffer[9] = {};
-            size_t read = 0;
-            for (; begin != end; ++begin) {
-                if (!isxdigit(*begin)) {
-                    break;
-                }
-                buffer[read] = *begin;
-                if (++read == 4) {
-                    break;
-                }
-            }
-            if (read != count) {
-                if (_warning_handler) {
-                    _warning_handler(position, (boost::format("expected %1% hexadecimal digits but found %2% for unicode escape sequence.") % count % read).str());
-                }
-                return false;
-            }
-
-            // Convert the input to a utf32 character (suports both four or eight hex characters)
-            char32_t from;
-            try {
-                from = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(buffer));
-            } catch (boost::bad_lexical_cast const&) {
-                if (_warning_handler) {
-                    _warning_handler(position, "invalid unicode escape sequence.");
-                }
-                return false;
-            }
-
-            // Convert the utf32 character to utf8 bytes (maximum is 4 bytes)
-            codecvt_utf8<char32_t> converter;
-            char32_t const* next_from = nullptr;
-            char* next_to = nullptr;
-            auto state = mbstate_t();
-            converter.out(state, &from, &from + 1, next_from, buffer, &buffer[0] + 4, next_to);
-
-            // Ensure all characters were converted (there was only one)
-            if (next_from != &from + 1) {
-                if (_warning_handler) {
-                    _warning_handler(position, "invalid unicode code point.");
-                }
-                return false;
-            }
-
-            // Output the number of bytes converted
-            for (size_t i = 0; (&buffer[0] + i) < next_to; ++i) {
-                output << buffer[i];
-            }
-            return true;
-        }
-
         static const char* const HEREDOC_PATTERN;
         static const char* const HEREDOC_ESCAPES;
         static const char* const FORCE_SLASH_STATE;
         static const char* const SLASH_CHECK_STATE;
         static const char* const SLASH_CHECK_PATTERN;
-
-        std::function<void (token_position const&, std::string const&)> _warning_handler;
     };
 
     template<typename Base>
@@ -832,7 +671,7 @@ namespace puppet { namespace lexer {
      * @tparam Iterator The input iterator for the token.
      */
     template <typename Iterator>
-    using lexer_token = boost::spirit::lex::lexertl::token<Iterator, boost::mpl::vector<string_token, number_token>>;
+    using lexer_token = boost::spirit::lex::lexertl::token<Iterator, boost::mpl::vector<string_token<Iterator>, number_token>>;
 
     /**
      * The lexer to use for files.
@@ -863,41 +702,55 @@ namespace puppet { namespace lexer {
     /**
      * Gets the lexer's ending iterator for the given file.
      * @param file The file to lex.
-     * @return Returns the ending input interator for the lexer.
+     * @return Returns the ending input iterator for the lexer.
      */
     lexer_istreambuf_iterator lex_end(std::ifstream& file);
 
     /**
      * Gets the lexer's beginning iterator for the given string.
      * @param str The string to lex.
-     * @return Returns the beginning input interator for the lexer.
+     * @return Returns the beginning input iterator for the lexer.
      */
     lexer_string_iterator lex_begin(std::string const& str);
 
     /**
      * Gets the lexer's ending iterator for the given string.
      * @param str The string to lex.
-     * @return Returns the ending input interator for the lexer.
+     * @return Returns the ending input iterator for the lexer.
      */
     lexer_string_iterator lex_end(std::string const& str);
 
     /**
-     * Gets the line of text and column for the given position in a file.
+     * Gets the lexer's beginning iterator for the given iterator range.
+     * @param range The iterator range to parse.
+     * @return Returns the beginning input iterator for the lexer.
+     */
+    lexer_string_iterator lex_begin(boost::iterator_range<lexer_string_iterator> const& range);
+
+    /**
+     * Gets the lexer's ending iterator for the given iterator range.
+     * @param range The iterator range to parse.
+     * @return Returns the ending input iterator for the lexer.
+     */
+    lexer_string_iterator lex_end(boost::iterator_range<lexer_string_iterator> const& range);
+
+    /**
+     * Gets the text and column for the given position in a file.
      * @param fs The file stream of the file.
      * @param position The position inside the file.
      * @param tab_width Specifies the width of a tab character for column calculations.
-     * @return Returns a tuple of the line in the file and the column of the position.
+     * @return Returns a tuple of the line's text and the column of the position.
      */
-    std::tuple<std::string, std::size_t> get_line_and_column(std::ifstream& fs, std::size_t position, std::size_t tab_width = LEXER_TAB_WIDTH);
+    std::tuple<std::string, std::size_t> get_text_and_column(std::ifstream& fs, std::size_t position, std::size_t tab_width = LEXER_TAB_WIDTH);
 
     /**
-     * Gets the line of text and column for the given position in a string.
+     * Gets the text and column for the given position in a string.
      * @param input The input string to get the line and position in.
      * @param position The position inside the string.
      * @param tab_width Specifies the width of a tab character for column calculations.
-     * @return Returns a tuple of the line in the file and the column of the position.
+     * @return Returns a tuple of the line's text and the column of the position.
      */
-    std::tuple<std::string, std::size_t> get_line_and_column(std::string const& input, std::size_t position, std::size_t tab_width = LEXER_TAB_WIDTH);
+    std::tuple<std::string, std::size_t> get_text_and_column(std::string const& input, std::size_t position, std::size_t tab_width = LEXER_TAB_WIDTH);
 
     /**
      * Gets the last position for the given file stream.
@@ -912,6 +765,13 @@ namespace puppet { namespace lexer {
      * @return Returns the last position in the input string.
      */
     token_position get_last_position(std::string const& input);
+
+    /**
+     * Gets the last position for the given input string iterator range.
+     * @param input The input string iterator range.
+     * @return Returns the last position in the iterator range.
+     */
+    token_position get_last_position(boost::iterator_range<lexer_string_iterator> const& range);
 
     /**
      * Utility type for visiting tokens for position and line information.

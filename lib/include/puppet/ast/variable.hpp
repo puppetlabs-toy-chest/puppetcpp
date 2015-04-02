@@ -37,6 +37,13 @@ namespace puppet { namespace ast {
         }
 
         /**
+         * Constructs a variable with the given name and position.
+         * @param name The variable name.
+         * @param position The token position of the variable.
+         */
+        variable(std::string name, lexer::token_position position);
+
+        /**
          * Gets the name of the variable.
          * @return Returns the name of the variable.
          */

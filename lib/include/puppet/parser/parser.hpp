@@ -5,10 +5,35 @@
 #pragma once
 
 #include "grammar.hpp"
+#include "../lexer/static_lexer.hpp"
 #include "../lexer/lexer.hpp"
 #include <boost/optional.hpp>
+#include <sstream>
+#include <iomanip>
 
 namespace puppet { namespace parser {
+
+    /**
+     * Exception for parse errors.
+     */
+    struct parse_exception : std::runtime_error
+    {
+        /**
+         * Constructs a parse exception.
+         * @param position The token position where parsing failed.
+         * @param message The exception message.
+         */
+        parse_exception(lexer::token_position position, std::string const& message);
+
+        /**
+         * Gets the token position where parsing failed.
+         * @return Returns the token     position where parsing failed.
+         */
+        lexer::token_position const& position() const;
+
+    private:
+        lexer::token_position _position;
+    };
 
     /**
      * Implements the Puppet language parser.
@@ -16,31 +41,28 @@ namespace puppet { namespace parser {
     struct parser
     {
         /**
-         * Parses the given manifest file into an AST manifest.
-         * @tparam ErrorReporter The error reporter type.
-         * @param reporter The error reporter to use for warnings and errors.
+         * Parses the given file into an AST manifest.
          * @param input The input file to parse.
-         * @param path The path to the manifest file begin parsed.
+         * @param interpolation True if parsing for string interpolation or false if not.
          * @return Returns the AST manifest if parsing succeeds or nullptr if not.
          */
-        template <typename ErrorReporter>
-        static boost::optional<ast::manifest> parse_manifest_file(ErrorReporter& reporter, std::ifstream& input, std::string const& path)
-        {
-            return parse_manifest<lexer::file_static_lexer>(reporter, input, path);
-        }
+        static ast::manifest parse(std::ifstream& input, bool interpolation = false);
+        /**
+         * Parses the given string into an AST manifest.
+         * @param input The input string to parse.
+         * @param interpolation True if parsing for string interpolation or false if not.
+         * @return Returns the AST manifest if parsing succeeds or nullptr if not.
+         */
+        static ast::manifest parse(std::string const& input, bool interpolation = false);
 
         /**
-         * Parses the given manifest string into an AST manifest.
-         * @tparam ErrorReporter The error reporter type.
-         * @param reporter The error reporter to use for warnings and errors.
-         * @param contents The manifest contents to parse.
+         * Parses the given iterator range into an AST manifest.
+         * @param begin The beginning of the input.
+         * @param end The end of the input.  If interpolating, the parsing may terminate before the end (stops at non-matching '}' token).
+         * @param interpolation True if parsing for string interpolation or false if not.
          * @return Returns the AST manifest if parsing succeeds or nullptr if not.
          */
-        template <typename ErrorReporter>
-        static boost::optional<ast::manifest> parse_manifest_string(ErrorReporter& reporter, std::string const& contents)
-        {
-            return parse_manifest<lexer::string_static_lexer>(reporter, contents, "<string>");
-        }
+        static ast::manifest parse(lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end, bool interpolation = false);
 
      private:
         struct expectation_info_printer
@@ -72,65 +94,50 @@ namespace puppet { namespace parser {
             return ss.str();
         }
 
-        template <typename Lexer, typename ErrorReporter, typename Input>
-        static boost::optional<ast::manifest> parse_manifest(ErrorReporter& reporter, Input& input, std::string const& path)
+        template <typename Lexer, typename Input, typename Iterator>
+        static ast::manifest parse(Lexer& lexer, Input& input, Iterator& begin, Iterator const& end, bool interpolation)
         {
             using namespace std;
             using namespace puppet::lexer;
-            using namespace boost::spirit::qi;
-
-            auto input_begin = lex_begin(input);
-            auto input_end = lex_end(input);
-
-            // Used in error handling
-            token_position error_position;
-            boost::optional<token_id> unexpected_token;
-            std::string error_message;
+            namespace qi = boost::spirit::qi;
 
             try {
                 // Construct a lexer of the given type with a callback that reports warnings
-                Lexer lexer([&](token_position const& position, std::string const& message) {
-                    std::string line;
-                    size_t column;
-                    tie(line, column) = get_line_and_column(input, get<0>(position));
-                    reporter.warning_with_location(path, line, get<1>(position), column, message);
-                });
-                auto token_begin = lexer.begin(input_begin, input_end);
+                Lexer lexer;
+                auto token_begin = lexer.begin(begin, end);
                 auto token_end = lexer.end();
 
                 // Parse the input into an AST manifest
                 ast::manifest manifest;
-                if (parse(token_begin, token_end, grammar<Lexer>(lexer), manifest) && (token_begin == token_end || token_begin->id() == boost::lexer::npos)) {
+                if (qi::parse(token_begin, token_end, grammar<Lexer>(lexer, interpolation), manifest) &&
+                    (token_begin == token_end || token_begin->id() == boost::lexer::npos || interpolation)) {
                     return manifest;
                 }
 
                 // If not all tokens were processed and the iterator points at a valid token, handle unexpected token
                 if (token_begin != token_end && token_is_valid(*token_begin)) {
-                    error_position = get_position(input, *token_begin);
-                    unexpected_token = static_cast<token_id>(token_begin->id());
+                    throw parse_exception(get_position(input, *token_begin), (boost::format("unexpected %1%.") % static_cast<token_id>(token_begin->id())).str());
                 }
-                else {
-                    error_position = input_begin.position();
-                }
-            } catch (lexer_exception<decltype(input_begin)> const& ex) {
-                error_position = ex.location().position();
-                error_message = ex.what();
-            } catch (expectation_failure<typename Lexer::iterator_type> const& ex) {
-                error_position = get_position(input, *ex.first);
-                error_message = to_string(ex);
+            } catch (lexer_exception<Iterator> const& ex) {
+                throw parse_exception(ex.location().position(), ex.what());
+            } catch (qi::expectation_failure<typename Lexer::iterator_type> const& ex) {
+                throw parse_exception(get_position(input, *ex.first), to_string(ex));
             }
 
-            std::string line;
-            size_t column;
-            tie(line, column) = get_line_and_column(input, get<0>(error_position));
-
-            if (unexpected_token) {
-                reporter.error_with_location(path, line, get<1>(error_position), column, "unexpected %1%.", *unexpected_token);
+            // Unexpected character in the input
+            ostringstream message;
+            if (begin != end) {
+                message << "unexpected character ";
+                if (isprint(*begin)) {
+                    message << '\'' << *begin << '\'';
+                } else {
+                    message << "0x" << setw(2) << setfill('0') << static_cast<int>(*begin);
+                }
+                message << ".";
+            } else {
+                message << "unexpected end of input.";
             }
-            else {
-                reporter.error_with_location(path, line, get<1>(error_position), column, error_message);
-            }
-            return nullptr;
+            throw parse_exception(begin.position(), message.str());
         }
     };
 

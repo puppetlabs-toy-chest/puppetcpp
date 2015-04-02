@@ -86,4 +86,10 @@ namespace puppet { namespace lexer {
         return os;
     }
 
+    bool is_keyword(token_id id)
+    {
+        return static_cast<size_t>(id) > static_cast<size_t>(token_id::first_keyword) &&
+               static_cast<size_t>(id) < static_cast<size_t>(token_id::last_keyword);
+    }
+
 }}  // namespace puppet::lexer

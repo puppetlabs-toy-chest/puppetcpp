@@ -49,7 +49,7 @@ Expression evaluator status:
 * [x] global scope
 * [ ] local scope
 * [ ] node scope
-* [ ] string interpolation
+* [x] string interpolation
 * [ ] EPP support
 
 Compiler status:
