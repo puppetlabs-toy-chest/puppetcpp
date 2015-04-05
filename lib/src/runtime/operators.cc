@@ -1218,4 +1218,15 @@ namespace puppet { namespace runtime {
         return boost::apply_visitor(match_visitor(left_position, right_position, ctx), dereference(left), dereference(right));
     }
 
+    value splat(value operand)
+    {
+        // If an array, reuse it; otherwise, to_array it (copy if variable)
+        array result;
+        auto ptr = get<array>(&operand);
+        if (ptr) {
+            return std::move(*ptr);
+        }
+        return to_array(dereference(operand));
+    }
+
 }}  // namespace puppet::runtime

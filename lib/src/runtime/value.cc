@@ -308,6 +308,33 @@ namespace puppet { namespace runtime {
         return type(kind);
     }
 
+    array to_array(value const& val)
+    {
+        // If already an array, return a copy
+        auto array_ptr = boost::get<array>(&val);
+        if (array_ptr) {
+            return *array_ptr;
+        }
+
+        array result;
+
+        // Check for hash
+        auto hash_ptr = boost::get<hash>(&val);
+        if (hash_ptr) {
+            // Turn the hash into an array of [K,V]
+            for (auto& kvp : *hash_ptr) {
+                array element;
+                element.emplace_back(kvp.first);
+                element.emplace_back(kvp.second);
+                result.emplace_back(std::move(element));
+            }
+        } else {
+            // Otherwise, add the value as the only element
+            result.emplace_back(val);
+        }
+        return result;
+    }
+
     bool operator==(undef const&, undef const&)
     {
         return true;

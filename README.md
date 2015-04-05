@@ -17,7 +17,7 @@ Expression evaluator status:
 * [x] - operator (binary)
 * [x] - operator (unary)
 * [x] * operator (binary)
-* [ ] * operator (unary)
+* [x] * operator (unary)
 * [x] / operator
 * [x] % operator
 * [x] << operator
