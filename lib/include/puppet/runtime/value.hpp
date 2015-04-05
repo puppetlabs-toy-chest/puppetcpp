@@ -1,6 +1,6 @@
 /**
  * @file
- * Declares the runtime value.
+ * Declares runtime values.
  */
 #pragma once
 
@@ -205,9 +205,9 @@ namespace puppet { namespace runtime {
 
     /**
      * Represents a runtime type (instance of a Type).
-     * @tparam ValueType The type of value.
+     * @tparam Value The type of value.
      */
-    template <typename ValueType>
+    template <typename Value>
     struct runtime_type
     {
         /**
@@ -232,7 +232,7 @@ namespace puppet { namespace runtime {
          * Gets the runtime type's parameters.
          * @return Returns the runtime type's parameters.
          */
-        std::vector<ValueType> const& parameters() const
+        std::vector<Value> const& parameters() const
         {
             return _parameters;
         }
@@ -241,29 +241,29 @@ namespace puppet { namespace runtime {
          * Adds a parameter to the runtime type.
          * @param parameter The parameter to add.
          */
-        void add_parameter(ValueType parameter)
+        void add_parameter(Value parameter)
         {
             // TODO: implement for use with access operator
         }
 
     private:
         type_kind _kind;
-        std::vector<ValueType> _parameters;
+        std::vector<Value> _parameters;
     };
 
     /**
      * Represents a reference to a variable.
      * Having this as a runtime value prevents unnecessary copying of a variable's value.
      * Thus, '$a = $b' simply points $a's value at what $b was set to.
-     * @tparam ValueType The runtime value type.
+     * @tparam Value The runtime value type.
      */
-    template <typename ValueType>
+    template <typename Value>
     struct variable_reference
     {
         /**
          * The runtime value type.
          */
-        typedef ValueType value_type;
+        typedef Value value_type;
 
         /**
          * Constructs a variable reference.
@@ -454,6 +454,13 @@ namespace puppet { namespace runtime {
      * @return Returns the runtime type of the value.
      */
     type get_type(value const& val);
+
+    /**
+     * Converts a value to an array (creates a copy of the value if already an array).
+     * @param val The value to convert.
+     * @return Returns the converted array.
+     */
+    array to_array(value const& val);
 
     /**
      * Equality operator for undef.

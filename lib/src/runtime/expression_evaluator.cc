@@ -9,6 +9,16 @@ using namespace puppet::lexer;
 
 namespace puppet { namespace runtime {
 
+    // Forward declaration for evaluating primarye expressions
+    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression& expr);
+
+    bool should_unfold(ast::expression const& expr)
+    {
+        // Determine if the given expression is a unary splat
+        auto ptr = boost::get<ast::unary_expression>(&expr.first());
+        return ptr && ptr->op() == ast::unary_operator::splat && expr.remainder().empty();
+    }
+
     struct match_variable_scope
     {
         explicit match_variable_scope(scope& s) :
@@ -31,9 +41,6 @@ namespace puppet { namespace runtime {
         _position(std::move(position))
     {
     }
-
-    // Forward declaration for evaluating primarye expressions
-    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression& expr);
 
     token_position const& evaluation_exception::position() const
     {
@@ -130,7 +137,18 @@ namespace puppet { namespace runtime {
 
             if (arr.elements()) {
                 for (auto& element : *arr.elements()) {
-                    new_array.emplace_back(_evaluator.evaluate(element));
+                    bool unfold = should_unfold(element);
+
+                    auto result = _evaluator.evaluate(element);
+
+                    // If unfolding, append the array's elements
+                    if (unfold) {
+                        auto array_ptr = boost::get<array>(&result);
+                        new_array.reserve(new_array.size() + array_ptr->size());
+                        new_array.insert(new_array.end(), std::make_move_iterator(array_ptr->begin()), std::make_move_iterator(array_ptr->end()));
+                        continue;
+                    }
+                    new_array.emplace_back(std::move(result));
                 }
             }
             return new_array;
@@ -178,23 +196,25 @@ namespace puppet { namespace runtime {
                     continue;
                 }
 
-                // Evaluate the case selector
+                bool unfold = should_unfold(selector_case.selector());
+
+                // Evaluate the option
                 value selector = _evaluator.evaluate(selector_case.selector());
 
-                // If the selector is a regex, use match
-                auto regex = boost::get<runtime::regex>(&dereference(selector));
-                if (regex) {
-                    // Only match against strings
-                    if (boost::get<string>(&dereference(result))) {
-                        if (is_truthy(match(result, selector, expr.position(), selector_case.position(), _evaluator.context()))) {
-                            return _evaluator.evaluate(selector_case.result());
+                // If unfolding, treat each element as an option
+                if (unfold) {
+                    auto array_ptr = boost::get<array>(&selector);
+                    if (array_ptr) {
+                        for (auto &element : *array_ptr) {
+                            if (is_match(result, element, expr.position(), selector_case.position())) {
+                                return _evaluator.evaluate(selector_case.result());
+                            }
                         }
                     }
                     continue;
                 }
 
-                // Otherwise, use equals
-                if (equals(result, selector)) {
+                if (is_match(result, selector, expr.position(), selector_case.position())) {
                     return _evaluator.evaluate(selector_case.result());
                 }
             }
@@ -229,23 +249,25 @@ namespace puppet { namespace runtime {
 
                 // Look for a match in the options
                 for (auto& option : proposition.options()) {
+                    bool unfold = should_unfold(option);
+
                     // Evaluate the option
                     value option_value = _evaluator.evaluate(option);
 
-                    // If the option is a regex, use match
-                    auto regex = boost::get<runtime::regex>(&dereference(option_value));
-                    if (regex) {
-                        // Only match against strings
-                        if (boost::get<string>(&dereference(result))) {
-                            if (is_truthy(match(result, option_value, expr.position(), proposition.position(), _evaluator.context()))) {
-                                return execute_block(proposition.body());
+                    // If unfolding, treat each element as an option
+                    if (unfold) {
+                        auto array_ptr = boost::get<array>(&option_value);
+                        if (array_ptr) {
+                            for (auto &element : *array_ptr) {
+                                if (is_match(result, element, expr.position(), option.position())) {
+                                    return execute_block(proposition.body());
+                                }
                             }
                         }
                         continue;
                     }
 
-                    // Otherwise, use equals
-                    if (equals(result, option_value)) {
+                    if (is_match(result, option_value, expr.position(), option.position())) {
                         return execute_block(proposition.body());
                     }
                 }
@@ -304,14 +326,27 @@ namespace puppet { namespace runtime {
         result_type operator()(ast::function_call_expression& expr) const
         {
             // Evaluate the arguments first
-            // TODO: support splat
             array arguments;
             arguments.reserve(expr.arguments() ? expr.arguments()->size() : 0);
             if (expr.arguments()) {
                 for (auto& argument : *expr.arguments()) {
-                    arguments.emplace_back(_evaluator.evaluate(argument));
+                    bool unfold = should_unfold(argument);
+
+                    auto result = _evaluator.evaluate(argument);
+
+                    // If unfolding, append the array to the arguments
+                    if (unfold) {
+                        auto array_ptr = boost::get<array>(&result);
+                        arguments.reserve(arguments.size() + array_ptr->size());
+                        arguments.insert(arguments.end(), std::make_move_iterator(array_ptr->begin()), std::make_move_iterator(array_ptr->end()));
+                        continue;
+                    }
+
+                    // Not unfolding, emplace
+                    arguments.emplace_back(std::move(result));
                 }
             }
+
             // TODO: this is just a HACK implementation of notice
             // TODO: implement real function dispatch
             if (expr.function().value() == "notice") {
@@ -344,6 +379,24 @@ namespace puppet { namespace runtime {
                 }
             }
             return result;
+        }
+
+        bool is_match(value const& result, value const& expected, token_position const& result_position, token_position const& expected_position) const
+        {
+            // If the expected value is a regex, use match
+            auto regex = boost::get<runtime::regex>(&dereference(expected));
+            if (regex) {
+                // Only match against strings
+                if (boost::get<string>(&dereference(result))) {
+                    if (is_truthy(match(result, expected, result_position, expected_position, _evaluator.context()))) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Otherwise, use equals
+            return equals(result, expected);
         }
 
         expression_evaluator& _evaluator;
@@ -543,8 +596,7 @@ namespace puppet { namespace runtime {
                     return logical_not(boost::apply_visitor(*this, expr.operand()));
 
                 case ast::unary_operator::splat:
-                    // TODO: implement
-                    throw evaluation_exception(expr.position(), "unary splat expression not yet implemented");
+                    return splat(boost::apply_visitor(*this, expr.operand()));
 
                 default:
                     throw evaluation_exception(expr.position(), "unexpected unary expression.");

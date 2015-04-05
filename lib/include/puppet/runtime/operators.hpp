@@ -180,4 +180,12 @@ namespace puppet { namespace runtime {
      */
     value match(value const& left, value const& right, lexer::token_position const& left_position, lexer::token_position const& right_position, context& ctx);
 
+    /**
+     * Implements the "splat" operator.
+     * Note: the splat operator performs the "to array" behavior; unfolding is implemented in the expression evaluator.
+     * @param operand The operand to splat.
+     * @return Returns the splatted value.
+     */
+    value splat(value operand);
+
 }}  // puppet::runtime
