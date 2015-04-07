@@ -53,12 +53,6 @@ namespace puppet { namespace ast {
         std::string const& value() const;
 
         /**
-         * Gets the value of the regex.
-         * @return Returns the value of the regex.
-         */
-        std::string& value();
-
-        /**
          * Gets the position of the regex.
          * @return Returns the position of the regex.
          */

@@ -23,11 +23,6 @@ namespace puppet { namespace ast {
         return _body;
     }
 
-    optional<vector<expression>>& else_expression::body()
-    {
-        return _body;
-    }
-
     ostream& operator<<(ostream& os, else_expression const& expr)
     {
         os << "else { ";
@@ -52,17 +47,7 @@ namespace puppet { namespace ast {
         return _conditional;
     }
 
-    expression& elsif_expression::conditional()
-    {
-        return _conditional;
-    }
-
     optional<vector<expression>> const& elsif_expression::body() const
-    {
-        return _body;
-    }
-
-    optional<vector<expression>>& elsif_expression::body()
     {
         return _body;
     }
@@ -101,17 +86,7 @@ namespace puppet { namespace ast {
         return _conditional;
     }
 
-    expression& if_expression::conditional()
-    {
-        return _conditional;
-    }
-
     optional<vector<expression>> const& if_expression::body() const
-    {
-        return _body;
-    }
-
-    optional<vector<expression>>& if_expression::body()
     {
         return _body;
     }
@@ -121,17 +96,7 @@ namespace puppet { namespace ast {
         return _elsifs;
     }
 
-    optional<vector<elsif_expression>>& if_expression::elsifs()
-    {
-        return _elsifs;
-    }
-
     optional<else_expression> const& if_expression::else_() const
-    {
-        return _else;
-    }
-
-    optional<else_expression>& if_expression::else_()
     {
         return _else;
     }

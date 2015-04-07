@@ -35,12 +35,6 @@ namespace puppet { namespace ast {
         boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * Gets the optional expression that make up the body.
-         * @return Returns the optional expression that make up the body.
-         */
-        boost::optional<std::vector<expression>>& body();
-
-        /**
          * Gets the position of the "else" expression.
          * @return Returns the position of the "else" expression.
          */
@@ -84,22 +78,10 @@ namespace puppet { namespace ast {
         expression const& conditional() const;
 
         /**
-         * Gets the conditional of the "else if" expression.
-         * @return Returns the conditional of the "else if" expression.
-         */
-        expression& conditional();
-
-        /**
          * Gets the optional expressions that make up the body.
          * @return Returns the optional expressions that make up the body.
          */
         boost::optional<std::vector<expression>> const& body() const;
-
-        /**
-         * Gets the optional expressions that make up the body.
-         * @return Returns the optional expressions that make up the body.
-         */
-        boost::optional<std::vector<expression>>& body();
 
         /**
          * Gets the position of the "else if" expression.
@@ -153,22 +135,10 @@ namespace puppet { namespace ast {
         expression const& conditional() const;
 
         /**
-         * Gets the conditional of the "if" expression.
-         * @return Returns the conditional of the "if" expression.
-         */
-        expression& conditional();
-
-        /**
          * Gets the optional expressions that make up the body.
          * @return Returns the optional expressions that make up the body.
          */
         boost::optional<std::vector<expression>> const& body() const;
-
-        /**
-         * Gets the optional expressions that make up the body.
-         * @return Returns the optional expressions that make up the body.
-         */
-        boost::optional<std::vector<expression>>& body();
 
         /**
          * Gets the optional list of "else if" expressions.
@@ -177,22 +147,10 @@ namespace puppet { namespace ast {
         boost::optional<std::vector<elsif_expression>> const& elsifs() const;
 
         /**
-         * Gets the optional list of "else if" expressions.
-         * @return Returns the optional list of "else if" expressions.
-         */
-        boost::optional<std::vector<elsif_expression>>& elsifs();
-
-        /**
          * Gets the optional "else" expression.
          * @return Returns the optional "else" expression.
          */
         boost::optional<else_expression> const& else_() const;
-
-        /**
-         * Gets the optional "else" expression.
-         * @return Returns the optional "else" expression.
-         */
-        boost::optional<else_expression>& else_();
 
         /**
          * Gets the position of the "if" expression.

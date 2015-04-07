@@ -8,6 +8,6 @@ debug
 info
 notice
 warning
-error
+err
 fail
 import

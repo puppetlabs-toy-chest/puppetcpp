@@ -23,11 +23,6 @@ namespace puppet { namespace ast {
         return _arguments;
     }
 
-    vector<expression>& access::arguments()
-    {
-        return _arguments;
-    }
-
     token_position const& access::position() const
     {
         return _position;
@@ -56,17 +51,7 @@ namespace puppet { namespace ast {
         return _target;
     }
 
-    primary_expression& access_expression::target()
-    {
-        return _target;
-    }
-
     vector<access> const& access_expression::accesses() const
-    {
-        return _accesses;
-    }
-
-    vector<access>& access_expression::accesses()
     {
         return _accesses;
     }

@@ -20,11 +20,6 @@ namespace puppet { namespace ast {
         return _value;
     }
 
-    number::value_type& number::value()
-    {
-        return _value;
-    }
-
     token_position const& number::position() const
     {
         return _position;

@@ -29,17 +29,7 @@ namespace puppet { namespace ast {
         return _selector;
     }
 
-    expression& selector_case_expression::selector()
-    {
-        return _selector;
-    }
-
     expression const& selector_case_expression::result() const
-    {
-        return _result;
-    }
-
-    expression& selector_case_expression::result()
     {
         return _result;
     }
@@ -80,17 +70,7 @@ namespace puppet { namespace ast {
         return _value;
     }
 
-    primary_expression& selector_expression::value()
-    {
-        return _value;
-    }
-
     vector<selector_case_expression> const& selector_expression::cases() const
-    {
-        return _cases;
-    }
-
-    vector<selector_case_expression>& selector_expression::cases()
     {
         return _cases;
     }

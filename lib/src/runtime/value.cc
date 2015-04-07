@@ -335,6 +335,19 @@ namespace puppet { namespace runtime {
         return result;
     }
 
+    void join(ostream& os, array const& arr, std::string const& separator)
+    {
+        bool first = true;
+        for (auto const& element : arr) {
+            if (first) {
+                first = false;
+            } else {
+                os << separator;
+            }
+            os << element;
+        }
+    }
+
     bool operator==(undef const&, undef const&)
     {
         return true;

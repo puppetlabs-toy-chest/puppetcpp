@@ -38,34 +38,16 @@ namespace puppet { namespace ast {
         name const& function() const;
 
         /**
-         * Gets the function name.
-         * @return Returns the function name.
-         */
-        name& function();
-
-        /**
          * Gets the optional argument expressions.
          * @return Returns the optional argument expressions.
          */
         boost::optional<std::vector<expression>> const& arguments() const;
 
         /**
-         * Gets the optional argument expressions.
-         * @return Returns the optional argument expressions.
-         */
-        boost::optional<std::vector<expression>>& arguments();
-
-        /**
          * Gets the optional lambda.
          * @return Returns the optional lambda.
          */
         boost::optional<ast::lambda> const& lambda() const;
-
-        /**
-         * Gets the optional lambda.
-         * @return Returns the optional lambda.
-         */
-        boost::optional<ast::lambda>& lambda();
 
         /**
          * Gets the position of the function call expression.

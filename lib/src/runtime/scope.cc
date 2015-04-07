@@ -14,35 +14,28 @@ namespace puppet { namespace runtime {
 
     string const& scope::name() const
     {
-        return _name;
+        if (!_name.empty() || !_parent) {
+            return _name;
+        }
+        return _parent->name();
     }
 
-    value const* scope::set(string name, value val, uint32_t line)
+    value const* scope::set(string name, value val)
     {
         if (_variables.count(name)) {
             return nullptr;
         }
-        auto entry = make_tuple(std::move(val), std::move(line));
-        auto result = _variables.emplace(make_pair(std::move(name), std::move(entry)));
-        return &std::get<0>(result.first->second);
+        auto result = _variables.emplace(make_pair(std::move(name), std::move(val)));
+        return &result.first->second;
     }
 
     value const* scope::get(string const& name) const
     {
         auto it = _variables.find(name);
         if (it != _variables.end()) {
-            return &std::get<0>(it->second);
+            return &it->second;
         }
         return _parent ? _parent->get(name) : nullptr;
-    }
-
-    boost::optional<uint32_t> scope::where(string const& name) const
-    {
-        auto it = _variables.find(name);
-        if (it != _variables.end()) {
-            return std::get<1>(it->second);
-        }
-        return nullptr;
     }
 
     scope const* scope::parent() const
@@ -96,6 +89,17 @@ namespace puppet { namespace runtime {
     {
         os << "Scope(" << s.name() << ")";
         return os;
+    }
+
+    match_variable_scope::match_variable_scope(scope& current) :
+        _current(current)
+    {
+        _current.push_matches();
+    }
+
+    match_variable_scope::~match_variable_scope()
+    {
+        _current.pop_matches();
     }
 
 }}  // namespace puppet::runtime

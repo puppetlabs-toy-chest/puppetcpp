@@ -38,12 +38,6 @@ namespace puppet { namespace ast {
         value_type const& value() const;
 
         /**
-         * Gets the value of the number.
-         * @return Returns the value of the number.
-         */
-        value_type& value();
-
-        /**
          * Gets the position of the number.
          * @return Returns the position of the number.
          */

@@ -349,7 +349,7 @@ SCENARIO("lexing statement calls")
     require_token(token, end, token_id::statement_call, "info");
     require_token(token, end, token_id::statement_call, "notice");
     require_token(token, end, token_id::statement_call, "warning");
-    require_token(token, end, token_id::statement_call, "error");
+    require_token(token, end, token_id::statement_call, "err");
     require_token(token, end, token_id::statement_call, "fail");
     require_token(token, end, token_id::statement_call, "import");
     REQUIRE(token == end);

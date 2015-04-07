@@ -50,12 +50,6 @@ namespace puppet { namespace ast {
         std::string const& name() const;
 
         /**
-         * Gets the name of the variable.
-         * @return Returns the name of the variable.
-         */
-        std::string& name();
-
-        /**
          * Gets the position of the variable.
          * @return Returns the position of the variable.
          */

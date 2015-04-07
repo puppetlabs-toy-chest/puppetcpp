@@ -24,11 +24,6 @@ namespace puppet { namespace ast {
         return _elements;
     }
 
-    optional<vector<expression>>& array::elements()
-    {
-        return _elements;
-    }
-
     token_position const& array::position() const
     {
         return _position;

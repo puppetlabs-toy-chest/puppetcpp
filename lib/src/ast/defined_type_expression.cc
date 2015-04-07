@@ -24,27 +24,12 @@ namespace puppet { namespace ast {
         return _name;
     }
 
-    ast::name& defined_type_expression::name()
-    {
-        return _name;
-    }
-
     optional<vector<parameter>> const& defined_type_expression::parameters() const
     {
         return _parameters;
     }
 
-    optional<vector<parameter>>& defined_type_expression::parameters()
-    {
-        return _parameters;
-    }
-
     optional<vector<expression>> const& defined_type_expression::body() const
-    {
-        return _body;
-    }
-
-    optional<vector<expression>>& defined_type_expression::body()
     {
         return _body;
     }

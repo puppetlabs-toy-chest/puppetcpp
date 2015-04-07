@@ -34,12 +34,6 @@ namespace puppet { namespace ast {
         std::vector<expression> const& arguments() const;
 
         /**
-         * Gets the argument expressions.
-         * @return Returns the argument expressions.
-         */
-        std::vector<expression>& arguments();
-
-        /**
          * Gets the position of the access.
          * @return Returns the position of the access.
          */
@@ -82,22 +76,10 @@ namespace puppet { namespace ast {
         primary_expression const& target() const;
 
         /**
-         * Gets the target expression.
-         * @return Returns the target expression.
-         */
-        primary_expression& target();
-
-        /**
          * Gets the accesses that make up the expression.
          * @return Returns the accesses in the expression.
          */
         std::vector<access> const& accesses() const;
-
-        /**
-         * Gets the accesses that make up the expression.
-         * @return Returns the accesses in the expression.
-         */
-        std::vector<access>& accesses();
 
         /**
          * Gets the position of the access expression.

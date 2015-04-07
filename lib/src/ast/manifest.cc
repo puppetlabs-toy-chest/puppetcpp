@@ -22,11 +22,6 @@ namespace puppet { namespace ast {
         return _body;
     }
 
-    optional<vector<expression>>& manifest::body()
-    {
-        return _body;
-    }
-
     lexer::token_position const& manifest::end() const
     {
         return _end;

@@ -38,10 +38,9 @@ namespace puppet { namespace runtime {
          * Sets a variable in the scope.
          * @param name The name of the variable.
          * @param val The value of the variable.
-         * @param line The line where the variable was assigned.
          * @return Returns a pointer to the value that was set or nullptr if the value already exists in this scope.
          */
-        value const* set(std::string name, value val, std::uint32_t line);
+        value const* set(std::string name, value val);
 
         /**
          * Gets a variable in the scope.
@@ -49,13 +48,6 @@ namespace puppet { namespace runtime {
          * @return Returns the value of the variable or nullptr if the value does not exist.
          */
         value const* get(std::string const& name) const;
-
-        /**
-         * Determines the line where a variable was set.
-         * @param name The name of the variable.
-         * @return Returns the line where the variable was set (0 if from facts) or nullptr if no such variable.
-         */
-        boost::optional<uint32_t> where(std::string const& name) const;
 
         /**
          * Gets the parent scope.
@@ -90,7 +82,7 @@ namespace puppet { namespace runtime {
      private:
         std::string _name;
         std::shared_ptr<scope> _parent;
-        std::unordered_map<std::string, std::tuple<value, std::uint32_t>> _variables;
+        std::unordered_map<std::string, value> _variables;
         std::deque<std::vector<value>> _matches;
     };
 
@@ -101,5 +93,25 @@ namespace puppet { namespace runtime {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, scope const& s);
+
+    /**
+     * Represents a match variable scope.
+     */
+    struct match_variable_scope
+    {
+        /**
+         * Constructs a match variable scope.
+         * @param current The current scope.
+         */
+        explicit match_variable_scope(scope& current);
+
+        /**
+         * Destructs a match variable scope.
+         */
+        ~match_variable_scope();
+
+     private:
+        scope& _current;
+    };
 
 }}  // puppet::runtime

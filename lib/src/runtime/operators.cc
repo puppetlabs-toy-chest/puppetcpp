@@ -110,13 +110,9 @@ namespace puppet { namespace runtime {
         }
 
         // Set the value in the current scope
-        auto value = ctx.current().set(var->name(), std::move(right), get<1>(position));
+        auto value = ctx.current().set(var->name(), std::move(right));
         if (!value) {
-            auto where = ctx.current().where(var->name());
-            if (*where == 0) {
-                throw evaluation_exception(position, (boost::format("cannot assign to $%1%: a fact with the same name exists at this scope.") % var->name()).str());
-            }
-            throw evaluation_exception(position, (boost::format("cannot assign to $%1%: variable was already assigned in the current scope on line %2%.") % var->name() % *where).str());
+            throw evaluation_exception(position, (boost::format("cannot assign to $%1%: variable already exists in the current scope.") % var->name()).str());
         }
         var->update(value);
     }

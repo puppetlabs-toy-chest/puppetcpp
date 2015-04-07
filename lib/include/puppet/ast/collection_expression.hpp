@@ -64,34 +64,16 @@ namespace puppet { namespace ast {
         name const& attribute() const;
 
         /**
-         * Gets the attribute being queried.
-         * @return Returns the attribute being queried.
-         */
-        name& attribute();
-
-        /**
          * Gets the attribute query operator.
          * @return Returns the query operator.
          */
         attribute_query_operator op() const;
 
         /**
-         * Gets the attribute query operator.
-         * @return Returns the query operator.
-         */
-        attribute_query_operator& op();
-
-        /**
          * Gets the query value.
          * @return Returns the query value.
          */
         basic_expression const& value() const;
-
-        /**
-         * Gets the query value.
-         * @return Returns the query value.
-         */
-        basic_expression& value();
 
         /**
          * Gets the position of the query.
@@ -166,22 +148,10 @@ namespace puppet { namespace ast {
         binary_query_operator op() const;
 
         /**
-         * Gets the binary query operator in the expression.
-         * @return Returns the binary query operator in the expression.
-         */
-        binary_query_operator& op();
-
-        /**
          * Gets the right-hand operand of the binary query expression.
          * @return Returns the right-hand operand of the binary query expression.
          */
         query const& operand() const;
-
-        /**
-         * Gets the right-hand operand of the binary query expression.
-         * @return Returns the right-hand operand of the binary query expression.
-         */
-        query& operand();
 
         /**
          * Gets the position of the binary query expression.
@@ -249,22 +219,10 @@ namespace puppet { namespace ast {
         collection_kind kind() const;
 
         /**
-         * Gets the kind of collection expression.
-         * @return Returns the kind of the collection expression.
-         */
-        collection_kind& kind();
-
-        /**
          * Gets the type being collected.
          * @return Returns the type being collected.
          */
         ast::type const& type() const;
-
-        /**
-         * Gets the type being collected.
-         * @return Returns the type being collected.
-         */
-        ast::type& type();
 
         /**
          * Gets the optional first query in the expression.
@@ -273,22 +231,10 @@ namespace puppet { namespace ast {
         boost::optional<query> const& first() const;
 
         /**
-         * Gets the optional first query in the expression.
-         * @return Returns the first query in the expression.
-         */
-        boost::optional<query>& first();
-
-        /**
          * Gets the remainder of the expression (for binary query expressions).
          * @return Returns the remainder of the expression.
          */
         std::vector<binary_query_expression> const& remainder() const;
-
-        /**
-         * Gets the remainder of the expression (for binary query expressions).
-         * @return Returns the remainder of the expression.
-         */
-        std::vector<binary_query_expression>& remainder();
 
         /**
          * Gets the position of the expression.

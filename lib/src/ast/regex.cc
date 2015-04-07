@@ -14,11 +14,6 @@ namespace puppet { namespace ast {
         return _value;
     }
 
-    string& regex::value()
-    {
-        return _value;
-    }
-
     token_position const& regex::position() const
     {
         return _position;

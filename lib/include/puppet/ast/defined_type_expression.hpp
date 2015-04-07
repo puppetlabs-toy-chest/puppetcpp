@@ -37,34 +37,16 @@ namespace puppet { namespace ast {
         ast::name const& name() const;
 
         /**
-         * Gets the name of the type.
-         * @return Returns the name of the type.
-         */
-        ast::name& name();
-
-        /**
          * Gets the type parameters.
          * @return Returns the type parameters.
          */
         boost::optional<std::vector<parameter>> const& parameters() const;
 
         /**
-         * Gets the optional type parameters.
-         * @return Returns the optional type parameters.
-         */
-        boost::optional<std::vector<parameter>>& parameters();
-
-        /**
          * Gets the optional body expressions.
          * @return Returns the optional body expressions.
          */
         boost::optional<std::vector<expression>> const& body() const;
-
-        /**
-         * Gets the optional body expressions.
-         * @return Returns the optional body expressions.
-         */
-        boost::optional<std::vector<expression>>& body();
 
         /**
          * Gets the position of the expression.

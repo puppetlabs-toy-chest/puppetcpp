@@ -43,7 +43,8 @@ Expression evaluator status:
 * [x] selector expressions
 * [x] case expressions
 * [ ] method call expressions
-* [ ] function call expressions (a temporary 'notice' implementation is present)
+* [x] function call expressions
+* [ ] lambdas (implemented except for parameter type checking)
 * [ ] catalog expressions
 * [ ] access expressions (implemented for all but Type and resource operands)
 * [x] global scope
@@ -52,10 +53,61 @@ Expression evaluator status:
 * [x] string interpolation
 * [ ] EPP support
 
-Compiler status:
+Puppet functions implemented:
+
+* [x] alert
+* [ ] assert_type
+* [ ] contain
+* [ ] create_resources
+* [x] crit
+* [x] debug
+* [ ] defined
+* [ ] digest
+* [ ] each
+* [x] emerg
+* [ ] epp
+* [x] err
+* [ ] extlookup
+* [x] fail
+* [ ] file
+* [ ] filter
+* [ ] fqdn_rand
+* [ ] generate
+* [ ] hiera
+* [ ] hiera_array
+* [ ] hiera_hash
+* [ ] hiera_include
+* [ ] include
+* [x] info
+* [ ] inline_epp
+* [ ] inline_template
+* [ ] lookup
+* [ ] map
+* [ ] match
+* [ ] md5
+* [x] notice
+* [ ] realize
+* [ ] reduce
+* [ ] regsubst
+* [ ] require
+* [ ] scanf
+* [ ] search
+* [ ] sha1
+* [ ] shellquote
+* [ ] slice
+* [ ] split
+* [ ] sprintf
+* [ ] tag
+* [ ] tagged
+* [ ] template
+* [ ] versioncmp
+* [x] warning
+* [x] with
+
+Catalog compiling status:
 
 * [ ] Node definition (fact gathering)
-* [ ] Catalog compilation from evaluation context
+* [ ] JSON catalog compilation from evaluation context
 
 The output of `puppetcpp` is currently the representation of the AST and its evaluation.
 Eventually it will output a JSON representation of a compiled catalog.

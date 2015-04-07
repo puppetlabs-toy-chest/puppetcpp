@@ -30,11 +30,6 @@ namespace puppet { namespace ast {
         return _elements;
     }
 
-    optional<vector<hash_pair>>& hash::elements()
-    {
-        return _elements;
-    }
-
     lexer::token_position const& hash::position() const
     {
         return _position;

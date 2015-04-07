@@ -38,22 +38,10 @@ namespace puppet { namespace ast {
         ast::name const& name() const;
 
         /**
-         * Gets the name of the class.
-         * @return Returns the name of the class.
-         */
-        ast::name& name();
-
-        /**
          * Gets the class parameters.
          * @return Returns the class parameters.
          */
         boost::optional<std::vector<parameter>> const& parameters() const;
-
-        /**
-         * Gets the optional class parameters.
-         * @return Returns the optional class parameters.
-         */
-        boost::optional<std::vector<parameter>>& parameters();
 
         /**
          * Gets the optional parent name.
@@ -62,22 +50,10 @@ namespace puppet { namespace ast {
         boost::optional<ast::name> const& parent() const;
 
         /**
-         * Gets the optional parent name.
-         * @return Returns the optional parent name.
-         */
-        boost::optional<ast::name>& parent();
-
-        /**
          * Gets the optional body expressions.
          * @return Returns the optional body expressions.
          */
         boost::optional<std::vector<expression>> const& body() const;
-
-        /**
-         * Gets the optional body expressions.
-         * @return Returns the optional body expressions.
-         */
-        boost::optional<std::vector<expression>>& body();
 
         /**
          * Gets the position of the expression.

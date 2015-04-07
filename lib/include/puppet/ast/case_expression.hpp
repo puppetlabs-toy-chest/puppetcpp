@@ -41,22 +41,10 @@ namespace puppet { namespace ast {
         std::vector<expression> const& options() const;
 
         /**
-         * Gets the case proposition options.
-         * @return Returns the case proposition options.
-         */
-        std::vector<expression>& options();
-
-        /**
          * Gets the expressions that make up the body of the proposition.
          * @return Returns the expressions that make up the body of the proposition.
          */
         boost::optional<std::vector<expression>> const& body() const;
-
-        /**
-         * Gets the expressions that make up the body of the proposition.
-         * @return Returns the expressions that make up the body of the proposition.
-         */
-        boost::optional<std::vector<expression>>& body();
 
         /**
          * Determines if the case proposition is the default case.
@@ -109,22 +97,10 @@ namespace puppet { namespace ast {
         ast::expression const& expression() const;
 
         /**
-         * Gets the case expression.
-         * @return Returns the case expression.
-         */
-        ast::expression& expression();
-
-        /**
          * Gets the case propositions.
          * @return Returns the case propositions.
          */
         std::vector<case_proposition> const& propositions() const;
-
-        /**
-         * Gets the case propositions.
-         * @return Returns the case propositions.
-         */
-        std::vector<case_proposition>& propositions();
 
         /**
          * Gets the position of the case expression.

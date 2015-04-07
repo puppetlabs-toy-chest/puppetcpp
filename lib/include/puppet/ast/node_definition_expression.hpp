@@ -53,22 +53,10 @@ namespace puppet { namespace ast {
         std::string const& value() const;
 
         /**
-         * Gets the value of the hostname.
-         * @return Returns the value of the hostname.
-         */
-        std::string& value();
-
-        /**
          * Determines if the hostname is a regex.
          * @return Returns true if the hostname is a regex or false if it is a regular string.
          */
         bool regex() const;
-
-        /**
-         * Determines if the hostname is a regex.
-         * @return Returns true if the hostname is a regex or false if it is a regular string.
-         */
-        bool& regex();
 
         /**
          * Determines if the hostname is the default hostname.
@@ -121,22 +109,10 @@ namespace puppet { namespace ast {
         std::vector<hostname> const& names() const;
 
         /**
-         * Gets the list of hostnames for the node definition.
-         * @return Returne the hostnames for the node definition.
-         */
-        std::vector<hostname>& names();
-
-        /**
          * Gets the optionl expressions that make up the definition'd body.
          * @return Returns the optional expressions that make up the definition's body.
          */
         boost::optional<std::vector<expression>> const& body() const;
-
-        /**
-         * Gets the optionl expressions that make up the definition's body.
-         * @return Returns the optional expression that make up the definition's body.
-         */
-        boost::optional<std::vector<expression>>& body();
 
         /**
          * Gets the position of the node definition expression.

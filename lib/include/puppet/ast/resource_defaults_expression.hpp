@@ -34,22 +34,10 @@ namespace puppet { namespace ast {
         ast::type const& type() const;
 
         /**
-         * Gets the type of the resource being defaulted.
-         * @return Returns the type of the resource being defaulted.
-         */
-        ast::type& type();
-
-        /**
          * Gets the optional attributes being defaulted.
          * @return Returns the attributes being defaulted.
          */
         boost::optional<std::vector<attribute_expression>> const& attributes() const;
-
-        /**
-         * Gets the optional attributes being defaulted.
-        * @return Returns the attributes being defaulted.
-         */
-        boost::optional<std::vector<attribute_expression>>& attributes();
 
         /**
          * Gets the position of the expression.

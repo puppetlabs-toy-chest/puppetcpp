@@ -39,22 +39,10 @@ namespace puppet { namespace ast {
         expression const& selector() const;
 
         /**
-         * Gets the selector expression.
-         * @return Returns the selector expression.
-         */
-        expression& selector();
-
-        /**
          * Gets the result expression.
          * @return Returns the result expression.
          */
         expression const& result() const;
-
-        /**
-         * Gets the result expression.
-         * @return Returns the result expression.
-         */
-        expression& result();
 
         /**
          * Determines if the expression is for the default case.
@@ -106,22 +94,10 @@ namespace puppet { namespace ast {
         primary_expression const& value() const;
 
         /**
-         * Gets the value of the selector expression.
-         * @return Returns the value of the selector expression.
-         */
-        primary_expression& value();
-
-        /**
          * Gets the selector case expressions.
          * @return Returns the selector case expressions.
          */
         std::vector<selector_case_expression> const& cases() const;
-
-        /**
-         * Gets the selector case expressions.
-         * @return Returns the selector case expressions.
-         */
-        std::vector<selector_case_expression>& cases();
 
         /**
          * Gets the position of the selector expression.

@@ -92,17 +92,7 @@ namespace puppet { namespace ast {
         return _value;
     }
 
-    std::string& hostname::value()
-    {
-        return _value;
-    }
-
     bool hostname::regex() const
-    {
-        return _regex;
-    }
-
-    bool& hostname::regex()
     {
         return _regex;
     }
@@ -143,17 +133,7 @@ namespace puppet { namespace ast {
         return _names;
     }
 
-    vector<hostname>& node_definition_expression::names()
-    {
-        return _names;
-    }
-
     optional<vector<expression>> const& node_definition_expression::body() const
-    {
-        return _body;
-    }
-
-    optional<vector<expression>>& node_definition_expression::body()
     {
         return _body;
     }

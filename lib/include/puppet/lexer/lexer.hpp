@@ -326,7 +326,7 @@ namespace puppet { namespace lexer {
                 ("info",    static_cast<id_type>(token_id::statement_call))
                 ("notice",  static_cast<id_type>(token_id::statement_call))
                 ("warning", static_cast<id_type>(token_id::statement_call))
-                ("error",   static_cast<id_type>(token_id::statement_call))
+                ("err",     static_cast<id_type>(token_id::statement_call))
                 ("fail",    static_cast<id_type>(token_id::statement_call))
                 ("import",  static_cast<id_type>(token_id::statement_call));
 

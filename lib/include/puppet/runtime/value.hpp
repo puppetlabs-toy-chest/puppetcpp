@@ -463,6 +463,14 @@ namespace puppet { namespace runtime {
     array to_array(value const& val);
 
     /**
+     * Joins the array by converting each element to a string.
+     * @param os The output stream to write to.
+     * @param arr The array to join.
+     * @param separator The separator to write between array elements.
+     */
+    void join(std::ostream& os, array const& arr, std::string const& separator = " ");
+
+    /**
      * Equality operator for undef.
      * @return Always returns true.
      */

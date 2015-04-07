@@ -24,27 +24,12 @@ namespace puppet { namespace ast {
         return _function;
     }
 
-    name& function_call_expression::function()
-    {
-        return _function;
-    }
-
     optional<vector<expression>> const& function_call_expression::arguments() const
     {
         return _arguments;
     }
 
-    optional<vector<expression>>& function_call_expression::arguments()
-    {
-        return _arguments;
-    }
-
     optional<lambda> const& function_call_expression::lambda() const
-    {
-        return _lambda;
-    }
-
-    optional<lambda>& function_call_expression::lambda()
     {
         return _lambda;
     }

@@ -62,34 +62,16 @@ namespace puppet { namespace ast {
         ast::name const& name() const;
 
         /**
-         * Gets the name of the attribute.
-         * @return Returns the name of the attribute.
-         */
-        ast::name& name();
-
-        /**
          * Gets the attribute operator.
          * @return Returns the attribute operator.
          */
         attribute_operator op() const;
 
         /**
-         * Gets the attribute operator.
-         * @return Returns the attribute operator.
-         */
-        attribute_operator& op();
-
-        /**
          * Gets the attribute's value expression.
          * @return Returns the attribute's value expression.
          */
         expression const& value() const;
-
-        /**
-         * Gets the attribute's value expression.
-         * @return Returns the attribute's value expression.
-         */
-        expression& value();
 
         /**
          * Gets the position of the attribute expression.
@@ -135,22 +117,10 @@ namespace puppet { namespace ast {
         expression const& title() const;
 
         /**
-         * Gets the resource body's title expression.
-         * @return Returns the resource body's title expression.
-         */
-        expression& title();
-
-        /**
          * Gets the optional attributes of the resource.
          * @return Returns optional the attributes of the resource.
          */
         boost::optional<std::vector<attribute_expression>> const& attributes() const;
-
-        /**
-         * Gets the optional attributes of the resource.
-         * @return Returns optional the attributes of the resource.
-         */
-        boost::optional<std::vector<attribute_expression>>& attributes();
 
         /**
          * Gets the position of the resource body.
@@ -219,34 +189,16 @@ namespace puppet { namespace ast {
         expression const& type() const;
 
         /**
-         * Gets the type expression of the resource being defined.
-         * @return Returns the type expression of the resource being defined.
-         */
-        expression& type();
-
-        /**
          * Gets the resource bodies that are being defined.
          * @return Returns the resource bodies that are being defined.
          */
         std::vector<resource_body> bodies() const;
 
         /**
-         * Gets the resource bodies that are being defined.
-         * @return Returns the resource bodies that are being defined.
-         */
-        std::vector<resource_body>& bodies();
-
-        /**
          * Gets the status of the resource.
          * @return Returns the status of the resource.
          */
         resource_status status() const;
-
-        /**
-         * Gets the status of the resource.
-         * @return Returns the status of the resource.
-         */
-        resource_status& status();
 
         /**
          * Gets the position of the resource expression.

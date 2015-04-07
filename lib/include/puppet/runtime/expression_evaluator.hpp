@@ -50,7 +50,7 @@ namespace puppet { namespace runtime {
          * @param expr The AST expression to evaluate.
          * @return Returns the runtime value that is the result of evaluating the expression.
          */
-        value evaluate(ast::expression& expr);
+        value evaluate(ast::expression const& expr);
 
         /**
          * Gets the evaluation context.
@@ -69,8 +69,8 @@ namespace puppet { namespace runtime {
             value& left,
             lexer::token_position& left_position,
             std::uint8_t min_precedence,
-            std::vector<ast::binary_expression>::iterator& begin,
-            std::vector<ast::binary_expression>::iterator const& end
+            std::vector<ast::binary_expression>::const_iterator& begin,
+            std::vector<ast::binary_expression>::const_iterator const& end
         );
 
         void evaluate(
