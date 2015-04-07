@@ -100,22 +100,10 @@ namespace puppet { namespace ast {
         boost::optional<parameter_type> const& type() const;
 
         /**
-         * Gets the optional type of the parameter.
-         * @return Returns the optional type of the parameter.
-         */
-        boost::optional<parameter_type>& type();
-
-        /**
          * Determines if the parameter captures the remaining arguments.
          * @return Returns true if the parameter captures the remaining arguments or false if not.
          */
         bool captures() const;
-
-        /**
-         * Determines if the parameter captures the remaining arguments.
-         * @return Returns true if the parameter captures the remaining arguments or false if not.
-         */
-        bool& captures();
 
         /**
          * Gets the variable of the parameter.
@@ -124,22 +112,10 @@ namespace puppet { namespace ast {
         ast::variable const& variable() const;
 
         /**
-         * Gets the variable of the parameter.
-         * @return Returns the variable of the parameter.
-         */
-        ast::variable& variable();
-
-        /**
          * Gets the optional default value expression of the parameter.
          * @return Returns the optional default value expression of the parameter.
          */
         boost::optional<expression> const& default_value() const;
-
-        /**
-         * Gets the optional default value expression of the parameter.
-         * @return Returns the optional default value expression of the parameter.
-         */
-        boost::optional<expression>& default_value();
 
         /**
          * Gets the position of the parameter.

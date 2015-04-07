@@ -38,34 +38,16 @@ namespace puppet { namespace ast {
         name const& method() const;
 
         /**
-         * Gets the method name.
-         * @return Returns the method name.
-         */
-        name& method();
-
-        /**
          * Gets the optional argument expressions.
          * @return Returns the argument expressions.
          */
         boost::optional<std::vector<expression>> const& arguments() const;
 
         /**
-         * Gets the optional argument expressions.
-         * @return Returns the argument expressions.
-         */
-        boost::optional<std::vector<expression>>& arguments();
-
-        /**
          * Gets the optional lambda.
          * @return Returns the optional lambda.
          */
-        boost::optional<ast:: lambda> const& lambda() const;
-
-        /**
-         * Gets the optional lambda.
-         * @return Returns the optional lambda.
-         */
-        boost::optional<struct lambda>& lambda();
+        boost::optional<ast::lambda> const& lambda() const;
 
         /**
          * Gets the position of the method call expression.
@@ -111,22 +93,10 @@ namespace puppet { namespace ast {
         primary_expression const& target() const;
 
         /**
-         * Gets the target expression.
-         * @return Returns the target expression.
-         */
-        primary_expression& target();
-
-        /**
          * Gets the method calls that make up the expression.
          * @return Returns the method calls in the expression.
          */
         std::vector<method_call> const& calls() const;
-
-        /**
-         * Gets the method calls that make up the expression.
-         * @return Returns the method calls in the expression.
-         */
-        std::vector<method_call>& calls();
 
         /**
          * Gets the position of the method call expression.

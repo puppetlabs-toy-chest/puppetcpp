@@ -41,27 +41,12 @@ namespace puppet { namespace ast {
         return _attribute;
     }
 
-    name& query::attribute()
-    {
-        return _attribute;
-    }
-
     attribute_query_operator query::op() const
     {
         return _op;
     }
 
-    attribute_query_operator& query::op()
-    {
-        return _op;
-    }
-
     basic_expression const& query::value() const
-    {
-        return _value;
-    }
-
-    basic_expression& query::value()
     {
         return _value;
     }
@@ -113,17 +98,7 @@ namespace puppet { namespace ast {
         return _op;
     }
 
-    binary_query_operator& binary_query_expression::op()
-    {
-        return _op;
-    }
-
     query const& binary_query_expression::operand() const
-    {
-        return _operand;
-    }
-
-    query& binary_query_expression::operand()
     {
         return _operand;
     }
@@ -161,17 +136,7 @@ namespace puppet { namespace ast {
         return _kind;
     }
 
-    collection_kind& collection_expression::kind()
-    {
-        return _kind;
-    }
-
     ast::type const& collection_expression::type() const
-    {
-        return _type;
-    }
-
-    ast::type& collection_expression::type()
     {
         return _type;
     }
@@ -181,17 +146,7 @@ namespace puppet { namespace ast {
         return _first;
     }
 
-    optional<query>& collection_expression::first()
-    {
-        return _first;
-    }
-
     vector<binary_query_expression> const& collection_expression::remainder() const
-    {
-        return _remainder;
-    }
-
-    vector<binary_query_expression>& collection_expression::remainder()
     {
         return _remainder;
     }

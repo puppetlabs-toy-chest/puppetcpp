@@ -25,27 +25,12 @@ namespace puppet { namespace ast {
         return _conditional;
     }
 
-    expression& unless_expression::conditional()
-    {
-        return _conditional;
-    }
-
     optional<vector<expression>> const& unless_expression::body() const
     {
         return _body;
     }
 
-    optional<vector<expression>>& unless_expression::body()
-    {
-        return _body;
-    }
-
     optional<else_expression> const& unless_expression::else_() const
-    {
-        return _else;
-    }
-
-    optional<else_expression>& unless_expression::else_()
     {
         return _else;
     }

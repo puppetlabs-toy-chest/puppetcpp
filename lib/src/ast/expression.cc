@@ -110,17 +110,7 @@ namespace puppet { namespace ast {
         return _op;
     }
 
-    unary_operator& unary_expression::op()
-    {
-        return _op;
-    }
-
     primary_expression const& unary_expression::operand() const
-    {
-        return _operand;
-    }
-
-    primary_expression& unary_expression::operand()
     {
         return _operand;
     }
@@ -237,17 +227,7 @@ namespace puppet { namespace ast {
         return _op;
     }
 
-    binary_operator& binary_expression::op()
-    {
-        return _op;
-    }
-
     primary_expression const& binary_expression::operand() const
-    {
-        return _operand;
-    }
-
-    primary_expression& binary_expression::operand()
     {
         return _operand;
     }
@@ -281,17 +261,7 @@ namespace puppet { namespace ast {
         return _first;
     }
 
-    primary_expression& expression::first()
-    {
-        return _first;
-    }
-
     vector<binary_expression> const& expression::remainder() const
-    {
-        return _remainder;
-    }
-
-    vector<binary_expression>& expression::remainder()
     {
         return _remainder;
     }

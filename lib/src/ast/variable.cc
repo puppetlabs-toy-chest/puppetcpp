@@ -21,11 +21,6 @@ namespace puppet { namespace ast {
         return _name;
     }
 
-    string& variable::name()
-    {
-        return _name;
-    }
-
     token_position const& variable::position() const
     {
         return _position;

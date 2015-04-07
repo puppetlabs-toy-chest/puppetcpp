@@ -40,12 +40,6 @@ namespace puppet { namespace ast {
         std::string const& name() const;
 
         /**
-         * Gets the name of the type.
-         * @return Returns the name of the type.
-         */
-        std::string& name();
-
-        /**
          * Gets the position of the type.
          * @return Returns the position of the type.
          */

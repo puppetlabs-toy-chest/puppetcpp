@@ -24,27 +24,12 @@ namespace puppet { namespace ast {
         return _method;
     }
 
-    name& method_call::method()
-    {
-        return _method;
-    }
-
     optional<vector<expression>> const& method_call::arguments() const
     {
         return _arguments;
     }
 
-    optional<vector<expression>>& method_call::arguments()
-    {
-        return _arguments;
-    }
-
     optional<lambda> const& method_call::lambda() const
-    {
-        return _lambda;
-    }
-
-    optional<lambda>& method_call::lambda()
     {
         return _lambda;
     }
@@ -83,17 +68,7 @@ namespace puppet { namespace ast {
         return _target;
     }
 
-    primary_expression& method_call_expression::target()
-    {
-        return _target;
-    }
-
     vector<method_call> const& method_call_expression::calls() const
-    {
-        return _calls;
-    }
-
-    vector<method_call>& method_call_expression::calls()
     {
         return _calls;
     }

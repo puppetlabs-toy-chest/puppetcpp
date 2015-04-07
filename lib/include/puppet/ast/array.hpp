@@ -36,12 +36,6 @@ namespace puppet { namespace ast {
         boost::optional<std::vector<expression>> const& elements() const;
 
         /**
-         * Gets the optional elements of the array.
-         * @return Returns the optional elements of the array.
-         */
-        boost::optional<std::vector<expression>>& elements();
-
-        /**
          * Gets the position of the array.
          * @return Returns the position of the array.
          */

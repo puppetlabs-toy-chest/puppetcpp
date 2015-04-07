@@ -40,12 +40,6 @@ namespace puppet { namespace ast {
         std::string const& value() const;
 
         /**
-         * Gets the value of the name.
-         * @return Returns the value of the name.
-         */
-        std::string& value();
-
-        /**
          * Gets the position of the name.
          * @return Returns the position of the name.
          */

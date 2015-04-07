@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
 
         if (manifest.body()) {
             // Evaluate all expressions in the manifest's body
-            context ctx([&](token_position const& position, string const& message) {
+            context ctx(logger, [&](token_position const& position, string const& message) {
                 string text;
                 size_t column;
                 tie(text, column) = get_text_and_column(file, get<0>(position));
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
         tie(text, column) = get_text_and_column(file, get<0>(ex.position()));
         logger.log(level::error, get<1>(ex.position()), column, text, argv[1], ex.what());
     } catch (exception const& ex) {
-        logger.log(level::fatal, "unhandled exception: %1%", ex.what());
+        logger.log(level::critical, "unhandled exception: %1%", ex.what());
     }
 
     auto errors = logger.errors();

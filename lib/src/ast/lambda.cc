@@ -24,17 +24,7 @@ namespace puppet { namespace ast {
         return _parameters;
     }
 
-    optional<vector<parameter>>& lambda::parameters()
-    {
-        return _parameters;
-    }
-
     optional<vector<expression>> const& lambda::body() const
-    {
-        return _body;
-    }
-
-    optional<vector<expression>>& lambda::body()
     {
         return _body;
     }

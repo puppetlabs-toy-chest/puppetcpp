@@ -22,7 +22,7 @@ namespace puppet { namespace logging {
     {
         if (lvl == level::warning) {
             ++_warnings;
-        } else if (lvl == level::error || lvl == level::fatal) {
+        } else if (lvl >= level::error) {
             ++_errors;
         }
         log_message(lvl, line, column, text, path, message);
@@ -58,8 +58,8 @@ namespace puppet { namespace logging {
     {
         static const string cyan = "\33[0;36m";
         static const string green = "\33[0;32m";
-        static const string yellow = "\33[0;33m";
-        static const string red = "\33[0;31m";
+        static const string hyellow = "\33[1;33m";
+        static const string hred = "\33[1;31m";
         static const string reset = "\33[0m";
 
         // TODO: don't output color codes for platforms that don't support them (also non-TTY)
@@ -68,9 +68,28 @@ namespace puppet { namespace logging {
         } else if (lvl == level::info) {
             _out << green;
         } else if (lvl == level::warning) {
-            _out << yellow;
-        } else if (lvl == level::error || lvl == level::fatal) {
-            _out << red;
+            _out << hyellow;
+        } else if (lvl >= level::error) {
+            _out << hred;
+        }
+
+       // Output the level
+        if (lvl == level::debug) {
+            _out << "Debug: ";
+        } else if (lvl == level::info) {
+            _out << "Info: ";
+        } else if (lvl == level::notice) {
+            _out << "Notice: ";
+        } else if (lvl == level::warning) {
+            _out << "Warning: ";
+        } else if (lvl == level::error) {
+            _out << "Error: ";
+        } else if (lvl == level::alert) {
+            _out << "Alert: ";
+        } else if (lvl == level::emergency) {
+            _out << "Emergency: ";
+        } else if (lvl == level::critical) {
+            _out << "Critical: ";
         }
 
         // If a location was given, write it out
@@ -85,23 +104,11 @@ namespace puppet { namespace logging {
             _out << ": ";
         }
 
-        // Output the level
-        if (lvl == level::debug) {
-            _out << "debug: ";
-        } else if (lvl == level::info) {
-            _out << "info: ";
-        } else if (lvl == level::warning) {
-            _out << "warning: ";
-        } else if (lvl == level::error) {
-            _out << "error: ";
-        } else if (lvl == level::fatal) {
-            _out << "fatal: ";
-        }
-
         // Output the message
         if (!message.empty()) {
             _out << message;
         }
+
         _out << "\n";
 
         // Output the offending line's text
@@ -110,7 +117,10 @@ namespace puppet { namespace logging {
             _out << setfill(' ') << setw(column + 5) << "^\n";
         }
 
-        _out << reset;
+        // Reset unless the level was notice (no color)
+        if (lvl != level::notice) {
+            _out << reset;
+        }
     }
 
 }}  // namespace puppet::logging

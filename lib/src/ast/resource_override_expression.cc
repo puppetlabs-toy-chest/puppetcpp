@@ -22,17 +22,7 @@ namespace puppet { namespace ast {
         return _reference;
     }
 
-    expression& resource_override_expression::reference()
-    {
-        return _reference;
-    }
-
     optional<vector<attribute_expression>> const& resource_override_expression::attributes() const
-    {
-        return _attributes;
-    }
-
-    optional<vector<attribute_expression>>& resource_override_expression::attributes()
     {
         return _attributes;
     }

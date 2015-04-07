@@ -1,6 +1,10 @@
 #include <puppet/runtime/expression_evaluator.hpp>
 #include <puppet/runtime/operators.hpp>
 #include <puppet/runtime/string_interpolator.hpp>
+#include <puppet/runtime/functions/logging.hpp>
+#include <puppet/runtime/functions/fail.hpp>
+#include <puppet/runtime/functions/with.hpp>
+#include <puppet/runtime/yielder.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <boost/format.hpp>
 
@@ -10,7 +14,7 @@ using namespace puppet::lexer;
 namespace puppet { namespace runtime {
 
     // Forward declaration for evaluating primarye expressions
-    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression& expr);
+    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression const& expr);
 
     bool should_unfold(ast::expression const& expr)
     {
@@ -18,23 +22,6 @@ namespace puppet { namespace runtime {
         auto ptr = boost::get<ast::unary_expression>(&expr.first());
         return ptr && ptr->op() == ast::unary_operator::splat && expr.remainder().empty();
     }
-
-    struct match_variable_scope
-    {
-        explicit match_variable_scope(scope& s) :
-            _scope(s)
-        {
-            _scope.push_matches();
-        }
-
-        ~match_variable_scope()
-        {
-            _scope.pop_matches();
-        }
-
-     private:
-        scope& _scope;
-    };
 
     evaluation_exception::evaluation_exception(token_position position, string const& message) :
         runtime_error(message),
@@ -54,12 +41,12 @@ namespace puppet { namespace runtime {
         {
         }
 
-        result_type operator()(ast::undef&) const
+        result_type operator()(ast::undef const&) const
         {
             return value();
         }
 
-        result_type operator()(ast::boolean& boolean) const
+        result_type operator()(ast::boolean const& boolean) const
         {
             return boolean.value();
         }
@@ -74,31 +61,31 @@ namespace puppet { namespace runtime {
             return floating;
         }
 
-        result_type operator()(ast::number& number) const
+        result_type operator()(ast::number const& number) const
         {
             return boost::apply_visitor(*this, number.value());
         }
 
-        result_type operator()(ast::string& str) const
+        result_type operator()(ast::string const& str) const
         {
             string_interpolator interpolator(_evaluator);
             return interpolator.interpolate(str.position(), str.value(), str.escapes(), str.quote(), str.interpolated(), str.margin(), str.remove_break());
         }
 
-        result_type operator()(ast::regex& regx) const
+        result_type operator()(ast::regex const& regx) const
         {
             try {
-                return runtime::regex(move(regx.value()));
+                return runtime::regex(regx.value());
             } catch (std::regex_error const& ex) {
                 throw evaluation_exception(regx.position(), ex.what());
             }
         }
 
-        result_type operator()(ast::variable& var) const
+        result_type operator()(ast::variable const& var) const
         {
             static const std::regex match_variable_patterh("^\\d+$");
 
-            string& name = var.name();
+            auto& name = var.name();
 
             bool match = false;
             value const* val = nullptr;
@@ -113,16 +100,16 @@ namespace puppet { namespace runtime {
             } else {
                 val = _evaluator.context().lookup(name);
             }
-            return variable(move(name), val, match);
+            return variable(name, val, match);
         }
 
-        result_type operator()(ast::name& name) const
+        result_type operator()(ast::name const& name) const
         {
             // Treat as a string
-            return move(name.value());
+            return name.value();
         }
 
-        result_type operator()(ast::type& type) const
+        result_type operator()(ast::type const& type) const
         {
             auto kind = get_type_kind(type.name());
             if (kind == type_kind::unknown) {
@@ -131,7 +118,7 @@ namespace puppet { namespace runtime {
             return runtime::type(kind);
         }
 
-        result_type operator()(ast::array& arr) const
+        result_type operator()(ast::array const& arr) const
         {
             array new_array;
 
@@ -144,9 +131,11 @@ namespace puppet { namespace runtime {
                     // If unfolding, append the array's elements
                     if (unfold) {
                         auto array_ptr = boost::get<array>(&result);
-                        new_array.reserve(new_array.size() + array_ptr->size());
-                        new_array.insert(new_array.end(), std::make_move_iterator(array_ptr->begin()), std::make_move_iterator(array_ptr->end()));
-                        continue;
+                        if (array_ptr) {
+                            new_array.reserve(new_array.size() + array_ptr->size());
+                            new_array.insert(new_array.end(), std::make_move_iterator(array_ptr->begin()), std::make_move_iterator(array_ptr->end()));
+                            continue;
+                        }
                     }
                     new_array.emplace_back(std::move(result));
                 }
@@ -154,7 +143,7 @@ namespace puppet { namespace runtime {
             return new_array;
         }
 
-        result_type operator()(ast::hash& h) const
+        result_type operator()(ast::hash const& h) const
         {
             hash new_hash;
 
@@ -177,7 +166,7 @@ namespace puppet { namespace runtime {
         {
         }
 
-        result_type operator()(ast::selector_expression& expr) const
+        result_type operator()(ast::selector_expression const& expr) const
         {
             // Selector expressions create a new match scope
             match_variable_scope match_scope(_evaluator.context().current());
@@ -228,7 +217,7 @@ namespace puppet { namespace runtime {
             return _evaluator.evaluate(cases[*default_index].result());
         }
 
-        result_type operator()(ast::case_expression& expr) const
+        result_type operator()(ast::case_expression const& expr) const
         {
             // Case expressions create a new match scope
             match_variable_scope match_scope(_evaluator.context().current());
@@ -282,7 +271,7 @@ namespace puppet { namespace runtime {
             return value();
         }
 
-        result_type operator()(ast::if_expression& expr) const
+        result_type operator()(ast::if_expression const& expr) const
         {
             // If expressions create a new match scope
             match_variable_scope match_scope(_evaluator.context().current());
@@ -303,7 +292,7 @@ namespace puppet { namespace runtime {
             return value();
         }
 
-        result_type operator()(ast::unless_expression& expr) const
+        result_type operator()(ast::unless_expression const& expr) const
         {
             // Unless expressions create a new match scope
             match_variable_scope match_scope(_evaluator.context().current());
@@ -317,14 +306,31 @@ namespace puppet { namespace runtime {
             return value();
         }
 
-        result_type operator()(ast::method_call_expression& expr) const
+        result_type operator()(ast::method_call_expression const& expr) const
         {
             // TODO: implement
-            throw evaluation_exception(expr.position(), "method call expression not yet implemented");
+            throw evaluation_exception(expr.position(), "method call expression not yet implemented.");
         }
 
-        result_type operator()(ast::function_call_expression& expr) const
+        result_type operator()(ast::function_call_expression const& expr) const
         {
+            typedef function<value(context&, token_position const&, array&, yielder&)> dispatcher;
+
+            // TODO: define this mapping somewhere else?
+            // Keep in alphabetical order
+            static const unordered_map<string, dispatcher> functions {
+                { "alert",   functions::logging_function(logging::level::alert) },
+                { "crit",    functions::logging_function(logging::level::critical) },
+                { "debug",   functions::logging_function(logging::level::debug) },
+                { "emerg",   functions::logging_function(logging::level::emergency) },
+                { "err",     functions::logging_function(logging::level::error) },
+                { "fail",    functions::fail() },
+                { "info",    functions::logging_function(logging::level::info) },
+                { "notice",  functions::logging_function(logging::level::notice) },
+                { "warning", functions::logging_function(logging::level::warning) },
+                { "with",    functions::with() },
+            };
+
             // Evaluate the arguments first
             array arguments;
             arguments.reserve(expr.arguments() ? expr.arguments()->size() : 0);
@@ -337,9 +343,11 @@ namespace puppet { namespace runtime {
                     // If unfolding, append the array to the arguments
                     if (unfold) {
                         auto array_ptr = boost::get<array>(&result);
-                        arguments.reserve(arguments.size() + array_ptr->size());
-                        arguments.insert(arguments.end(), std::make_move_iterator(array_ptr->begin()), std::make_move_iterator(array_ptr->end()));
-                        continue;
+                        if (array_ptr) {
+                            arguments.reserve(arguments.size() + array_ptr->size());
+                            arguments.insert(arguments.end(), std::make_move_iterator(array_ptr->begin()), std::make_move_iterator(array_ptr->end()));
+                            continue;
+                        }
                     }
 
                     // Not unfolding, emplace
@@ -347,30 +355,21 @@ namespace puppet { namespace runtime {
                 }
             }
 
-            // TODO: this is just a HACK implementation of notice
-            // TODO: implement real function dispatch
-            if (expr.function().value() == "notice") {
-                cout << "Notice: " << _evaluator.context().current() << ": ";
-                ostringstream ss;
-                bool first = true;
-                for (auto const& argument : arguments) {
-                    if (first) {
-                        first = false;
-                    } else {
-                        ss << ' ';
-                    }
-                    ss << argument;
-                }
-                string message = ss.str();
-                cout << message << endl;
-                return arguments.empty() ? value() : message;
-            } else {
+            // Find the function
+            auto it = functions.find(expr.function().value());
+            if (it == functions.end()) {
                 throw evaluation_exception(expr.position(), (boost::format("unknown function \"%1%\".") % expr.function().value()).str());
             }
+
+            // Wrap the lambda expression with a yielder
+            runtime::yielder yielder(_evaluator, expr.position(), expr.lambda());
+
+            // Dispatch the call
+            return it->second(_evaluator.context(), expr.position(), arguments, yielder);
         }
 
      private:
-        result_type execute_block(boost::optional<vector<ast::expression>>& expressions) const
+        result_type execute_block(boost::optional<vector<ast::expression>> const& expressions) const
         {
             value result;
             if (expressions) {
@@ -404,7 +403,7 @@ namespace puppet { namespace runtime {
 
     struct access_expression_evaluator : boost::static_visitor<value>
     {
-        access_expression_evaluator(expression_evaluator& evaluator, vector<ast::expression>& expressions, token_position const& position) :
+        access_expression_evaluator(expression_evaluator& evaluator, vector<ast::expression> const& expressions, token_position const& position) :
             _evaluator(evaluator),
             _expressions(expressions),
             _position(position)
@@ -554,7 +553,7 @@ namespace puppet { namespace runtime {
 
      private:
         expression_evaluator& _evaluator;
-        vector<ast::expression>& _expressions;
+        vector<ast::expression> const& _expressions;
         token_position const& _position;
     };
 
@@ -565,28 +564,28 @@ namespace puppet { namespace runtime {
         {
         }
 
-        result_type operator()(boost::blank&) const
+        result_type operator()(boost::blank const&) const
         {
-            throw runtime_error("unexpected blank expression.");
+            throw runtime_error("unexpected blank expression");
         }
 
-        result_type operator()(ast::basic_expression& expr) const
+        result_type operator()(ast::basic_expression const& expr) const
         {
             return boost::apply_visitor(basic_expression_visitor(_evaluator), expr);
         }
 
-        result_type operator()(ast::control_flow_expression& expr) const
+        result_type operator()(ast::control_flow_expression const& expr) const
         {
             return boost::apply_visitor(control_flow_expression_visitor(_evaluator), expr);
         }
 
-        result_type operator()(ast::catalog_expression& expr) const
+        result_type operator()(ast::catalog_expression const& expr) const
         {
             // TODO: implement
-            throw evaluation_exception(get_position(expr), "catalog expression not yet implemented");
+            throw evaluation_exception(get_position(expr), "catalog expression not yet implemented.");
         }
 
-        result_type operator()(ast::unary_expression& expr) const
+        result_type operator()(ast::unary_expression const& expr) const
         {
             switch (expr.op()) {
                 case ast::unary_operator::negate:
@@ -603,7 +602,7 @@ namespace puppet { namespace runtime {
             }
         }
 
-        result_type operator()(ast::access_expression& expr) const
+        result_type operator()(ast::access_expression const& expr) const
         {
             value target = boost::apply_visitor(*this, expr.target());
             for (auto& access : expr.accesses()) {
@@ -612,7 +611,7 @@ namespace puppet { namespace runtime {
             return target;
         }
 
-        result_type operator()(ast::expression& expr) const
+        result_type operator()(ast::expression const& expr) const
         {
             return _evaluator.evaluate(expr);
         }
@@ -621,7 +620,7 @@ namespace puppet { namespace runtime {
         expression_evaluator& _evaluator;
     };
 
-    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression& expr)
+    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression const& expr)
     {
         return boost::apply_visitor(expression_visitor(evaluator), expr);
     }
@@ -631,7 +630,7 @@ namespace puppet { namespace runtime {
     {
     }
 
-    value expression_evaluator::evaluate(ast::expression& expr)
+    value expression_evaluator::evaluate(ast::expression const& expr)
     {
         if (expr.blank()) {
             return value();
@@ -663,8 +662,8 @@ namespace puppet { namespace runtime {
         value& left,
         token_position& left_position,
         uint8_t min_precedence,
-        vector<ast::binary_expression>::iterator& begin,
-        vector<ast::binary_expression>::iterator const& end)
+        vector<ast::binary_expression>::const_iterator& begin,
+        vector<ast::binary_expression>::const_iterator const& end)
     {
         // This member implements precedence climbing for binary expressions
         uint8_t precedence;
@@ -829,7 +828,7 @@ namespace puppet { namespace runtime {
                 break;
         }
 
-        throw runtime_error("invalid binary operator");
+        throw runtime_error("invalid binary operator.");
     }
 
     bool expression_evaluator::is_right_associative(ast::binary_operator op)

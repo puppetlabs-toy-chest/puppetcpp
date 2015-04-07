@@ -35,12 +35,6 @@ namespace puppet { namespace ast {
         boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * Gets the expressions that make up the body of the manifest.
-         * @return Returns the expressions that make up the body of the manifest.
-         */
-        boost::optional<std::vector<expression>>& body();
-
-        /**
          * Gets the end token position for interpolation.
          * @return Returns the end token position for interpolation or nullptr if not interpolated.
          */

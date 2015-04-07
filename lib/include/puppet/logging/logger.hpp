@@ -24,6 +24,10 @@ namespace puppet { namespace logging {
          */
         info,
         /**
+         * The notice log level.
+         */
+        notice,
+        /**
          * The warning log level.
          */
         warning,
@@ -32,9 +36,17 @@ namespace puppet { namespace logging {
          */
         error,
         /**
-         * The fatal error log level.
+         * The alert log level.
          */
-        fatal
+        alert,
+        /**
+         * The emergency log level.
+         */
+        emergency,
+        /**
+         * The critical error log level.
+         */
+        critical
     };
 
     /**

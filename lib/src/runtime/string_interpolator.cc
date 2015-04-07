@@ -92,46 +92,53 @@ namespace puppet { namespace runtime {
         return true;
     }
 
-    struct interpolation_expression_visitor : boost::static_visitor<void>
+    struct interpolation_expression_visitor : boost::static_visitor<boost::optional<value>>
     {
-        result_type operator()(ast::access_expression& expr) const
+        explicit interpolation_expression_visitor(expression_evaluator& evaluator) :
+            _evaluator(evaluator)
+        {
+        }
+
+        result_type operator()(ast::access_expression const& expr) const
         {
             auto basic = boost::get<ast::basic_expression>(&expr.target());
             if (!basic) {
-                return;
+                return nullptr;
             }
             auto name = boost::get<ast::name>(basic);
             if (!name) {
-                return;
+                return nullptr;
             }
 
-            // For access expressions with name targets, convert to a variable target
-            *basic = ast::variable(std::move(name->value()), name->position());
+            return _evaluator.evaluate(ast::expression(ast::access_expression(ast::basic_expression(ast::variable(name->value(), name->position())), expr.accesses())));
         }
 
-        result_type operator()(ast::control_flow_expression& expr) const
+        result_type operator()(ast::control_flow_expression const& expr) const
         {
             auto call = boost::get<ast::method_call_expression>(&expr);
             if (!call) {
-                return;
+                return nullptr;
             }
             auto basic = boost::get<ast::basic_expression>(&call->target());
             if (!basic) {
-                return;
+                return nullptr;
             }
             auto name = boost::get<ast::name>(basic);
             if (!name) {
-                return;
+                return nullptr;
             }
+            return _evaluator.evaluate(ast::expression(ast::control_flow_expression(ast::method_call_expression(ast::basic_expression(ast::variable(name->value(), name->position())), call->calls()))));
 
-            // For method calls with name targets, convert to a variable target
-            *basic = ast::variable(name->value(), name->position());
         }
 
         template <typename T>
         result_type operator()(T& t) const
         {
+            return nullptr;
         }
+
+     private:
+        expression_evaluator& _evaluator;
     };
 
     string_interpolator::string_interpolator(expression_evaluator& evaluator) :
@@ -264,7 +271,11 @@ namespace puppet { namespace runtime {
                                     // For the first expression, transform certain constructs to their "variable" forms
                                     if (first) {
                                         first = false;
-                                        boost::apply_visitor(interpolation_expression_visitor(), expression.first());
+                                        auto result = boost::apply_visitor(interpolation_expression_visitor(_evaluator), expression.first());
+                                        if (result) {
+                                            val = *result;
+                                            continue;
+                                        }
                                     }
                                     val = _evaluator.evaluate(expression);
                                 }

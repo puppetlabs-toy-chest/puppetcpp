@@ -45,27 +45,12 @@ namespace puppet { namespace ast {
         return _name;
     }
 
-    name& attribute_expression::name()
-    {
-        return _name;
-    }
-
     attribute_operator attribute_expression::op() const
     {
         return _op;
     }
 
-    attribute_operator& attribute_expression::op()
-    {
-        return _op;
-    }
-
     expression const& attribute_expression::value() const
-    {
-        return _value;
-    }
-
-    expression& attribute_expression::value()
     {
         return _value;
     }
@@ -99,17 +84,7 @@ namespace puppet { namespace ast {
         return _title;
     }
 
-    expression& resource_body::title()
-    {
-        return _title;
-    }
-
     optional<vector<attribute_expression>> const& resource_body::attributes() const
-    {
-        return _attributes;
-    }
-
-    optional<vector<attribute_expression>>& resource_body::attributes()
     {
         return _attributes;
     }
@@ -147,27 +122,12 @@ namespace puppet { namespace ast {
         return _type;
     }
 
-    expression& resource_expression::type()
-    {
-        return _type;
-    }
-
     vector<resource_body> resource_expression::bodies() const
     {
         return _bodies;
     }
 
-    vector<resource_body>& resource_expression::bodies()
-    {
-        return _bodies;
-    }
-
     resource_status resource_expression::status() const
-    {
-        return _status;
-    }
-
-    resource_status& resource_expression::status()
     {
         return _status;
     }

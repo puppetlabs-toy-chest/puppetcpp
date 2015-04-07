@@ -49,12 +49,6 @@ namespace puppet { namespace ast {
         boost::optional<std::vector<hash_pair>> const& elements() const;
 
         /**
-         * Gets the elements (name-value pairs) of the hash.
-         * @return Returns the optional name-value pair elements of the hash.
-         */
-        boost::optional<std::vector<hash_pair>>& elements();
-
-        /**
          * Gets the position of the hash.
          * @return Returns the position of the hash.
          */

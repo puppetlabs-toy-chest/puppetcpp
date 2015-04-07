@@ -26,17 +26,7 @@ namespace puppet { namespace ast {
         return _name;
     }
 
-    ast::name& class_definition_expression::name()
-    {
-        return _name;
-    }
-
     optional<vector<parameter>> const& class_definition_expression::parameters() const
-    {
-        return _parameters;
-    }
-
-    optional<vector<parameter>>& class_definition_expression::parameters()
     {
         return _parameters;
     }
@@ -46,17 +36,7 @@ namespace puppet { namespace ast {
         return _parent;
     }
 
-    optional<ast::name>& class_definition_expression::parent()
-    {
-        return _parent;
-    }
-
     optional<vector<expression>> const& class_definition_expression::body() const
-    {
-        return _body;
-    }
-
-    optional<vector<expression>>& class_definition_expression::body()
     {
         return _body;
     }

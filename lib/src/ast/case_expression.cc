@@ -32,17 +32,7 @@ namespace puppet { namespace ast {
         return _options;
     }
 
-    vector<expression>& case_proposition::options()
-    {
-        return _options;
-    }
-
     optional<vector<expression>> const& case_proposition::body() const
-    {
-        return _body;
-    }
-
-    optional<vector<expression>>& case_proposition::body()
     {
         return _body;
     }
@@ -86,17 +76,7 @@ namespace puppet { namespace ast {
         return _expression;
     }
 
-    expression& case_expression::expression()
-    {
-        return _expression;
-    }
-
     vector<case_proposition> const& case_expression::propositions() const
-    {
-        return _propositions;
-    }
-
-    vector<case_proposition>& case_expression::propositions()
     {
         return _propositions;
     }

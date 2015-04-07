@@ -5,6 +5,7 @@
 #pragma once
 
 #include "scope.hpp"
+#include "../logging/logger.hpp"
 #include "../lexer/token_position.hpp"
 #include <memory>
 #include <stack>
@@ -21,9 +22,15 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluation context.
+         * @param logger The logger to use.
          * @param warn The warning callback to use.
          */
-        explicit context(std::function<void(lexer::token_position const&, std::string const&)> warn = nullptr);
+        context(logging::logger& logger, std::function<void(lexer::token_position const&, std::string const&)> warn = nullptr);
+
+        /**
+         * Pushes an ephemeral scope.
+         */
+        void push();
 
         /**
          * Pushes a new scope onto the evaluation context.
@@ -31,7 +38,7 @@ namespace puppet { namespace runtime {
          * @param parent_name The name of the scope's parent scope.
          * @return Returns true if the scope was pushed or false if not (scope with the given name already exists).
          */
-        bool push(std::string name = std::string(), std::string const& parent_name = std::string());
+        bool push(std::string name, std::string const& parent_name = std::string());
 
         /**
          * Pops the current scope.
@@ -59,6 +66,12 @@ namespace puppet { namespace runtime {
         scope& current();
 
         /**
+         * Gets the logger.
+         * @return Returns the logger.
+         */
+        logging::logger& logger();
+
+        /**
          * Emits a warning with the given position and message.
          * @param position The position of the warning.
          * @param message The warning message.
@@ -66,10 +79,31 @@ namespace puppet { namespace runtime {
         void warn(lexer::token_position const& position, std::string const& message) const;
 
     private:
+        logging::logger& _logger;
         std::unordered_map<std::string, std::shared_ptr<scope>> _scopes;
         std::stack<std::shared_ptr<scope>> _stack;
         std::shared_ptr<scope> _top;
         std::function<void(lexer::token_position const&, std::string const&)> _warn;
+    };
+
+    /**
+     * Helper for creating an ephemeral scope.
+     */
+    struct ephemeral_scope
+    {
+        /**
+         * Constructs an ephemeral scope.
+         * @param ctx The current evaluation context.
+         */
+        explicit ephemeral_scope(context& ctx);
+
+        /**
+         * Destructs the ephemeral scope.
+         */
+        ~ephemeral_scope();
+
+     private:
+        context& _ctx;
     };
 
 }}  // puppet::runtime

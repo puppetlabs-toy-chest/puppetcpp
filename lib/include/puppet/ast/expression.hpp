@@ -182,22 +182,10 @@ namespace puppet { namespace ast {
         unary_operator op() const;
 
         /**
-        * Gets the unary operator for the expression.
-        * @return Returns the unary operator for the expression.
-        */
-        unary_operator& op();
-
-        /**
          * Gets the operand for the expression.
          * @return Returns the operand for the expression.
          */
         primary_expression const& operand() const;
-
-        /**
-         * Gets the operand for the expression.
-         * @return Returns the operand for the expression.
-         */
-        primary_expression& operand();
 
         /**
          * Gets the position of the unary expression.
@@ -354,22 +342,10 @@ namespace puppet { namespace ast {
         binary_operator op() const;
 
         /**
-         * Gets the binary operator in the expression.
-         * @return Returns the binary operator in the expression.
-         */
-        binary_operator& op();
-
-        /**
          * Gets the right-hand operand of the binary expression.
          * @return Returns the right-hand operand of the binary expression.
          */
         primary_expression const& operand() const;
-
-        /**
-         * Gets the right-hand operand the binary expression.
-         * @return Returns the right-hand operand of the binary expression.
-         */
-        primary_expression& operand();
 
         /**
          * Gets the position of the binary expression.
@@ -414,24 +390,11 @@ namespace puppet { namespace ast {
         primary_expression const& first() const;
 
         /**
-         * Gets the first primary expression in the expression.
-         * @return Returns the first primary expression in the expression.
-         */
-        primary_expression& first();
-
-        /**
          * Gets the remainder of the expression (for binary expressions).
          * Empty for unary expressions.
          * @return Returns the remainder of the expression.
          */
         std::vector<binary_expression> const& remainder() const;
-
-        /**
-         * Gets the remainder of the expression (for binary expressions).
-         * Empty for unary expressions.
-         * @return Returns the remainder of the expression.
-         */
-        std::vector<binary_expression>& remainder();
 
         /**
          * Gets the position of the expression.

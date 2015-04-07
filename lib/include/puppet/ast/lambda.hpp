@@ -37,22 +37,10 @@ namespace puppet { namespace ast {
         boost::optional<std::vector<parameter>> const& parameters() const;
 
         /**
-         * Gets the parameters of the lambda.
-         * @return Returns the parameters of the lambda.
-         */
-        boost::optional<std::vector<parameter>>& parameters();
-
-        /**
          * Gets the expressions of the lambda's body.
          * @return Returns the expressions of the lambda's body.
          */
         boost::optional<std::vector<expression>> const& body() const;
-
-        /**
-         * Gets the expressions of the lambda's body.
-         * @return Returns the expressions of the lambda's body.
-         */
-        boost::optional<std::vector<expression>>& body();
 
         /**
          * Gets the position of the lambda.

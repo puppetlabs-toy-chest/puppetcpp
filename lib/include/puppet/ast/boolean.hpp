@@ -34,12 +34,6 @@ namespace puppet { namespace ast {
         bool value() const;
 
         /**
-         * Gets the value of the boolean.
-         * @return Returns the value of the boolean.
-         */
-        bool& value();
-
-        /**
          * Gets the position of the boolean.
          * @return Returns the position of the boolean.
          */

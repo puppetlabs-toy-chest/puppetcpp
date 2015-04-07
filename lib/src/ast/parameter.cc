@@ -73,17 +73,7 @@ namespace puppet { namespace ast {
         return _type;
     }
 
-    optional<parameter_type>& parameter::type()
-    {
-        return _type;
-    }
-
     bool parameter::captures() const
-    {
-        return _captures;
-    }
-
-    bool& parameter::captures()
     {
         return _captures;
     }
@@ -93,17 +83,7 @@ namespace puppet { namespace ast {
         return _variable;
     }
 
-    variable& parameter::variable()
-    {
-        return _variable;
-    }
-
     optional<expression> const& parameter::default_value() const
-    {
-        return _default_value;
-    }
-
-    optional<expression>& parameter::default_value()
     {
         return _default_value;
     }

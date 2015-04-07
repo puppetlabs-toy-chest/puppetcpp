@@ -4,24 +4,37 @@ using namespace std;
 
 namespace puppet { namespace runtime {
 
-    context::context(function<void(lexer::token_position const&, string const&)> warn) :
+    context::context(logging::logger& logger, function<void(lexer::token_position const&, string const&)> warn) :
+        _logger(logger),
         _top(make_shared<scope>("Class[main]")),
         _warn(std::move(warn))
     {
     }
 
+    void context::push()
+    {
+        auto parent = _stack.empty() ? _top : _stack.top();
+        auto current = make_shared<scope>("", std::move(parent));
+        _stack.push(current);
+    }
+
     bool context::push(string name, string const& parent_name)
     {
-        if (_scopes.count(name)) {
+        if (name.empty() || !_scopes.count(name)) {
             return false;
         }
 
-        auto parent = _top;
+        shared_ptr<scope> parent;
         if (!parent_name.empty()) {
             auto it = _scopes.find(parent_name);
-            if (it != _scopes.end()) {
+            if (it == _scopes.end()) {
+                // TODO: throw for not being able to find parent?
+            } else {
                 parent = it->second;
             }
+        }
+        if (!parent) {
+            parent = _stack.empty() ? _top : _stack.top();
         }
 
         auto current = make_shared<scope>(name, std::move(parent));
@@ -73,11 +86,27 @@ namespace puppet { namespace runtime {
         return _stack.empty() ? *_top : *_stack.top();
     }
 
+    logging::logger& context::logger()
+    {
+        return _logger;
+    }
+
     void context::warn(lexer::token_position const& position, string const& message) const
     {
         if (_warn) {
             _warn(position, message);
         }
+    }
+
+    ephemeral_scope::ephemeral_scope(context& ctx) :
+        _ctx(ctx)
+    {
+        _ctx.push();
+    }
+
+    ephemeral_scope::~ephemeral_scope()
+    {
+        _ctx.pop();
     }
 
 }}  // namespace puppet::runtime

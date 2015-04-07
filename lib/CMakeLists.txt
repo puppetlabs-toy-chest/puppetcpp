@@ -49,12 +49,16 @@ add_library(puppet SHARED
     src/ast/variable.cc
     src/logging/logger.cc
     src/parser/parser.cc
+    src/runtime/functions/fail.cc
+    src/runtime/functions/logging.cc
+    src/runtime/functions/with.cc
     src/runtime/context.cc
     src/runtime/expression_evaluator.cc
     src/runtime/operators.cc
     src/runtime/scope.cc
     src/runtime/string_interpolator.cc
     src/runtime/value.cc
+    src/runtime/yielder.cc
 )
 
 set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LIBPUPPET_VERSION_MINOR}.${LIBPUPPET_VERSION_PATCH}" COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY_UNITY")

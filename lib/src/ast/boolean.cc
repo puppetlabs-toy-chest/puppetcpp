@@ -21,11 +21,6 @@ namespace puppet { namespace ast {
         return _value;
     }
 
-    bool& boolean::value()
-    {
-        return _value;
-    }
-
     token_position const& boolean::position() const
     {
         return _position;

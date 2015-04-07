@@ -22,17 +22,7 @@ namespace puppet { namespace ast {
         return _type;
     }
 
-    ast::type& resource_defaults_expression::type()
-    {
-        return _type;
-    }
-
     optional<vector<attribute_expression>> const& resource_defaults_expression::attributes() const
-    {
-        return _attributes;
-    }
-
-    optional<vector<attribute_expression>>& resource_defaults_expression::attributes()
     {
         return _attributes;
     }
