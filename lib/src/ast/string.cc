@@ -5,7 +5,11 @@ using namespace puppet::lexer;
 
 namespace puppet { namespace ast {
 
-    string::string()
+    string::string() :
+        _quote(0),
+        _interpolated(false),
+        _margin(0),
+        _remove_break(false)
     {
     }
 

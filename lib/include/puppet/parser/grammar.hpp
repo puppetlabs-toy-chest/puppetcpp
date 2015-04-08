@@ -113,15 +113,16 @@ namespace puppet { namespace parser {
             // Basic expressions
             basic_expression =
                 (
-                    undef    |
-                    boolean  |
-                    number   |
-                    string   |
-                    regex    |
-                    variable |
-                    name     |
-                    type     |
-                    array    |
+                    undef     |
+                    boolean   |
+                    number    |
+                    string    |
+                    regex     |
+                    variable  |
+                    name      |
+                    bare_word |
+                    type      |
+                    array     |
                     hash
                 ) [ _val = phx::construct<ast::basic_expression>(_1) ];
             undef =
@@ -132,7 +133,6 @@ namespace puppet { namespace parser {
             number =
                 lexer.number [ _val = phx::construct<ast::number>(_1) ];
             string =
-                token(token_id::bare_word)                                                [ _val = phx::construct<ast::string>(_1) ] |
                 (lexer.single_quoted_string | lexer.double_quoted_string | lexer.heredoc) [ _val = phx::construct<ast::string>(_1) ];
             regex =
                 token(token_id::regex) [ _val = phx::construct<ast::regex>(_1) ];
@@ -140,6 +140,8 @@ namespace puppet { namespace parser {
                 token(token_id::variable) [ _val = phx::construct<ast::variable>(_1) ];
             name =
                 (token(token_id::name) | token(token_id::statement_call)) [ _val = phx::construct<ast::name>(_1) ];
+            bare_word =
+                token(token_id::bare_word) [ _val = phx::construct<ast::bare_word>(_1) ];
             type =
                 token(token_id::type) [ _val = phx::construct<ast::type>(_1) ];
             array =
@@ -344,6 +346,7 @@ namespace puppet { namespace parser {
             regex.name("regex");
             variable.name("variable");
             name.name("name");
+            bare_word.name("bare word");
             type.name("type");
             array.name("array");
             hash.name("hash");
@@ -423,6 +426,7 @@ namespace puppet { namespace parser {
             debug(regex);
             debug(variable);
             debug(name);
+            debug(bare_word);
             debug(type);
             debug(array);
             debug(hash);
@@ -505,6 +509,7 @@ namespace puppet { namespace parser {
         boost::spirit::qi::rule<iterator_type, puppet::ast::regex()> regex;
         boost::spirit::qi::rule<iterator_type, puppet::ast::variable()> variable;
         boost::spirit::qi::rule<iterator_type, puppet::ast::name()> name;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::bare_word()> bare_word;
         boost::spirit::qi::rule<iterator_type, puppet::ast::type()> type;
         boost::spirit::qi::rule<iterator_type, puppet::ast::array()> array;
         boost::spirit::qi::rule<iterator_type, puppet::ast::hash()> hash;

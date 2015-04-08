@@ -46,7 +46,7 @@ namespace puppet { namespace runtime {
             auto token_end = lexer.end();
 
             // Check for the following forms:
-            // {keyword}, {name}, {decimal}
+            // {keyword}, {name/bare_word}, {decimal}
             // name, decimal
 
             // Skip past the opening bracket
@@ -54,7 +54,12 @@ namespace puppet { namespace runtime {
                 ++token_begin;
             }
 
-            if (token_begin != token_end && (is_keyword(static_cast<token_id>(token_begin->id())) || token_begin->id() == static_cast<size_t>(token_id::name))) {
+            if (token_begin != token_end &&
+                (
+                    is_keyword(static_cast<token_id>(token_begin->id())) ||
+                    token_begin->id() == static_cast<size_t>(token_id::name) ||
+                    token_begin->id() == static_cast<size_t>(token_id::bare_word)
+                )) {
                 auto token = get<boost::iterator_range<lexer_string_iterator>>(&token_begin->value());
                 if (!token) {
                     return false;
@@ -101,20 +106,39 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::access_expression const& expr) const
         {
+            // Transform access expressions with a name or bare word target into a variable target
             auto basic = boost::get<ast::basic_expression>(&expr.target());
             if (!basic) {
                 return nullptr;
             }
+
+            token_position variable_position;
+            string variable_name;
+
+            // Check for name
             auto name = boost::get<ast::name>(basic);
-            if (!name) {
+            if (name) {
+                variable_position = name->position();
+                variable_name = name->value();
+            } else {
+                // Also check for bare word
+                auto word = boost::get<ast::bare_word>(basic);
+                if (word) {
+                    variable_position = word->position();
+                    variable_name = word->value();
+                }
+            }
+            if (variable_name.empty()) {
                 return nullptr;
             }
 
-            return _evaluator.evaluate(ast::expression(ast::access_expression(ast::basic_expression(ast::variable(name->value(), name->position())), expr.accesses())));
+            // Evaluate the expression, but with a variable of the same name instead
+            return _evaluator.evaluate(ast::expression(ast::access_expression(ast::basic_expression(ast::variable(variable_name,variable_position)), expr.accesses())));
         }
 
         result_type operator()(ast::control_flow_expression const& expr) const
         {
+            // Transform method call expressions with a name or bare word target into a variable target
             auto call = boost::get<ast::method_call_expression>(&expr);
             if (!call) {
                 return nullptr;
@@ -123,12 +147,29 @@ namespace puppet { namespace runtime {
             if (!basic) {
                 return nullptr;
             }
+
+            token_position variable_position;
+            string variable_name;
+
+            // Check for name
             auto name = boost::get<ast::name>(basic);
-            if (!name) {
+            if (name) {
+                variable_position = name->position();
+                variable_name = name->value();
+            } else {
+                // Also check for bare word
+                auto word = boost::get<ast::bare_word>(basic);
+                if (word) {
+                    variable_position = word->position();
+                    variable_name = word->value();
+                }
+            }
+            if (variable_name.empty()) {
                 return nullptr;
             }
-            return _evaluator.evaluate(ast::expression(ast::control_flow_expression(ast::method_call_expression(ast::basic_expression(ast::variable(name->value(), name->position())), call->calls()))));
 
+            // Evaluate the expression, but with a variable of the same name instead
+            return _evaluator.evaluate(ast::expression(ast::control_flow_expression(ast::method_call_expression(ast::basic_expression(ast::variable(variable_name, variable_position)), call->calls()))));
         }
 
         template <typename T>

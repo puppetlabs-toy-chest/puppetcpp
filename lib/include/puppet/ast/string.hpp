@@ -23,17 +23,6 @@ namespace puppet { namespace ast {
         string();
 
         /**
-         * Constructs a string from a token.
-         * @tparam Iterator The underlying iterator type for the token.
-         * @param range The token representing the string.
-         */
-        template <typename Iterator>
-        explicit string(boost::iterator_range<Iterator> const& range)
-        {
-            throw std::runtime_error("should not be called");
-        }
-
-        /**
          * Constructs a string from a string token.
          * @tparam Iterator The underlying iterator type for the token.
          * @param token The string token to construct the string from.

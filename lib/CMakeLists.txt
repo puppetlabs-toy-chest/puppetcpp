@@ -21,6 +21,7 @@ add_library(puppet SHARED
     src/lexer/token_id.cc
     src/ast/access_expression.cc
     src/ast/array.cc
+    src/ast/bare_word.cc
     src/ast/boolean.cc
     src/ast/case_expression.cc
     src/ast/class_definition_expression.cc
