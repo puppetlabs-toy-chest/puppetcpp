@@ -12,6 +12,7 @@
 #include "variable.hpp"
 #include "type.hpp"
 #include "name.hpp"
+#include "bare_word.hpp"
 #include <boost/variant.hpp>
 #include <iostream>
 #include <vector>
@@ -49,6 +50,7 @@ namespace puppet { namespace ast {
         regex,
         variable,
         name,
+        bare_word,
         ast::type,
         boost::recursive_wrapper<array>,
         boost::recursive_wrapper<hash>

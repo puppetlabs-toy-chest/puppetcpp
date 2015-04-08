@@ -109,6 +109,12 @@ namespace puppet { namespace runtime {
             return name.value();
         }
 
+        result_type operator()(ast::bare_word const& word) const
+        {
+            // Treat as a string
+            return word.value();
+        }
+
         result_type operator()(ast::type const& type) const
         {
             auto kind = get_type_kind(type.name());
