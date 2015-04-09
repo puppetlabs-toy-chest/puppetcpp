@@ -41,7 +41,8 @@ int main(int argc, char* argv[])
             });
             expression_evaluator evaluator(ctx);
             for (auto &expression : *manifest.body()) {
-                evaluator.evaluate(expression);
+                // Top level expressions must be productive
+                evaluator.evaluate(expression, true);
             }
         }
 

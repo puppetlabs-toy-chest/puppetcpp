@@ -13,10 +13,34 @@ using namespace puppet::lexer;
 
 namespace puppet { namespace runtime {
 
-    // Forward declaration for evaluating primarye expressions
+    // Forward declaration for evaluating primary expressions
     static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression const& expr);
+    static bool is_productive(ast::expression const& expr);
+    static bool should_unfold(ast::expression const& expr);
 
-    bool should_unfold(ast::expression const& expr)
+    static bool is_productive(ast::expression const& expr)
+    {
+        // Catalog and control flow expressions are productive
+        if (boost::get<ast::catalog_expression>(&expr.first()) ||
+            boost::get<ast::control_flow_expression>(&expr.first())) {
+            return true;
+        }
+
+        // Expressions followed by an assignment or relationship operator are productive
+        for (auto const& binary_expr : expr.remainder()) {
+            if (binary_expr.op() == ast::binary_operator::assignment ||
+                binary_expr.op() == ast::binary_operator::in_edge ||
+                binary_expr.op() == ast::binary_operator::in_edge_subscribe ||
+                binary_expr.op() == ast::binary_operator::out_edge ||
+                binary_expr.op() == ast::binary_operator::out_edge_subscribe) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool should_unfold(ast::expression const& expr)
     {
         // Determine if the given expression is a unary splat
         auto ptr = boost::get<ast::unary_expression>(&expr.first());
@@ -379,8 +403,10 @@ namespace puppet { namespace runtime {
         {
             value result;
             if (expressions) {
-                for (auto &expr : *expressions) {
-                    result = _evaluator.evaluate(expr);
+                for (size_t i = 0; i < expressions->size(); ++i) {
+                    auto& expression = (*expressions)[i];
+                    // The last expression in the block is allowed to be unproductive (i.e. the return value)
+                    result = _evaluator.evaluate(expression, i < (expressions->size() - 1));
                 }
             }
             return result;
@@ -572,7 +598,7 @@ namespace puppet { namespace runtime {
 
         result_type operator()(boost::blank const&) const
         {
-            throw runtime_error("unexpected blank expression");
+            return value();
         }
 
         result_type operator()(ast::basic_expression const& expr) const
@@ -636,10 +662,10 @@ namespace puppet { namespace runtime {
     {
     }
 
-    value expression_evaluator::evaluate(ast::expression const& expr)
+    value expression_evaluator::evaluate(ast::expression const& expr, bool productive)
     {
-        if (expr.blank()) {
-            return value();
+        if (productive && !is_productive(expr)) {
+            throw evaluation_exception(expr.position(), "unproductive expressions may only appear last in a block.");
         }
 
         // Evaluate the first sub-expression
