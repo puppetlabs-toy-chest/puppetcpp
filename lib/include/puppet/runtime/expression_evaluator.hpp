@@ -48,9 +48,10 @@ namespace puppet { namespace runtime {
         /**
          * Evaluates the given AST expression and returns the resulting runtime value.
          * @param expr The AST expression to evaluate.
+         * @param productive True if the expression is required to be productive (i.e. has side effect) or false if not.
          * @return Returns the runtime value that is the result of evaluating the expression.
          */
-        value evaluate(ast::expression const& expr);
+        value evaluate(ast::expression const& expr, bool productive = false);
 
         /**
          * Gets the evaluation context.
@@ -70,8 +71,7 @@ namespace puppet { namespace runtime {
             lexer::token_position& left_position,
             std::uint8_t min_precedence,
             std::vector<ast::binary_expression>::const_iterator& begin,
-            std::vector<ast::binary_expression>::const_iterator const& end
-        );
+            std::vector<ast::binary_expression>::const_iterator const& end);
 
         void evaluate(
             value& left,
