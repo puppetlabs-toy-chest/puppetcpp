@@ -16,7 +16,8 @@ namespace puppet { namespace runtime {
     // Forward declaration for evaluating primary expressions
     static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression const& expr);
     static bool is_productive(ast::expression const& expr);
-    static bool should_unfold(ast::expression const& expr);
+    static boost::optional<array> unfold(ast::expression const& expression, value& evaluated);
+    static boost::optional<array> unfold(ast::primary_expression const& expression, value& evaluated);
 
     static bool is_productive(ast::expression const& expr)
     {
@@ -40,11 +41,44 @@ namespace puppet { namespace runtime {
         return false;
     }
 
-    static bool should_unfold(ast::expression const& expr)
+    static boost::optional<array> unfold(ast::expression const& expr, value& result)
+    {
+        // An unfold expression is always unary
+        if (!expr.remainder().empty()) {
+            return nullptr;
+        }
+        // Unfold the first expression
+        return unfold(expr.first(), result);
+    }
+
+    static boost::optional<array> unfold(ast::primary_expression const& expression, value& evaluated)
     {
         // Determine if the given expression is a unary splat
-        auto ptr = boost::get<ast::unary_expression>(&expr.first());
-        return ptr && ptr->op() == ast::unary_operator::splat && expr.remainder().empty();
+        auto unary = boost::get<ast::unary_expression>(&expression);
+        if (unary && unary->op() == ast::unary_operator::splat) {
+            // If an array, return the array itself
+            auto array_ptr = boost::get<array>(&evaluated);
+            if (array_ptr) {
+                return std::move(*array_ptr);
+            }
+            // Otherwise, it should be a variable
+            if (!boost::get<variable>(&evaluated)) {
+                return nullptr;
+            }
+            auto const_array_ptr = boost::get<array>(&dereference(evaluated));
+            if (!const_array_ptr) {
+                return nullptr;
+            }
+            // Return a copy of the array
+            return *const_array_ptr;
+        }
+
+        // Try for nested expression
+        auto nested = boost::get<ast::expression>(&expression);
+        if (nested) {
+            return unfold(*nested, evaluated);
+        }
+        return nullptr;
     }
 
     evaluation_exception::evaluation_exception(token_position position, string const& message) :
@@ -154,18 +188,14 @@ namespace puppet { namespace runtime {
 
             if (arr.elements()) {
                 for (auto& element : *arr.elements()) {
-                    bool unfold = should_unfold(element);
-
                     auto result = _evaluator.evaluate(element);
 
                     // If unfolding, append the array's elements
-                    if (unfold) {
-                        auto array_ptr = boost::get<array>(&result);
-                        if (array_ptr) {
-                            new_array.reserve(new_array.size() + array_ptr->size());
-                            new_array.insert(new_array.end(), std::make_move_iterator(array_ptr->begin()), std::make_move_iterator(array_ptr->end()));
-                            continue;
-                        }
+                    auto unfold_array = unfold(element, result);
+                    if (unfold_array) {
+                        new_array.reserve(new_array.size() + unfold_array->size());
+                        new_array.insert(new_array.end(), std::make_move_iterator(unfold_array->begin()), std::make_move_iterator(unfold_array->end()));
+                        continue;
                     }
                     new_array.emplace_back(std::move(result));
                 }
@@ -215,22 +245,17 @@ namespace puppet { namespace runtime {
                     continue;
                 }
 
-                bool unfold = should_unfold(selector_case.selector());
-
                 // Evaluate the option
                 value selector = _evaluator.evaluate(selector_case.selector());
 
                 // If unfolding, treat each element as an option
-                if (unfold) {
-                    auto array_ptr = boost::get<array>(&selector);
-                    if (array_ptr) {
-                        for (auto &element : *array_ptr) {
-                            if (is_match(result, element, expr.position(), selector_case.position())) {
-                                return _evaluator.evaluate(selector_case.result());
-                            }
+                auto unfold_array = unfold(selector_case.selector(), selector);
+                if (unfold_array) {
+                    for (auto& element : *unfold_array) {
+                        if (is_match(result, element, expr.position(), selector_case.position())) {
+                            return _evaluator.evaluate(selector_case.result());
                         }
                     }
-                    continue;
                 }
 
                 if (is_match(result, selector, expr.position(), selector_case.position())) {
@@ -268,22 +293,17 @@ namespace puppet { namespace runtime {
 
                 // Look for a match in the options
                 for (auto& option : proposition.options()) {
-                    bool unfold = should_unfold(option);
-
                     // Evaluate the option
                     value option_value = _evaluator.evaluate(option);
 
                     // If unfolding, treat each element as an option
-                    if (unfold) {
-                        auto array_ptr = boost::get<array>(&option_value);
-                        if (array_ptr) {
-                            for (auto &element : *array_ptr) {
-                                if (is_match(result, element, expr.position(), option.position())) {
-                                    return execute_block(proposition.body());
-                                }
+                    auto unfold_array = unfold(option, option_value);
+                    if (unfold_array) {
+                        for (auto& element : *unfold_array) {
+                            if (is_match(result, element, expr.position(), option.position())) {
+                                return execute_block(proposition.body());
                             }
                         }
-                        continue;
                     }
 
                     if (is_match(result, option_value, expr.position(), option.position())) {
@@ -338,11 +358,28 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::method_call_expression const& expr) const
         {
-            // TODO: implement
-            throw evaluation_exception(expr.position(), "method call expression not yet implemented.");
+            // Evaluate the target first
+            value result = _evaluator.evaluate(expr.target());
+
+            // Pass the target expression to support splat unfolding
+            auto first_expression = &expr.target();
+            for (auto const& call : expr.calls()) {
+                // Execute each chained call
+                result = call_function(call.position(), call.method().value(), &result, first_expression, call.arguments(), call.lambda());
+
+                // Only the first method call should unfold
+                first_expression = nullptr;
+            }
+            return result;
         }
 
         result_type operator()(ast::function_call_expression const& expr) const
+        {
+            return call_function(expr.position(), expr.function().value(), nullptr, nullptr, expr.arguments(), expr.lambda());
+        }
+
+     private:
+        value call_function(token_position const& position, std::string const& name, value* first, ast::primary_expression const* first_expression, boost::optional<vector<ast::expression>> const& remainder, boost::optional<ast::lambda> const& lambda) const
         {
             typedef function<value(context&, token_position const&, array&, yielder&)> dispatcher;
 
@@ -361,44 +398,56 @@ namespace puppet { namespace runtime {
                 { "with",    functions::with() },
             };
 
+            size_t argument_count = (remainder ? remainder->size() : 0) + (first ? 1 : 0);
+
             // Evaluate the arguments first
             array arguments;
-            arguments.reserve(expr.arguments() ? expr.arguments()->size() : 0);
-            if (expr.arguments()) {
-                for (auto& argument : *expr.arguments()) {
-                    bool unfold = should_unfold(argument);
+            arguments.reserve(argument_count);
 
-                    auto result = _evaluator.evaluate(argument);
+            for (size_t i = 0; i < argument_count; ++i) {
+                value* argument = nullptr;
+                boost::optional<array> unfold_array;
+                value result;
 
-                    // If unfolding, append the array to the arguments
-                    if (unfold) {
-                        auto array_ptr = boost::get<array>(&result);
-                        if (array_ptr) {
-                            arguments.reserve(arguments.size() + array_ptr->size());
-                            arguments.insert(arguments.end(), std::make_move_iterator(array_ptr->begin()), std::make_move_iterator(array_ptr->end()));
-                            continue;
-                        }
+                // If the first argument
+                if (i == 0 && first) {
+                    argument = first;
+                    // For the first argument on a method call, try to unfold the argument
+                    if (first_expression) {
+                        unfold_array = unfold(*first_expression, *first);
                     }
-
-                    // Not unfolding, emplace
-                    arguments.emplace_back(std::move(result));
+                } else if (remainder) {
+                    auto& expression = (*remainder)[i - (first ? 1 : 0)];
+                    result = _evaluator.evaluate(expression);
+                    argument = &result;
+                    unfold_array = unfold(expression, result);
                 }
+                if (!argument) {
+                    continue;
+                }
+
+                // If unfolding, append the array to the arguments
+                if (unfold_array) {
+                    arguments.reserve(arguments.size() + unfold_array->size());
+                    arguments.insert(arguments.end(), std::make_move_iterator(unfold_array->begin()), std::make_move_iterator(unfold_array->end()));
+                    continue;
+                }
+                arguments.emplace_back(std::move(*argument));
             }
 
             // Find the function
-            auto it = functions.find(expr.function().value());
+            auto it = functions.find(name);
             if (it == functions.end()) {
-                throw evaluation_exception(expr.position(), (boost::format("unknown function \"%1%\".") % expr.function().value()).str());
+                throw evaluation_exception(position, (boost::format("unknown function \"%1%\".") % name).str());
             }
 
             // Wrap the lambda expression with a yielder
-            runtime::yielder yielder(_evaluator, expr.position(), expr.lambda());
+            runtime::yielder yielder(_evaluator, position, lambda);
 
             // Dispatch the call
-            return it->second(_evaluator.context(), expr.position(), arguments, yielder);
+            return it->second(_evaluator.context(), position, arguments, yielder);
         }
 
-     private:
         result_type execute_block(boost::optional<vector<ast::expression>> const& expressions) const
         {
             value result;

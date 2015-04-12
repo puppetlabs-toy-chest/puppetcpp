@@ -110,8 +110,10 @@ namespace puppet { namespace runtime {
             }
 
             // Evaluate the lambda body
-            for (auto& expression : *_lambda->body()) {
-                result = _evaluator.evaluate(expression);
+            for (size_t i = 0; i < _lambda->body()->size(); ++i) {
+                auto& expression = (* _lambda->body())[i];
+                // The last expression in the block is allowed to be unproductive (i.e. the return value)
+                result = _evaluator.evaluate(expression, i < ( _lambda->body()->size() - 1));
             }
         }
         return result;

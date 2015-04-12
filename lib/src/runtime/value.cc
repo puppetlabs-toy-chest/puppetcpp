@@ -213,11 +213,13 @@ namespace puppet { namespace runtime {
 
     value const& dereference(value const& val)
     {
-        auto ptr = boost::get<variable>(&val);
-        if (ptr) {
-            return ptr->value();
+        auto result = &val;
+        auto ptr = boost::get<variable>(result);
+        while (ptr) {
+            result = &ptr->value();
+            ptr = boost::get<variable>(result);
         }
-        return val;
+        return *result;
     }
 
     struct truthy_visitor : boost::static_visitor<bool>
