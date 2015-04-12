@@ -14,12 +14,10 @@ namespace puppet { namespace runtime { namespace functions {
     {
         // Format the message based on the arguments
         ostringstream ss;
-        ss << ctx.current() << ": ";
         join(ss, arguments, " ");
-
         string message = ss.str();
 
-        ctx.logger().log(_level, message);
+        ctx.logger().log(_level, "%1%: %2%", ctx.current(), message);
         return arguments.empty() ? value() : message;
     }
 
