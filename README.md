@@ -42,7 +42,7 @@ Expression evaluator status:
 * [x] unless expressions
 * [x] selector expressions
 * [x] case expressions
-* [ ] method call expressions
+* [x] method call expressions
 * [x] function call expressions
 * [ ] lambdas (implemented except for parameter type checking)
 * [ ] catalog expressions
