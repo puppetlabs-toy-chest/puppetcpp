@@ -52,6 +52,7 @@ add_library(puppet SHARED
     src/parser/parser.cc
     src/runtime/functions/fail.cc
     src/runtime/functions/logging.cc
+    src/runtime/functions/split.cc
     src/runtime/functions/with.cc
     src/runtime/context.cc
     src/runtime/dispatcher.cc

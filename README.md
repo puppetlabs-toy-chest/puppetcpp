@@ -95,7 +95,7 @@ Puppet functions implemented:
 * [ ] sha1
 * [ ] shellquote
 * [ ] slice
-* [ ] split
+* [ ] split (implemented for all but Type overload)
 * [ ] sprintf
 * [ ] tag
 * [ ] tagged

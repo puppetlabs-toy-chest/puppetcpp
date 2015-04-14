@@ -1,6 +1,7 @@
 #include <puppet/runtime/dispatcher.hpp>
-#include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/fail.hpp>
+#include <puppet/runtime/functions/logging.hpp>
+#include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
 #include <boost/format.hpp>
 
@@ -110,6 +111,7 @@ namespace puppet { namespace runtime {
             { "fail",    functions::fail() },
             { "info",    functions::logging_function(logging::level::info) },
             { "notice",  functions::logging_function(logging::level::notice) },
+            { "split",   functions::split() },
             { "warning", functions::logging_function(logging::level::warning) },
             { "with",    functions::with() },
         };
