@@ -6,9 +6,9 @@ using namespace puppet::lexer;
 
 namespace puppet { namespace runtime { namespace functions {
 
-    value with::operator()(context& ctx, token_position const& position, array& arguments, runtime::yielder& yielder) const
+    value with::operator()(call_context& context) const
     {
-        return yielder.yield(arguments);
+        return context.yielder().yield(context.arguments());
     }
 
 }}}  // namespace puppet::runtime::functions

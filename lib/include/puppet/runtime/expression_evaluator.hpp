@@ -65,7 +65,23 @@ namespace puppet { namespace runtime {
          */
         runtime::context& context();
 
-     private:
+        /**
+         * Unfolds a splat expression.
+         * @param expression The expression to check for splat unfolding.
+         * @param evaluated The evaluated value of the given expression.
+         * @return Returns the unfolded array if the expression is a splat or nullptr if not.
+         */
+        boost::optional<array> unfold(ast::expression const& expression, value& evaluated);
+
+        /**
+         * Unfolds a splated expression.
+         * @param expression The expression to check for splat unfolding.
+         * @param evaluated The evaluated value of the given expression.
+         * @return Returns the unfolded array if the expression is a splat or nullptr if not.
+         */
+        boost::optional<array> unfold(ast::primary_expression const& expression, value& evaluated);
+
+    private:
         void climb_expression(
             value& left,
             lexer::token_position& left_position,

@@ -54,6 +54,7 @@ add_library(puppet SHARED
     src/runtime/functions/logging.cc
     src/runtime/functions/with.cc
     src/runtime/context.cc
+    src/runtime/dispatcher.cc
     src/runtime/expression_evaluator.cc
     src/runtime/operators.cc
     src/runtime/scope.cc
