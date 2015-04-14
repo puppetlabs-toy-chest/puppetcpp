@@ -1,6 +1,6 @@
 /**
  * @file
- * Declares the logging functions.
+ * Declares the split function.
  */
 #pragma once
 
@@ -10,25 +10,16 @@
 namespace puppet { namespace runtime { namespace functions {
 
     /**
-     * Implements the logging functions (debug, info, notice, warning, err, etc.)
+     * Implements the "split" function.
      */
-    struct logging_function
+    struct split
     {
-        /**
-         * Constructs a logging function with the given log level.
-         * @param lvl The log level to use when invoked.
-         */
-        explicit logging_function(logging::level lvl);
-
         /**
          * Called to invoke the function.
          * @param context The function call context.
          * @return Returns the resulting value.
          */
         value operator()(call_context& context) const;
-
-     private:
-        logging::level _level;
     };
 
 }}}  // puppet::runtime::functions

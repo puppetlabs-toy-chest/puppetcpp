@@ -10,15 +10,15 @@ namespace puppet { namespace runtime { namespace functions {
     {
     }
 
-    value logging_function::operator()(context& ctx, token_position const& position, array& arguments, runtime::yielder& yielder) const
+    value logging_function::operator()(call_context& context) const
     {
         // Format the message based on the arguments
         ostringstream ss;
-        join(ss, arguments, " ");
+        join(ss, context.arguments(), " ");
         string message = ss.str();
 
-        ctx.logger().log(_level, "%1%: %2%", ctx.current(), message);
-        return arguments.empty() ? value() : message;
+        context.evaluation_context().logger().log(_level, "%1%: %2%", context.evaluation_context().current(), message);
+        return message;
     }
 
 }}}  // namespace puppet::runtime::functions
