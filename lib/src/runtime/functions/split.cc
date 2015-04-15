@@ -15,6 +15,9 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(string const& first, string const& second) const
         {
+            if (second.empty()) {
+                return split_empty(first);
+            }
             array result;
             boost::split_iterator<string::const_iterator> end;
             for (auto it = boost::make_split_iterator(first, boost::first_finder(second, boost::is_equal())); it != end; ++it) {
@@ -25,6 +28,9 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(string const& first, regex const& second) const
         {
+            if (second.pattern().empty()) {
+                return split_empty(first);
+            }
             array result;
             for (sregex_token_iterator begin{ first.begin(), first.end(), second.value(), -1}, end; begin != end; ++begin) {
                 result.emplace_back(*begin);
@@ -54,7 +60,17 @@ namespace puppet { namespace runtime { namespace functions {
             throw evaluation_exception(_context.position(0), (boost::format("expected String for first argument but found %1%.") % get_type(first)).str());
         }
 
-    private:
+     private:
+        static result_type split_empty(string const& str)
+        {
+            array result;
+            result.reserve(str.size());
+            for (auto c : str) {
+                result.emplace_back(string(1, c));
+            }
+            return result;
+        }
+
         call_context const& _context;
     };
 
