@@ -28,13 +28,6 @@ namespace puppet { namespace ast {
         case_proposition(std::vector<expression> options, boost::optional<std::vector<expression>> body);
 
         /**
-         * Constructs a default case proposition with the given position and body expressions.
-         * @param position The position of the default case proposition.
-         * @param body The expressions that make up the body of the proposition.
-         */
-        case_proposition(lexer::token_position position, boost::optional<std::vector<expression>> body);
-
-        /**
          * Gets the case proposition options.
          * @return Returns the case proposition options.
          */
@@ -45,12 +38,6 @@ namespace puppet { namespace ast {
          * @return Returns the expressions that make up the body of the proposition.
          */
         boost::optional<std::vector<expression>> const& body() const;
-
-        /**
-         * Determines if the case proposition is the default case.
-         * @return Returns true if the case proposition is the default case or false if not.
-         */
-        bool is_default() const;
 
         /**
          * Gets the position of the case proposition.

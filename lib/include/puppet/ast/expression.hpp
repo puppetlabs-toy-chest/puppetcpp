@@ -5,6 +5,7 @@
 #pragma once
 
 #include "undef.hpp"
+#include "defaulted.hpp"
 #include "boolean.hpp"
 #include "number.hpp"
 #include "string.hpp"
@@ -44,6 +45,7 @@ namespace puppet { namespace ast {
      */
     typedef boost::variant<
         undef,
+        defaulted,
         boolean,
         number,
         string,

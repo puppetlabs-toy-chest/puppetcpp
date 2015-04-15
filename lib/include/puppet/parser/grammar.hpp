@@ -114,6 +114,7 @@ namespace puppet { namespace parser {
             basic_expression =
                 (
                     undef     |
+                    defaulted |
                     boolean   |
                     number    |
                     string    |
@@ -127,6 +128,8 @@ namespace puppet { namespace parser {
                 ) [ _val = phx::construct<ast::basic_expression>(_1) ];
             undef =
                 token(token_id::keyword_undef) [ _val = phx::construct<ast::undef>(get_token_position(_1)) ];
+            defaulted =
+                token(token_id::keyword_default) [ _val = phx::construct<ast::defaulted>(get_token_position(_1)) ];
             boolean =
                 token(token_id::keyword_true)  [ _val = phx::construct<ast::boolean>(get_token_position(_1), true) ] |
                 token(token_id::keyword_false) [ _val = phx::construct<ast::boolean>(get_token_position(_1), false) ];
@@ -162,13 +165,11 @@ namespace puppet { namespace parser {
                     // Method call is a postfix expression; handled in primary_expression
                 ) [ _val = phx::construct<ast::control_flow_expression>(_1) ];
             selector_case_expression =
-                (expression > raw_token(token_id::fat_arrow) > expression)                       [ _val = phx::construct<ast::selector_case_expression>(_1, _2) ] |
-                (token(token_id::keyword_default) > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::selector_case_expression>(get_token_position(_1), _2) ];
+                (expression > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::selector_case_expression>(_1, _2) ];
             case_expression =
                 (token(token_id::keyword_case) > expression > raw_token('{') > +case_proposition > raw_token('}')) [ _val = phx::construct<ast::case_expression>(get_token_position(_1), _2, _3) ];
             case_proposition =
-                (expressions > raw_token(':') > raw_token('{') > statements > raw_token('}'))                      [ _val = phx::construct<ast::case_proposition>(_1, _2) ] |
-                (token(token_id::keyword_default) > raw_token(':') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::case_proposition>(get_token_position(_1), _2) ];
+                (expressions > raw_token(':') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::case_proposition>(_1, _2) ];
             if_expression =
                 (token(token_id::keyword_if) > expression > raw_token('{') > statements > raw_token('}') > *elsif_expression > -else_expression) [ _val = phx::construct<ast::if_expression>(get_token_position(_1), _2, _3, _4, _5) ];
             elsif_expression =
@@ -340,6 +341,7 @@ namespace puppet { namespace parser {
             // Basic expressions
             basic_expression.name("basic expression");
             undef.name("undef");
+            defaulted.name("default");
             boolean.name("boolean");
             number.name("number");
             string.name("string");
@@ -420,6 +422,7 @@ namespace puppet { namespace parser {
             // Basic expressions
             debug(basic_expression);
             debug(undef);
+            debug(defaulted);
             debug(boolean);
             debug(number);
             debug(string);
@@ -503,6 +506,7 @@ namespace puppet { namespace parser {
         // Basic expressions
         boost::spirit::qi::rule<iterator_type, puppet::ast::basic_expression()> basic_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::undef()> undef;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::defaulted()> defaulted;
         boost::spirit::qi::rule<iterator_type, puppet::ast::boolean()> boolean;
         boost::spirit::qi::rule<iterator_type, puppet::ast::number()> number;
         boost::spirit::qi::rule<iterator_type, puppet::ast::string()> string;

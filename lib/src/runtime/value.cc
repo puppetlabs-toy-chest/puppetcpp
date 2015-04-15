@@ -10,6 +10,12 @@ namespace puppet { namespace runtime {
         return os;
     }
 
+    ostream& operator<<(ostream& os, defaulted const&)
+    {
+        os << "default";
+        return os;
+    }
+
     regex::regex()
     {
     }
@@ -72,7 +78,7 @@ namespace puppet { namespace runtime {
             { "Callable",       type_kind::callable },
             { "Type",           type_kind::type },
             { "Runtime",        type_kind::runtime },
-            { "Default",        type_kind::default_ }
+            { "Default",        type_kind::defaulted }
         };
 
         auto it = kinds.find(name);
@@ -108,7 +114,7 @@ namespace puppet { namespace runtime {
             { type_kind::callable,          "Callable" },
             { type_kind::type,              "Type" },
             { type_kind::runtime,           "Runtime" },
-            { type_kind::default_,          "Default" }
+            { type_kind::defaulted,          "Default" }
         };
 
         auto it = kinds.find(kind);
@@ -246,6 +252,16 @@ namespace puppet { namespace runtime {
         }
     };
 
+    bool is_undef(value const& val)
+    {
+        return boost::get<undef>(&val);
+    }
+
+    bool is_default(value const& val)
+    {
+        return boost::get<defaulted>(&val);
+    }
+
     bool is_truthy(value const& val)
     {
         return boost::apply_visitor(truthy_visitor(), val);
@@ -256,6 +272,11 @@ namespace puppet { namespace runtime {
         result_type operator()(undef const&) const
         {
             return type_kind::undef;
+        }
+
+        result_type operator()(defaulted const&) const
+        {
+            return type_kind::defaulted;
         }
 
         result_type operator()(int64_t) const
@@ -351,6 +372,11 @@ namespace puppet { namespace runtime {
     }
 
     bool operator==(undef const&, undef const&)
+    {
+        return true;
+    }
+
+    bool operator==(defaulted const&, defaulted const&)
     {
         return true;
     }
