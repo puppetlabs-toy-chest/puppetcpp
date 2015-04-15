@@ -18,12 +18,6 @@ namespace puppet { namespace ast {
     {
     }
 
-    selector_case_expression::selector_case_expression(token_position position, expression result) :
-        _position(std::move(position)),
-        _result(std::move(result))
-    {
-    }
-
     expression const& selector_case_expression::selector() const
     {
         return _selector;
@@ -34,11 +28,6 @@ namespace puppet { namespace ast {
         return _result;
     }
 
-    bool selector_case_expression::is_default() const
-    {
-        return _selector.blank();
-    }
-
     token_position const& selector_case_expression::position() const
     {
         return _position;
@@ -46,12 +35,7 @@ namespace puppet { namespace ast {
 
     ostream& operator<<(ostream& os, selector_case_expression const& expr)
     {
-        if (expr.is_default()) {
-            os << "default";
-        } else {
-            os << expr.selector();
-        }
-        os << " => " << expr.result();
+        os << expr.selector() << " => " << expr.result();
         return os;
     }
 

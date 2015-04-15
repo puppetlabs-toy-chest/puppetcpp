@@ -29,6 +29,20 @@ namespace puppet { namespace runtime {
     std::ostream& operator<<(std::ostream& os, undef const&);
 
     /**
+     * Represents the "default" value.
+     */
+    struct defaulted
+    {
+    };
+
+    /**
+     * Stream insertion operator for runtime default.
+     * @param os The output stream to write the runtime default to.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, defaulted const&);
+
+    /**
      * Represents a runtime regex.
      */
     struct regex
@@ -185,7 +199,7 @@ namespace puppet { namespace runtime {
         /**
          * Represents the Default type.
          */
-        default_
+        defaulted
     };
 
     /**
@@ -358,6 +372,7 @@ namespace puppet { namespace runtime {
      */
     typedef boost::make_recursive_variant<
         undef,
+        defaulted,
         std::int64_t,
         long double,
         bool,
@@ -442,6 +457,18 @@ namespace puppet { namespace runtime {
     value const& dereference(value const& val);
 
     /**
+     * Determines if the given value is undefined.
+     * @return Returns true for undef values or false if not.
+     */
+    bool is_undef(value const& val);
+
+    /**
+     * Determines if the given value is default.
+     * @return Returns true for default values or false if not.
+     */
+    bool is_default(value const& val);
+
+    /**
      * Determines if a value is "truthy".
      * @param val The value to test for "truthiness".
      * @return Returns true if the value is "truthy" or false if it is not.
@@ -475,6 +502,12 @@ namespace puppet { namespace runtime {
      * @return Always returns true.
      */
     bool operator==(undef const&, undef const&);
+
+    /**
+     * Equality operator for default.
+     * @return Always returns true.
+     */
+    bool operator==(defaulted const&, defaulted const&);
 
     /**
      * Equality operator for regex.
@@ -664,6 +697,23 @@ namespace boost
          * @return Returns a constant hash value.
          */
         size_t operator()(puppet::runtime::undef const&) const
+        {
+            return 0;
+        }
+    };
+
+    /**
+    * Hash specialization for defaulted.
+    */
+    template <>
+    struct hash<puppet::runtime::defaulted>
+    {
+        /**
+         * Hashes the default value.
+         * Note: all default values hash the same.
+         * @return Returns a constant hash value.
+         */
+        size_t operator()(puppet::runtime::defaulted const&) const
         {
             return 0;
         }

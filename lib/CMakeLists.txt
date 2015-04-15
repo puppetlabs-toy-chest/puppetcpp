@@ -26,6 +26,7 @@ add_library(puppet SHARED
     src/ast/case_expression.cc
     src/ast/class_definition_expression.cc
     src/ast/collection_expression.cc
+    src/ast/defaulted.cc
     src/ast/defined_type_expression.cc
     src/ast/expression.cc
     src/ast/function_call_expression.cc

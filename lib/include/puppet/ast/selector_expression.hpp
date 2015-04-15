@@ -26,13 +26,6 @@ namespace puppet { namespace ast {
         selector_case_expression(expression selector, expression result);
 
         /**
-         * Constructs a default selector case expression with the given position and result expression.
-         * @param position The position of the default case expression.
-         * @param result The result expression if no selector matches.
-         */
-        selector_case_expression(lexer::token_position position, expression result);
-
-        /**
          * Gets the selector expression.
          * @return Returns the selector expression.
          */
@@ -43,12 +36,6 @@ namespace puppet { namespace ast {
          * @return Returns the result expression.
          */
         expression const& result() const;
-
-        /**
-         * Determines if the expression is for the default case.
-         * @return Returns true if the expression is for the default case or false if it is not.
-         */
-        bool is_default() const;
 
         /**
          * Gets the position of the selector case expression.

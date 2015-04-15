@@ -59,6 +59,11 @@ namespace puppet { namespace runtime {
             return value();
         }
 
+        result_type operator()(ast::defaulted const&) const
+        {
+            return defaulted();
+        }
+
         result_type operator()(ast::boolean const& boolean) const
         {
             return boolean.value();
@@ -194,14 +199,14 @@ namespace puppet { namespace runtime {
             auto& cases = expr.cases();
             for (size_t i = 0; i < cases.size(); ++i) {
                 auto& selector_case = cases[i];
-                if (selector_case.is_default()) {
+
+                // Evaluate the option
+                value selector = _evaluator.evaluate(selector_case.selector());
+                if (is_default(selector)) {
                     // Remember where the default case is and keep going
                     default_index = i;
                     continue;
                 }
-
-                // Evaluate the option
-                value selector = _evaluator.evaluate(selector_case.selector());
 
                 // If unfolding, treat each element as an option
                 auto unfold_array = _evaluator.unfold(selector_case.selector(), selector);
@@ -240,16 +245,15 @@ namespace puppet { namespace runtime {
             auto& propositions = expr.propositions();
             for (size_t i = 0; i < propositions.size(); ++i) {
                 auto& proposition = propositions[i];
-                if (proposition.is_default()) {
-                    // Remember where the default is and keep going
-                    default_index = i;
-                    continue;
-                }
-
                 // Look for a match in the options
                 for (auto& option : proposition.options()) {
                     // Evaluate the option
                     value option_value = _evaluator.evaluate(option);
+                    if (is_default(option_value)) {
+                        // Remember where the default is and keep going
+                        default_index = i;
+                        continue;
+                    }
 
                     // If unfolding, treat each element as an option
                     auto unfold_array = _evaluator.unfold(option, option_value);

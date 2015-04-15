@@ -21,12 +21,6 @@ namespace puppet { namespace ast {
         }
     }
 
-    case_proposition::case_proposition(token_position position, optional<vector<expression>> body) :
-        _position(std::move(position)),
-        _body(std::move(body))
-    {
-    }
-
     vector<expression> const& case_proposition::options() const
     {
         return _options;
@@ -37,11 +31,6 @@ namespace puppet { namespace ast {
         return _body;
     }
 
-    bool case_proposition::is_default() const
-    {
-        return _options.empty();
-    }
-
     token_position const& case_proposition::position() const
     {
         return _position;
@@ -49,11 +38,7 @@ namespace puppet { namespace ast {
 
     ostream& operator<<(ostream& os, case_proposition const& proposition)
     {
-        if (proposition.is_default()) {
-            os << "default";
-        } else {
-            pretty_print(os, proposition.options(), ", ");
-        }
+        pretty_print(os, proposition.options(), ", ");
         os << ": {";
         pretty_print(os, proposition.body(), "; ");
         os << "}";
