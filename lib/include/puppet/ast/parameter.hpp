@@ -15,66 +15,6 @@
 namespace puppet { namespace ast {
 
     /**
-     * Represents the type of an AST parameter.
-     */
-    struct parameter_type
-    {
-        /**
-         * Default constructor for parameter_type.
-         */
-        parameter_type();
-
-        /**
-         * Constructs a parameter type with the given type and type expressions.
-         * @param type The type of the parameter.
-         * @param expressions The optional type expressions.
-         */
-        parameter_type(ast::type type, boost::optional<std::vector<expression>> expressions);
-
-        /**
-         * Gets the type of the parameter.
-         * @return Returns the type of the parameter.
-         */
-        ast::type const& type() const;
-
-        /**
-         * Gets the type of the parameter.
-         * @return Returns the type of the parameter.
-         */
-        ast::type& type();
-
-        /**
-         * Gets the optional type expressions.
-         * @return Returns the optional type expressions.
-         */
-        boost::optional<std::vector<expression>> const& expressions() const;
-
-        /**
-         * Gets the optional type expressions.
-         * @return Returns the optional type expressions.
-         */
-        boost::optional<std::vector<expression>>& expressions();
-
-        /**
-         * Gets the position of the parameter type.
-         * @return Returns the position of the parameter type.
-         */
-        lexer::token_position const& position() const;
-
-     private:
-        struct type _type;
-        boost::optional<std::vector<expression>> _expressions;
-    };
-
-    /**
-     * Stream insertion operator for AST parameter type.
-     * @param os The output stream to write the parameter type to.
-     * @param type The parameter type to write.
-     * @return Returns the given output stream.
-     */
-    std::ostream& operator<<(std::ostream& os, parameter_type const& type);
-
-    /**
      * Represents an AST parameter.
      */
     struct parameter
@@ -91,13 +31,13 @@ namespace puppet { namespace ast {
          * @param variable The variable of the parameter.
          * @param default_value The optional default value expression.
          */
-        parameter(boost::optional<parameter_type> type, bool captures, struct variable variable, boost::optional<expression> default_value);
+        parameter(boost::optional<primary_expression> type, bool captures, struct variable variable, boost::optional<expression> default_value);
 
         /**
          * Gets the optional type of the parameter.
          * @return Returns the optional type of the parameter.
          */
-        boost::optional<parameter_type> const& type() const;
+        boost::optional<primary_expression> const& type() const;
 
         /**
          * Determines if the parameter captures the remaining arguments.
@@ -124,7 +64,7 @@ namespace puppet { namespace ast {
         lexer::token_position const& position() const;
 
      private:
-        boost::optional<parameter_type> _type;
+        boost::optional<primary_expression> _type;
         bool _captures;
         struct variable _variable;
         boost::optional<expression> _default_value;

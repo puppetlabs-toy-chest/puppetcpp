@@ -54,6 +54,13 @@ namespace puppet { namespace runtime {
         value evaluate(ast::expression const& expr, bool productive = false);
 
         /**
+         * Evaluates the given AST primary expression and returns the resulting runtime value.
+         * @param expr The AST primary expression to evaluate.
+         * @return Returns the runtime value that is the result of evaluating the expression.
+         */
+        value evaluate(ast::primary_expression const& expr);
+
+        /**
          * Gets the evaluation context.
          * @return Returns the evaluation context.
          */
@@ -82,6 +89,8 @@ namespace puppet { namespace runtime {
         boost::optional<array> unfold(ast::primary_expression const& expression, value& evaluated);
 
     private:
+        static bool is_productive(ast::expression const& expr);
+
         void climb_expression(
             value& left,
             lexer::token_position& left_position,
@@ -97,6 +106,7 @@ namespace puppet { namespace runtime {
             lexer::token_position& right_position);
 
         static uint8_t get_precedence(ast::binary_operator op);
+
         static bool is_right_associative(ast::binary_operator op);
 
         runtime::context& _context;

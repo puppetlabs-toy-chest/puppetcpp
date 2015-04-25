@@ -10,32 +10,6 @@ using namespace puppet::lexer;
 
 namespace puppet { namespace runtime {
 
-    // Forward declaration for evaluating primary expressions
-    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression const& expr);
-    static bool is_productive(ast::expression const& expr);
-
-    static bool is_productive(ast::expression const& expr)
-    {
-        // Catalog and control flow expressions are productive
-        if (boost::get<ast::catalog_expression>(&expr.first()) ||
-            boost::get<ast::control_flow_expression>(&expr.first())) {
-            return true;
-        }
-
-        // Expressions followed by an assignment or relationship operator are productive
-        for (auto const& binary_expr : expr.remainder()) {
-            if (binary_expr.op() == ast::binary_operator::assignment ||
-                binary_expr.op() == ast::binary_operator::in_edge ||
-                binary_expr.op() == ast::binary_operator::in_edge_subscribe ||
-                binary_expr.op() == ast::binary_operator::out_edge ||
-                binary_expr.op() == ast::binary_operator::out_edge_subscribe) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     evaluation_exception::evaluation_exception(token_position position, string const& message) :
         runtime_error(message),
         _position(std::move(position))
@@ -192,7 +166,7 @@ namespace puppet { namespace runtime {
             match_variable_scope match_scope(_evaluator.context().current());
 
             // Evaluate the selector's value
-            value result = evaluate_primary_expression(_evaluator, expr.value());
+            value result = _evaluator.evaluate(expr.value());
 
             boost::optional<size_t> default_index;
 
@@ -593,11 +567,6 @@ namespace puppet { namespace runtime {
         expression_evaluator& _evaluator;
     };
 
-    static value evaluate_primary_expression(expression_evaluator& evaluator, ast::primary_expression const& expr)
-    {
-        return boost::apply_visitor(expression_visitor(evaluator), expr);
-    }
-
     expression_evaluator::expression_evaluator(runtime::context& ctx) :
         _context(ctx)
     {
@@ -610,7 +579,7 @@ namespace puppet { namespace runtime {
         }
 
         // Evaluate the first sub-expression
-        auto result = evaluate_primary_expression(*this, expr.first());
+        auto result = evaluate(expr.first());
         auto position = expr.position();
 
         // Climb the remainder of the expression
@@ -619,6 +588,11 @@ namespace puppet { namespace runtime {
         climb_expression(result, position, 0, begin, remainder.end());
 
         return result;
+    }
+
+    value expression_evaluator::evaluate(ast::primary_expression const& expr)
+    {
+        return boost::apply_visitor(expression_visitor(*this), expr);
     }
 
     runtime::context const& expression_evaluator::context() const
@@ -635,7 +609,7 @@ namespace puppet { namespace runtime {
     {
         // An unfold expression is always unary
         if (!expr.remainder().empty()) {
-            return nullptr;
+            return boost::none;
         }
         // Unfold the first expression
         return unfold(expr.first(), result);
@@ -653,11 +627,11 @@ namespace puppet { namespace runtime {
             }
             // Otherwise, it should be a variable
             if (!boost::get<variable>(&evaluated)) {
-                return nullptr;
+                return boost::none;
             }
             auto const_array_ptr = boost::get<array>(&dereference(evaluated));
             if (!const_array_ptr) {
-                return nullptr;
+                return boost::none;
             }
             // Return a copy of the array
             return *const_array_ptr;
@@ -668,7 +642,29 @@ namespace puppet { namespace runtime {
         if (nested) {
             return unfold(*nested, evaluated);
         }
-        return nullptr;
+        return boost::none;
+    }
+
+    bool expression_evaluator::is_productive(ast::expression const& expr)
+    {
+        // Catalog and control flow expressions are productive
+        if (boost::get<ast::catalog_expression>(&expr.first()) ||
+            boost::get<ast::control_flow_expression>(&expr.first())) {
+            return true;
+        }
+
+        // Expressions followed by an assignment or relationship operator are productive
+        for (auto const& binary_expr : expr.remainder()) {
+            if (binary_expr.op() == ast::binary_operator::assignment ||
+                binary_expr.op() == ast::binary_operator::in_edge ||
+                binary_expr.op() == ast::binary_operator::in_edge_subscribe ||
+                binary_expr.op() == ast::binary_operator::out_edge ||
+                binary_expr.op() == ast::binary_operator::out_edge_subscribe) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     void expression_evaluator::climb_expression(
@@ -688,7 +684,7 @@ namespace puppet { namespace runtime {
             ++begin;
 
             // Evaluate the right side
-            value right = evaluate_primary_expression(*this, operand);
+            value right = evaluate(operand);
 
             // Recurse and climb the expression
             uint8_t next_precdence = precedence + (is_right_associative(op) ? static_cast<uint8_t>(0) : static_cast<uint8_t>(1));

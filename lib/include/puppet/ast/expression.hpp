@@ -385,7 +385,7 @@ namespace puppet { namespace ast {
          * @param first The first primary expression in the expression.
          * @param remainder The remaining binary expressions; empty if a unary expression.
          */
-        expression(primary_expression first, std::vector<binary_expression> remainder = std::vector<binary_expression>());
+        explicit expression(primary_expression first, std::vector<binary_expression> remainder = std::vector<binary_expression>());
 
         /**
          * Gets the first primary expression in the expression.
