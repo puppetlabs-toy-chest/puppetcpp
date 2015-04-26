@@ -116,6 +116,7 @@ namespace puppet { namespace runtime {
                 { types::boolean::name(),       types::boolean() },
                 { types::callable::name(),      types::callable() },
                 { types::catalog_entry::name(), types::catalog_entry() },
+                { types::collection::name(),    types::collection() },
                 { types::data::name(),          types::data() },
                 { types::defaulted::name(),     types::defaulted() },
                 { types::floating::name(),      types::floating() },

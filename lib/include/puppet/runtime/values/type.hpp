@@ -9,6 +9,7 @@
 #include "../types/boolean.hpp"
 #include "../types/callable.hpp"
 #include "../types/catalog_entry.hpp"
+#include "../types/collection.hpp"
 #include "../types/data.hpp"
 #include "../types/defaulted.hpp"
 #include "../types/floating.hpp"
@@ -40,6 +41,7 @@ namespace puppet { namespace runtime { namespace values {
         types::boolean,
         types::callable,
         types::catalog_entry,
+        types::collection,
         types::data,
         types::defaulted,
         types::floating,

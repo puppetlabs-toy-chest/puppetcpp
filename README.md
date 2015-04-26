@@ -60,7 +60,7 @@ Type system implemented:
 * [x] Boolean
 * [ ] Callable
 * [ ] CatalogEntry
-* [ ] Collection
+* [x] Collection
 * [x] Data
 * [x] Default
 * [ ] Enum

@@ -59,6 +59,7 @@ add_library(puppet SHARED
     src/runtime/types/boolean.cc
     src/runtime/types/callable.cc
     src/runtime/types/catalog_entry.cc
+    src/runtime/types/collection.cc
     src/runtime/types/data.cc
     src/runtime/types/defaulted.cc
     src/runtime/types/floating.cc
