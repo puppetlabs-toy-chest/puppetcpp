@@ -1,0 +1,277 @@
+/**
+ * @file
+ * Declares the runtime value.
+ */
+#pragma once
+
+#include "array.hpp"
+#include "defaulted.hpp"
+#include "hash.hpp"
+#include "regex.hpp"
+#include "type.hpp"
+#include "undef.hpp"
+#include "variable.hpp"
+#include <boost/variant.hpp>
+#include <boost/optional.hpp>
+#include <string>
+#include <cstddef>
+
+namespace puppet { namespace runtime { namespace values {
+
+    /**
+     * Represents a runtime value.
+     * Note: undef should always come first (default value).
+     */
+    typedef boost::make_recursive_variant<
+        undef,
+        defaulted,
+        std::int64_t,
+        long double,
+        bool,
+        std::string,
+        regex,
+        type,
+        basic_variable<boost::recursive_variant_>,
+        basic_array<boost::recursive_variant_>,
+        basic_hash<boost::recursive_variant_>
+    >::type value;
+
+    /**
+     * Stream insertion operator for runtime value.
+     * @param os The output stream to write the runtime value to.
+     * @param val The runtime value to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, value const& val);
+
+    /**
+     * Type definition for runtime variable.
+     */
+    typedef basic_variable<value> variable;
+
+    /**
+     * Type definition for runtime array.
+     */
+    typedef basic_array<value> array;
+
+    /**
+     * Type definition for runtime hash.
+     */
+    typedef basic_hash<value> hash;
+
+    /**
+     * Dereferences a value.
+     * @param val The value to dereference.
+     * @return Returns the value of a variable or the original value if not a variable.
+     */
+    value const& dereference(value const& val);
+
+    /**
+     * Dereferences a variable and checks that it points at the given type.
+     * @param val The value to dereference.
+     * @return Returns a copy of a variable's value if the value is of the given type or otherwise boost::none.
+     */
+    template <typename T>
+    boost::optional<T> dereference(value& val)
+    {
+        if (!boost::get<variable>(&val)) {
+            return boost::none;
+        }
+        auto result = dereference(val);
+        auto ptr = boost::get<T>(&result);
+        if (!ptr) {
+            return boost::none;
+        }
+        return *ptr;
+    }
+
+    /**
+     * Determines if the given value is undefined.
+     * @return Returns true for undef values or false if not.
+     */
+    bool is_undef(value const& val);
+
+    /**
+     * Determines if the given value is default.
+     * @return Returns true for default values or false if not.
+     */
+    bool is_default(value const& val);
+
+    /**
+     * Determines if a value is "truthy".
+     * @param val The value to test for "truthiness".
+     * @return Returns true if the value is "truthy" or false if it is not.
+     */
+    bool is_truthy(value const& val);
+
+    /**
+     * Gets the type name of the given value.
+     * @param val The runtime value to get the type name of.
+     * @return Returns the runtime type name of the value.
+     */
+    std::string get_type_name(value const& val);
+
+    /**
+     * Determines if the given value is an instance of the given type.
+     * @param val The value to check.
+     * @param t The type to check.
+     * @return Returns true if the value is an instance of the given type or false if not.
+     */
+    bool is_instance(value const& val, type const& t);
+
+    /**
+     * Determines if the second type is a specialization of the first.
+     * @param first The first type.
+     * @param second The second type.
+     * @return Returns true if the second type is a specialization of the first or false if not.
+     */
+    bool is_specialization(type const& first, type const& second);
+
+    /**
+     * Converts a value to an array (creates a copy of the value if already an array).
+     * @param val The value to convert.
+     * @return Returns the converted array.
+     */
+    array to_array(value const& val);
+
+    /**
+     * Joins the array by converting each element to a string.
+     * @param os The output stream to write to.
+     * @param arr The array to join.
+     * @param separator The separator to write between array elements.
+     */
+    void join(std::ostream& os, array const& arr, std::string const& separator = " ");
+
+    /**
+     * Declaration of operator== for values.
+     * This exists to intentionally cause an ambiguity if == is used on a value.
+     * Always use equals() on values and not ==.
+     * @return No return defined.
+     */
+    bool operator==(value const&, value const&);
+
+    /**
+     * Equality visitor for values that handles variable comparison.
+     */
+    struct equality_visitor : boost::static_visitor<bool>
+    {
+        /**
+         * Compares a variable against another value type.
+         * @tparam The type of the other value.
+         * @param left The variable to compare.
+         * @param right The other value type to compare.
+         * @return Returns true if the variable's value equals the value on the right-hand side.
+         */
+        template <
+            typename T,
+            typename = typename std::enable_if<!std::is_same<T, variable>::value>::type
+        >
+        result_type operator()(variable const& left, T const& right) const
+        {
+            // Dereference and "cast" to T
+            auto ptr = boost::get<T>(&dereference(left));
+            if (!ptr) {
+                // Not the same type
+                return false;
+            }
+            return operator()(*ptr, right);
+        }
+
+        /**
+         * Compares a variable against another value type.
+         * @tparam The type of the other value.
+         * @param left The other value type to compare.
+         * @param right The variable to compare.
+         * @return Returns true if the variable's value equals the value on the left-hand side.
+         */
+        template <
+            typename T,
+            typename = typename std::enable_if<!std::is_same<T, variable>::value>::type
+        >
+        result_type operator()(T const& left, variable const& right) const
+        {
+            auto ptr = boost::get<T>(&dereference(right));
+            if (!ptr) {
+                // Not the same type
+                return false;
+            }
+            return operator()(left, *ptr);
+        }
+
+        /**
+         * Compares two strings.
+         * @param left The left operand.
+         * @param right The right operand.
+         * @return Returns true if the strings are equal (case insensitive) or false if not.
+         */
+        result_type operator()(std::string const& left, std::string const& right) const;
+
+        /**
+         * Compares two different value types.
+         * @tparam T The left hand type.
+         * @tparam U The right hand type.
+         * @return Always returns false since two values of different types cannot be equal.
+         */
+        template <
+            typename T,
+            typename U,
+            typename = typename std::enable_if<!std::is_same<T, variable>::value>::type,
+            typename = typename std::enable_if<!std::is_same<U, variable>::value>::type
+        >
+        result_type operator()(T const&, U const&) const
+        {
+            // Not the same type
+            return false;
+        }
+
+        /**
+         * Compares two different value types.
+         * @tparam T The type of the values being compared.
+         * @param left The left hand value.
+         * @param right The right hand value.
+         * @return Returns true if both values are equal or false if not.
+         */
+        template <typename T>
+        result_type operator()(T const& left, T const& right) const
+        {
+            // Same type
+            return left == right;
+        }
+    };
+
+    /**
+     * Compares two values for equality.
+     * Use this instead of operator== (which boost::variant unfortunately defines).
+     * @param left The left value to compare.
+     * @param right The right value to compare.
+     * @return Returns true if both values are equal or false if they are not equal.
+     */
+    bool equals(value const& left, value const& right);
+
+    /**
+     * Compares a value with a value type.
+     * @tparam Left The type of the right-hand side.
+     * @param left The value type to compare.
+     * @param right The value to compare.
+     * @return Returns true if the type stored in the value is equal to the value type.
+     */
+    template <typename Left>
+    bool equals(Left const& left, value const& right)
+    {
+        return boost::apply_visitor(std::bind(equality_visitor(), std::ref(left), std::placeholders::_1), right);
+    }
+
+    /**
+     * Compares a value with a value type.
+     * @tparam Right The type of the right-hand side.
+     * @param left The value to compare.
+     * @param right The value type to compare.
+     * @return Returns true if the type stored in the value is equal to the value type.
+     */
+    template <typename Right>
+    bool equals(value const& left, Right const& right)
+    {
+        return boost::apply_visitor(std::bind(equality_visitor(), std::placeholders::_1, std::ref(right)), left);
+    }
+
+}}}  // namespace puppet::runtime::values

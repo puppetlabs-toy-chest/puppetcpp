@@ -3,9 +3,11 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <limits>
+#include <cfenv>
 
 using namespace std;
 using namespace puppet::lexer;
+using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
@@ -21,7 +23,7 @@ namespace puppet { namespace runtime {
             return boost::algorithm::icontains(right, left);
         }
 
-        result_type operator()(regex const& left, string const& right) const
+        result_type operator()(values::regex const& left, string const& right) const
         {
             smatch matches;
             bool result = left.pattern().empty() || regex_match(right, matches, left.value());
@@ -29,13 +31,17 @@ namespace puppet { namespace runtime {
             return result;
         }
 
-        result_type operator()(type const& left, array const& right) const
+        result_type operator()(type const& left, values::array const& right) const
         {
-            // TODO: implement
-            throw runtime_error("in operator not yet implemented for type");
+            for (auto const& element : right) {
+                if (is_instance(element, left)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
-        result_type operator()(regex const& left, array const& right) const
+        result_type operator()(values::regex const& left, values::array const& right) const
         {
             for (auto const& element : right) {
                 auto ptr = boost::get<string>(&element);
@@ -47,7 +53,7 @@ namespace puppet { namespace runtime {
         }
 
         template <typename Left>
-        result_type operator()(Left const& left, array const& right) const
+        result_type operator()(Left const& left, values::array const& right) const
         {
             for (auto const& element : right) {
                 if (equals(left, element)) {
@@ -57,14 +63,18 @@ namespace puppet { namespace runtime {
             return false;
         }
 
-        result_type operator()(type const& left, hash const& right) const
+        result_type operator()(type const& left, values::hash const& right) const
         {
-            // TODO: implement
-            throw runtime_error("in operator not yet implemented for type");
+            for (auto const& element : right) {
+                if (is_instance(element.first, left)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         template <typename Left>
-        result_type operator()(Left const& left, hash const& right) const
+        result_type operator()(Left const& left, values::hash const& right) const
         {
             for (auto const& element : right) {
                 if (equals(left, element.first)) {
@@ -93,7 +103,7 @@ namespace puppet { namespace runtime {
     {
         auto var = boost::get<variable>(&left);
         if (!var) {
-            throw evaluation_exception(position, (boost::format("cannot assign to %1%: assignment can only be performed on variables.") % get_type(left)).str());
+            throw evaluation_exception(position, (boost::format("cannot assign to %1%: assignment can only be performed on variables.") % get_type_name(left)).str());
         }
         // Can't assign to match variables
         if (var->match()) {
@@ -117,16 +127,14 @@ namespace puppet { namespace runtime {
         var->update(value);
     }
 
-    template <typename T>
-    bool overflow(T left, T right)
+    bool overflow(int64_t left, int64_t right)
     {
-        return left > 0 && right > numeric_limits<T>::max() - left;
+        return left > 0 && right > numeric_limits<int64_t>::max() - left;
     }
 
-    template <typename T>
-    bool underflow(T left, T right)
+    bool underflow(int64_t left, int64_t right)
     {
-        return left < 0 && right < numeric_limits<T>::min() - left;
+        return left < 0 && right < numeric_limits<int64_t>::min() - left;
     }
 
     struct plus_visitor : boost::static_visitor<value>
@@ -139,39 +147,51 @@ namespace puppet { namespace runtime {
 
         result_type operator()(int64_t left, int64_t right) const
         {
-            check_operands(left, right);
+            if (overflow(left, right)) {
+                throw evaluation_exception(_left_position, (boost::format("addition of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+            }
+            if (underflow(left, right)) {
+                throw evaluation_exception(_left_position, (boost::format("addition of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+            }
             return left + right;
         }
 
         result_type operator()(int64_t left, long double right) const
         {
-            return static_cast<long double>(left) + right;
+            return operator()(static_cast<long double>(left), right);
         }
 
         result_type operator()(long double left, int64_t right) const
         {
-            return left + static_cast<long double>(right);
+            return operator()(left, static_cast<long double>(right));
         }
 
         result_type operator()(long double left, long double right) const
         {
-            return left + right;
+            feclearexcept(FE_OVERFLOW | FE_UNDERFLOW);
+            long double result = left + right;
+            if (fetestexcept(FE_OVERFLOW)) {
+                throw evaluation_exception(_left_position, (boost::format("addition of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+            } else if (fetestexcept(FE_UNDERFLOW)) {
+                throw evaluation_exception(_left_position, (boost::format("addition of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+            }
+            return result;
         }
 
-        result_type operator()(array const& left, array const& right) const
+        result_type operator()(values::array const& left, values::array const& right) const
         {
-            array copy = left;
+            auto copy = left;
             for (auto const& element : right) {
                 copy.emplace_back(element);
             }
             return copy;
         }
 
-        result_type operator()(array const& left, hash const& right) const
+        result_type operator()(values::array const& left, values::hash const& right) const
         {
-            array copy = left;
+            auto copy = left;
             for (auto const& element : right) {
-                array subarray;
+                values::array subarray;
                 subarray.push_back(element.first);
                 subarray.push_back(element.second);
                 copy.emplace_back(subarray);
@@ -180,30 +200,30 @@ namespace puppet { namespace runtime {
         }
 
         template <typename Right>
-        result_type operator()(array const& left, Right const& right) const
+        result_type operator()(values::array const& left, Right const& right) const
         {
-            array copy = left;
+            auto copy = left;
             copy.emplace_back(right);
             return copy;
         }
 
-        result_type operator()(hash const& left, hash const& right) const
+        result_type operator()(values::hash const& left, values::hash const& right) const
         {
-            hash copy = left;
+            auto copy = left;
             for (auto const& element : right) {
                 copy.emplace(make_pair(element.first, element.second));
             }
             return copy;
         }
 
-        result_type operator()(hash const& left, array const& right) const
+        result_type operator()(values::hash const& left, values::array const& right) const
         {
-            hash copy = left;
+            auto copy = left;
 
             // Check to see if the array is a "hash" (made up of two-element arrays only)
             bool hash = true;
             for (auto const& element : right) {
-                auto subarray = boost::get<array>(&element);
+                auto subarray = boost::get<values::array>(&element);
                 if (!subarray || subarray->size() != 2) {
                     hash = false;
                     break;
@@ -212,7 +232,7 @@ namespace puppet { namespace runtime {
 
             if (hash) {
                 for (auto const& element : right) {
-                    auto subarray = boost::get<array>(element);
+                    auto subarray = boost::get<values::array>(element);
                     copy[subarray[0]] = subarray[1];
                 }
                 return copy;
@@ -221,7 +241,7 @@ namespace puppet { namespace runtime {
             // Otherwise, there should be an even number of elements
             // If not valid, the
             if (right.size() & 1) {
-                throw evaluation_exception(_right_position, (boost::format("expected an even number of elements in Array for concatenation but found %1%.") % right.size()).str());
+                throw evaluation_exception(_right_position, (boost::format("expected an even number of elements in %1% for concatenation but found %2%.") % types::array::name() % right.size()).str());
             }
 
             for (size_t i = 0; i < right.size(); i += 2) {
@@ -231,9 +251,9 @@ namespace puppet { namespace runtime {
         }
 
         template <typename Right>
-        result_type operator()(hash const&, Right const& right) const
+        result_type operator()(values::hash const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic addition but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -243,7 +263,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic addition but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type_name(right)).str());
         }
 
         template <
@@ -253,27 +273,16 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic addition but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Numeric for arithmetic addition but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type_name(left)).str());
         }
 
      private:
-        template <typename T>
-        void check_operands(T left, T right) const
-        {
-            if (overflow(left, right)) {
-                throw evaluation_exception(_left_position, (boost::format("addition of %1% and %2% results in an arithmetic overflow.") % left % right).str());
-            }
-            if (underflow(left, right)) {
-                throw evaluation_exception(_left_position, (boost::format("addition of %1% and %2% results in an arithmetic underflow.") % left % right).str());
-            }
-        }
-
         token_position const& _left_position;
         token_position const& _right_position;
     };
@@ -293,33 +302,40 @@ namespace puppet { namespace runtime {
 
         result_type operator()(int64_t left, int64_t right) const
         {
-            check_operands(left, right);
+            if (overflow(left, right)) {
+                throw evaluation_exception(_left_position, (boost::format("subtraction of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+            }
+            if (underflow(left, right)) {
+                throw evaluation_exception(_left_position, (boost::format("subtraction of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+            }
             return left - right;
         }
 
         result_type operator()(int64_t left, long double right) const
         {
-            auto operand = static_cast<long double>(left);
-            check_operands(operand, right);
-            return operand - right;
+            return operator()(static_cast<long double>(left), right);
         }
 
         result_type operator()(long double left, int64_t right) const
         {
-            auto operand = static_cast<long double>(right);
-            check_operands(left, operand);
-            return left - operand;
+            return operator()(left, static_cast<long double>(right));
         }
 
         result_type operator()(long double left, long double right) const
         {
-            check_operands(left, right);
-            return left - right;
+            feclearexcept(FE_OVERFLOW | FE_UNDERFLOW);
+            long double result = left - right;
+            if (fetestexcept(FE_OVERFLOW)) {
+                throw evaluation_exception(_left_position, (boost::format("subtraction of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+            } else if (fetestexcept(FE_UNDERFLOW)) {
+                throw evaluation_exception(_left_position, (boost::format("subtraction of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+            }
+            return result;
         }
 
-        result_type operator()(array const& left, array const& right) const
+        result_type operator()(values::array const& left, values::array const& right) const
         {
-            array copy = left;
+            auto copy = left;
             copy.erase(remove_if(copy.begin(), copy.end(), [&](value const& v) {
                 for (auto const& element : right) {
                     if (equals(v, element)) {
@@ -331,12 +347,12 @@ namespace puppet { namespace runtime {
             return copy;
         }
 
-        result_type operator()(array const& left, hash const& right) const
+        result_type operator()(values::array const& left, values::hash const& right) const
         {
-            array copy = left;
+            auto copy = left;
             copy.erase(remove_if(copy.begin(), copy.end(), [&](value const& v) {
                 // The element should be an array of [K, V]
-                auto ptr = boost::get<array>(&v);
+                auto ptr = boost::get<values::array>(&v);
                 if (!ptr || ptr->size() != 2) {
                     return false;
                 }
@@ -350,21 +366,21 @@ namespace puppet { namespace runtime {
         }
 
         template <typename Right>
-        result_type operator()(array const& left, Right& right) const
+        result_type operator()(values::array const& left, Right& right) const
         {
-            array copy = left;
+            auto copy = left;
             copy.erase(remove_if(copy.begin(), copy.end(), [&](value const& v) {
                 return equals(v, right);
             }), copy.end());
             return copy;
         }
 
-        result_type operator()(hash const& left, hash const& right) const
+        result_type operator()(values::hash const& left, values::hash const& right) const
         {
-            hash copy = left;
+            auto copy = left;
             for (auto it = copy.begin(); it != copy.end();) {
                 if (right.count(it->first)) {
-                    it = copy.erase(static_cast<hash::const_iterator>(it));
+                    it = copy.erase(static_cast<values::hash::const_iterator>(it));
                 } else {
                     ++it;
                 }
@@ -372,9 +388,9 @@ namespace puppet { namespace runtime {
             return copy;
         }
 
-        result_type operator()(hash const& left, array const& right) const
+        result_type operator()(values::hash const& left, values::array const& right) const
         {
-            hash copy = left;
+            auto copy = left;
             for (auto const& element : right) {
                 copy.erase(element);
             }
@@ -382,9 +398,9 @@ namespace puppet { namespace runtime {
         }
 
         template <typename Right>
-        result_type operator()(hash const&, Right const& right) const
+        result_type operator()(values::hash const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Hash or Array for deletion but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% or %2% for deletion but found %3%.") % types::array::name() % types::hash::name() % get_type_name(right)).str());
         }
 
         template <
@@ -394,7 +410,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic subtraction but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -404,27 +420,16 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic subtraction but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Numeric for arithmetic subtraction but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type_name(left)).str());
         }
 
      private:
-        template <typename T>
-        void check_operands(T left, T right) const
-        {
-            if (overflow(left, right)) {
-                throw evaluation_exception(_left_position, (boost::format("subtraction of %1% and %2% results in an arithmetic overflow.") % left % right).str());
-            }
-            if (underflow(left, right)) {
-                throw evaluation_exception(_left_position, (boost::format("subtraction of %1% and %2% results in an arithmetic underflow.") % left % right).str());
-            }
-        }
-
         token_position const& _left_position;
         token_position const& _right_position;
     };
@@ -444,22 +449,33 @@ namespace puppet { namespace runtime {
 
         result_type operator()(int64_t left, int64_t right) const
         {
-            return multiply(left, right);
+            int64_t result = left * right;
+            if (left != 0 && (result / left) != right) {
+                throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+            }
+            return result;
         }
 
         result_type operator()(int64_t left, long double right) const
         {
-            return static_cast<long double>(left) * right;
+            return operator()(static_cast<long double>(left), right);
         }
 
         result_type operator()(long double left, int64_t right) const
         {
-            return left * static_cast<long double>(right);
+            return operator()(left, static_cast<long double>(right));
         }
 
         result_type operator()(long double left, long double right) const
         {
-            return left * right;
+            feclearexcept(FE_OVERFLOW | FE_UNDERFLOW);
+            long double result = left * right;
+            if (fetestexcept(FE_OVERFLOW)) {
+                throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+            } else if (fetestexcept(FE_UNDERFLOW)) {
+                throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+            }
+            return result;
         }
 
         template <
@@ -469,7 +485,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic multiplication but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -479,13 +495,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic multiplication but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Numeric for arithmetic multiplication but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type_name(left)).str());
         }
 
     private:
@@ -517,53 +533,6 @@ namespace puppet { namespace runtime {
 
         result_type operator()(int64_t left, int64_t right) const
         {
-            return divide(left, right);
-        }
-
-        result_type operator()(int64_t left, long double right) const
-        {
-            return static_cast<long double>(left) / right;
-        }
-
-        result_type operator()(long double left, int64_t right) const
-        {
-            return left / static_cast<long double>(right);
-        }
-
-        result_type operator()(long double left, long double right) const
-        {
-            return left / right;
-        }
-
-        template <
-            typename Right,
-            typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
-            typename = typename enable_if<!is_same<Right, long double>::value>::type
-        >
-        result_type operator()(int64_t const&, Right const& right) const
-        {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic division but found %1%.") % get_type(right)).str());
-        }
-
-        template <
-            typename Right,
-            typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
-            typename = typename enable_if<!is_same<Right, long double>::value>::type
-        >
-        result_type operator()(long double const&, Right const& right) const
-        {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for arithmetic division but found %1%.") % get_type(right)).str());
-        }
-
-        template <typename Left, typename Right>
-        result_type operator()(Left const& left, Right const&) const
-        {
-            throw evaluation_exception(_left_position, (boost::format("expected Numeric for arithmetic division but found %1%.") % get_type(left)).str());
-        }
-
-    private:
-        int64_t divide(int64_t left, int64_t right) const
-        {
             if (right == 0) {
                 throw evaluation_exception(_right_position, "cannot divide by zero.");
             }
@@ -574,6 +543,57 @@ namespace puppet { namespace runtime {
             return left / right;
         }
 
+        result_type operator()(int64_t left, long double right) const
+        {
+            return operator()(static_cast<long double>(left), right);
+        }
+
+        result_type operator()(long double left, int64_t right) const
+        {
+            return operator()(left, static_cast<long double>(right));
+        }
+
+        result_type operator()(long double left, long double right) const
+        {
+            feclearexcept(FE_OVERFLOW | FE_UNDERFLOW | FE_DIVBYZERO);
+            long double result = left / right;
+            if (fetestexcept(FE_DIVBYZERO)) {
+                throw evaluation_exception(_right_position, "cannot divide by zero.");
+            } else if (fetestexcept(FE_OVERFLOW)) {
+                throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+            } else if (fetestexcept(FE_UNDERFLOW)) {
+                throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+            }
+            return result;
+        }
+
+        template <
+            typename Right,
+            typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
+            typename = typename enable_if<!is_same<Right, long double>::value>::type
+        >
+        result_type operator()(int64_t const&, Right const& right) const
+        {
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+        }
+
+        template <
+            typename Right,
+            typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
+            typename = typename enable_if<!is_same<Right, long double>::value>::type
+        >
+        result_type operator()(long double const&, Right const& right) const
+        {
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+        }
+
+        template <typename Left, typename Right>
+        result_type operator()(Left const& left, Right const&) const
+        {
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type_name(left)).str());
+        }
+
+    private:
         token_position const& _left_position;
         token_position const& _right_position;
     };
@@ -605,13 +625,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Integer for arithmetic modulo but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic modulo but found %2%.") % types::integer::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Integer for arithmetic modulo but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic modulo but found %2%.") % types::integer::name() % get_type_name(left)).str());
         }
 
     private:
@@ -644,7 +664,7 @@ namespace puppet { namespace runtime {
         template <typename T>
         result_type operator()(T const& operand) const
         {
-            throw evaluation_exception(_position, (boost::format("expected Numeric for unary negation operator but found %1%.") % get_type(operand)).str());
+            throw evaluation_exception(_position, (boost::format("expected %1% for unary negation operator but found %2%.") % types::numeric::name() % get_type_name(operand)).str());
         }
 
     private:
@@ -681,9 +701,9 @@ namespace puppet { namespace runtime {
         }
 
         template <typename Right>
-        result_type operator()(array const& left, Right const& right) const
+        result_type operator()(values::array const& left, Right const& right) const
         {
-            array copy = left;
+            auto copy = left;
             copy.emplace_back(right);
             return copy;
         }
@@ -694,13 +714,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Integer for bitwise left shift but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for bitwise left shift but found %2%.") % types::integer::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Integer for bitwise left shift but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for bitwise left shift but found %2%.") % types::integer::name() % get_type_name(left)).str());
         }
 
     private:
@@ -743,13 +763,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Integer for bitwise right shift but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for bitwise right shift but found %2%.") % types::integer::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Integer for bitwise right shift but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for bitwise right shift but found %2%.") % types::integer::name() % get_type_name(left)).str());
         }
 
     private:
@@ -792,12 +812,12 @@ namespace puppet { namespace runtime {
 
         result_type operator()(int64_t left, long double right) const
         {
-            return static_cast<long double>(left) < right;
+            return operator()(static_cast<long double>(left), right);
         }
 
         result_type operator()(long double left, int64_t right) const
         {
-            return left < static_cast<long double>(right);
+            return operator()(left, static_cast<long double>(right));
         }
 
         result_type operator()(long double left, long double right) const
@@ -812,8 +832,7 @@ namespace puppet { namespace runtime {
 
         result_type operator()(type const& left, type const& right) const
         {
-            // TODO: implement
-            throw evaluation_exception(_left_position, "operator < not yet implemented for type.");
+            return is_specialization(right, left);
         }
 
         template <
@@ -823,7 +842,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -833,7 +852,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -842,7 +861,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected String for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type_name(right)).str());
         }
 
         template <
@@ -851,13 +870,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(type const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Type for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Numeric, String, or Type for comparison but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type_name(left)).str());
         }
 
      private:
@@ -885,12 +904,12 @@ namespace puppet { namespace runtime {
 
         result_type operator()(int64_t left, long double right) const
         {
-            return static_cast<long double>(left) <= right;
+            return operator()(static_cast<long double>(left), right);
         }
 
         result_type operator()(long double left, int64_t right) const
         {
-            return left <= static_cast<long double>(right);
+            return operator()(left, static_cast<long double>(right));
         }
 
         result_type operator()(long double left, long double right) const
@@ -906,8 +925,7 @@ namespace puppet { namespace runtime {
 
         result_type operator()(type const& left, type const& right) const
         {
-            // TODO: implement
-            throw evaluation_exception(_left_position, "operator <= not yet implemented for type.");
+            return left == right || is_specialization(right, left);
         }
 
         template <
@@ -917,7 +935,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -927,7 +945,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -936,7 +954,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected String for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type_name(right)).str());
         }
 
         template <
@@ -945,13 +963,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(type const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Type for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Numeric, String, or Type for comparison but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type_name(left)).str());
         }
 
     private:
@@ -979,12 +997,12 @@ namespace puppet { namespace runtime {
 
         result_type operator()(int64_t left, long double right) const
         {
-            return static_cast<long double>(left) > right;
+            return operator()(static_cast<long double>(left), right);
         }
 
         result_type operator()(long double left, int64_t right) const
         {
-            return left > static_cast<long double>(right);
+            return operator()(left, static_cast<long double>(right));
         }
 
         result_type operator()(long double left, long double right) const
@@ -1000,8 +1018,7 @@ namespace puppet { namespace runtime {
 
         result_type operator()(type const& left, type const& right) const
         {
-            // TODO: implement
-            throw evaluation_exception(_left_position, "operator > not yet implemented for type.");
+            return is_specialization(left, right);
         }
 
         template <
@@ -1011,7 +1028,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -1021,7 +1038,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -1030,7 +1047,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected String for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type_name(right)).str());
         }
 
         template <
@@ -1039,13 +1056,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(type const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Type for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Numeric, String, or Type for comparison but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type_name(left)).str());
         }
 
     private:
@@ -1073,12 +1090,12 @@ namespace puppet { namespace runtime {
 
         result_type operator()(int64_t left, long double right) const
         {
-            return static_cast<long double>(left) >= right;
+            return operator()(static_cast<long double>(left), right);
         }
 
         result_type operator()(long double left, int64_t right) const
         {
-            return left >= static_cast<long double>(right);
+            return operator()(left, static_cast<long double>(right));
         }
 
         result_type operator()(long double left, long double right) const
@@ -1093,8 +1110,7 @@ namespace puppet { namespace runtime {
 
         result_type operator()(type const& left, type const& right) const
         {
-            // TODO: implement
-            throw evaluation_exception(_left_position, "operator <= not yet implemented for type.");
+            return left == right || is_specialization(left, right);
         }
 
         template <
@@ -1104,7 +1120,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -1114,7 +1130,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Numeric for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
         }
 
         template <
@@ -1123,7 +1139,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected String for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type_name(right)).str());
         }
 
         template <
@@ -1132,13 +1148,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(type const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected Type for comparison but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type_name(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected Numeric, String, or Type for comparison but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type_name(left)).str());
         }
 
     private:
@@ -1168,7 +1184,7 @@ namespace puppet { namespace runtime {
             return result;
         }
 
-        result_type operator()(string const& left, runtime::regex const& right) const
+        result_type operator()(string const& left, values::regex const& right) const
         {
             smatch matches;
             bool result = right.pattern().empty() || regex_match(left, matches, right.value());
@@ -1179,8 +1195,7 @@ namespace puppet { namespace runtime {
         template <typename Left>
         result_type operator()(Left const& left, type const& right) const
         {
-            // TODO: implement
-            throw evaluation_exception(_right_position, "operator =~ not yet implemented for type.");
+            return is_instance(left, right);
         }
 
         template <
@@ -1190,7 +1205,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected String or Regexp for match but found %1%.") % get_type(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% or %2% for match but found %3%.") % types::string::name() % types::regexp::name() % get_type_name(right)).str());
         }
 
         template <
@@ -1200,7 +1215,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected String for match but found %1%.") % get_type(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for match but found %2%.") % types::string::name() % get_type_name(left)).str());
         }
 
     private:
@@ -1217,8 +1232,8 @@ namespace puppet { namespace runtime {
     value splat(value operand)
     {
         // If an array, reuse it; otherwise, to_array it (copy if variable)
-        array result;
-        auto ptr = get<array>(&operand);
+        values::array result;
+        auto ptr = get<values::array>(&operand);
         if (ptr) {
             return std::move(*ptr);
         }

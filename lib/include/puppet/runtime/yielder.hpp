@@ -5,7 +5,7 @@
 #pragma once
 
 #include "../ast/lambda.hpp"
-#include "value.hpp"
+#include "values/value.hpp"
 #include "expression_evaluator.hpp"
 #include <boost/optional.hpp>
 #include <vector>
@@ -38,7 +38,7 @@ namespace puppet { namespace runtime {
          * Yields to the lambda without passing any arguments.
          * @return Returns the value from the lambda's block.
          */
-        value yield();
+        values::value yield();
 
         /**
          * Yields to the lambda with the given arguments.
@@ -46,13 +46,13 @@ namespace puppet { namespace runtime {
          * @param arguments The arguments to pass to the lambda.
          * @return Returns the value from the lambda's block.
          */
-        value yield(array& arguments);
+        values::value yield(values::array& arguments);
 
      private:
         expression_evaluator& _evaluator;
         lexer::token_position const& _position;
         boost::optional<ast::lambda> const& _lambda;
-        std::unordered_map<std::string, value> _default_cache;
+        std::unordered_map<std::string, values::value> _default_cache;
     };
 
 }}  // puppet::runtime

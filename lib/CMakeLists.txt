@@ -55,13 +55,28 @@ add_library(puppet SHARED
     src/runtime/functions/logging.cc
     src/runtime/functions/split.cc
     src/runtime/functions/with.cc
+    src/runtime/types/any.cc
+    src/runtime/types/boolean.cc
+    src/runtime/types/data.cc
+    src/runtime/types/defaulted.cc
+    src/runtime/types/floating.cc
+    src/runtime/types/integer.cc
+    src/runtime/types/numeric.cc
+    src/runtime/types/regexp.cc
+    src/runtime/types/scalar.cc
+    src/runtime/types/string.cc
+    src/runtime/types/type.cc
+    src/runtime/types/undef.cc
+    src/runtime/values/defaulted.cc
+    src/runtime/values/regex.cc
+    src/runtime/values/undef.cc
+    src/runtime/values/value.cc
     src/runtime/context.cc
     src/runtime/dispatcher.cc
     src/runtime/expression_evaluator.cc
     src/runtime/operators.cc
     src/runtime/scope.cc
     src/runtime/string_interpolator.cc
-    src/runtime/value.cc
     src/runtime/yielder.cc
 )
 

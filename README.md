@@ -27,31 +27,60 @@ Expression evaluator status:
 * [x] logical not
 * [x] == operator
 * [x] != operator
-* [ ] =~ operator (implemented for all but Type operands)
-* [ ] !~ operator (implemented for all but Type operands)
-* [ ] < operator (implemented for all but Type operands)
-* [ ] <= operator (implemented for all but Type operands)
-* [ ] > operator (implemented for all but Type operands)
-* [ ] >= operator (implemented for all but Type operands)
+* [x] =~ operator
+* [x] !~ operator
+* [x] < operator
+* [x] <= operator
+* [x] > operator
+* [x] >= operator
 * [ ] -> operator
 * [ ] ~> operator
 * [ ] <- operator
 * [ ] <~ operator
-* [ ] "in" operator (implemented for all but Type operands)
+* [x] "in" operator
 * [x] if expressions
 * [x] unless expressions
 * [x] selector expressions
 * [x] case expressions
 * [x] method call expressions
 * [x] function call expressions
-* [ ] lambdas (implemented except for parameter type checking)
+* [x] lambdas
 * [ ] catalog expressions
-* [ ] access expressions (implemented for all but Type and resource operands)
+* [x] access expressions
 * [x] global scope
 * [ ] local scope
 * [ ] node scope
 * [x] string interpolation
 * [ ] EPP support
+
+Type system implemented:
+
+* [x] Any
+* [x] Array
+* [x] Boolean
+* [ ] Callable
+* [ ] CatalogEntry
+* [ ] Collection
+* [x] Data
+* [x] Default
+* [ ] Enum
+* [x] Float
+* [x] Hash
+* [x] Integer
+* [ ] Class
+* [x] Numeric
+* [ ] Optional
+* [ ] Pattern
+* [x] Regexp
+* [ ] Resource
+* [ ] Runtime
+* [x] Scalar
+* [x] String
+* [x] Struct
+* [x] Tuple
+* [x] Type
+* [x] Undef
+* [ ] Variant
 
 Puppet functions implemented:
 

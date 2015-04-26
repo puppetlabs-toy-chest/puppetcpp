@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "value.hpp"
+#include "values/value.hpp"
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -40,14 +40,14 @@ namespace puppet { namespace runtime {
          * @param val The value of the variable.
          * @return Returns a pointer to the value that was set or nullptr if the value already exists in this scope.
          */
-        value const* set(std::string name, value val);
+        values::value const* set(std::string name, values::value val);
 
         /**
          * Gets a variable in the scope.
          * @param name The name of the variable to get.
          * @return Returns the value of the variable or nullptr if the value does not exist.
          */
-        value const* get(std::string const& name) const;
+        values::value const* get(std::string const& name) const;
 
         /**
          * Gets the parent scope.
@@ -67,7 +67,7 @@ namespace puppet { namespace runtime {
          * @param index The index of the match variable.
          * @return Returns the match variable's value or nullptr if the index is not in range.
          */
-        value const* get(size_t index) const;
+        values::value const* get(size_t index) const;
 
         /**
          * Pushes the current match variables.
@@ -82,8 +82,8 @@ namespace puppet { namespace runtime {
      private:
         std::string _name;
         std::shared_ptr<scope> _parent;
-        std::unordered_map<std::string, value> _variables;
-        std::deque<std::vector<value>> _matches;
+        std::unordered_map<std::string, values::value> _variables;
+        std::deque<std::vector<values::value>> _matches;
     };
 
     /**
