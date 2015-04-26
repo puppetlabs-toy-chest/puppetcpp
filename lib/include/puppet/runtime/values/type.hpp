@@ -8,13 +8,16 @@
 #include "../types/array.hpp"
 #include "../types/boolean.hpp"
 #include "../types/callable.hpp"
+#include "../types/catalog_entry.hpp"
 #include "../types/data.hpp"
 #include "../types/defaulted.hpp"
 #include "../types/floating.hpp"
 #include "../types/hash.hpp"
 #include "../types/integer.hpp"
+#include "../types/klass.hpp"
 #include "../types/numeric.hpp"
 #include "../types/regexp.hpp"
+#include "../types/resource.hpp"
 #include "../types/scalar.hpp"
 #include "../types/string.hpp"
 #include "../types/struct.hpp"
@@ -36,12 +39,15 @@ namespace puppet { namespace runtime { namespace values {
         types::basic_type<boost::recursive_variant_>,
         types::boolean,
         types::callable,
+        types::catalog_entry,
         types::data,
         types::defaulted,
         types::floating,
         types::integer,
+        types::klass,
         types::numeric,
         types::regexp,
+        types::resource,
         types::scalar,
         types::string,
         types::undef
