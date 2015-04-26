@@ -80,7 +80,7 @@ Type system implemented:
 * [x] Tuple
 * [x] Type
 * [x] Undef
-* [ ] Variant
+* [x] Variant
 
 Puppet functions implemented:
 

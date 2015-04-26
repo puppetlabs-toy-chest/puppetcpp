@@ -29,6 +29,7 @@
 #include "../types/tuple.hpp"
 #include "../types/type.hpp"
 #include "../types/undef.hpp"
+#include "../types/variant.hpp"
 
 namespace puppet { namespace runtime { namespace values {
 
@@ -43,6 +44,7 @@ namespace puppet { namespace runtime { namespace values {
         types::basic_struct<boost::recursive_variant_>,
         types::basic_tuple<boost::recursive_variant_>,
         types::basic_type<boost::recursive_variant_>,
+        types::basic_variant<boost::recursive_variant_>,
         types::boolean,
         types::callable,
         types::catalog_entry,
@@ -97,5 +99,10 @@ namespace puppet { namespace runtime { namespace types {
      * Represents the Type type.
      */
     typedef basic_type<values::type> type;
+
+    /**
+     * Represents the Variant type.
+     */
+    typedef basic_variant<values::type> variant;
 
 }}}  // namespace puppet::runtime::types

@@ -135,7 +135,8 @@ namespace puppet { namespace runtime {
                 { types::structure::name(),     types::structure() },
                 { types::tuple::name(),         types::tuple() },
                 { types::type::name(),          types::type(boost::none) },
-                { types::undef::name(),         types::undef() }
+                { types::undef::name(),         types::undef() },
+                { types::variant::name(),       types::variant() },
             };
 
             auto it = names.find(type.name());
@@ -783,6 +784,21 @@ namespace puppet { namespace runtime {
                 types.insert(make_pair(std::move(*str), std::move(*type)));
             }
             return types::structure(std::move(types));
+        }
+
+        result_type operator()(types::variant const& type)
+        {
+            vector<values::type> types;
+            types.reserve(_arguments.size());
+
+            for (size_t i = 0; i < _arguments.size(); ++i) {
+                auto type_parameter = move_parameter<values::type>(i);
+                if (!type_parameter) {
+                    throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type_name(_arguments[i])).str());
+                }
+                types.emplace_back(std::move(*type_parameter));
+            }
+            return types::variant(std::move(types));
         }
 
         template <typename T>
