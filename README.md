@@ -69,7 +69,7 @@ Type system implemented:
 * [x] Integer
 * [ ] Class
 * [x] Numeric
-* [ ] Optional
+* [x] Optional
 * [ ] Pattern
 * [x] Regexp
 * [ ] Resource

@@ -18,6 +18,7 @@
 #include "../types/integer.hpp"
 #include "../types/klass.hpp"
 #include "../types/numeric.hpp"
+#include "../types/optional.hpp"
 #include "../types/regexp.hpp"
 #include "../types/resource.hpp"
 #include "../types/scalar.hpp"
@@ -36,6 +37,7 @@ namespace puppet { namespace runtime { namespace values {
         types::any,
         types::basic_array<boost::recursive_variant_>,
         types::basic_hash<boost::recursive_variant_>,
+        types::basic_optional<boost::recursive_variant_>,
         types::basic_struct<boost::recursive_variant_>,
         types::basic_tuple<boost::recursive_variant_>,
         types::basic_type<boost::recursive_variant_>,
@@ -73,6 +75,16 @@ namespace puppet { namespace runtime { namespace types {
     typedef basic_hash<values::type> hash;
 
     /**
+     * Represents the Optional type.
+     */
+    typedef basic_optional<values::type> optional;
+
+    /**
+     * Represents the Struct type.
+     */
+    typedef basic_struct<values::type> structure;
+
+    /**
      * Represents the Tuple type.
      */
     typedef basic_tuple<values::type> tuple;
@@ -81,10 +93,5 @@ namespace puppet { namespace runtime { namespace types {
      * Represents the Type type.
      */
     typedef basic_type<values::type> type;
-
-    /**
-     * Represents the Struct type.
-     */
-    typedef basic_struct<values::type> structure;
 
 }}}  // namespace puppet::runtime::types

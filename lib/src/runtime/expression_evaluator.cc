@@ -125,6 +125,7 @@ namespace puppet { namespace runtime {
                 { types::integer::name(),       types::integer() },
                 { types::klass::name(),         types::klass() },
                 { types::numeric::name(),       types::numeric() },
+                { types::optional::name(),      types::optional(boost::none) },
                 { types::regexp::name(),        types::regexp() },
                 { types::resource::name(),      types::resource() },
                 { types::scalar::name(),        types::scalar() },
@@ -670,6 +671,22 @@ namespace puppet { namespace runtime {
                 types.emplace_back(std::move(*type_parameter));
             }
             return types::tuple(std::move(types), from, to);
+        }
+
+        result_type operator()(types::optional const& type)
+        {
+            // Only 1 argument to Optional
+            if (_arguments.size() > 1) {
+                throw evaluation_exception(_positions[2], (boost::format("expected 1 argument for %1% but %2% were given.") % types::optional::name() % _arguments.size()).str());
+            }
+
+            // First argument should be a type
+            auto optional_type = move_parameter<values::type>(0);
+            if (!optional_type) {
+                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type_name(_arguments[0])).str());
+            }
+
+            return types::optional(std::move(*optional_type));
         }
 
         result_type operator()(types::type const& type)
