@@ -22,6 +22,7 @@
 #include "../types/pattern.hpp"
 #include "../types/regexp.hpp"
 #include "../types/resource.hpp"
+#include "../types/runtime.hpp"
 #include "../types/scalar.hpp"
 #include "../types/string.hpp"
 #include "../types/struct.hpp"
@@ -56,6 +57,7 @@ namespace puppet { namespace runtime { namespace values {
         types::pattern,
         types::regexp,
         types::resource,
+        types::runtime,
         types::scalar,
         types::string,
         types::undef

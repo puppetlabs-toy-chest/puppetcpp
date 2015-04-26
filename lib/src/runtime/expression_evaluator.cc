@@ -129,6 +129,7 @@ namespace puppet { namespace runtime {
                 { types::pattern::name(),       types::pattern() },
                 { types::regexp::name(),        types::regexp() },
                 { types::resource::name(),      types::resource() },
+                { types::runtime::name(),       types::runtime() },
                 { types::scalar::name(),        types::scalar() },
                 { types::string::name(),        types::string() },
                 { types::structure::name(),     types::structure() },
