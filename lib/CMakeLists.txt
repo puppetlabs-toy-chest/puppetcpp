@@ -12,10 +12,9 @@ add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc src/lexe
 target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
 
 # Add the command to generate the static lexer
-add_custom_command(COMMAND generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp DEPENDS include/puppet/lexer/lexer.hpp)
+add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
 
 add_library(puppet SHARED
-    include/puppet/lexer/static_lexer.hpp
     src/lexer/lexer.cc
     src/lexer/number_token.cc
     src/lexer/token_id.cc
@@ -55,15 +54,39 @@ add_library(puppet SHARED
     src/runtime/functions/logging.cc
     src/runtime/functions/split.cc
     src/runtime/functions/with.cc
+    src/runtime/types/any.cc
+    src/runtime/types/boolean.cc
+    src/runtime/types/callable.cc
+    src/runtime/types/catalog_entry.cc
+    src/runtime/types/collection.cc
+    src/runtime/types/data.cc
+    src/runtime/types/defaulted.cc
+    src/runtime/types/enumeration.cc
+    src/runtime/types/floating.cc
+    src/runtime/types/integer.cc
+    src/runtime/types/klass.cc
+    src/runtime/types/numeric.cc
+    src/runtime/types/pattern.cc
+    src/runtime/types/regexp.cc
+    src/runtime/types/resource.cc
+    src/runtime/types/runtime.cc
+    src/runtime/types/scalar.cc
+    src/runtime/types/string.cc
+    src/runtime/types/type.cc
+    src/runtime/types/undef.cc
+    src/runtime/values/defaulted.cc
+    src/runtime/values/regex.cc
+    src/runtime/values/undef.cc
+    src/runtime/values/value.cc
     src/runtime/context.cc
     src/runtime/dispatcher.cc
     src/runtime/expression_evaluator.cc
     src/runtime/operators.cc
     src/runtime/scope.cc
     src/runtime/string_interpolator.cc
-    src/runtime/value.cc
     src/runtime/yielder.cc
 )
+add_dependencies(puppet generate_static_lexer)
 
 set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LIBPUPPET_VERSION_MINOR}.${LIBPUPPET_VERSION_PATCH}" COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY_UNITY")
 
@@ -73,6 +96,7 @@ target_link_libraries(puppet
 
 install(TARGETS puppet DESTINATION lib)
 
-#cotire(puppet)
+cotire(generate_static_lexer)
+cotire(puppet)
 
 add_subdirectory(tests)

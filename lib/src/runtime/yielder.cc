@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace puppet::lexer;
+using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
@@ -20,11 +21,11 @@ namespace puppet { namespace runtime {
 
     value yielder::yield()
     {
-        array arguments;
+        values::array arguments;
         return yield(arguments);
     }
 
-    value yielder::yield(array& arguments)
+    value yielder::yield(values::array& arguments)
     {
         if (!lambda_given()) {
             throw evaluation_exception(_position, "function call requires a lambda but one was not given.");
@@ -36,7 +37,7 @@ namespace puppet { namespace runtime {
             for (size_t i = 0; i < _lambda->parameters()->size(); ++i) {
                 auto& parameter = (*_lambda->parameters())[i];
                 auto& variable = parameter.variable();
-                runtime::value value;
+                values::value value;
 
                 // Check for capture
                 if (parameter.captures()) {
@@ -48,14 +49,14 @@ namespace puppet { namespace runtime {
                         // Check the default value cache
                         auto it = _default_cache.find(variable.name());
                         if (it == _default_cache.end()) {
-                            array captured;
+                            values::array captured;
                             captured.emplace_back(_evaluator.evaluate(*parameter.default_value()));
                             it = _default_cache.emplace(variable.name(), std::move(captured)).first;
                         }
                         // Copy the value from the cache
                         value = it->second;
                     } else {
-                        array captured;
+                        values::array captured;
                         if (i < arguments.size()) {
                             captured.reserve(arguments.size() - i);
                             captured.insert(captured.end(), std::make_move_iterator(arguments.begin() + i), std::make_move_iterator(arguments.end()));
@@ -89,7 +90,17 @@ namespace puppet { namespace runtime {
                     }
                 }
 
-                // TODO: verify the value is of the parameter's type
+                // Verify the value matches the parameter type
+                if (parameter.type()) {
+                    auto result = _evaluator.evaluate(*parameter.type());
+                    auto type = boost::get<values::type>(&result);
+                    if (!type) {
+                        throw evaluation_exception(parameter.position(), (boost::format("expected %1% for parameter type but found %2%.") % types::type::name() % get_type_name(type)).str());
+                    }
+                    if (!is_instance(dereference(value), *type)) {
+                        throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% has expected type %2% but was given %3% (%4%).") % variable.name() % *type % get_type_name(value) % value).str());
+                    }
+                }
 
                 if (!variables.emplace(variable.name(), std::move(value)).second) {
                     throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % variable.name()).str());

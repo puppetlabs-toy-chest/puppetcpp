@@ -7,6 +7,7 @@
 
 using namespace std;
 using namespace puppet::lexer;
+using namespace puppet::runtime::values;
 using boost::optional;
 
 namespace puppet { namespace runtime {
@@ -19,10 +20,10 @@ namespace puppet { namespace runtime {
         optional<ast::lambda> const& lambda,
         value* first_value,
         lexer::token_position const* first_position) :
-        _name(name),
-        _position(position),
-        _context(evaluator.context()),
-        _yielder(evaluator, _position, lambda)
+            _name(name),
+            _position(position),
+            _context(evaluator.context()),
+            _yielder(evaluator, _position, lambda)
     {
         _arguments.reserve((arguments ? arguments->size() : 0) + (first_value ? 1 : 0));
         if (first_value) {
@@ -67,12 +68,12 @@ namespace puppet { namespace runtime {
         return _positions[index];
     }
 
-    array const& call_context::arguments() const
+    values::array const& call_context::arguments() const
     {
         return _arguments;
     }
 
-    array& call_context::arguments()
+    values::array& call_context::arguments()
     {
         return _arguments;
     }

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../value.hpp"
+#include "../values/value.hpp"
 #include "../dispatcher.hpp"
 
 namespace puppet { namespace runtime { namespace functions {
@@ -19,7 +19,7 @@ namespace puppet { namespace runtime { namespace functions {
          * @param context The function call context.
          * @return Returns the resulting value.
          */
-        value operator()(call_context& context) const;
+        values::value operator()(call_context& context) const;
     };
 
 }}}  // puppet::runtime::functions

@@ -51,7 +51,7 @@ namespace puppet { namespace runtime {
          * @name The name of the variable to lookup.
          * @return Returns the value of the variable or nullptr if the variable is not defined.
          */
-        value const* lookup(std::string const& name) const;
+        values::value const* lookup(std::string const& name) const;
 
         /**
          * Gets the current scope.

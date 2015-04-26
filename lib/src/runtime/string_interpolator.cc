@@ -8,6 +8,7 @@
 using namespace std;
 using namespace puppet::lexer;
 using namespace puppet::parser;
+using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
@@ -109,7 +110,7 @@ namespace puppet { namespace runtime {
             // Transform access expressions with a name or bare word target into a variable target
             auto basic = boost::get<ast::basic_expression>(&expr.target());
             if (!basic) {
-                return nullptr;
+                return boost::none;
             }
 
             token_position variable_position;
@@ -129,7 +130,7 @@ namespace puppet { namespace runtime {
                 }
             }
             if (variable_name.empty()) {
-                return nullptr;
+                return boost::none;
             }
 
             // Evaluate the expression, but with a variable of the same name instead
@@ -141,11 +142,11 @@ namespace puppet { namespace runtime {
             // Transform method call expressions with a name or bare word target into a variable target
             auto call = boost::get<ast::method_call_expression>(&expr);
             if (!call) {
-                return nullptr;
+                return boost::none;
             }
             auto basic = boost::get<ast::basic_expression>(&call->target());
             if (!basic) {
-                return nullptr;
+                return boost::none;
             }
 
             token_position variable_position;
@@ -165,7 +166,7 @@ namespace puppet { namespace runtime {
                 }
             }
             if (variable_name.empty()) {
-                return nullptr;
+                return boost::none;
             }
 
             // Evaluate the expression, but with a variable of the same name instead
@@ -175,7 +176,7 @@ namespace puppet { namespace runtime {
         template <typename T>
         result_type operator()(T& t) const
         {
-            return nullptr;
+            return boost::none;
         }
 
      private:

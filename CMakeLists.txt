@@ -26,5 +26,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 find_package(Boost 1.57.0 REQUIRED)
 set(CATCH_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/catch/include")
 
+# Need to bump up the limit for MPL lists a little bit (default is 20)
+# This is because we stick a lot of different types in boost::variant for runtime types
+add_definitions(-DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS -DBOOST_MPL_LIMIT_LIST_SIZE=30 -DBOOST_MPL_LIMIT_VECTOR_SIZE=30)
+
 add_subdirectory(exe)
 add_subdirectory(lib)

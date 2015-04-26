@@ -185,12 +185,9 @@ namespace puppet { namespace parser {
             lambda =
                 (token('|') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token('|') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::lambda>(get_token_position(_1), _2, _3) ];
             parameter =
-                (parameter_type > -token('*') > variable > -(raw_token('=') > expression)) [ _val = phx::construct<ast::parameter>(_1, phx::static_cast_<bool>(_2), _3, _4) ] |
-                (raw_token('*') > variable > -(raw_token('=') > expression))               [ _val = phx::construct<ast::parameter>(nullptr, true, _1, _2) ] |
-                (variable > -(raw_token('=') > expression))                                [ _val = phx::construct<ast::parameter>(nullptr, false, _1, _2) ];
+                (-parameter_type > matches[raw_token('*')] > variable > -(raw_token('=') > expression)) [ _val = phx::construct<ast::parameter>(_1, _2, _3, _4) ];
             parameter_type =
-                ((type >> raw_token('[')) > expressions > raw_token(']')) [ _val = phx::construct<ast::parameter_type>(_1, _2) ] |
-                type                                                      [ _val = phx::construct<ast::parameter_type>(_1, nullptr) ];
+                    (type [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1)) ] >> -((+access) [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::access_expression>(_a, _1)) ])) [ _val = _a ];
             method_call_expression =
                 (primary_expression >> +method_call) [ _val = phx::construct<ast::method_call_expression>(_1, _2) ];
             method_call =
@@ -532,7 +529,7 @@ namespace puppet { namespace parser {
         boost::spirit::qi::rule<iterator_type, puppet::ast::function_call_expression()> statement_call_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::lambda()> lambda;
         boost::spirit::qi::rule<iterator_type, puppet::ast::parameter()> parameter;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::parameter_type()> parameter_type;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression(), boost::spirit::qi::locals<puppet::ast::primary_expression>> parameter_type;
         boost::spirit::qi::rule<iterator_type, puppet::ast::method_call_expression()> method_call_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::method_call()> method_call;
 

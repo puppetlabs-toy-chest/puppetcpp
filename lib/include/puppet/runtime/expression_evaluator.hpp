@@ -51,7 +51,14 @@ namespace puppet { namespace runtime {
          * @param productive True if the expression is required to be productive (i.e. has side effect) or false if not.
          * @return Returns the runtime value that is the result of evaluating the expression.
          */
-        value evaluate(ast::expression const& expr, bool productive = false);
+        values::value evaluate(ast::expression const& expr, bool productive = false);
+
+        /**
+         * Evaluates the given AST primary expression and returns the resulting runtime value.
+         * @param expr The AST primary expression to evaluate.
+         * @return Returns the runtime value that is the result of evaluating the expression.
+         */
+        values::value evaluate(ast::primary_expression const& expr);
 
         /**
          * Gets the evaluation context.
@@ -71,7 +78,7 @@ namespace puppet { namespace runtime {
          * @param evaluated The evaluated value of the given expression.
          * @return Returns the unfolded array if the expression is a splat or nullptr if not.
          */
-        boost::optional<array> unfold(ast::expression const& expression, value& evaluated);
+        boost::optional<values::array> unfold(ast::expression const& expression, values::value& evaluated);
 
         /**
          * Unfolds a splated expression.
@@ -79,24 +86,27 @@ namespace puppet { namespace runtime {
          * @param evaluated The evaluated value of the given expression.
          * @return Returns the unfolded array if the expression is a splat or nullptr if not.
          */
-        boost::optional<array> unfold(ast::primary_expression const& expression, value& evaluated);
+        boost::optional<values::array> unfold(ast::primary_expression const& expression, values::value& evaluated);
 
     private:
+        static bool is_productive(ast::expression const& expr);
+
         void climb_expression(
-            value& left,
+            values::value& left,
             lexer::token_position& left_position,
             std::uint8_t min_precedence,
             std::vector<ast::binary_expression>::const_iterator& begin,
             std::vector<ast::binary_expression>::const_iterator const& end);
 
         void evaluate(
-            value& left,
+            values::value& left,
             lexer::token_position const& left_position,
             ast::binary_operator op,
-            value& right,
+            values::value& right,
             lexer::token_position& right_position);
 
         static uint8_t get_precedence(ast::binary_operator op);
+
         static bool is_right_associative(ast::binary_operator op);
 
         runtime::context& _context;

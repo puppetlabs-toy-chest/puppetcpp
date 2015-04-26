@@ -36,7 +36,7 @@ namespace puppet { namespace runtime {
             lexer::token_position const& position,
             boost::optional<std::vector<ast::expression>> const& arguments,
             boost::optional<ast::lambda> const& lambda,
-            value* first_value = nullptr,
+            values::value* first_value = nullptr,
             lexer::token_position const* first_position = nullptr);
 
         /**
@@ -62,13 +62,13 @@ namespace puppet { namespace runtime {
          * Gets the arguments.
          * @return Returns the arguments.
          */
-        array const& arguments() const;
+        values::array const& arguments() const;
 
         /**
          * Gets the arguments.
          * @return Returns the arguments.
          */
-        array& arguments();
+        values::array& arguments();
 
         /**
          * Gets the yielder for a lambda.
@@ -98,7 +98,7 @@ namespace puppet { namespace runtime {
         std::string const& _name;
         lexer::token_position const& _position;
         context& _context;
-        array _arguments;
+        values::array _arguments;
         std::vector<lexer::token_position> _positions;
         runtime::yielder _yielder;
     };
@@ -111,7 +111,7 @@ namespace puppet { namespace runtime {
         /**
          * Represents the runtime function type (signature of all functions).
          */
-        typedef std::function<value(call_context&)> function_type;
+        typedef std::function<values::value(call_context&)> function_type;
 
         /**
          * Constructs a dispatcher for a function.
@@ -129,11 +129,11 @@ namespace puppet { namespace runtime {
          * @param first_position The first argument position (for method calls; nullptr otherwise).
          * @return Returns the value returned from the function.
          */
-        value dispatch(
+        values::value dispatch(
             expression_evaluator& evaluator,
             boost::optional<std::vector<ast::expression>> const& arguments,
             boost::optional<ast::lambda> const& lambda,
-            value* first_value = nullptr,
+            values::value* first_value = nullptr,
             lexer::token_position const* first_position = nullptr) const;
 
         /**

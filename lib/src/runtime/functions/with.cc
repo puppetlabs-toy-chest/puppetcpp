@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace puppet::lexer;
+using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace functions {
 
