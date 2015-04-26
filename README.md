@@ -63,7 +63,7 @@ Type system implemented:
 * [x] Collection
 * [x] Data
 * [x] Default
-* [ ] Enum
+* [x] Enum
 * [x] Float
 * [x] Hash
 * [x] Integer

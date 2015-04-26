@@ -119,6 +119,7 @@ namespace puppet { namespace runtime {
                 { types::collection::name(),    types::collection() },
                 { types::data::name(),          types::data() },
                 { types::defaulted::name(),     types::defaulted() },
+                { types::enumeration::name(),   types::enumeration() },
                 { types::floating::name(),      types::floating() },
                 { types::hash::name(),          types::hash() },
                 { types::integer::name(),       types::integer() },
@@ -582,6 +583,22 @@ namespace puppet { namespace runtime {
                 pattern = std::move(*str);
             }
             return types::regexp(std::move(pattern));
+        }
+
+        result_type operator()(types::enumeration const& type)
+        {
+            // Ensure each argument is a string
+            vector<string> strings;
+            strings.reserve(_arguments.size());
+
+            for (size_t i = 0; i < _arguments.size(); ++i) {
+                auto str = move_parameter<string>(i);
+                if (!str) {
+                    throw evaluation_exception(_positions[i], (boost::format("expected %1% but found %2%.") % types::string::name() % get_type_name(_arguments[i])).str());
+                }
+                strings.emplace_back(std::move(*str));
+            }
+            return types::enumeration(std::move(strings));
         }
 
         result_type operator()(types::array const& type)

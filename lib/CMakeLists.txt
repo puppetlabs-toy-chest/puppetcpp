@@ -62,6 +62,7 @@ add_library(puppet SHARED
     src/runtime/types/collection.cc
     src/runtime/types/data.cc
     src/runtime/types/defaulted.cc
+    src/runtime/types/enumeration.cc
     src/runtime/types/floating.cc
     src/runtime/types/integer.cc
     src/runtime/types/klass.cc

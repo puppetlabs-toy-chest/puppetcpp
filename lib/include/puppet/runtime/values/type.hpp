@@ -12,6 +12,7 @@
 #include "../types/collection.hpp"
 #include "../types/data.hpp"
 #include "../types/defaulted.hpp"
+#include "../types/enumeration.hpp"
 #include "../types/floating.hpp"
 #include "../types/hash.hpp"
 #include "../types/integer.hpp"
@@ -44,6 +45,7 @@ namespace puppet { namespace runtime { namespace values {
         types::collection,
         types::data,
         types::defaulted,
+        types::enumeration,
         types::floating,
         types::integer,
         types::klass,
