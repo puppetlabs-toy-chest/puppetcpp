@@ -114,6 +114,7 @@ namespace puppet { namespace runtime {
                 { types::any::name(),           types::any() },
                 { types::array::name(),         types::array() },
                 { types::boolean::name(),       types::boolean() },
+                { types::callable::name(),      types::callable() },
                 { types::data::name(),          types::data() },
                 { types::defaulted::name(),     types::defaulted() },
                 { types::floating::name(),      types::floating() },

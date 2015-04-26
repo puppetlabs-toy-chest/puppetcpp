@@ -7,6 +7,7 @@
 #include "../types/any.hpp"
 #include "../types/array.hpp"
 #include "../types/boolean.hpp"
+#include "../types/callable.hpp"
 #include "../types/data.hpp"
 #include "../types/defaulted.hpp"
 #include "../types/floating.hpp"
@@ -34,6 +35,7 @@ namespace puppet { namespace runtime { namespace values {
         types::basic_tuple<boost::recursive_variant_>,
         types::basic_type<boost::recursive_variant_>,
         types::boolean,
+        types::callable,
         types::data,
         types::defaulted,
         types::floating,
