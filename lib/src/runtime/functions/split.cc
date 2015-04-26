@@ -41,7 +41,19 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(string const& first, type const& second) const
         {
-            throw evaluation_exception(_context.position(2), "Type argument not yet implemented.");
+            auto regexp = boost::get<types::regexp>(&second);
+            if (!regexp) {
+                throw evaluation_exception(_context.position(1), (boost::format("expected %1% or %2% for second argument but found %3%.") % types::string::name() % types::regexp::name() % get_type_name(second)).str());
+            }
+            if (regexp->pattern().empty()) {
+                return split_empty(first);
+            }
+            values::array result;
+            std::regex pattern(regexp->pattern());
+            for (sregex_token_iterator begin{ first.begin(), first.end(), pattern, -1}, end; begin != end; ++begin) {
+                result.emplace_back(string(*begin));
+            }
+            return result;
         }
 
         template <
@@ -52,13 +64,13 @@ namespace puppet { namespace runtime { namespace functions {
         >
         result_type operator()(string const&, Second const& second) const
         {
-            throw evaluation_exception(_context.position(1), (boost::format("expected String, Regex, or Type[Regexp] for second argument but found %1%.") % get_type_name(second)).str());
+            throw evaluation_exception(_context.position(1), (boost::format("expected %1% or %2% for second argument but found %3%.") % types::string::name() % types::regexp::name() % get_type_name(second)).str());
         }
 
         template <typename First, typename Second>
         result_type operator()(First const& first, Second const&) const
         {
-            throw evaluation_exception(_context.position(0), (boost::format("expected String for first argument but found %1%.") % get_type_name(first)).str());
+            throw evaluation_exception(_context.position(0), (boost::format("expected %1% for first argument but found %2%.") % types::string::name() % get_type_name(first)).str());
         }
 
      private:
