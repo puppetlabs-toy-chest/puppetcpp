@@ -19,6 +19,7 @@
 #include "../types/klass.hpp"
 #include "../types/numeric.hpp"
 #include "../types/optional.hpp"
+#include "../types/pattern.hpp"
 #include "../types/regexp.hpp"
 #include "../types/resource.hpp"
 #include "../types/scalar.hpp"
@@ -52,6 +53,7 @@ namespace puppet { namespace runtime { namespace values {
         types::integer,
         types::klass,
         types::numeric,
+        types::pattern,
         types::regexp,
         types::resource,
         types::scalar,

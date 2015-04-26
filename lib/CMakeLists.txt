@@ -66,6 +66,7 @@ add_library(puppet SHARED
     src/runtime/types/integer.cc
     src/runtime/types/klass.cc
     src/runtime/types/numeric.cc
+    src/runtime/types/pattern.cc
     src/runtime/types/regexp.cc
     src/runtime/types/resource.cc
     src/runtime/types/scalar.cc

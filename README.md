@@ -70,7 +70,7 @@ Type system implemented:
 * [ ] Class
 * [x] Numeric
 * [x] Optional
-* [ ] Pattern
+* [x] Pattern
 * [x] Regexp
 * [ ] Resource
 * [ ] Runtime

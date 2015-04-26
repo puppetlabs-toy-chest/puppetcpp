@@ -126,6 +126,7 @@ namespace puppet { namespace runtime {
                 { types::klass::name(),         types::klass() },
                 { types::numeric::name(),       types::numeric() },
                 { types::optional::name(),      types::optional(boost::none) },
+                { types::pattern::name(),       types::pattern() },
                 { types::regexp::name(),        types::regexp() },
                 { types::resource::name(),      types::resource() },
                 { types::scalar::name(),        types::scalar() },
@@ -600,6 +601,53 @@ namespace puppet { namespace runtime {
                 strings.emplace_back(std::move(*str));
             }
             return types::enumeration(std::move(strings));
+        }
+
+        result_type operator()(types::pattern const& type)
+        {
+            vector<values::regex> patterns;
+            patterns.reserve(_arguments.size());
+
+            // Each argument can be a string, regex value, Regexp type or another Pattern type
+            for (size_t i = 0; i < _arguments.size(); ++i) {
+                auto const& argument = dereference(_arguments[i]);
+                // Check for string
+                auto str = move_parameter<string>(i);
+                if (str) {
+                    patterns.emplace_back(std::move(*str));
+                    continue;
+                }
+                // Check for regex
+                auto regex = move_parameter<values::regex>(i);
+                if (regex) {
+                    patterns.emplace_back(std::move(*regex));
+                    continue;
+                }
+                // Check for Type
+                auto type_ptr = boost::get<values::type>(&argument);
+                if (type_ptr) {
+                    auto regexp = boost::get<types::regexp>(type_ptr);
+                    if (regexp) {
+                        patterns.emplace_back(regexp->pattern());
+                        continue;
+                    }
+                    // Check for Pattern type
+                    auto pattern_type = boost::get<types::pattern>(type_ptr);
+                    if (pattern_type) {
+                        patterns.reserve(patterns.size() + pattern_type->patterns().size());
+                        patterns.insert(patterns.end(), pattern_type->patterns().begin(), pattern_type->patterns().end());
+                        continue;
+                    }
+                }
+
+                // Not any of the above types
+                throw evaluation_exception(_positions[i], (boost::format("expected %1%, %2%, or %3% but found %4%.") %
+                        types::string::name() %
+                        types::regexp::name() %
+                        types::pattern::name() %
+                        get_type_name(_arguments[i])).str());
+            }
+            return types::pattern(std::move(patterns));
         }
 
         result_type operator()(types::array const& type)
