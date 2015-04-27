@@ -105,11 +105,11 @@ namespace puppet { namespace runtime { namespace values {
     bool is_truthy(value const& val);
 
     /**
-     * Gets the type name of the given value.
-     * @param val The runtime value to get the type name of.
-     * @return Returns the runtime type name of the value.
+     * Gets the type of the given value.
+     * @param val The runtime value to get the type of.
+     * @return Returns the runtime type of the value.
      */
-    std::string get_type_name(value const& val);
+    values::type get_type(value const& val);
 
     /**
      * Determines if the given value is an instance of the given type.

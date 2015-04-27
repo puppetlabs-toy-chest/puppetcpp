@@ -84,46 +84,46 @@ namespace puppet { namespace runtime { namespace values {
         return boost::apply_visitor(truthy_visitor(), val);
     }
 
-    struct type_visitor : boost::static_visitor<string>
+    struct type_visitor : boost::static_visitor<values::type>
     {
         result_type operator()(undef const&) const
         {
-            return types::undef::name();
+            return types::undef();
         }
 
         result_type operator()(defaulted const&) const
         {
-            return types::defaulted::name();
+            return types::defaulted();
         }
 
         result_type operator()(int64_t) const
         {
-            return types::integer::name();
+            return types::integer();
         }
 
         result_type operator()(long double) const
         {
-            return types::floating::name();
+            return types::floating();
         }
 
         result_type operator()(bool) const
         {
-            return types::boolean::name();
+            return types::boolean();
         }
 
         result_type operator()(string const&) const
         {
-            return types::string::name();
+            return types::string();
         }
 
         result_type operator()(values::regex const&) const
         {
-            return types::regexp::name();
+            return types::regexp();
         }
 
         result_type operator()(type const& type) const
         {
-            return types::type::name();
+            return type;
         }
 
         result_type operator()(variable const& var) const
@@ -133,16 +133,16 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(array const&) const
         {
-            return types::array::name();
+            return types::array();
         }
 
         result_type operator()(hash const&) const
         {
-            return types::hash::name();
+            return types::hash();
         }
     };
 
-    string get_type_name(value const& val)
+    values::type get_type(value const& val)
     {
         return boost::apply_visitor(type_visitor(), val);
     }
@@ -166,7 +166,7 @@ namespace puppet { namespace runtime { namespace values {
 
     bool is_instance(value const& val, type const& t)
     {
-        return boost::apply_visitor(is_instance_visitor(val), t);
+        return boost::apply_visitor(is_instance_visitor(dereference(val)), t);
     }
 
     struct is_specialization_visitor : boost::static_visitor<bool>

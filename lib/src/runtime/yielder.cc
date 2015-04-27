@@ -95,10 +95,10 @@ namespace puppet { namespace runtime {
                     auto result = _evaluator.evaluate(*parameter.type());
                     auto type = boost::get<values::type>(&result);
                     if (!type) {
-                        throw evaluation_exception(parameter.position(), (boost::format("expected %1% for parameter type but found %2%.") % types::type::name() % get_type_name(type)).str());
+                        throw evaluation_exception(parameter.position(), (boost::format("expected %1% for parameter type but found %2%.") % types::type::name() % get_type(type)).str());
                     }
                     if (!is_instance(dereference(value), *type)) {
-                        throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% has expected type %2% but was given %3% (%4%).") % variable.name() % *type % get_type_name(value) % value).str());
+                        throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% has expected type %2% but was given %3% (%4%).") % variable.name() % *type % get_type(value) % value).str());
                     }
                 }
 
