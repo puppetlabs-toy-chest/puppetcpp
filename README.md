@@ -85,7 +85,7 @@ Type system implemented:
 Puppet functions implemented:
 
 * [x] alert
-* [ ] assert_type
+* [x] assert_type
 * [ ] contain
 * [ ] create_resources
 * [x] crit

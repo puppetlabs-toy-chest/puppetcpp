@@ -410,7 +410,7 @@ namespace puppet { namespace runtime {
             // Get the index
             auto ptr = boost::get<int64_t>(&dereference(_arguments[0]));
             if (!ptr) {
-                throw evaluation_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type_name(_arguments[0])).str());
+                throw evaluation_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type(_arguments[0])).str());
             }
 
             // If the index is negative, it's from the end of the string
@@ -424,7 +424,7 @@ namespace puppet { namespace runtime {
             if (_arguments.size() == 2) {
                 ptr = boost::get<int64_t>(&dereference(_arguments[1]));
                 if (!ptr) {
-                    throw evaluation_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type_name(_arguments[1])).str());
+                    throw evaluation_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type(_arguments[1])).str());
                 }
                 count = *ptr;
 
@@ -454,7 +454,7 @@ namespace puppet { namespace runtime {
             // Get the index
             auto ptr = boost::get<int64_t>(&dereference(_arguments[0]));
             if (!ptr) {
-                throw evaluation_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type_name(_arguments[0])).str());
+                throw evaluation_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type(_arguments[0])).str());
             }
 
             // If the index is negative, it's from the end of the array
@@ -468,7 +468,7 @@ namespace puppet { namespace runtime {
             if (_arguments.size() == 2) {
                 ptr = boost::get<int64_t>(&dereference(_arguments[1]));
                 if (!ptr) {
-                    throw evaluation_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type_name(_arguments[1])).str());
+                    throw evaluation_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type(_arguments[1])).str());
                 }
                 count = *ptr;
 
@@ -582,7 +582,7 @@ namespace puppet { namespace runtime {
             } else {
                 auto str = move_parameter<string>(0);
                 if (!str) {
-                    throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% or %2% but found %3%.") % types::string::name() % types::regexp::name() % get_type_name(_arguments[0])).str());
+                    throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% or %2% but found %3%.") % types::string::name() % types::regexp::name() % get_type(_arguments[0])).str());
                 }
                 pattern = std::move(*str);
             }
@@ -598,7 +598,7 @@ namespace puppet { namespace runtime {
             for (size_t i = 0; i < _arguments.size(); ++i) {
                 auto str = move_parameter<string>(i);
                 if (!str) {
-                    throw evaluation_exception(_positions[i], (boost::format("expected %1% but found %2%.") % types::string::name() % get_type_name(_arguments[i])).str());
+                    throw evaluation_exception(_positions[i], (boost::format("expected %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
                 }
                 strings.emplace_back(std::move(*str));
             }
@@ -647,7 +647,7 @@ namespace puppet { namespace runtime {
                         types::string::name() %
                         types::regexp::name() %
                         types::pattern::name() %
-                        get_type_name(_arguments[i])).str());
+                        get_type(_arguments[i])).str());
             }
             return types::pattern(std::move(patterns));
         }
@@ -662,7 +662,7 @@ namespace puppet { namespace runtime {
             // First argument should be a type
             auto element_type = move_parameter<values::type>(0);
             if (!element_type) {
-                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type_name(_arguments[0])).str());
+                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
             }
 
             // Get the optional range
@@ -684,13 +684,13 @@ namespace puppet { namespace runtime {
             // First argument should be a type
             auto key_type = move_parameter<values::type>(0);
             if (!key_type) {
-                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type_name(_arguments[0])).str());
+                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
             }
 
             // Second argument should be a type
             auto element_type = move_parameter<values::type>(1);
             if (!element_type) {
-                throw evaluation_exception(_positions[1], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type_name(_arguments[1])).str());
+                throw evaluation_exception(_positions[1], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[1])).str());
             }
 
             // Get the optional range
@@ -733,7 +733,7 @@ namespace puppet { namespace runtime {
             // First argument should be a type
             auto optional_type = move_parameter<values::type>(0);
             if (!optional_type) {
-                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type_name(_arguments[0])).str());
+                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
             }
 
             return types::optional(std::move(*optional_type));
@@ -749,7 +749,7 @@ namespace puppet { namespace runtime {
             // First argument should be a type
             auto underlying_type = move_parameter<values::type>(0);
             if (!underlying_type) {
-                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type_name(_arguments[0])).str());
+                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
             }
 
             return types::type(std::move(*underlying_type));
@@ -765,7 +765,7 @@ namespace puppet { namespace runtime {
             // First argument should be a hash
             auto hash = move_parameter<values::hash>(0);
             if (!hash) {
-                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::hash::name() % get_type_name(_arguments[0])).str());
+                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::hash::name() % get_type(_arguments[0])).str());
             }
 
             // Build a map of string -> Type
@@ -774,12 +774,12 @@ namespace puppet { namespace runtime {
                 // Ensure the key is a string
                 auto str = boost::get<string>(&kvp.first);
                 if (!str) {
-                    throw evaluation_exception(_positions[0], (boost::format("expected hash keys to be %1% but found %2%.") % types::string::name() % get_type_name(kvp.first)).str());
+                    throw evaluation_exception(_positions[0], (boost::format("expected hash keys to be %1% but found %2%.") % types::string::name() % get_type(kvp.first)).str());
                 }
                 // Ensure the value is a type
                 auto type = boost::get<values::type>(&kvp.second);
                 if (!type) {
-                    throw evaluation_exception(_positions[0], (boost::format("expected hash values to be %1% but found %2%.") % types::type::name() % get_type_name(kvp.second)).str());
+                    throw evaluation_exception(_positions[0], (boost::format("expected hash values to be %1% but found %2%.") % types::type::name() % get_type(kvp.second)).str());
                 }
                 types.insert(make_pair(std::move(*str), std::move(*type)));
             }
@@ -794,7 +794,7 @@ namespace puppet { namespace runtime {
             for (size_t i = 0; i < _arguments.size(); ++i) {
                 auto type_parameter = move_parameter<values::type>(i);
                 if (!type_parameter) {
-                    throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type_name(_arguments[i])).str());
+                    throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[i])).str());
                 }
                 types.emplace_back(std::move(*type_parameter));
             }
@@ -804,7 +804,7 @@ namespace puppet { namespace runtime {
         template <typename T>
         result_type operator()(T const& target)
         {
-            throw evaluation_exception(_position, (boost::format("access expression is not supported for %1% (%2%).") % get_type_name(target) % target).str());
+            throw evaluation_exception(_position, (boost::format("access expression is not supported for %1% (%2%).") % get_type(target) % target).str());
         }
 
      private:
@@ -852,7 +852,7 @@ namespace puppet { namespace runtime {
                     } else {
                         auto value_ptr = boost::get<Value>(&dereference(argument));
                         if (!value_ptr) {
-                            throw evaluation_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type_name(argument)).str());
+                            throw evaluation_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type(argument)).str());
                         }
                         from = *value_ptr;
                     }
@@ -871,7 +871,7 @@ namespace puppet { namespace runtime {
                     } else {
                         auto value_ptr = boost::get<Value>(&dereference(argument));
                         if (!value_ptr) {
-                            throw evaluation_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type_name(argument)).str());
+                            throw evaluation_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type(argument)).str());
                         }
                         to = *value_ptr;
                     }

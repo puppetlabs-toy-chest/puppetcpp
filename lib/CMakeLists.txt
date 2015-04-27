@@ -50,6 +50,7 @@ add_library(puppet SHARED
     src/ast/variable.cc
     src/logging/logger.cc
     src/parser/parser.cc
+    src/runtime/functions/assert_type.cc
     src/runtime/functions/fail.cc
     src/runtime/functions/logging.cc
     src/runtime/functions/split.cc

@@ -103,7 +103,7 @@ namespace puppet { namespace runtime {
     {
         auto var = boost::get<variable>(&left);
         if (!var) {
-            throw evaluation_exception(position, (boost::format("cannot assign to %1%: assignment can only be performed on variables.") % get_type_name(left)).str());
+            throw evaluation_exception(position, (boost::format("cannot assign to %1%: assignment can only be performed on variables.") % get_type(left)).str());
         }
         // Can't assign to match variables
         if (var->match()) {
@@ -253,7 +253,7 @@ namespace puppet { namespace runtime {
         template <typename Right>
         result_type operator()(values::hash const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -263,7 +263,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type(right)).str());
         }
 
         template <
@@ -273,13 +273,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic addition but found %2%.") % types::numeric::name() %get_type(left)).str());
         }
 
      private:
@@ -400,7 +400,7 @@ namespace puppet { namespace runtime {
         template <typename Right>
         result_type operator()(values::hash const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% or %2% for deletion but found %3%.") % types::array::name() % types::hash::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% or %2% for deletion but found %3%.") % types::array::name() % types::hash::name() % get_type(right)).str());
         }
 
         template <
@@ -410,7 +410,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -420,13 +420,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic subtraction but found %2%.") % types::numeric::name() % get_type(left)).str());
         }
 
      private:
@@ -485,7 +485,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -495,13 +495,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(left)).str());
         }
 
     private:
@@ -574,7 +574,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -584,13 +584,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic division but found %2%.") % types::numeric::name() % get_type(left)).str());
         }
 
     private:
@@ -625,13 +625,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic modulo but found %2%.") % types::integer::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic modulo but found %2%.") % types::integer::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic modulo but found %2%.") % types::integer::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic modulo but found %2%.") % types::integer::name() % get_type(left)).str());
         }
 
     private:
@@ -664,7 +664,7 @@ namespace puppet { namespace runtime {
         template <typename T>
         result_type operator()(T const& operand) const
         {
-            throw evaluation_exception(_position, (boost::format("expected %1% for unary negation operator but found %2%.") % types::numeric::name() % get_type_name(operand)).str());
+            throw evaluation_exception(_position, (boost::format("expected %1% for unary negation operator but found %2%.") % types::numeric::name() % get_type(operand)).str());
         }
 
     private:
@@ -714,13 +714,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for bitwise left shift but found %2%.") % types::integer::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for bitwise left shift but found %2%.") % types::integer::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for bitwise left shift but found %2%.") % types::integer::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for bitwise left shift but found %2%.") % types::integer::name() % get_type(left)).str());
         }
 
     private:
@@ -763,13 +763,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for bitwise right shift but found %2%.") % types::integer::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for bitwise right shift but found %2%.") % types::integer::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for bitwise right shift but found %2%.") % types::integer::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for bitwise right shift but found %2%.") % types::integer::name() % get_type(left)).str());
         }
 
     private:
@@ -842,7 +842,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -852,7 +852,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -861,7 +861,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type(right)).str());
         }
 
         template <
@@ -870,13 +870,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(type const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type(left)).str());
         }
 
      private:
@@ -935,7 +935,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -945,7 +945,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -954,7 +954,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type(right)).str());
         }
 
         template <
@@ -963,13 +963,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(type const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type(left)).str());
         }
 
     private:
@@ -1028,7 +1028,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -1038,7 +1038,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -1047,7 +1047,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type(right)).str());
         }
 
         template <
@@ -1056,13 +1056,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(type const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type(left)).str());
         }
 
     private:
@@ -1120,7 +1120,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -1130,7 +1130,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -1139,7 +1139,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::string::name() % get_type(right)).str());
         }
 
         template <
@@ -1148,13 +1148,13 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(type const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% for comparison but found %2%.") % types::type::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1%, %2%, or %3% for comparison but found %4%.") % types::numeric::name() % types::string::name() % types::type::name() % get_type(left)).str());
         }
 
     private:
@@ -1205,7 +1205,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(string const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% or %2% for match but found %3%.") % types::string::name() % types::regexp::name() % get_type_name(right)).str());
+            throw evaluation_exception(_right_position, (boost::format("expected %1% or %2% for match but found %3%.") % types::string::name() % types::regexp::name() % get_type(right)).str());
         }
 
         template <
@@ -1215,7 +1215,7 @@ namespace puppet { namespace runtime {
         >
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for match but found %2%.") % types::string::name() % get_type_name(left)).str());
+            throw evaluation_exception(_left_position, (boost::format("expected %1% for match but found %2%.") % types::string::name() % get_type(left)).str());
         }
 
     private:
