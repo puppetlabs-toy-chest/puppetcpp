@@ -38,6 +38,7 @@ namespace puppet { namespace ast {
     struct collection_expression;
     struct unary_expression;
     struct access_expression;
+    struct postfix_expression;
     struct expression;
 
     /**
@@ -69,11 +70,9 @@ namespace puppet { namespace ast {
      * Represents a control-flow expression.
      */
     typedef boost::variant<
-        boost::recursive_wrapper<selector_expression>,
         boost::recursive_wrapper<case_expression>,
         boost::recursive_wrapper<if_expression>,
         boost::recursive_wrapper<unless_expression>,
-        boost::recursive_wrapper<method_call_expression>,
         boost::recursive_wrapper<function_call_expression>
     > control_flow_expression;
 
@@ -113,7 +112,7 @@ namespace puppet { namespace ast {
         control_flow_expression,
         catalog_expression,
         boost::recursive_wrapper<unary_expression>,
-        boost::recursive_wrapper<access_expression>,
+        boost::recursive_wrapper<postfix_expression>,
         boost::recursive_wrapper<expression>
     > primary_expression;
 
@@ -381,24 +380,23 @@ namespace puppet { namespace ast {
         expression();
 
         /**
-         * Constructs an expression with the first primary expression and a variable number of binary expressions.
-         * @param first The first primary expression in the expression.
-         * @param remainder The remaining binary expressions; empty if a unary expression.
+         * Constructs an expression.
+         * @param primary The primary expression.
+         * @param binary The binary expressions to apply.
          */
-        explicit expression(primary_expression first, std::vector<binary_expression> remainder = std::vector<binary_expression>());
+        explicit expression(primary_expression primary, std::vector<binary_expression> binary = std::vector<binary_expression>());
 
         /**
-         * Gets the first primary expression in the expression.
-         * @return Returns the first primary expression in the expression.
+         * Gets the primary expression.
+         * @return Returns the primary expression.
          */
-        primary_expression const& first() const;
+        primary_expression const& primary() const;
 
         /**
-         * Gets the remainder of the expression (for binary expressions).
-         * Empty for unary expressions.
-         * @return Returns the remainder of the expression.
+         * Gets the binary expressions.
+         * @return Returns the binary expressions.
          */
-        std::vector<binary_expression> const& remainder() const;
+        std::vector<binary_expression> const& binary() const;
 
         /**
          * Gets the position of the expression.
@@ -413,8 +411,8 @@ namespace puppet { namespace ast {
         bool blank() const;
 
      private:
-        primary_expression _first;
-        std::vector<binary_expression> _remainder;
+        primary_expression _primary;
+        std::vector<binary_expression> _binary;
     };
 
     /**

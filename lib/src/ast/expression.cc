@@ -12,24 +12,19 @@ namespace puppet { namespace ast {
             return default_position;
         }
 
-        result_type operator()(basic_expression const& expr) const
+        result_type operator()(basic_expression const& subexpression) const
         {
-            return get_position(expr);
+            return get_position(subexpression);
         }
 
-        result_type operator()(control_flow_expression const& expr) const
+        result_type operator()(control_flow_expression const& subexpression) const
         {
-            return get_position(expr);
+            return get_position(subexpression);
         }
 
-        result_type operator()(catalog_expression const& expr) const
+        result_type operator()(catalog_expression const& subexpression) const
         {
-            return get_position(expr);
-        }
-
-        result_type operator()(primary_expression const& expr) const
-        {
-            return get_position(expr);
+            return get_position(subexpression);
         }
 
         template <typename T>
@@ -250,37 +245,37 @@ namespace puppet { namespace ast {
     {
     }
 
-    expression::expression(primary_expression first, vector<binary_expression> remainder) :
-        _first(std::move(first)),
-        _remainder(std::move(remainder))
+    expression::expression(primary_expression primary, vector<binary_expression> binary) :
+        _primary(std::move(primary)),
+        _binary(std::move(binary))
     {
     }
 
-    primary_expression const& expression::first() const
+    primary_expression const& expression::primary() const
     {
-        return _first;
+        return _primary;
     }
 
-    vector<binary_expression> const& expression::remainder() const
+    vector<binary_expression> const& expression::binary() const
     {
-        return _remainder;
+        return _binary;
     }
 
     token_position const& expression::position() const
     {
-        return get_position(_first);
+        return get_position(_primary);
     }
 
     bool expression::blank() const
     {
-        return is_blank(_first);
+        return is_blank(_primary);
     }
 
     ostream& operator<<(ostream& os, expression const& expr)
     {
-        os << "(" << expr.first();
-        for (auto const& bexpr : expr.remainder()) {
-            os << bexpr;
+        os << "(" << expr.primary();
+        for (auto const& binary : expr.binary()) {
+            os << binary;
         }
         os << ")";
         return os;

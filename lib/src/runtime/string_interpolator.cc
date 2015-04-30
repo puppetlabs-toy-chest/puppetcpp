@@ -98,90 +98,48 @@ namespace puppet { namespace runtime {
         return true;
     }
 
-    struct interpolation_expression_visitor : boost::static_visitor<boost::optional<value>>
+    static boost::optional<value> transform_expression(expression_evaluator& evaluator, ast::expression const& expression)
     {
-        explicit interpolation_expression_visitor(expression_evaluator& evaluator) :
-            _evaluator(evaluator)
-        {
-        }
-
-        result_type operator()(ast::access_expression const& expr) const
-        {
-            // Transform access expressions with a name or bare word target into a variable target
-            auto basic = boost::get<ast::basic_expression>(&expr.target());
-            if (!basic) {
-                return boost::none;
-            }
-
-            token_position variable_position;
-            string variable_name;
-
-            // Check for name
-            auto name = boost::get<ast::name>(basic);
-            if (name) {
-                variable_position = name->position();
-                variable_name = name->value();
-            } else {
-                // Also check for bare word
-                auto word = boost::get<ast::bare_word>(basic);
-                if (word) {
-                    variable_position = word->position();
-                    variable_name = word->value();
-                }
-            }
-            if (variable_name.empty()) {
-                return boost::none;
-            }
-
-            // Evaluate the expression, but with a variable of the same name instead
-            return _evaluator.evaluate(ast::expression(ast::access_expression(ast::basic_expression(ast::variable(variable_name,variable_position)), expr.accesses())));
-        }
-
-        result_type operator()(ast::control_flow_expression const& expr) const
-        {
-            // Transform method call expressions with a name or bare word target into a variable target
-            auto call = boost::get<ast::method_call_expression>(&expr);
-            if (!call) {
-                return boost::none;
-            }
-            auto basic = boost::get<ast::basic_expression>(&call->target());
-            if (!basic) {
-                return boost::none;
-            }
-
-            token_position variable_position;
-            string variable_name;
-
-            // Check for name
-            auto name = boost::get<ast::name>(basic);
-            if (name) {
-                variable_position = name->position();
-                variable_name = name->value();
-            } else {
-                // Also check for bare word
-                auto word = boost::get<ast::bare_word>(basic);
-                if (word) {
-                    variable_position = word->position();
-                    variable_name = word->value();
-                }
-            }
-            if (variable_name.empty()) {
-                return boost::none;
-            }
-
-            // Evaluate the expression, but with a variable of the same name instead
-            return _evaluator.evaluate(ast::expression(ast::control_flow_expression(ast::method_call_expression(ast::basic_expression(ast::variable(variable_name, variable_position)), call->calls()))));
-        }
-
-        template <typename T>
-        result_type operator()(T& t) const
-        {
+        // Check for a postfix expression
+        auto postfix = boost::get<ast::postfix_expression>(&expression.primary());
+        if (!postfix || postfix->subexpressions().empty()) {
             return boost::none;
         }
 
-     private:
-        expression_evaluator& _evaluator;
-    };
+        // Check for access or method call
+        auto& subexpression = postfix->subexpressions().front();
+        if (!boost::get<ast::access_expression>(&subexpression) &&
+            !boost::get<ast::method_call_expression>(&subexpression)) {
+            return boost::none;
+        }
+
+        // If the expression is a name followed by an access operation or method call, treat as a variable
+        auto basic = boost::get<ast::basic_expression>(&postfix->primary());
+        if (!basic) {
+            return boost::none;
+        }
+
+        token_position variable_position;
+        string variable_name;
+
+        // Check for name
+        auto name = boost::get<ast::name>(basic);
+        if (name) {
+            variable_position = name->position();
+            variable_name = name->value();
+        } else {
+            // Also check for bare word
+            auto word = boost::get<ast::bare_word>(basic);
+            if (word) {
+                variable_position = word->position();
+                variable_name = word->value();
+            }
+        }
+        if (variable_name.empty()) {
+            return boost::none;
+        }
+        return evaluator.evaluate(ast::expression(ast::postfix_expression(ast::basic_expression(ast::variable(std::move(variable_name), std::move(variable_position))), postfix->subexpressions()), expression.binary()));
+    }
 
     string_interpolator::string_interpolator(expression_evaluator& evaluator) :
         _evaluator(evaluator)
@@ -313,7 +271,7 @@ namespace puppet { namespace runtime {
                                     // For the first expression, transform certain constructs to their "variable" forms
                                     if (first) {
                                         first = false;
-                                        auto result = boost::apply_visitor(interpolation_expression_visitor(_evaluator), expression.first());
+                                        auto result = transform_expression(_evaluator, expression);
                                         if (result) {
                                             val = *result;
                                             continue;

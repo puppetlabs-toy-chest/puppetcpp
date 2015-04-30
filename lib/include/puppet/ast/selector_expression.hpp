@@ -44,7 +44,6 @@ namespace puppet { namespace ast {
         lexer::token_position const& position() const;
 
      private:
-        lexer::token_position _position;
         expression _selector;
         expression _result;
     };
@@ -68,17 +67,11 @@ namespace puppet { namespace ast {
         selector_expression();
 
         /**
-         * Constructs a selector expression with the given value expression and cases.
-         * @param value The value being selected upon.
+         * Constructs a selector expression.
+         * @param position The position of the selector expression.
          * @param cases The selector cases.
          */
-        selector_expression(primary_expression value, std::vector<selector_case_expression> cases);
-
-        /**
-         * Gets the value of the selector expression.
-         * @return Returns the value of the selector expression.
-         */
-        primary_expression const& value() const;
+        selector_expression(lexer::token_position position, std::vector<selector_case_expression> cases);
 
         /**
          * Gets the selector case expressions.
@@ -93,7 +86,7 @@ namespace puppet { namespace ast {
         lexer::token_position const& position() const;
 
      private:
-        primary_expression _value;
+        lexer::token_position _position;
         std::vector<selector_case_expression> _cases;
     };
 

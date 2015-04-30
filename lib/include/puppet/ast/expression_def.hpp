@@ -23,3 +23,4 @@
 #include "defined_type_expression.hpp"
 #include "node_definition_expression.hpp"
 #include "collection_expression.hpp"
+#include "postfix_expression.hpp"
