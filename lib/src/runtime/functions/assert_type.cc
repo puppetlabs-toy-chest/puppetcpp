@@ -9,7 +9,7 @@ namespace puppet { namespace runtime { namespace functions {
 
     value assert_type::operator()(call_context& context) const
     {
-        // Check the argument ocunt
+        // Check the argument count
         auto& arguments = context.arguments();
         if (arguments.size() != 2) {
             throw evaluation_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to assert_type function but %1% were given.") % arguments.size()).str());

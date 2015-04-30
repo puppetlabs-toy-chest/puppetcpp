@@ -43,9 +43,6 @@ namespace puppet { namespace ast {
 
     token_position const& parameter::position() const
     {
-        if (_type) {
-            return get_position(*_type);
-        }
         return _variable.position();
     }
 

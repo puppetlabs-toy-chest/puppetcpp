@@ -110,14 +110,14 @@ namespace puppet { namespace ast {
     {
     }
 
-    resource_expression::resource_expression(expression type, vector<resource_body> bodies, resource_status status) :
+    resource_expression::resource_expression(primary_expression type, vector<resource_body> bodies, resource_status status) :
         _type(std::move(type)),
         _bodies(std::move(bodies)),
         _status(status)
     {
     }
 
-    expression const& resource_expression::type() const
+    primary_expression const& resource_expression::type() const
     {
         return _type;
     }
@@ -134,7 +134,7 @@ namespace puppet { namespace ast {
 
     token_position const& resource_expression::position() const
     {
-        return _type.position();
+        return get_position(_type);
     }
 
     ostream& operator<<(ostream& os, resource_expression const& expression)

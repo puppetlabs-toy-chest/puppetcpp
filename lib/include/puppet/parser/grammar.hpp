@@ -93,21 +93,19 @@ namespace puppet { namespace parser {
                 (primary_expression > *binary_expression) [ _val = phx::construct<ast::expression>(_1, _2) ];
 
             // Primary expression
-            // This also handles postfix expressions such as selector, access and method call expressions
             // The order of the subexpressions is important; specifically basic_expression must come after the other subexpressions
             primary_expression =
-                ((
-                    unary_expression |
-                    catalog_expression |
-                    control_flow_expression |
-                    basic_expression |
-                    (raw_token('(') > expression > raw_token(')'))
-                ) [ _a = phx::construct<ast::primary_expression>(_1) ] >>
-                    -(
-                        (raw_token('?') > raw_token('{') > (selector_case_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::control_flow_expression>(phx::construct<ast::selector_expression>(_a, _1))) ] |
-                        (+access)                                                                                                          [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::access_expression>(_a, _1)) ] |
-                        (+method_call)                                                                                                     [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::control_flow_expression>(phx::construct<ast::method_call_expression>(_a, _1))) ]
-                     )
+                (
+                    (
+                        unary_expression |
+                        catalog_expression |
+                        control_flow_expression |
+                        basic_expression |
+                        (raw_token('(') > expression > raw_token(')'))
+                    ) [ _a = phx::construct<ast::primary_expression>(_1) ] >>
+                        (
+                            (*postfix_subexpression) [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::postfix_expression>(_a, _1)) ]
+                        )
                 ) [ _val = _a ];
 
             // Basic expressions
@@ -157,15 +155,13 @@ namespace puppet { namespace parser {
             // Control-flow expressions
             control_flow_expression =
                 (
-                    // Selector expression is a postfix expression; handled in primary_expression
+                    // Selector expression is a postfix expression
                     case_expression |
                     if_expression |
                     unless_expression |
                     function_call_expression
-                    // Method call is a postfix expression; handled in primary_expression
+                    // Method call is a postfix expression
                 ) [ _val = phx::construct<ast::control_flow_expression>(_1) ];
-            selector_case_expression =
-                (expression > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::selector_case_expression>(_1, _2) ];
             case_expression =
                 (token(token_id::keyword_case) > expression > raw_token('{') > +case_proposition > raw_token('}')) [ _val = phx::construct<ast::case_expression>(get_token_position(_1), _2, _3) ];
             case_proposition =
@@ -185,13 +181,7 @@ namespace puppet { namespace parser {
             lambda =
                 (token('|') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token('|') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::lambda>(get_token_position(_1), _2, _3) ];
             parameter =
-                (-parameter_type > matches[raw_token('*')] > variable > -(raw_token('=') > expression)) [ _val = phx::construct<ast::parameter>(_1, _2, _3, _4) ];
-            parameter_type =
-                    (type [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1)) ] >> -((+access) [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::access_expression>(_a, _1)) ])) [ _val = _a ];
-            method_call_expression =
-                (primary_expression >> +method_call) [ _val = phx::construct<ast::method_call_expression>(_1, _2) ];
-            method_call =
-                (raw_token('.') > name > -(raw_token('(') > expressions > raw_token(')')) > -lambda) [ _val = phx::construct<ast::method_call>(_1, _2, _3) ];
+                (-type_expression >> matches[raw_token('*')] >> variable >> -(raw_token('=') > expression)) [ _val = phx::construct<ast::parameter>(_1, _2, _3, _4) ];
 
             // Catalog expressions
             catalog_expression =
@@ -206,10 +196,9 @@ namespace puppet { namespace parser {
                 (raw_token(token_id::atat) > resource_type > raw_token('{') > (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}')) [ _val = phx::construct<ast::resource_expression>(_1, _2, ast::resource_status::exported) ] |
                 ((resource_type >> raw_token('{')) >> (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}'))                         [ _val = phx::construct<ast::resource_expression>(_1, _2) ];
             resource_type =
-                name                           [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1))) ] |
-                token(token_id::keyword_class) [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(phx::construct<ast::name>(_1)))) ] |
-                type                           [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1))) ] |
-                (type >> +access)              [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::access_expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1)), _2))) ];
+                name                           [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1)) ] |
+                token(token_id::keyword_class) [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(phx::construct<ast::name>(_1))) ] |
+                variable_type_expression       [ _val = _1 ];
             resource_body =
                 ((expression >> raw_token(':')) > -(attribute_expression % raw_token(',')) > -raw_token(',')) [ _val = phx::construct<ast::resource_body>(_1, _2) ];
             attribute_expression =
@@ -243,11 +232,7 @@ namespace puppet { namespace parser {
             resource_defaults_expression =
                 ((type >> raw_token('{')) > -(attribute_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::resource_defaults_expression>(_1, _2) ];
             resource_override_expression =
-                ((resource_reference >> raw_token('{')) > -(attribute_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::resource_override_expression>(_1, _2) ];
-            resource_reference =
-                (variable >> +access) [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::access_expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1)), _2))) ] |
-                variable              [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1))) ] |
-                (type >> +access)     [ _val = phx::construct<ast::expression>(phx::construct<ast::primary_expression>(phx::construct<ast::access_expression>(phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1)), _2))) ];
+                ((variable_type_expression >> raw_token('{')) > -(attribute_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::resource_override_expression>(_1, _2) ];
             class_definition_expression =
                 (token(token_id::keyword_class) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > -(raw_token(token_id::keyword_inherits) > name) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::class_definition_expression>(get_token_position(_1), _2, _3, _4, _5) ];
             defined_type_expression =
@@ -287,6 +272,22 @@ namespace puppet { namespace parser {
                 (token('*') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_token_position(_1), ast::unary_operator::splat, _2) ]  |
                 (token('!') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_token_position(_1), ast::unary_operator::logical_not, _2) ];
 
+            // Postfix expressions
+            postfix_subexpression =
+                (
+                    selector_expression     |
+                    access_expression       |
+                    method_call_expression
+                ) [ _val = phx::construct<ast::postfix_subexpression>(_1) ];
+            selector_expression =
+                (token('?') > raw_token('{') > (selector_case_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::selector_expression>(get_token_position(_1), _2) ];
+            selector_case_expression =
+                (expression > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::selector_case_expression>(_1, _2) ];
+            access_expression =
+                (token('[') > expressions > raw_token(']')) [ _val = phx::construct<ast::access_expression>(get_token_position(_1), _2) ];
+            method_call_expression =
+                (raw_token('.') > name > -(raw_token('(') > expressions > raw_token(')')) > -lambda) [ _val = phx::construct<ast::method_call_expression>(_1, _2, _3) ];
+
             // Binary expression
             binary_expression =
                 (binary_operator > primary_expression) [ _val = phx::construct<ast::binary_expression>(_1, _2) ];
@@ -315,9 +316,13 @@ namespace puppet { namespace parser {
                 raw_token(token_id::out_edge)       [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::out_edge) ]          |
                 raw_token(token_id::out_edge_sub)   [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::out_edge_subscribe) ];
 
-            // Access expression
-            access =
-                (token('[') > expressions > raw_token(']')) [ _val = phx::construct<ast::access>(get_token_position(_1), _2) ];
+            // Type expression
+            type_expression =
+                (type > *type_access_expression) [ _val = phx::construct<ast::postfix_expression>(phx::construct<ast::basic_expression>(_1), _2) ];
+            variable_type_expression =
+                ((type | variable) > *type_access_expression) [ _val = phx::construct<ast::postfix_expression>(phx::construct<ast::basic_expression>(_1), _2) ];
+            type_access_expression =
+                access_expression [ _val = phx::construct<ast::postfix_subexpression>(_1) ];
 
             // Manifest
             manifest.name("manifest");
@@ -353,7 +358,6 @@ namespace puppet { namespace parser {
 
             // Control-flow expressions
             control_flow_expression.name("control flow expression");
-            selector_case_expression.name("selector case expression");
             case_expression.name("case expression");
             case_proposition.name("case proposition");
             if_expression.name("if expression");
@@ -364,9 +368,6 @@ namespace puppet { namespace parser {
             statement_call_expression.name("statement call expression");
             lambda.name("lambda");
             parameter.name("parameter");
-            parameter_type.name("parameter type");
-            method_call_expression.name("method call expression");
-            method_call.name("method call");
 
             // Catalog expressions
             catalog_expression.name("catalog expression");
@@ -378,7 +379,6 @@ namespace puppet { namespace parser {
             attribute_name.name("attribute name");
             resource_defaults_expression.name("resource defaults expression");
             resource_override_expression.name("resource override expression");
-            resource_reference.name("resource reference");
             class_definition_expression.name("class definition expression");
             defined_type_expression.name("defined type expression");
             node_definition_expression.name("node definition expression");
@@ -393,12 +393,22 @@ namespace puppet { namespace parser {
             // Unary expressions
             unary_expression.name("unary expression");
 
+            // Postfix expressions
+            postfix_subexpression.name("postfix subexpression");
+            selector_expression.name("selector expression");
+            selector_case_expression.name("selector case expression");
+            access_expression.name("access expression");
+            method_call_expression.name("method call expression");
+
             // Binary expressions
             binary_expression.name("binary expression");
             binary_operator.name("binary operator");
 
-            // Access expression
-            access.name("access");
+            // Type expression
+            type_expression.name("type expression");
+            variable_type_expression.name("variable or type expression");
+            type_access_expression.name("type access expression");
+
 #ifndef NDEBUG
             // Manifest
             debug(manifest);
@@ -434,7 +444,6 @@ namespace puppet { namespace parser {
 
             // Control-flow expressions
             debug(control_flow_expression);
-            debug(selector_case_expression);
             debug(case_expression);
             debug(case_proposition);
             debug(if_expression);
@@ -445,9 +454,6 @@ namespace puppet { namespace parser {
             debug(statement_call_expression);
             debug(lambda);
             debug(parameter);
-            debug(parameter_type);
-            debug(method_call_expression);
-            debug(method_call);
 
             // Catalog expressions
             debug(catalog_expression);
@@ -459,7 +465,6 @@ namespace puppet { namespace parser {
             debug(attribute_name);
             debug(resource_defaults_expression);
             debug(resource_override_expression);
-            debug(resource_reference);
             debug(class_definition_expression);
             debug(defined_type_expression);
             debug(node_definition_expression);
@@ -474,12 +479,21 @@ namespace puppet { namespace parser {
             // Unary expressions
             debug(unary_expression);
 
+            // Postfix expressions
+            debug(postfix_subexpression);
+            debug(selector_expression);
+            debug(selector_case_expression);
+            debug(access_expression);
+            debug(method_call_expression);
+
             // Binary expressions
             debug(binary_expression);
             debug(binary_operator);
 
-            // Access expression
-            debug(access);
+            // Type expression
+            debug(type_expression);
+            debug(variable_type_expression);
+            debug(type_access_expression);
 #endif
         }
 
@@ -518,7 +532,6 @@ namespace puppet { namespace parser {
 
         // Control-flow expressions
         boost::spirit::qi::rule<iterator_type, puppet::ast::control_flow_expression()> control_flow_expression;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::selector_case_expression()> selector_case_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::case_expression()> case_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::case_proposition()> case_proposition;
         boost::spirit::qi::rule<iterator_type, puppet::ast::if_expression()> if_expression;
@@ -529,21 +542,17 @@ namespace puppet { namespace parser {
         boost::spirit::qi::rule<iterator_type, puppet::ast::function_call_expression()> statement_call_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::lambda()> lambda;
         boost::spirit::qi::rule<iterator_type, puppet::ast::parameter()> parameter;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression(), boost::spirit::qi::locals<puppet::ast::primary_expression>> parameter_type;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::method_call_expression()> method_call_expression;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::method_call()> method_call;
 
         // Catalog expressions
         boost::spirit::qi::rule<iterator_type, puppet::ast::catalog_expression()> catalog_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::resource_expression()> resource_expression;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::expression()> resource_type;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression()> resource_type;
         boost::spirit::qi::rule<iterator_type, puppet::ast::resource_body()> resource_body;
         boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_expression()> attribute_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_operator()> attribute_operator;
         boost::spirit::qi::rule<iterator_type, puppet::ast::name()> attribute_name;
         boost::spirit::qi::rule<iterator_type, puppet::ast::resource_defaults_expression()> resource_defaults_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::resource_override_expression()> resource_override_expression;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::expression()> resource_reference;
         boost::spirit::qi::rule<iterator_type, puppet::ast::class_definition_expression()> class_definition_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::defined_type_expression()> defined_type_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::node_definition_expression()> node_definition_expression;
@@ -558,12 +567,21 @@ namespace puppet { namespace parser {
         // Unary expressions
         boost::spirit::qi::rule<iterator_type, puppet::ast::unary_expression()> unary_expression;
 
+        // Postfix expressions
+        boost::spirit::qi::rule<iterator_type, puppet::ast::postfix_subexpression()> postfix_subexpression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::selector_expression()> selector_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::selector_case_expression()> selector_case_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::access_expression()> access_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::method_call_expression()> method_call_expression;
+
         // Binary expressions
         boost::spirit::qi::rule<iterator_type, puppet::ast::binary_expression()> binary_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::binary_operator()> binary_operator;
 
-        // Access expression
-        boost::spirit::qi::rule<iterator_type, puppet::ast::access()> access;
+        // Type expression
+        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression()> type_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression()> variable_type_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::postfix_subexpression()> type_access_expression;
     };
 
 }}  // namespace puppet::parser

@@ -11,13 +11,13 @@ namespace puppet { namespace ast {
     {
     }
 
-    resource_override_expression::resource_override_expression(expression reference, optional<vector<attribute_expression>> attributes) :
+    resource_override_expression::resource_override_expression(primary_expression reference, optional<vector<attribute_expression>> attributes) :
         _reference(std::move(reference)),
         _attributes(std::move(attributes))
     {
     }
 
-    expression const& resource_override_expression::reference() const
+    primary_expression const& resource_override_expression::reference() const
     {
         return _reference;
     }
@@ -29,12 +29,12 @@ namespace puppet { namespace ast {
 
     token_position const& resource_override_expression::position() const
     {
-        return _reference.position();
+        return get_position(_reference);
     }
 
     ostream& operator<<(ostream& os, resource_override_expression const& expr)
     {
-        if (expr.reference().blank()) {
+        if (is_blank(expr.reference())) {
             return os;
         }
         os << expr.reference() << " { ";

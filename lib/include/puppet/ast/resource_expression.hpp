@@ -180,13 +180,13 @@ namespace puppet { namespace ast {
          * @param bodies The resource bodies being defined.
          * @param status The resource status.
          */
-        resource_expression(expression type, std::vector<resource_body> bodies, resource_status status = resource_status::realized);
+        resource_expression(primary_expression type, std::vector<resource_body> bodies, resource_status status = resource_status::realized);
 
         /**
          * Gets the type expression of the resource being defined.
          * @return Returns the type expression of the resource being defined.
          */
-        expression const& type() const;
+        primary_expression const& type() const;
 
         /**
          * Gets the resource bodies that are being defined.
@@ -207,7 +207,7 @@ namespace puppet { namespace ast {
         lexer::token_position const& position() const;
 
      private:
-        expression _type;
+        primary_expression _type;
         std::vector<resource_body> _bodies;
         resource_status _status;
     };

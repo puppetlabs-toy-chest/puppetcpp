@@ -38,6 +38,7 @@ add_library(puppet SHARED
     src/ast/node_definition_expression.cc
     src/ast/number.cc
     src/ast/parameter.cc
+    src/ast/postfix_expression.cc
     src/ast/regex.cc
     src/ast/selector_expression.cc
     src/ast/undef.cc

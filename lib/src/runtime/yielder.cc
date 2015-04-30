@@ -98,7 +98,7 @@ namespace puppet { namespace runtime {
                         throw evaluation_exception(parameter.position(), (boost::format("expected %1% for parameter type but found %2%.") % types::type::name() % get_type(type)).str());
                     }
                     if (!is_instance(dereference(value), *type)) {
-                        throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% has expected type %2% but was given %3% (%4%).") % variable.name() % *type % get_type(value) % value).str());
+                        throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% has expected type %2% but was given %3%.") % variable.name() % *type % get_type(value)).str());
                     }
                 }
 
@@ -122,11 +122,19 @@ namespace puppet { namespace runtime {
 
             // Evaluate the lambda body
             for (size_t i = 0; i < _lambda->body()->size(); ++i) {
-                auto& expression = (* _lambda->body())[i];
+                auto& expression = (*_lambda->body())[i];
                 // The last expression in the block is allowed to be unproductive (i.e. the return value)
                 result = _evaluator.evaluate(expression, i < ( _lambda->body()->size() - 1));
             }
+
+            // If the result is a variable in the current scope (or a match variable), it's ephemeral and needs to be copied
+            if (auto ptr = boost::get<values::variable>(&result)) {
+                if (ptr->match() || _evaluator.context().current().get(ptr->name())) {
+                    result = dereference(result);
+                }
+            }
         }
+
         return result;
     }
 

@@ -26,13 +26,13 @@ namespace puppet { namespace ast {
          * @param reference The reference expression for resources being overriden.
          * @param attributes The optional list of attributes being overridden.
          */
-        resource_override_expression(expression reference, boost::optional<std::vector<attribute_expression>> attributes);
+        resource_override_expression(primary_expression reference, boost::optional<std::vector<attribute_expression>> attributes);
 
         /**
          * Gets the reference expression for the resources being overriden.
          * @return Returns the reference expression for the resources being overriden.
          */
-        expression const& reference() const;
+        primary_expression const& reference() const;
 
         /**
          * Gets the optional attributes being overridden.
@@ -47,7 +47,7 @@ namespace puppet { namespace ast {
         lexer::token_position const& position() const;
 
      private:
-        expression _reference;
+        primary_expression _reference;
         boost::optional<std::vector<attribute_expression>> _attributes;
     };
 
