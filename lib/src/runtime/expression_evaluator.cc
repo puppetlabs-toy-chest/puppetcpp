@@ -1051,25 +1051,9 @@ namespace puppet { namespace runtime {
 
     bool expression_evaluator::is_productive(ast::expression const& expr)
     {
-        // Check for recursive primary expression
-        auto recursive = boost::get<ast::expression>(&expr.primary());
-        if (recursive && is_productive(*recursive)) {
+        // Check if the primary expression itself is productive
+        if (is_productive(expr.primary())) {
             return true;
-        }
-
-        // Catalog and control flow expressions are productive
-        if (boost::get<ast::catalog_expression>(&expr.primary()) ||
-            boost::get<ast::control_flow_expression>(&expr.primary())) {
-            return true;
-        }
-
-        // Postfix method calls are productive
-        if (auto ptr = boost::get<ast::postfix_expression>(&expr.primary())) {
-            for (auto const& subexpression : ptr->subexpressions()) {
-                if (boost::get<ast::method_call_expression>(&subexpression)) {
-                    return true;
-                }
-            }
         }
 
         // Expressions followed by an assignment or relationship operator are productive
@@ -1083,6 +1067,42 @@ namespace puppet { namespace runtime {
             }
         }
 
+        return false;
+    }
+
+    bool expression_evaluator::is_productive(ast::primary_expression const& expr)
+    {
+        // Check for recursive primary expression
+        if (auto ptr = boost::get<ast::expression>(&expr)) {
+            if (is_productive(*ptr)) {
+                return true;
+            }
+        }
+
+        // Check for unary expression
+        if (auto ptr = boost::get<ast::unary_expression>(&expr)) {
+            if (is_productive(ptr->operand())) {
+                return true;
+            }
+        }
+
+        // Catalog and control flow expressions are productive
+        if (boost::get<ast::catalog_expression>(&expr) ||
+            boost::get<ast::control_flow_expression>(&expr)) {
+            return true;
+        }
+
+        // Postfix method calls are productive
+        if (auto ptr = boost::get<ast::postfix_expression>(&expr)) {
+            if (is_productive(ptr->primary())) {
+                return true;
+            }
+            for (auto const& subexpression : ptr->subexpressions()) {
+                if (boost::get<ast::method_call_expression>(&subexpression)) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 

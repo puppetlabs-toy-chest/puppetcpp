@@ -103,9 +103,9 @@ namespace puppet { namespace parser {
                         basic_expression |
                         (raw_token('(') > expression > raw_token(')'))
                     ) [ _a = phx::construct<ast::primary_expression>(_1) ] >>
-                        (
-                            (*postfix_subexpression) [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::postfix_expression>(_a, _1)) ]
-                        )
+                        -(
+                            (+postfix_subexpression) [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::postfix_expression>(_a, _1)) ]
+                         )
                 ) [ _val = _a ];
 
             // Basic expressions
