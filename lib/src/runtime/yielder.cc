@@ -14,9 +14,36 @@ namespace puppet { namespace runtime {
     {
     }
 
+    token_position const& yielder::position() const
+    {
+        if (!_lambda) {
+            return _position;
+        }
+        return _lambda->position();
+    }
+
+    token_position const& yielder::position(size_t index) const
+    {
+        if (!_lambda || !_lambda->parameters()) {
+            return position();
+        }
+        if (index >= _lambda->parameters()->size()) {
+            throw runtime_error("parameter index out of range.");
+        }
+        return (*_lambda->parameters())[index].position();
+    }
+
     bool yielder::lambda_given() const
     {
         return static_cast<bool>(_lambda);
+    }
+
+    size_t yielder::parameter_count() const
+    {
+        if (!_lambda || !_lambda->parameters()) {
+            return 0;
+        }
+        return _lambda->parameters()->size();
     }
 
     value yielder::yield()

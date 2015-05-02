@@ -91,7 +91,7 @@ namespace puppet { namespace runtime { namespace functions {
     {
         auto& arguments = context.arguments();
         if (arguments.size() != 2) {
-            throw evaluation_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to split function but %1% were given.") % arguments.size()).str());
+            throw evaluation_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to 'split' function but %1% were given.") % arguments.size()).str());
         }
         return boost::apply_visitor(split_visitor(context), arguments[0], arguments[1]);
     }

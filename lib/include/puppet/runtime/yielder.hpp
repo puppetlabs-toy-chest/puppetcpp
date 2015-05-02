@@ -29,10 +29,29 @@ namespace puppet { namespace runtime {
         yielder(expression_evaluator& evaluator, lexer::token_position const& position, boost::optional<ast::lambda> const& lambda);
 
         /**
+         * Gets the position of the lambda itself.
+         * @return Returns the position of the lambda itself.
+         */
+        lexer::token_position const& position() const;
+
+        /**
+         * Gets the position of an parameter to the lambda.
+         * @param index The index of the parameter.
+         * @return Returns the position of the parameter.
+         */
+        lexer::token_position const& position(size_t index) const;
+
+        /**
          * Determines if the lambda was given to the function.
          * @return Returns true if the lambda was given or false if not.
          */
         bool lambda_given() const;
+
+        /**
+         * Gets the count of parameters to the lambda.
+         * @return Returns the count of parameters to the lambda.
+         */
+        size_t parameter_count() const;
 
         /**
          * Yields to the lambda without passing any arguments.

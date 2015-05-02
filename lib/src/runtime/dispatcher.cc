@@ -1,5 +1,6 @@
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/runtime/functions/assert_type.hpp>
+#include <puppet/runtime/functions/each.hpp>
 #include <puppet/runtime/functions/fail.hpp>
 #include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/split.hpp>
@@ -109,6 +110,7 @@ namespace puppet { namespace runtime {
             { "assert_type",    functions::assert_type() },
             { "crit",           functions::logging_function(logging::level::critical) },
             { "debug",          functions::logging_function(logging::level::debug) },
+            { "each",           functions::each() },
             { "emerg",          functions::logging_function(logging::level::emergency) },
             { "err",            functions::logging_function(logging::level::error) },
             { "fail",           functions::fail() },
