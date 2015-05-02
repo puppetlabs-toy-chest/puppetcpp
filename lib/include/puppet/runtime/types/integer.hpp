@@ -8,6 +8,7 @@
 #include <limits>
 #include <cstdint>
 #include <ostream>
+#include <functional>
 
 namespace puppet { namespace runtime { namespace types {
 
@@ -40,6 +41,18 @@ namespace puppet { namespace runtime { namespace types {
          * @return Returns the name of the type (i.e. Integer).
          */
         static const char* name();
+
+        /**
+         * Determines if the range is enumerable.
+         * @return Returns whether or not the range is enumerable.
+         */
+        bool enumerable() const;
+
+        /**
+         * Calls the given callback for each integer in the range.
+         * @param callback The callback to call.
+         */
+        void each(std::function<bool(int64_t, int64_t)> const& callback) const;
 
         /**
          * Determines if the given value is an instance of this type.

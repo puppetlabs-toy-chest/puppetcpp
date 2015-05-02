@@ -32,17 +32,8 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(int64_t argument) const
         {
-            values::array arguments;
-            arguments.reserve(2);
-            for (int64_t i = 0; i < argument; ++i) {
-                arguments.clear();
-                if (_context.yielder().parameter_count() == 1) {
-                    arguments.push_back(i);
-                } else {
-                    arguments.push_back(i);
-                    arguments.push_back(i);
-                }
-                _context.yielder().yield(arguments);
+            if (argument > 0) {
+                enumerate(types::integer(0, argument));
             }
         }
 
@@ -85,24 +76,10 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(types::integer const& argument) const
         {
-            if (argument.from() == numeric_limits<int64_t>::min() ||
-                argument.to() == numeric_limits<int64_t>::max()) {
-                throw evaluation_exception(_context.position(0), (boost::format("cannot enumerate %1%: 'from' or 'to' is a default value.") % argument).str());
+            if (!argument.enumerable()) {
+                throw evaluation_exception(_context.position(0), (boost::format("%1% is not enumerable.") % argument).str());
             }
-            values::array arguments;
-            arguments.reserve(2);
-            int64_t start = std::min(argument.from(), argument.to());
-            int64_t end = std::max(argument.from(), argument.to());
-            for (int64_t index = 0; start < end; ++index, ++start) {
-                arguments.clear();
-                if (_context.yielder().parameter_count() == 1) {
-                    arguments.push_back(start);
-                } else {
-                    arguments.push_back(index);
-                    arguments.push_back(start);
-                }
-                _context.yielder().yield(arguments);
-            }
+            enumerate(argument);
         }
 
         template <typename T>
@@ -112,6 +89,23 @@ namespace puppet { namespace runtime { namespace functions {
         }
 
      private:
+        void enumerate(types::integer const& range) const
+        {
+            values::array arguments;
+            arguments.reserve(2);
+            range.each([&](int64_t index, int64_t value) {
+                arguments.clear();
+                if (_context.yielder().parameter_count() == 1) {
+                    arguments.push_back(value);
+                } else {
+                    arguments.push_back(index);
+                    arguments.push_back(value);
+                }
+                _context.yielder().yield(arguments);
+                return true;
+            });
+        }
+
         call_context& _context;
     };
 
