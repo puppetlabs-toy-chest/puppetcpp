@@ -33,17 +33,19 @@ namespace puppet { namespace runtime {
     static bool tokenize_interpolation(
         string& result,
         expression_evaluator& evaluator,
-        lexer_string_iterator begin,
+        lexer_string_iterator& begin,
         lexer_string_iterator const& end,
         function<token_position(token_position const&)> const& calculate_position)
     {
-        bool bracket = begin != end && *begin == '{';
-        string_static_lexer lexer;
-
-        // Check for keyword or name
-        value const* val = nullptr;
         try {
-            auto token_begin = lexer.begin(begin, end);
+            bool bracket = begin != end && *begin == '{';
+            string_static_lexer lexer;
+
+            // Check for keyword or name
+            value const* val = nullptr;
+
+            auto current = begin;
+            auto token_begin = lexer.begin(current, end);
             auto token_end = lexer.end();
 
             // Check for the following forms:
@@ -66,7 +68,6 @@ namespace puppet { namespace runtime {
                     return false;
                 }
                 val = evaluator.context().lookup(string(token->begin(), token->end()));
-                ++token_begin;
             } else if (token_begin != token_end && token_begin->id() == static_cast<size_t>(token_id::number)) {
                 auto token = get<number_token>(&token_begin->value());
                 if (!token) {
@@ -76,26 +77,33 @@ namespace puppet { namespace runtime {
                     throw evaluation_exception(calculate_position(token->position()), (boost::format("'%1%' is not a valid match variable name.") % *token).str());
                 }
                 val = evaluator.context().current().get(get<int64_t>(token->value()));
-                ++token_begin;
             } else {
                 return false;
             }
 
-            // Check for not parsed or missing a closing } token
-            if (bracket && (token_begin == token_end || token_begin->id() != '}')) {
-                return false;
+            // If bracketed, look for the closing bracket
+            if (bracket) {
+                ++token_begin;
+
+                // Check for not parsed or missing a closing } token
+                if (bracket && (token_begin == token_end || token_begin->id() != '}')) {
+                    return false;
+                }
             }
+
+            // Output the variable
+            if (val) {
+                ostringstream ss;
+                ss << *val;
+                result += ss.str();
+            }
+
+            // Update to where we stopped lexing
+            begin = current;
+            return true;
         } catch (lexer_exception<lexer_string_iterator> const& ex) {
             throw evaluation_exception(calculate_position(ex.location().position()), ex.what());
         }
-
-        // Output the variable
-        if (val) {
-            ostringstream ss;
-            ss << *val;
-            result += ss.str();
-        }
-        return true;
     }
 
     static boost::optional<value> transform_expression(expression_evaluator& evaluator, ast::expression const& expression)
@@ -244,17 +252,7 @@ namespace puppet { namespace runtime {
                 if (next != end && !isspace(*next)) {
                     // First attempt to interpolate using the lexer
                     if (tokenize_interpolation(result, _evaluator, next, end, calculate_position)) {
-                        // Success, update the iterator
-                        if (*next == '{') {
-                            // Move to closing }
-                            for (begin = next; begin != end && *begin != '}'; ++begin);
-                        } else {
-                            // Move to first whitespace character
-                            for (begin = next; begin != end && !isspace(*begin); ++begin);
-                        }
-                        if (begin != end) {
-                            ++begin;
-                        }
+                        begin = next;
                         continue;
                     }
                     // Otherwise, check for expression form
