@@ -26,7 +26,7 @@ namespace puppet { namespace runtime {
         result_type operator()(values::regex const& left, string const& right) const
         {
             smatch matches;
-            bool result = left.pattern().empty() || regex_match(right, matches, left.value());
+            bool result = left.pattern().empty() || regex_search(right, matches, left.value());
             _context.current().set(matches);
             return result;
         }
@@ -1179,7 +1179,7 @@ namespace puppet { namespace runtime {
         result_type operator()(string const& left, string const& right) const
         {
             smatch matches;
-            bool result = right.empty() || regex_match(left, matches, std::regex(right));
+            bool result = right.empty() || regex_search(left, matches, std::regex(right));
             _context.current().set(matches);
             return result;
         }
@@ -1187,7 +1187,7 @@ namespace puppet { namespace runtime {
         result_type operator()(string const& left, values::regex const& right) const
         {
             smatch matches;
-            bool result = right.pattern().empty() || regex_match(left, matches, right.value());
+            bool result = right.pattern().empty() || regex_search(left, matches, right.value());
             _context.current().set(matches);
             return result;
         }

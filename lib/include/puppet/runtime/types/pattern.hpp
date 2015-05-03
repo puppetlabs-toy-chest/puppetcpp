@@ -56,7 +56,7 @@ namespace puppet { namespace runtime { namespace types {
 
             // Check for a matching pattern
             for (auto const& regex : _patterns) {
-                if (regex.pattern().empty() || std::regex_match(*ptr, regex.value())) {
+                if (regex.pattern().empty() || std::regex_search(*ptr, regex.value())) {
                     return true;
                 }
             }
