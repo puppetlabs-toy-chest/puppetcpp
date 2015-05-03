@@ -35,7 +35,7 @@ namespace puppet { namespace runtime {
         std::string interpolate(lexer::token_position const& position, std::string const& text, std::string const& escapes, char quote, bool full = true, int margin = 0, bool remove_break = false);
 
      private:
-        bool write_unicode_escape_sequence(lexer::token_position const& position, lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end, std::string& result, bool four_characters = true);
+        bool write_unicode_escape_sequence(lexer::token_position const& position, lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end, std::string& result);
 
         expression_evaluator& _evaluator;
     };

@@ -311,42 +311,63 @@ namespace puppet { namespace runtime {
         return result;
     }
 
-    bool string_interpolator::write_unicode_escape_sequence(token_position const& position, lexer_string_iterator& begin, lexer_string_iterator const& end, string& result, bool four_characters)
+    bool string_interpolator::write_unicode_escape_sequence(token_position const& position, lexer_string_iterator& begin, lexer_string_iterator const& end, string& result)
     {
-        size_t count = four_characters ? 4 : 8;
+        // Check for a variable length unicode escape sequence
+        bool variable_length = false;
+        if (begin != end && *begin == '{') {
+            ++begin;
+            variable_length = true;
+        }
 
-        // Use a buffer that can store up to 8 characters (nnnn or nnnnnnnn)
-        char buffer[9] = {};
-        size_t read = 0;
+        string characters;
+        characters.reserve(6);
         for (; begin != end; ++begin) {
+            // Break on '}' for variable length
+            if (variable_length && *begin == '}') {
+                break;
+            }
+            // Check for valid hex digit
             if (!isxdigit(*begin)) {
+                _evaluator.context().warn(position, (boost::format("unicode escape sequence contains non-hexadecimal character '%1%'.") % *begin).str());
+                return false;
+            }
+
+            characters.push_back(*begin);
+
+            // Break on 4 characters for fixed length
+            if (!variable_length && characters.size() == 4) {
                 break;
             }
-            buffer[read] = *begin;
-            if (++read == 4) {
-                break;
-            }
-        }
-        if (read != count) {
-            _evaluator.context().warn(position, (boost::format("expected %1% hexadecimal digits but found %2% for unicode escape sequence.") % count % read).str());
-            return false;
         }
 
-        // Convert the input to a utf32 character (supports both four or eight hex characters)
+        if (variable_length) {
+            if (begin == end || *begin != '}') {
+                _evaluator.context().warn(position, "a closing '}' was not found for unicode escape sequence.");
+                return false;
+            }
+            if (characters.empty() || characters.size() > 6) {
+                _evaluator.context().warn(position, "expected at least 1 and at most 6 hexadecimal digits for unicode escape sequence.");
+                return false;
+            }
+        }
+
+        // Convert the input to a unicode character
         char32_t from;
         try {
-            from = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(buffer));
+            from = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(characters));
         } catch (boost::bad_lexical_cast const&) {
             _evaluator.context().warn(position, "invalid unicode escape sequence.");
             return false;
         }
 
-        // Convert the utf32 character to utf8 bytes (maximum is 4 bytes)
+        // Convert the unicode character to utf8 bytes (maximum is 4 bytes)
         codecvt_utf8<char32_t> converter;
         char32_t const* next_from = nullptr;
         char* next_to = nullptr;
         auto state = mbstate_t();
-        converter.out(state, &from, &from + 1, next_from, buffer, &buffer[0] + 4, next_to);
+        char buffer[4] = {};
+        converter.out(state, &from, &from + 1, next_from, buffer, std::end(buffer), next_to);
 
         // Ensure all characters were converted (there was only one)
         if (next_from != &from + 1) {
