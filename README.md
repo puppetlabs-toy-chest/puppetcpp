@@ -98,7 +98,7 @@ Puppet functions implemented:
 * [x] err
 * [x] fail
 * [ ] file
-* [ ] filter
+* [x] filter
 * [ ] fqdn_rand
 * [ ] generate
 * [ ] hiera

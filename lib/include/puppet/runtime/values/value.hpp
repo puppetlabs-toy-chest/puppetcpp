@@ -98,6 +98,20 @@ namespace puppet { namespace runtime { namespace values {
     bool is_default(value const& val);
 
     /**
+     * Determines if a value is the "true" value.
+     * @param val The value to test.
+     * @return Returns true if the value is exactly "true", or false if not.
+     */
+    bool is_true(value const& val);
+
+    /**
+     * Determines if a value is the "false" value.
+     * @param val The value to test.
+     * @return Returns true if the value is exactly "false", or false if not.
+     */
+    bool is_false(value const& val);
+
+    /**
      * Determines if a value is "truthy".
      * @param val The value to test for "truthiness".
      * @return Returns true if the value is "truthy" or false if it is not.

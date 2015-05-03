@@ -45,6 +45,28 @@ namespace puppet { namespace runtime { namespace values {
         return *result;
     }
 
+    bool is_undef(value const& val)
+    {
+        return boost::get<undef>(&dereference(val));
+    }
+
+    bool is_default(value const& val)
+    {
+        return boost::get<defaulted>(&dereference(val));
+    }
+
+    bool is_true(value const& val)
+    {
+        auto ptr = boost::get<bool>(&val);
+        return ptr && *ptr;
+    }
+
+    bool is_false(value const& val)
+    {
+        auto ptr = boost::get<bool>(&val);
+        return ptr && !*ptr;
+    }
+
     struct truthy_visitor : boost::static_visitor<bool>
     {
         result_type operator()(undef const&) const
@@ -68,16 +90,6 @@ namespace puppet { namespace runtime { namespace values {
             return true;
         }
     };
-
-    bool is_undef(value const& val)
-    {
-        return boost::get<undef>(&dereference(val));
-    }
-
-    bool is_default(value const& val)
-    {
-        return boost::get<defaulted>(&dereference(val));
-    }
 
     bool is_truthy(value const& val)
     {

@@ -54,6 +54,7 @@ add_library(puppet SHARED
     src/runtime/functions/assert_type.cc
     src/runtime/functions/each.cc
     src/runtime/functions/fail.cc
+    src/runtime/functions/filter.cc
     src/runtime/functions/logging.cc
     src/runtime/functions/split.cc
     src/runtime/functions/with.cc

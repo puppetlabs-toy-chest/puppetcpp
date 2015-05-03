@@ -2,6 +2,7 @@
 #include <puppet/runtime/functions/assert_type.hpp>
 #include <puppet/runtime/functions/each.hpp>
 #include <puppet/runtime/functions/fail.hpp>
+#include <puppet/runtime/functions/filter.hpp>
 #include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
@@ -114,6 +115,7 @@ namespace puppet { namespace runtime {
             { "emerg",          functions::logging_function(logging::level::emergency) },
             { "err",            functions::logging_function(logging::level::error) },
             { "fail",           functions::fail() },
+            { "filter",         functions::filter() },
             { "info",           functions::logging_function(logging::level::info) },
             { "notice",         functions::logging_function(logging::level::notice) },
             { "split",          functions::split() },
