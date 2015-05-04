@@ -26,14 +26,13 @@ namespace puppet { namespace runtime { namespace functions {
             return std::move(arguments[1]);
         }
 
-        // Otherwise, yield to a lambda if given
-        if (context.yielder().lambda_given()) {
-            values::array lambda_arguments = { std::move(arguments[0]), get_type(arguments[1]) };
-            return context.yielder().yield(lambda_arguments);
+        // Otherwise, a lambda is required
+        if (!context.yielder().lambda_given()) {
+            throw evaluation_exception(context.position(1), (boost::format("type assertion failure: expected %1% but found %2%.") % *type % get_type(arguments[1])).str());
         }
 
-        // Or raise an error
-        throw evaluation_exception(context.position(1), (boost::format("type assertion failure: expected %1% but found %2%.") % *type % get_type(arguments[1])).str());
+        arguments[1] = get_type(arguments[1]);
+        return context.yielder().yield(arguments);
     }
 
 }}}  // namespace puppet::runtime::functions

@@ -57,21 +57,19 @@ namespace puppet { namespace runtime {
          * Yields to the lambda without passing any arguments.
          * @return Returns the value from the lambda's block.
          */
-        values::value yield();
+        values::value yield() const;
 
         /**
          * Yields to the lambda with the given arguments.
-         * Note: elements of the array may be mutated.
          * @param arguments The arguments to pass to the lambda.
          * @return Returns the value from the lambda's block.
          */
-        values::value yield(values::array& arguments);
+        values::value yield(values::array& arguments) const;
 
      private:
         expression_evaluator& _evaluator;
         lexer::token_position const& _position;
         boost::optional<ast::lambda> const& _lambda;
-        std::unordered_map<std::string, values::value> _default_cache;
     };
 
 }}  // puppet::runtime
