@@ -21,9 +21,21 @@ namespace puppet { namespace ast {
         }
     }
 
+    case_proposition::case_proposition(ast::lambda option, optional<vector<expression>> body) :
+        _lambda(std::move(option)),
+        _body(std::move(body))
+    {
+        _position = _lambda->position();
+    }
+
     vector<expression> const& case_proposition::options() const
     {
         return _options;
+    }
+
+    optional<ast::lambda> const& case_proposition::lambda() const
+    {
+        return _lambda;
     }
 
     optional<vector<expression>> const& case_proposition::body() const

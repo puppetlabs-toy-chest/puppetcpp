@@ -67,7 +67,8 @@ namespace puppet { namespace runtime { namespace values {
     value const& dereference(value const& val);
 
     /**
-     * Dereferences a variable and checks that it points at the given type.
+     * Dereferences a variable and checks that it is of the given value type.
+     * @tparam T The value type.
      * @param val The value to dereference.
      * @return Returns a copy of a variable's value if the value is of the given type or otherwise boost::none.
      */

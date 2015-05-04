@@ -216,11 +216,33 @@ namespace puppet { namespace runtime {
             // Evaluate the case's expression
             value result = _evaluator.evaluate(expr.expression());
 
-            boost::optional<size_t> default_index;
-
             auto& propositions = expr.propositions();
+            boost::optional<size_t> default_index;
             for (size_t i = 0; i < propositions.size(); ++i) {
                 auto& proposition = propositions[i];
+
+                // Check for a lambda proposition
+                if (proposition.lambda()) {
+                    runtime::yielder yielder(_evaluator, proposition.position(), proposition.lambda());
+
+                    // Automatically "splat" the result
+                    auto arguments = dereference<values::array>(result);
+                    if (!arguments) {
+                        if (auto ptr = boost::get<values::array>(&result)) {
+                            arguments = std::move(*ptr);
+                        } else {
+                            arguments = values::array();
+                            arguments->emplace_back(std::move(result));
+                        }
+                    }
+
+                    // Yield to the lambda and execute the block if truthy
+                    if (is_truthy(yielder.yield(*arguments))) {
+                        return execute_block(proposition.body());
+                    }
+                    continue;
+                }
+
                 // Look for a match in the options
                 for (auto& option : proposition.options()) {
                     // Evaluate the option
