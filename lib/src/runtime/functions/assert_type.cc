@@ -16,7 +16,7 @@ namespace puppet { namespace runtime { namespace functions {
         }
 
         // First argument should be a type (TODO: should accept a string that is a type name too)
-        auto type = boost::get<values::type>(&dereference(arguments[0]));
+        auto type = as<values::type>(arguments[0]);
         if (!type) {
             throw evaluation_exception(context.position(0), (boost::format("expected %1% for first argument but found %2%.") % types::type::name() % get_type(arguments[0])).str());
         }

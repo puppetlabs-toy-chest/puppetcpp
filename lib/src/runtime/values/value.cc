@@ -34,6 +34,16 @@ namespace puppet { namespace runtime { namespace values {
         return boost::apply_visitor(value_visitor(os), val);
     }
 
+    value mutate(value& v)
+    {
+        // Check for variable first and create a copy
+        if (boost::get<variable>(&v)) {
+            return dereference(v);
+        }
+        // Otherwise, just move the argument
+        return std::move(v);
+    }
+
     value const& dereference(value const& val)
     {
         auto result = &val;
@@ -47,23 +57,23 @@ namespace puppet { namespace runtime { namespace values {
 
     bool is_undef(value const& val)
     {
-        return boost::get<undef>(&dereference(val));
+        return as<undef>(val);
     }
 
     bool is_default(value const& val)
     {
-        return boost::get<defaulted>(&dereference(val));
+        return as<defaulted>(val);
     }
 
     bool is_true(value const& val)
     {
-        auto ptr = boost::get<bool>(&val);
+        auto ptr = as<bool>(val);
         return ptr && *ptr;
     }
 
     bool is_false(value const& val)
     {
-        auto ptr = boost::get<bool>(&val);
+        auto ptr = as<bool>(val);
         return ptr && !*ptr;
     }
 
@@ -206,7 +216,7 @@ namespace puppet { namespace runtime { namespace values {
     array to_array(value const& val)
     {
         // If already an array, return a copy
-        auto array_ptr = boost::get<array>(&val);
+        auto array_ptr = as<values::array>(&val);
         if (array_ptr) {
             return *array_ptr;
         }
@@ -214,7 +224,7 @@ namespace puppet { namespace runtime { namespace values {
         array result;
 
         // Check for hash
-        auto hash_ptr = boost::get<hash>(&val);
+        auto hash_ptr = as<values::hash>(&val);
         if (hash_ptr) {
             // Turn the hash into an array of [K,V]
             for (auto& kvp : *hash_ptr) {

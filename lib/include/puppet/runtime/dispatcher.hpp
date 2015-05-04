@@ -11,11 +11,6 @@
 namespace puppet { namespace runtime {
 
     /**
-     * Forward declaration of dispatcher.
-     */
-    struct dispatcher;
-
-    /**
      * Represents context about a function call.
      */
     struct call_context

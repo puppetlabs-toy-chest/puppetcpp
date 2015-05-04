@@ -60,6 +60,15 @@ namespace puppet { namespace runtime { namespace values {
     typedef basic_hash<value> hash;
 
     /**
+     * Prepares the value for mutation.
+     * For non-variables, this simply moves the value into the return value.
+     * For variables, this creates a copy of the variable's value so it can be mutated.
+     * @param v The value to mutate.
+     * @return Returns the original value if not a variable or a copy of the value if a variable.
+     */
+    value mutate(value& v);
+
+    /**
      * Dereferences a value.
      * @param val The value to dereference.
      * @return Returns the value of a variable or the original value if not a variable.
@@ -67,23 +76,34 @@ namespace puppet { namespace runtime { namespace values {
     value const& dereference(value const& val);
 
     /**
-     * Dereferences a variable and checks that it is of the given value type.
-     * @tparam T The value type.
-     * @param val The value to dereference.
-     * @return Returns a copy of a variable's value if the value is of the given type or otherwise boost::none.
+     * Casts the value to a pointer of the given type.
+     * Use this over boost::get for values to properly dereference variables.
+     * @tparam T The type to cast the value to.
+     * @param v The value to cast.
+     * @return Returns a pointer to the given type or nullptr if the value is not of that type.
      */
     template <typename T>
-    boost::optional<T> dereference(value& val)
+    T const* as(value const& v)
     {
-        if (!boost::get<variable>(&val)) {
-            return boost::none;
+        return boost::get<T>(&dereference(v));
+    }
+
+    /**
+     * Prepares the value for mutation as the given type.
+     * Note: throws boost::bad_get if the value is not of the given type.
+     * @tparam T The resulting type.
+     * @param v The value to mutate.
+     * @return Returns the value moved into the given type or a copy if the value is a variable.
+     */
+    template <typename T>
+    T mutate_as(value& v)
+    {
+        // Check for variable first
+        if (boost::get<variable>(&v)) {
+            return boost::get<T>(dereference(v));
         }
-        auto result = dereference(val);
-        auto ptr = boost::get<T>(&result);
-        if (!ptr) {
-            return boost::none;
-        }
-        return *ptr;
+        // Move the value
+        return std::move(boost::get<T>(v));
     }
 
     /**
