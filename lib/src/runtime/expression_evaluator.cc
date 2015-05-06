@@ -1,5 +1,26 @@
 #include <puppet/runtime/expression_evaluator.hpp>
-#include <puppet/runtime/operators.hpp>
+#include <puppet/runtime/operators/assignment.hpp>
+#include <puppet/runtime/operators/divide.hpp>
+#include <puppet/runtime/operators/equals.hpp>
+#include <puppet/runtime/operators/greater.hpp>
+#include <puppet/runtime/operators/greater_equal.hpp>
+#include <puppet/runtime/operators/in.hpp>
+#include <puppet/runtime/operators/left_shift.hpp>
+#include <puppet/runtime/operators/less.hpp>
+#include <puppet/runtime/operators/less_equal.hpp>
+#include <puppet/runtime/operators/logical_and.hpp>
+#include <puppet/runtime/operators/logical_not.hpp>
+#include <puppet/runtime/operators/logical_or.hpp>
+#include <puppet/runtime/operators/match.hpp>
+#include <puppet/runtime/operators/minus.hpp>
+#include <puppet/runtime/operators/modulo.hpp>
+#include <puppet/runtime/operators/multiply.hpp>
+#include <puppet/runtime/operators/negate.hpp>
+#include <puppet/runtime/operators/not_equals.hpp>
+#include <puppet/runtime/operators/not_match.hpp>
+#include <puppet/runtime/operators/plus.hpp>
+#include <puppet/runtime/operators/right_shift.hpp>
+#include <puppet/runtime/operators/splat.hpp>
 #include <puppet/runtime/string_interpolator.hpp>
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/ast/expression_def.hpp>
@@ -11,14 +32,15 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    static bool is_match(context& ctx, value const& result, value const& expected, token_position const& result_position, token_position const& expected_position)
+    static bool is_match(context& ctx, value& result, token_position const& result_position, value& expected, token_position const& expected_position)
     {
         // If the expected value is a regex, use match
-        auto regex = boost::get<values::regex>(&dereference(expected));
+        auto regex = as<values::regex>(expected);
         if (regex) {
             // Only match against strings
-            if (boost::get<string>(&dereference(result))) {
-                if (is_truthy(match(result, expected, result_position, expected_position, ctx))) {
+            if (as<string>(result)) {
+                operators::binary_context context(ctx, result, result_position, expected, expected_position);
+                if (is_truthy(operators::match()(context))) {
                     return true;
                 }
             }
@@ -216,11 +238,29 @@ namespace puppet { namespace runtime {
             // Evaluate the case's expression
             value result = _evaluator.evaluate(expr.expression());
 
-            boost::optional<size_t> default_index;
-
             auto& propositions = expr.propositions();
+            boost::optional<size_t> default_index;
             for (size_t i = 0; i < propositions.size(); ++i) {
                 auto& proposition = propositions[i];
+
+                // Check for a lambda proposition
+                if (proposition.lambda()) {
+                    // Automatically splat an array
+                    values::array arguments;
+                    if (auto ptr = as<values::array>(result)) {
+                        arguments = *ptr;
+                    } else {
+                        arguments.push_back(result);
+                    }
+
+                    // Yield to the lambda and execute the block if truthy
+                    runtime::yielder yielder(_evaluator, proposition.position(), proposition.lambda());
+                    if (is_truthy(yielder.yield(arguments))) {
+                        return execute_block(proposition.body());
+                    }
+                    continue;
+                }
+
                 // Look for a match in the options
                 for (auto& option : proposition.options()) {
                     // Evaluate the option
@@ -235,13 +275,13 @@ namespace puppet { namespace runtime {
                     auto unfold_array = _evaluator.unfold(option, option_value);
                     if (unfold_array) {
                         for (auto& element : *unfold_array) {
-                            if (is_match(_evaluator.context(), result, element, expr.position(), option.position())) {
+                            if (is_match(_evaluator.context(), result, expr.position(), element, option.position())) {
                                 return execute_block(proposition.body());
                             }
                         }
                     }
 
-                    if (is_match(_evaluator.context(), result, option_value, expr.position(), option.position())) {
+                    if (is_match(_evaluator.context(), result, expr.position(), option_value, option.position())) {
                         return execute_block(proposition.body());
                     }
                 }
@@ -344,7 +384,7 @@ namespace puppet { namespace runtime {
             }
 
             // Get the index
-            auto ptr = boost::get<int64_t>(&dereference(_arguments[0]));
+            auto ptr = as<int64_t>(_arguments[0]);
             if (!ptr) {
                 throw evaluation_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type(_arguments[0])).str());
             }
@@ -358,7 +398,7 @@ namespace puppet { namespace runtime {
             // Get the count
             int64_t count = 1;
             if (_arguments.size() == 2) {
-                ptr = boost::get<int64_t>(&dereference(_arguments[1]));
+                ptr = as<int64_t>(_arguments[1]);
                 if (!ptr) {
                     throw evaluation_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type(_arguments[1])).str());
                 }
@@ -388,7 +428,7 @@ namespace puppet { namespace runtime {
             }
 
             // Get the index
-            auto ptr = boost::get<int64_t>(&dereference(_arguments[0]));
+            auto ptr = as<int64_t>(_arguments[0]);
             if (!ptr) {
                 throw evaluation_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type(_arguments[0])).str());
             }
@@ -402,7 +442,7 @@ namespace puppet { namespace runtime {
             // Get the count
             int64_t count = 1;
             if (_arguments.size() == 2) {
-                ptr = boost::get<int64_t>(&dereference(_arguments[1]));
+                ptr = as<int64_t>(_arguments[1]);
                 if (!ptr) {
                     throw evaluation_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type(_arguments[1])).str());
                 }
@@ -442,7 +482,7 @@ namespace puppet { namespace runtime {
         {
             if (_arguments.size() == 1) {
                 // Lookup by key
-                auto it = target.find(dereference(_arguments[0]));
+                auto it = target.find(_arguments[0]);
                 if (it == target.end()) {
                     return value();
                 }
@@ -453,7 +493,7 @@ namespace puppet { namespace runtime {
             values::array result;
             for (auto const& argument : _arguments) {
                 // Lookup by key
-                auto it = target.find(dereference(argument));
+                auto it = target.find(argument);
                 if (it == target.end()) {
                     continue;
                 }
@@ -512,15 +552,14 @@ namespace puppet { namespace runtime {
 
             // Get the pattern argument; check for regex argument first
             string pattern;
-            auto regex = boost::get<values::regex>(&dereference(_arguments[0]));
+            auto regex = as<values::regex>(_arguments[0]);
             if (regex) {
                 pattern = regex->pattern();
             } else {
-                auto str = move_parameter<string>(0);
-                if (!str) {
+                if (!as<string>(_arguments[0])) {
                     throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% or %2% but found %3%.") % types::string::name() % types::regexp::name() % get_type(_arguments[0])).str());
                 }
-                pattern = std::move(*str);
+                pattern = mutate_as<string>(_arguments[0]);
             }
             return types::regexp(std::move(pattern));
         }
@@ -532,11 +571,10 @@ namespace puppet { namespace runtime {
             strings.reserve(_arguments.size());
 
             for (size_t i = 0; i < _arguments.size(); ++i) {
-                auto str = move_parameter<string>(i);
-                if (!str) {
+                if (!as<string>(_arguments[i])) {
                     throw evaluation_exception(_positions[i], (boost::format("expected %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
                 }
-                strings.emplace_back(std::move(*str));
+                strings.emplace_back(mutate_as<string>(_arguments[i]));
             }
             return types::enumeration(std::move(strings));
         }
@@ -548,21 +586,18 @@ namespace puppet { namespace runtime {
 
             // Each argument can be a string, regex value, Regexp type or another Pattern type
             for (size_t i = 0; i < _arguments.size(); ++i) {
-                auto const& argument = dereference(_arguments[i]);
                 // Check for string
-                auto str = move_parameter<string>(i);
-                if (str) {
-                    patterns.emplace_back(std::move(*str));
+                if (as<string>(_arguments[i])) {
+                    patterns.emplace_back(mutate_as<string>(_arguments[i]));
                     continue;
                 }
                 // Check for regex
-                auto regex = move_parameter<values::regex>(i);
-                if (regex) {
-                    patterns.emplace_back(std::move(*regex));
+                if (as<values::regex>(_arguments[i])) {
+                    patterns.emplace_back(mutate_as<values::regex>(_arguments[i]));
                     continue;
                 }
                 // Check for Type
-                auto type_ptr = boost::get<values::type>(&argument);
+                auto type_ptr = as<values::type>(_arguments[i]);
                 if (type_ptr) {
                     auto regexp = boost::get<types::regexp>(type_ptr);
                     if (regexp) {
@@ -596,43 +631,40 @@ namespace puppet { namespace runtime {
             }
 
             // First argument should be a type
-            auto element_type = move_parameter<values::type>(0);
-            if (!element_type) {
+            if (!as<values::type>(_arguments[0])) {
                 throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
             }
 
             // Get the optional range
             size_t from, to;
             tie(from, to) = get_range<int64_t, types::integer>(true, 1);
-            return types::array(std::move(*element_type), from, to);
+            return types::array(mutate_as<values::type>(_arguments[0]), from, to);
         }
 
         result_type operator()(types::hash const& type)
         {
             // At least 2 and at most 4 arguments to Hash
             if (_arguments.size() < 2) {
-                throw evaluation_exception(_positions[4], (boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
+                throw evaluation_exception(_position, (boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
             }
             if (_arguments.size() > 4) {
                 throw evaluation_exception(_positions[4], (boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
             }
 
             // First argument should be a type
-            auto key_type = move_parameter<values::type>(0);
-            if (!key_type) {
+            if (!as<values::type>(_arguments[0])) {
                 throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
             }
 
             // Second argument should be a type
-            auto element_type = move_parameter<values::type>(1);
-            if (!element_type) {
+            if (!as<values::type>(_arguments[1])) {
                 throw evaluation_exception(_positions[1], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[1])).str());
             }
 
             // Get the optional range
             size_t from, to;
             tie(from, to) = get_range<int64_t, types::integer>(true, 2);
-            return types::hash(std::move(*key_type), std::move(*element_type), from, to);
+            return types::hash(mutate_as<values::type>(_arguments[0]), mutate_as<values::type>(_arguments[1]), from, to);
         }
 
         result_type operator()(types::tuple const& type)
@@ -643,9 +675,8 @@ namespace puppet { namespace runtime {
             int64_t from = _arguments.size();
             int64_t to = _arguments.size();
             for (size_t i = 0; i < _arguments.size(); ++i) {
-                auto type_parameter = move_parameter<values::type>(i);
                 // Stop at first parameter that isn't a type
-                if (!type_parameter) {
+                if (!as<values::type>(_arguments[i])) {
                     // There must be at most 2 more parameters (the range)
                     if ((i + 2) < _arguments.size()) {
                         throw evaluation_exception(_positions[i + 2], (boost::format("expected at most %1% arguments for %2% but %3% were given.") % (i + 2) % types::tuple::name() % _arguments.size()).str());
@@ -654,7 +685,7 @@ namespace puppet { namespace runtime {
                     tie(from, to) = get_range<int64_t, types::integer>(true, i);
                     break;
                 }
-                types.emplace_back(std::move(*type_parameter));
+                types.emplace_back(mutate_as<values::type>(_arguments[i]));
             }
             return types::tuple(std::move(types), from, to);
         }
@@ -667,12 +698,11 @@ namespace puppet { namespace runtime {
             }
 
             // First argument should be a type
-            auto optional_type = move_parameter<values::type>(0);
-            if (!optional_type) {
+            if (!as<values::type>(_arguments[0])) {
                 throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
             }
 
-            return types::optional(std::move(*optional_type));
+            return types::optional(mutate_as<values::type>(_arguments[0]));
         }
 
         result_type operator()(types::type const& type)
@@ -683,12 +713,11 @@ namespace puppet { namespace runtime {
             }
 
             // First argument should be a type
-            auto underlying_type = move_parameter<values::type>(0);
-            if (!underlying_type) {
+            if (!as<values::type>(_arguments[0])) {
                 throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
             }
 
-            return types::type(std::move(*underlying_type));
+            return types::type(mutate_as<values::type>(_arguments[0]));
         }
 
         result_type operator()(types::structure const& type)
@@ -699,25 +728,25 @@ namespace puppet { namespace runtime {
             }
 
             // First argument should be a hash
-            auto hash = move_parameter<values::hash>(0);
-            if (!hash) {
+            if (!as<values::hash>(_arguments[0])) {
                 throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::hash::name() % get_type(_arguments[0])).str());
             }
 
+            auto hash = mutate_as<values::hash>(_arguments[0]);
+
             // Build a map of string -> Type
             unordered_map<string, values::type> types;
-            for (auto& kvp : *hash) {
+            for (auto& kvp : hash) {
                 // Ensure the key is a string
-                auto str = boost::get<string>(&kvp.first);
-                if (!str) {
+                auto key = as<string>(kvp.first);
+                if (!key) {
                     throw evaluation_exception(_positions[0], (boost::format("expected hash keys to be %1% but found %2%.") % types::string::name() % get_type(kvp.first)).str());
                 }
                 // Ensure the value is a type
-                auto type = boost::get<values::type>(&kvp.second);
-                if (!type) {
+                if (!as<values::type>(kvp.second)) {
                     throw evaluation_exception(_positions[0], (boost::format("expected hash values to be %1% but found %2%.") % types::type::name() % get_type(kvp.second)).str());
                 }
-                types.insert(make_pair(std::move(*str), std::move(*type)));
+                types.insert(make_pair(*key, mutate_as<values::type>(kvp.second)));
             }
             return types::structure(std::move(types));
         }
@@ -728,11 +757,10 @@ namespace puppet { namespace runtime {
             types.reserve(_arguments.size());
 
             for (size_t i = 0; i < _arguments.size(); ++i) {
-                auto type_parameter = move_parameter<values::type>(i);
-                if (!type_parameter) {
+                if (!as<values::type>(_arguments[i])) {
                     throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[i])).str());
                 }
-                types.emplace_back(std::move(*type_parameter));
+                types.emplace_back(mutate_as<values::type>(_arguments[i]));
             }
             return types::variant(std::move(types));
         }
@@ -744,29 +772,12 @@ namespace puppet { namespace runtime {
         }
 
      private:
-        template <typename Value>
-        boost::optional<Value> move_parameter(size_t index)
-        {
-            // Check for a variable first
-            auto var = dereference<Value>(_arguments[index]);
-            if (var) {
-                return var;
-            }
-
-            // Otherwise, check for the argument type
-            auto result = boost::get<Value>(&_arguments[index]);
-            if (!result) {
-                return boost::none;
-            }
-            return std::move(*result);
-        }
-
         template <typename Value, typename Type>
         tuple<Value, Value> get_range(bool accept_range = false, size_t start_index = 0) const
         {
             // Check for Integer type first
             if (accept_range && _arguments.size() > start_index) {
-                auto type_ptr = boost::get<values::type>(&dereference(_arguments[start_index]));
+                auto type_ptr = as<values::type>(_arguments[start_index]);
                 if (type_ptr) {
                     auto integer_ptr = boost::get<types::integer>(type_ptr);
                     if (integer_ptr) {
@@ -782,11 +793,11 @@ namespace puppet { namespace runtime {
 
                 if (!is_default(argument)) {
                     // Try int64_t first; this allows either Integer or Floats when Value is floating point
-                    auto ptr = boost::get<int64_t>(&dereference(argument));
+                    auto ptr = as<int64_t>(argument);
                     if (ptr) {
                         from = static_cast<Value>(*ptr);
                     } else {
-                        auto value_ptr = boost::get<Value>(&dereference(argument));
+                        auto value_ptr = as<Value>(argument);
                         if (!value_ptr) {
                             throw evaluation_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type(argument)).str());
                         }
@@ -801,11 +812,11 @@ namespace puppet { namespace runtime {
 
                 if (!is_default(argument)) {
                     // Try int64_t first; this allows either Integer or Floats when Value is floating point
-                    auto ptr = boost::get<int64_t>(&dereference(argument));
+                    auto ptr = as<int64_t>(argument);
                     if (ptr) {
                         to = static_cast<Value>(*ptr);
                     } else {
-                        auto value_ptr = boost::get<Value>(&dereference(argument));
+                        auto value_ptr = as<Value>(argument);
                         if (!value_ptr) {
                             throw evaluation_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type(argument)).str());
                         }
@@ -824,9 +835,10 @@ namespace puppet { namespace runtime {
 
     struct postfix_expression_visitor : boost::static_visitor<void>
     {
-        postfix_expression_visitor(expression_evaluator& evaluator, value& result, token_position& position) :
+        postfix_expression_visitor(expression_evaluator& evaluator, value& result, ast::primary_expression const* first_expression, token_position& position) :
             _evaluator(evaluator),
             _result(result),
+            _first_expression(first_expression),
             _position(position)
         {
         }
@@ -854,17 +866,19 @@ namespace puppet { namespace runtime {
                 auto unfold_array = _evaluator.unfold(selector_case.selector(), selector);
                 if (unfold_array) {
                     for (auto& element : *unfold_array) {
-                        if (is_match(_evaluator.context(), _result, element, expr.position(), selector_case.position())) {
+                        if (is_match(_evaluator.context(), _result, expr.position(), element, selector_case.position())) {
                             _result = _evaluator.evaluate(selector_case.result());
                             _position = selector_case.position();
+                            _first_expression = nullptr;
                             return;
                         }
                     }
                 }
 
-                if (is_match(_evaluator.context(), _result, selector, expr.position(), selector_case.position())) {
+                if (is_match(_evaluator.context(), _result, expr.position(), selector, selector_case.position())) {
                     _result = _evaluator.evaluate(selector_case.result());
                     _position = selector_case.position();
+                    _first_expression = nullptr;
                     return;
                 }
             }
@@ -877,6 +891,7 @@ namespace puppet { namespace runtime {
             // Evaluate the default case
             _result = _evaluator.evaluate(cases[*default_index].result());
             _position = cases[*default_index].position();
+            _first_expression = nullptr;
         }
 
         result_type operator()(ast::access_expression const& expr)
@@ -884,6 +899,7 @@ namespace puppet { namespace runtime {
             access_expression_visitor visitor(_evaluator, expr.arguments(), expr.position());
             _result = boost::apply_visitor(visitor, dereference(_result));
             _position = expr.position();
+            _first_expression = nullptr;
         }
 
         result_type operator()(ast::method_call_expression const& expr)
@@ -891,13 +907,15 @@ namespace puppet { namespace runtime {
             runtime::dispatcher dispatcher(expr.method().value(), expr.method().position());
 
             // Evaluate the result for the next call
-            _result = dispatcher.dispatch(_evaluator, expr.arguments(), expr.lambda(), &_result, &_position);
+            _result = dispatcher.dispatch(_evaluator, expr.arguments(), expr.lambda(), &_result, _first_expression, &_position);
             _position = expr.position();
+            _first_expression = nullptr;
         }
 
     private:
         expression_evaluator& _evaluator;
         value& _result;
+        ast::primary_expression const* _first_expression;
         token_position& _position;
     };
 
@@ -933,19 +951,20 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::unary_expression const& expr)
         {
-            switch (expr.op()) {
-                case ast::unary_operator::negate:
-                    return negate(boost::apply_visitor(*this, expr.operand()), expr.position());
+            static const unordered_map<ast::unary_operator, std::function<values::value(operators::unary_context&)>> unary_operators = {
+                { ast::unary_operator::negate,      operators::negate() },
+                { ast::unary_operator::logical_not, operators::logical_not() },
+                { ast::unary_operator::splat,       operators::splat() }
+            };
 
-                case ast::unary_operator::logical_not:
-                    return logical_not(boost::apply_visitor(*this, expr.operand()));
-
-                case ast::unary_operator::splat:
-                    return splat(boost::apply_visitor(*this, expr.operand()));
-
-                default:
-                    throw evaluation_exception(expr.position(), "unexpected unary expression.");
+            auto it = unary_operators.find(expr.op());
+            if (it == unary_operators.end()) {
+                throw evaluation_exception(expr.position(), "unexpected unary expression.");
             }
+
+            auto operand = boost::apply_visitor(*this, expr.operand());
+            operators::unary_context context(_evaluator.context(), operand, expr.position());
+            return it->second(context);
         }
 
         result_type operator()(ast::postfix_expression const& expr)
@@ -954,7 +973,7 @@ namespace puppet { namespace runtime {
             auto position = expr.position();
 
             // Evaluate the postfix expressions
-            postfix_expression_visitor visitor(_evaluator, result, position);
+            postfix_expression_visitor visitor(_evaluator, result, &expr.primary(), position);
             for (auto const& expression : expr.subexpressions()) {
                 boost::apply_visitor(visitor, expression);
             }
@@ -1021,24 +1040,10 @@ namespace puppet { namespace runtime {
 
     boost::optional<values::array> expression_evaluator::unfold(ast::primary_expression const& expression, value& evaluated)
     {
-        // Determine if the given expression is a unary splat
+        // Determine if the given expression is a unary splat of an array
         auto unary = boost::get<ast::unary_expression>(&expression);
-        if (unary && unary->op() == ast::unary_operator::splat) {
-            // If an array, return the array itself
-            auto array_ptr = boost::get<values::array>(&evaluated);
-            if (array_ptr) {
-                return std::move(*array_ptr);
-            }
-            // Otherwise, it should be a variable
-            if (!boost::get<variable>(&evaluated)) {
-                return boost::none;
-            }
-            auto const_array_ptr = boost::get<values::array>(&dereference(evaluated));
-            if (!const_array_ptr) {
-                return boost::none;
-            }
-            // Return a copy of the array
-            return *const_array_ptr;
+        if (unary && unary->op() == ast::unary_operator::splat && as<values::array>(evaluated)) {
+            return mutate_as<values::array>(evaluated);
         }
 
         // Try for nested expression
@@ -1051,25 +1056,9 @@ namespace puppet { namespace runtime {
 
     bool expression_evaluator::is_productive(ast::expression const& expr)
     {
-        // Check for recursive primary expression
-        auto recursive = boost::get<ast::expression>(&expr.primary());
-        if (recursive && is_productive(*recursive)) {
+        // Check if the primary expression itself is productive
+        if (is_productive(expr.primary())) {
             return true;
-        }
-
-        // Catalog and control flow expressions are productive
-        if (boost::get<ast::catalog_expression>(&expr.primary()) ||
-            boost::get<ast::control_flow_expression>(&expr.primary())) {
-            return true;
-        }
-
-        // Postfix method calls are productive
-        if (auto ptr = boost::get<ast::postfix_expression>(&expr.primary())) {
-            for (auto const& subexpression : ptr->subexpressions()) {
-                if (boost::get<ast::method_call_expression>(&subexpression)) {
-                    return true;
-                }
-            }
         }
 
         // Expressions followed by an assignment or relationship operator are productive
@@ -1083,6 +1072,42 @@ namespace puppet { namespace runtime {
             }
         }
 
+        return false;
+    }
+
+    bool expression_evaluator::is_productive(ast::primary_expression const& expr)
+    {
+        // Check for recursive primary expression
+        if (auto ptr = boost::get<ast::expression>(&expr)) {
+            if (is_productive(*ptr)) {
+                return true;
+            }
+        }
+
+        // Check for unary expression
+        if (auto ptr = boost::get<ast::unary_expression>(&expr)) {
+            if (is_productive(ptr->operand())) {
+                return true;
+            }
+        }
+
+        // Catalog and control flow expressions are productive
+        if (boost::get<ast::catalog_expression>(&expr) ||
+            boost::get<ast::control_flow_expression>(&expr)) {
+            return true;
+        }
+
+        // Postfix method calls are productive
+        if (auto ptr = boost::get<ast::postfix_expression>(&expr)) {
+            if (is_productive(ptr->primary())) {
+                return true;
+            }
+            for (auto const& subexpression : ptr->subexpressions()) {
+                if (boost::get<ast::method_call_expression>(&subexpression)) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -1121,86 +1146,35 @@ namespace puppet { namespace runtime {
         value& right,
         token_position& right_position)
     {
-        switch (op) {
-            case ast::binary_operator::in:
-                left = in(left, right, _context);
-                return;
+        static const unordered_map<ast::binary_operator, std::function<values::value(operators::binary_context&)>> binary_operators = {
+            { ast::binary_operator::assignment,         operators::assignment() },
+            { ast::binary_operator::divide,             operators::divide() },
+            { ast::binary_operator::equals,             operators::equals() },
+            { ast::binary_operator::greater_than,       operators::greater() },
+            { ast::binary_operator::greater_equals,     operators::greater_equal() },
+            { ast::binary_operator::in,                 operators::in() },
+            { ast::binary_operator::less_than,          operators::less() },
+            { ast::binary_operator::less_equals,        operators::less_equal() },
+            { ast::binary_operator::left_shift,         operators::left_shift() },
+            { ast::binary_operator::logical_and,        operators::logical_and() },
+            { ast::binary_operator::logical_or,         operators::logical_or() },
+            { ast::binary_operator::match,              operators::match() },
+            { ast::binary_operator::minus,              operators::minus() },
+            { ast::binary_operator::modulo,             operators::modulo() },
+            { ast::binary_operator::multiply,           operators::multiply() },
+            { ast::binary_operator::not_equals,         operators::not_equals() },
+            { ast::binary_operator::not_match,          operators::not_match() },
+            { ast::binary_operator::plus,               operators::plus() },
+            { ast::binary_operator::right_shift,        operators::right_shift() }
+        };
 
-            case ast::binary_operator::assignment:
-                assign(left, right, _context, left_position);
-                return;
-
-            case ast::binary_operator::plus:
-                left = plus(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::minus:
-                left = minus(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::multiply:
-                left = multiply(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::divide:
-                left = divide(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::modulo:
-                left = modulo(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::left_shift:
-                left = left_shift(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::right_shift:
-                left = right_shift(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::logical_and:
-                left = logical_and(left, right);
-                return;
-
-            case ast::binary_operator::logical_or:
-                left = logical_or(left, right);
-                return;
-
-            case ast::binary_operator::equals:
-                left = equals(left, right);
-                return;
-
-            case ast::binary_operator::not_equals:
-                left = !equals(left, right);
-                return;
-
-            case ast::binary_operator::less_than:
-                left = less(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::less_equals:
-                left = less_equal(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::greater_than:
-                left = greater(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::greater_equals:
-                left = greater_equal(left, right, left_position, right_position);
-                return;
-
-            case ast::binary_operator::match:
-                left = match(left, right, left_position, right_position, _context);
-                return;
-
-            case ast::binary_operator::not_match:
-                left = !is_truthy(match(left, right, left_position, right_position, _context));
-                return;
-
-            default:
-                throw evaluation_exception(left_position, "unexpected binary expression.");
+        auto it = binary_operators.find(op);
+        if (it == binary_operators.end()) {
+            throw evaluation_exception(left_position, "unexpected binary expression.");
         }
+
+        operators::binary_context context(_context, left, left_position, right, right_position);
+        left = it->second(context);
     }
 
     uint8_t expression_evaluator::get_precedence(ast::binary_operator op)

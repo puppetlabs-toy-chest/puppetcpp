@@ -92,14 +92,13 @@ Puppet functions implemented:
 * [x] debug
 * [ ] defined
 * [ ] digest
-* [ ] each
+* [x] each
 * [x] emerg
 * [ ] epp
 * [x] err
-* [ ] extlookup
 * [x] fail
 * [ ] file
-* [ ] filter
+* [x] filter
 * [ ] fqdn_rand
 * [ ] generate
 * [ ] hiera

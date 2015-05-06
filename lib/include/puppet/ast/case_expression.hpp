@@ -5,6 +5,7 @@
 #pragma once
 
 #include "expression.hpp"
+#include "lambda.hpp"
 #include <boost/optional.hpp>
 #include <vector>
 
@@ -28,10 +29,24 @@ namespace puppet { namespace ast {
         case_proposition(std::vector<expression> options, boost::optional<std::vector<expression>> body);
 
         /**
+         * Constructs a case proposition with the given lambda option and body expressions.
+         * @param option The case proposition lambda.
+         * @param body The expressions that make up the body of the proposition.
+         */
+        case_proposition(lambda option, boost::optional<std::vector<expression>> body);
+
+        /**
          * Gets the case proposition options.
          * @return Returns the case proposition options.
          */
         std::vector<expression> const& options() const;
+
+        /**
+         * Gets the optional case proposition lambda.
+         * If present, this should be respected over the option expressions.
+         * @return Returns the optional case proposition lambda.
+         */
+        boost::optional<ast::lambda> const& lambda() const;
 
         /**
          * Gets the expressions that make up the body of the proposition.
@@ -48,6 +63,7 @@ namespace puppet { namespace ast {
      private:
         lexer::token_position _position;
         std::vector<expression> _options;
+        boost::optional<ast::lambda> _lambda;
         boost::optional<std::vector<expression>> _body;
     };
 

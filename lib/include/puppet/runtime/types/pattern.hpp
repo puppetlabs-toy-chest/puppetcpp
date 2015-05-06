@@ -37,7 +37,7 @@ namespace puppet { namespace runtime { namespace types {
         /**
          * Determines if the given value is an instance of this type.
          * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type.
+         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
         template <typename Value>
@@ -56,7 +56,7 @@ namespace puppet { namespace runtime { namespace types {
 
             // Check for a matching pattern
             for (auto const& regex : _patterns) {
-                if (regex.pattern().empty() || std::regex_match(*ptr, regex.value())) {
+                if (regex.pattern().empty() || std::regex_search(*ptr, regex.value())) {
                     return true;
                 }
             }

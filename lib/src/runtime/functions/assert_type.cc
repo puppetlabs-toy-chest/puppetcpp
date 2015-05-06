@@ -12,11 +12,11 @@ namespace puppet { namespace runtime { namespace functions {
         // Check the argument count
         auto& arguments = context.arguments();
         if (arguments.size() != 2) {
-            throw evaluation_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to assert_type function but %1% were given.") % arguments.size()).str());
+            throw evaluation_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to 'assert_type' function but %1% were given.") % arguments.size()).str());
         }
 
         // First argument should be a type (TODO: should accept a string that is a type name too)
-        auto type = boost::get<values::type>(&dereference(arguments[0]));
+        auto type = as<values::type>(arguments[0]);
         if (!type) {
             throw evaluation_exception(context.position(0), (boost::format("expected %1% for first argument but found %2%.") % types::type::name() % get_type(arguments[0])).str());
         }
@@ -26,14 +26,13 @@ namespace puppet { namespace runtime { namespace functions {
             return std::move(arguments[1]);
         }
 
-        // Otherwise, yield to a lambda if given
-        if (context.yielder().lambda_given()) {
-            values::array lambda_arguments = { std::move(arguments[0]), get_type(arguments[1]) };
-            return context.yielder().yield(lambda_arguments);
+        // Otherwise, a lambda is required
+        if (!context.yielder().lambda_given()) {
+            throw evaluation_exception(context.position(1), (boost::format("type assertion failure: expected %1% but found %2%.") % *type % get_type(arguments[1])).str());
         }
 
-        // Or raise an error
-        throw evaluation_exception(context.position(1), (boost::format("type assertion failure: expected %1% but found %2%.") % *type % get_type(arguments[1])).str());
+        arguments[1] = get_type(arguments[1]);
+        return context.yielder().yield(arguments);
     }
 
 }}}  // namespace puppet::runtime::functions

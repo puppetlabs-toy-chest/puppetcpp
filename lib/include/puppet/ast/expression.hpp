@@ -17,6 +17,7 @@
 #include <boost/variant.hpp>
 #include <iostream>
 #include <vector>
+#include <functional>
 
 namespace puppet { namespace ast {
 
@@ -424,3 +425,70 @@ namespace puppet { namespace ast {
     std::ostream& operator<<(std::ostream& os, expression const& expr);
 
 }}  // namespace puppet::ast
+
+namespace std
+{
+    /**
+     * Responsible for hashing ast::unary_operator.
+     * Note: this specialization is unnecessary in C++14.
+     */
+    template<>
+    struct hash<puppet::ast::unary_operator>
+    {
+        /**
+         * The argument type.
+         */
+        typedef puppet::ast::unary_operator argument_type;
+        /**
+         * The underlying type of the enum.
+         */
+        typedef std::underlying_type<argument_type>::type underlying_type;
+        /**
+         * The result type of the hash.
+         */
+        typedef std::hash<underlying_type>::result_type result_type;
+
+        /**
+         * Responsible for hashing the argument.
+         * @param arg The argument to hash.
+         * @return Returns the hash value.
+         */
+        result_type operator()(argument_type const& arg) const
+        {
+            std::hash<underlying_type> hasher;
+            return hasher(static_cast<underlying_type>(arg));
+        }
+    };
+
+    /**
+     * Responsible for hashing ast::unary_operator.
+     * Note: this specialization is unnecessary in C++14.
+     */
+    template<>
+    struct hash<puppet::ast::binary_operator>
+    {
+        /**
+         * The argument type.
+         */
+        typedef puppet::ast::binary_operator argument_type;
+        /**
+         * The underlying type of the enum.
+         */
+        typedef std::underlying_type<argument_type>::type underlying_type;
+        /**
+         * The result type of the hash.
+         */
+        typedef std::hash<underlying_type>::result_type result_type;
+
+        /**
+         * Responsible for hashing the argument.
+         * @param arg The argument to hash.
+         * @return Returns the hash value.
+         */
+        result_type operator()(argument_type const& arg) const
+        {
+            std::hash<underlying_type> hasher;
+            return hasher(static_cast<underlying_type>(arg));
+        }
+    };
+}

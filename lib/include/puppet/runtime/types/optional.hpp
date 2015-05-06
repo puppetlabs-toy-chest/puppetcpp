@@ -48,7 +48,7 @@ namespace puppet { namespace runtime { namespace types {
         /**
          * Determines if the given value is an instance of this type.
          * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type.
+         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
         template <typename Value>

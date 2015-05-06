@@ -1,6 +1,8 @@
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/runtime/functions/assert_type.hpp>
+#include <puppet/runtime/functions/each.hpp>
 #include <puppet/runtime/functions/fail.hpp>
+#include <puppet/runtime/functions/filter.hpp>
 #include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
@@ -20,6 +22,7 @@ namespace puppet { namespace runtime {
         optional<vector<ast::expression>> const& arguments,
         optional<ast::lambda> const& lambda,
         value* first_value,
+        ast::primary_expression const* first_expression,
         lexer::token_position const* first_position) :
             _name(name),
             _position(position),
@@ -28,8 +31,22 @@ namespace puppet { namespace runtime {
     {
         _arguments.reserve((arguments ? arguments->size() : 0) + (first_value ? 1 : 0));
         if (first_value) {
-            _arguments.emplace_back(std::move(*first_value));
-            _positions.push_back(first_position ? *first_position : position);
+            // If this is the first expression, attempt to unfold a splat
+            bool added = false;
+            if (first_expression) {
+                auto unfold_array = evaluator.unfold(*first_expression, *first_value);
+                if (unfold_array) {
+                    _positions.insert(_positions.end(), unfold_array->size(), *first_position);
+                    _arguments.reserve(_arguments.size() + unfold_array->size());
+                    _arguments.insert(_arguments.end(), std::make_move_iterator(unfold_array->begin()), std::make_move_iterator(unfold_array->end()));
+                    added = true;
+                }
+            }
+            // Add the first argument if nothing was added above
+            if (!added) {
+                _arguments.emplace_back(std::move(*first_value));
+                _positions.push_back(first_position ? *first_position : position);
+            }
         }
 
         // Evaluate the arguments
@@ -109,9 +126,11 @@ namespace puppet { namespace runtime {
             { "assert_type",    functions::assert_type() },
             { "crit",           functions::logging_function(logging::level::critical) },
             { "debug",          functions::logging_function(logging::level::debug) },
+            { "each",           functions::each() },
             { "emerg",          functions::logging_function(logging::level::emergency) },
             { "err",            functions::logging_function(logging::level::error) },
             { "fail",           functions::fail() },
+            { "filter",         functions::filter() },
             { "info",           functions::logging_function(logging::level::info) },
             { "notice",         functions::logging_function(logging::level::notice) },
             { "split",          functions::split() },
@@ -132,10 +151,11 @@ namespace puppet { namespace runtime {
         optional<vector<ast::expression>> const& arguments,
         optional<ast::lambda> const& lambda,
         value* first_value,
+        ast::primary_expression const* first_expression,
         lexer::token_position const* first_position) const
     {
         // Dispatch the call
-        call_context ctx(evaluator, _name, _position, arguments, lambda, first_value, first_position);
+        call_context ctx(evaluator, _name, _position, arguments, lambda, first_value, first_expression, first_position);
         return (*_function)(ctx);
     }
 

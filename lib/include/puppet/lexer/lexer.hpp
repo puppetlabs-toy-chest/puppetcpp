@@ -184,7 +184,7 @@ namespace puppet { namespace lexer {
          */
         typedef typename Base::token_type token_type;
 
-       /**
+        /**
          * The token id type.
          */
         typedef typename Base::id_type id_type;

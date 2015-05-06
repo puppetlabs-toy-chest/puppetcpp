@@ -34,6 +34,16 @@ namespace puppet { namespace runtime { namespace values {
         return boost::apply_visitor(value_visitor(os), val);
     }
 
+    value mutate(value& v)
+    {
+        // Check for variable first and create a copy
+        if (boost::get<variable>(&v)) {
+            return dereference(v);
+        }
+        // Otherwise, just move the argument
+        return std::move(v);
+    }
+
     value const& dereference(value const& val)
     {
         auto result = &val;
@@ -43,6 +53,28 @@ namespace puppet { namespace runtime { namespace values {
             ptr = boost::get<variable>(result);
         }
         return *result;
+    }
+
+    bool is_undef(value const& val)
+    {
+        return as<undef>(val);
+    }
+
+    bool is_default(value const& val)
+    {
+        return as<defaulted>(val);
+    }
+
+    bool is_true(value const& val)
+    {
+        auto ptr = as<bool>(val);
+        return ptr && *ptr;
+    }
+
+    bool is_false(value const& val)
+    {
+        auto ptr = as<bool>(val);
+        return ptr && !*ptr;
     }
 
     struct truthy_visitor : boost::static_visitor<bool>
@@ -68,16 +100,6 @@ namespace puppet { namespace runtime { namespace values {
             return true;
         }
     };
-
-    bool is_undef(value const& val)
-    {
-        return boost::get<undef>(&dereference(val));
-    }
-
-    bool is_default(value const& val)
-    {
-        return boost::get<defaulted>(&dereference(val));
-    }
 
     bool is_truthy(value const& val)
     {
@@ -121,9 +143,9 @@ namespace puppet { namespace runtime { namespace values {
             return types::regexp();
         }
 
-        result_type operator()(type const& type) const
+        result_type operator()(type const&) const
         {
-            return type;
+            return types::type();
         }
 
         result_type operator()(variable const& var) const
@@ -133,12 +155,12 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(array const&) const
         {
-            return types::array();
+            return types::array(types::any());
         }
 
         result_type operator()(hash const&) const
         {
-            return types::hash();
+            return types::hash(types::any(), types::any());
         }
     };
 
@@ -194,7 +216,7 @@ namespace puppet { namespace runtime { namespace values {
     array to_array(value const& val)
     {
         // If already an array, return a copy
-        auto array_ptr = boost::get<array>(&val);
+        auto array_ptr = as<values::array>(&val);
         if (array_ptr) {
             return *array_ptr;
         }
@@ -202,7 +224,7 @@ namespace puppet { namespace runtime { namespace values {
         array result;
 
         // Check for hash
-        auto hash_ptr = boost::get<hash>(&val);
+        auto hash_ptr = as<values::hash>(&val);
         if (hash_ptr) {
             // Turn the hash into an array of [K,V]
             for (auto& kvp : *hash_ptr) {

@@ -90,6 +90,7 @@ namespace puppet { namespace runtime {
 
     private:
         static bool is_productive(ast::expression const& expr);
+        static bool is_productive(ast::primary_expression const& expr);
 
         void climb_expression(
             values::value& left,

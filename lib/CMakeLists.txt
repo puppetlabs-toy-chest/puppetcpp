@@ -52,10 +52,36 @@ add_library(puppet SHARED
     src/logging/logger.cc
     src/parser/parser.cc
     src/runtime/functions/assert_type.cc
+    src/runtime/functions/each.cc
     src/runtime/functions/fail.cc
+    src/runtime/functions/filter.cc
     src/runtime/functions/logging.cc
     src/runtime/functions/split.cc
     src/runtime/functions/with.cc
+    src/runtime/operators/assignment.cc
+    src/runtime/operators/binary_context.cc
+    src/runtime/operators/divide.cc
+    src/runtime/operators/equals.cc
+    src/runtime/operators/greater.cc
+    src/runtime/operators/greater_equal.cc
+    src/runtime/operators/left_shift.cc
+    src/runtime/operators/less.cc
+    src/runtime/operators/less_equal.cc
+    src/runtime/operators/logical_and.cc
+    src/runtime/operators/logical_not.cc
+    src/runtime/operators/logical_or.cc
+    src/runtime/operators/in.cc
+    src/runtime/operators/match.cc
+    src/runtime/operators/minus.cc
+    src/runtime/operators/modulo.cc
+    src/runtime/operators/multiply.cc
+    src/runtime/operators/negate.cc
+    src/runtime/operators/not_equals.cc
+    src/runtime/operators/not_match.cc
+    src/runtime/operators/plus.cc
+    src/runtime/operators/right_shift.cc
+    src/runtime/operators/splat.cc
+    src/runtime/operators/unary_context.cc
     src/runtime/types/any.cc
     src/runtime/types/boolean.cc
     src/runtime/types/callable.cc
@@ -83,7 +109,6 @@ add_library(puppet SHARED
     src/runtime/context.cc
     src/runtime/dispatcher.cc
     src/runtime/expression_evaluator.cc
-    src/runtime/operators.cc
     src/runtime/scope.cc
     src/runtime/string_interpolator.cc
     src/runtime/yielder.cc
