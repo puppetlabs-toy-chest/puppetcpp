@@ -21,7 +21,7 @@ namespace puppet { namespace runtime { namespace types {
          * Constructs an Type type.
          * @param type The optional type.
          */
-        explicit basic_type(boost::optional<Type> type) :
+        explicit basic_type(boost::optional<Type> type = boost::none) :
             _type(std::move(type))
         {
         }

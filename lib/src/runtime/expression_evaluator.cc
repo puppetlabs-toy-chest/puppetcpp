@@ -835,9 +835,10 @@ namespace puppet { namespace runtime {
 
     struct postfix_expression_visitor : boost::static_visitor<void>
     {
-        postfix_expression_visitor(expression_evaluator& evaluator, value& result, token_position& position) :
+        postfix_expression_visitor(expression_evaluator& evaluator, value& result, ast::primary_expression const* first_expression, token_position& position) :
             _evaluator(evaluator),
             _result(result),
+            _first_expression(first_expression),
             _position(position)
         {
         }
@@ -868,6 +869,7 @@ namespace puppet { namespace runtime {
                         if (is_match(_evaluator.context(), _result, expr.position(), element, selector_case.position())) {
                             _result = _evaluator.evaluate(selector_case.result());
                             _position = selector_case.position();
+                            _first_expression = nullptr;
                             return;
                         }
                     }
@@ -876,6 +878,7 @@ namespace puppet { namespace runtime {
                 if (is_match(_evaluator.context(), _result, expr.position(), selector, selector_case.position())) {
                     _result = _evaluator.evaluate(selector_case.result());
                     _position = selector_case.position();
+                    _first_expression = nullptr;
                     return;
                 }
             }
@@ -888,6 +891,7 @@ namespace puppet { namespace runtime {
             // Evaluate the default case
             _result = _evaluator.evaluate(cases[*default_index].result());
             _position = cases[*default_index].position();
+            _first_expression = nullptr;
         }
 
         result_type operator()(ast::access_expression const& expr)
@@ -895,6 +899,7 @@ namespace puppet { namespace runtime {
             access_expression_visitor visitor(_evaluator, expr.arguments(), expr.position());
             _result = boost::apply_visitor(visitor, dereference(_result));
             _position = expr.position();
+            _first_expression = nullptr;
         }
 
         result_type operator()(ast::method_call_expression const& expr)
@@ -902,13 +907,15 @@ namespace puppet { namespace runtime {
             runtime::dispatcher dispatcher(expr.method().value(), expr.method().position());
 
             // Evaluate the result for the next call
-            _result = dispatcher.dispatch(_evaluator, expr.arguments(), expr.lambda(), &_result, &_position);
+            _result = dispatcher.dispatch(_evaluator, expr.arguments(), expr.lambda(), &_result, _first_expression, &_position);
             _position = expr.position();
+            _first_expression = nullptr;
         }
 
     private:
         expression_evaluator& _evaluator;
         value& _result;
+        ast::primary_expression const* _first_expression;
         token_position& _position;
     };
 
@@ -966,7 +973,7 @@ namespace puppet { namespace runtime {
             auto position = expr.position();
 
             // Evaluate the postfix expressions
-            postfix_expression_visitor visitor(_evaluator, result, position);
+            postfix_expression_visitor visitor(_evaluator, result, &expr.primary(), position);
             for (auto const& expression : expr.subexpressions()) {
                 boost::apply_visitor(visitor, expression);
             }

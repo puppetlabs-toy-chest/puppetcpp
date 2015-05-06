@@ -143,9 +143,9 @@ namespace puppet { namespace runtime { namespace values {
             return types::regexp();
         }
 
-        result_type operator()(type const& type) const
+        result_type operator()(type const&) const
         {
-            return type;
+            return types::type();
         }
 
         result_type operator()(variable const& var) const
@@ -155,12 +155,12 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(array const&) const
         {
-            return types::array();
+            return types::array(types::any());
         }
 
         result_type operator()(hash const&) const
         {
-            return types::hash();
+            return types::hash(types::any(), types::any());
         }
     };
 

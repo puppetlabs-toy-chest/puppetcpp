@@ -22,7 +22,8 @@ namespace puppet { namespace runtime {
          * @param position The position of the function call.
          * @param arguments The arguments to the function.
          * @param lambda The lambda to the function.
-         * @param first_value The first evaluated value (for method calls; nullptr otherwise)
+         * @param first_value The first evaluated value (for method calls; nullptr otherwise).
+         * @param first_expression The first expression (for method calls; nullptr otherwise).
          * @param first_position The first argument position (for method calls; nullptr otherwise).
          */
         call_context(
@@ -32,6 +33,7 @@ namespace puppet { namespace runtime {
             boost::optional<std::vector<ast::expression>> const& arguments,
             boost::optional<ast::lambda> const& lambda,
             values::value* first_value = nullptr,
+            ast::primary_expression const* first_expression = nullptr,
             lexer::token_position const* first_position = nullptr);
 
         /**
@@ -120,7 +122,8 @@ namespace puppet { namespace runtime {
          * @param evaluator The expression evaluator to use.
          * @param arguments The arguments to the function.
          * @param lambda The lambda to call for the function.
-         * @param first_value The first evaluated value (for method calls; nullptr otherwise)
+         * @param first_value The first evaluated value (for method calls; nullptr otherwise).
+         * @param first_expression The first expression (for method calls; nullptr otherwise).
          * @param first_position The first argument position (for method calls; nullptr otherwise).
          * @return Returns the value returned from the function.
          */
@@ -129,6 +132,7 @@ namespace puppet { namespace runtime {
             boost::optional<std::vector<ast::expression>> const& arguments,
             boost::optional<ast::lambda> const& lambda,
             values::value* first_value = nullptr,
+            ast::primary_expression const* first_expression = nullptr,
             lexer::token_position const* first_position = nullptr) const;
 
         /**
