@@ -41,6 +41,7 @@ namespace puppet { namespace runtime { namespace values {
         types::basic_array<boost::recursive_variant_>,
         types::basic_hash<boost::recursive_variant_>,
         types::basic_optional<boost::recursive_variant_>,
+        types::basic_resource<boost::recursive_variant_>,
         types::basic_struct<boost::recursive_variant_>,
         types::basic_tuple<boost::recursive_variant_>,
         types::basic_type<boost::recursive_variant_>,
@@ -58,7 +59,6 @@ namespace puppet { namespace runtime { namespace values {
         types::numeric,
         types::pattern,
         types::regexp,
-        types::resource,
         types::runtime,
         types::scalar,
         types::string,
@@ -84,6 +84,11 @@ namespace puppet { namespace runtime { namespace types {
      * Represents the Optional type.
      */
     typedef basic_optional<values::type> optional;
+
+    /**
+     * Represents the Resource type.
+     */
+    typedef basic_resource<values::type> resource;
 
     /**
      * Represents the Struct type.

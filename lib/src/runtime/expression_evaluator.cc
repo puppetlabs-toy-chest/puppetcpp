@@ -181,7 +181,8 @@ namespace puppet { namespace runtime {
 
             auto it = names.find(type.name());
             if (it == names.end()) {
-                throw evaluation_exception(type.position(), (boost::format("unknown type %1%.") % type.name()).str());
+                // Assume the unknown type is a resource
+                return types::resource(type.name());
             }
             return it->second;
         }
@@ -763,6 +764,70 @@ namespace puppet { namespace runtime {
                 types.emplace_back(mutate_as<values::type>(_arguments[i]));
             }
             return types::variant(std::move(types));
+        }
+
+        result_type operator()(types::resource const& type)
+        {
+            // If the resource already has a type, treat the access as titles only
+            if (!type.type_name().empty()) {
+                // If there is only one parameter, return a resource with a title
+                if (_arguments.size() == 1) {
+                    if (!as<string>(_arguments[0])) {
+                        throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[0])).str());
+                    }
+                    return types::resource(type.type_name(), mutate_as<string>(_arguments[0]));
+                }
+
+                // Otherwise, return an array of resources with titles
+                values::array result;
+                for (size_t i = 0; i < _arguments.size(); ++i) {
+                    if (!as<string>(_arguments[i])) {
+                        throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
+                    }
+                    result.emplace_back(types::resource(type.type_name(), mutate_as<string>(_arguments[i])));
+                }
+                return result;
+            }
+
+            // Get the type name
+            string type_name;
+            if (as<string>(_arguments[0])) {
+                type_name = mutate_as<string>(_arguments[0]);
+            } else {
+                auto type_ptr = as<values::type>(_arguments[0]);
+                if (type_ptr) {
+                    auto resource_ptr = boost::get<types::resource>(type_ptr);
+                    if (resource_ptr) {
+                        type_name = resource_ptr->type_name();
+                    }
+                }
+            }
+            if (type_name.empty()) {
+                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% or typed %2% but found %3%.") % types::string::name() % types::resource::name() % get_type(_arguments[0])).str());
+            }
+
+            // If only one parameter, return a resource of that type
+            if (_arguments.size() == 1) {
+                return types::resource(std::move(type_name));
+            }
+
+            // If there are two parameters, return a type with a title
+            if (_arguments.size() == 2) {
+                if (!as<string>(_arguments[1])) {
+                    throw evaluation_exception(_positions[1], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[1])).str());
+                }
+                return types::resource(std::move(type_name), mutate_as<string>(_arguments[1]));
+            }
+
+            // Otherwise, return an array of types
+            values::array result;
+            for (size_t i = 1; i < _arguments.size(); ++i) {
+                if (!as<string>(_arguments[i])) {
+                    throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
+                }
+                result.emplace_back(types::resource(type_name, mutate_as<string>(_arguments[i])));
+            }
+            return result;
         }
 
         template <typename T>

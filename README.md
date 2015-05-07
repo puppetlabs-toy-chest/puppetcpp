@@ -72,7 +72,7 @@ Type system implemented:
 * [x] Optional
 * [x] Pattern
 * [x] Regexp
-* [ ] Resource
+* [x] Resource
 * [ ] Runtime
 * [x] Scalar
 * [x] String
