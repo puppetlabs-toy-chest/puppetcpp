@@ -147,10 +147,6 @@ namespace puppet { namespace ast {
     enum class resource_status
     {
         /**
-         * No status.
-         */
-        none,
-        /**
          * The resource is realized.
          */
         realized,
@@ -180,13 +176,13 @@ namespace puppet { namespace ast {
          * @param bodies The resource bodies being defined.
          * @param status The resource status.
          */
-        resource_expression(primary_expression type, std::vector<resource_body> bodies, resource_status status = resource_status::realized);
+        resource_expression(ast::name type, std::vector<resource_body> bodies, resource_status status = resource_status::realized);
 
         /**
          * Gets the type expression of the resource being defined.
          * @return Returns the type expression of the resource being defined.
          */
-        primary_expression const& type() const;
+        ast::name const& type() const;
 
         /**
          * Gets the resource bodies that are being defined.
@@ -207,7 +203,7 @@ namespace puppet { namespace ast {
         lexer::token_position const& position() const;
 
      private:
-        primary_expression _type;
+        ast::name _type;
         std::vector<resource_body> _bodies;
         resource_status _status;
     };

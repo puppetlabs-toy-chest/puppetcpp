@@ -181,7 +181,8 @@ namespace puppet { namespace runtime {
 
             auto it = names.find(type.name());
             if (it == names.end()) {
-                throw evaluation_exception(type.position(), (boost::format("unknown type %1%.") % type.name()).str());
+                // Assume the unknown type is a resource
+                return types::resource(type.name());
             }
             return it->second;
         }
@@ -765,6 +766,70 @@ namespace puppet { namespace runtime {
             return types::variant(std::move(types));
         }
 
+        result_type operator()(types::resource const& type)
+        {
+            // If the resource already has a type, treat the access as titles only
+            if (!type.type_name().empty()) {
+                // If there is only one parameter, return a resource with a title
+                if (_arguments.size() == 1) {
+                    if (!as<string>(_arguments[0])) {
+                        throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[0])).str());
+                    }
+                    return types::resource(type.type_name(), mutate_as<string>(_arguments[0]));
+                }
+
+                // Otherwise, return an array of resources with titles
+                values::array result;
+                for (size_t i = 0; i < _arguments.size(); ++i) {
+                    if (!as<string>(_arguments[i])) {
+                        throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
+                    }
+                    result.emplace_back(types::resource(type.type_name(), mutate_as<string>(_arguments[i])));
+                }
+                return result;
+            }
+
+            // Get the type name
+            string type_name;
+            if (as<string>(_arguments[0])) {
+                type_name = mutate_as<string>(_arguments[0]);
+            } else {
+                auto type_ptr = as<values::type>(_arguments[0]);
+                if (type_ptr) {
+                    auto resource_ptr = boost::get<types::resource>(type_ptr);
+                    if (resource_ptr) {
+                        type_name = resource_ptr->type_name();
+                    }
+                }
+            }
+            if (type_name.empty()) {
+                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% or typed %2% but found %3%.") % types::string::name() % types::resource::name() % get_type(_arguments[0])).str());
+            }
+
+            // If only one parameter, return a resource of that type
+            if (_arguments.size() == 1) {
+                return types::resource(std::move(type_name));
+            }
+
+            // If there are two parameters, return a type with a title
+            if (_arguments.size() == 2) {
+                if (!as<string>(_arguments[1])) {
+                    throw evaluation_exception(_positions[1], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[1])).str());
+                }
+                return types::resource(std::move(type_name), mutate_as<string>(_arguments[1]));
+            }
+
+            // Otherwise, return an array of types
+            values::array result;
+            for (size_t i = 1; i < _arguments.size(); ++i) {
+                if (!as<string>(_arguments[i])) {
+                    throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
+                }
+                result.emplace_back(types::resource(type_name, mutate_as<string>(_arguments[i])));
+            }
+            return result;
+        }
+
         template <typename T>
         result_type operator()(T const& target)
         {
@@ -919,6 +984,102 @@ namespace puppet { namespace runtime {
         token_position& _position;
     };
 
+    struct catalog_expression_visitor : boost::static_visitor<value>
+    {
+        explicit catalog_expression_visitor(expression_evaluator& evaluator) :
+            _evaluator(evaluator)
+        {
+        }
+
+        result_type operator()(ast::resource_expression const& expr)
+        {
+            if (expr.status() == ast::resource_status::virtualized) {
+                // TODO: add to a list of virtual resources
+                throw evaluation_exception(expr.position(), "virtual resource expressions are not yet implemented.");
+            }
+            if (expr.status() == ast::resource_status::exported) {
+                // TODO: add to a list of virtual exported resources
+                throw evaluation_exception(expr.position(), "exported resource expressions are not yet implemented.");
+            }
+
+            // Realize the resources
+            values::array result;
+            auto& catalog = _evaluator.context().catalog();
+            for (auto const& body : expr.bodies()) {
+                // Evaluate the resource title
+                auto title = _evaluator.evaluate(body.title());
+                if (!as<string>(title)) {
+                    throw evaluation_exception(body.position(), (boost::format("expected %1% for resource title but found %2%.") % types::string::name() % get_type(title)).str());
+                }
+
+                types::resource resource_type(expr.type().value(), mutate_as<string>(title));
+
+                // Add the resource
+                auto resource = catalog.add_resource(resource_type.type_name(), resource_type.title());
+                if (!resource) {
+                    // TODO: inform the user about the previous declaration location
+                    throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared.") % resource_type).str());
+                }
+
+                // Set the parameters
+                if (body.attributes()) {
+                    for (auto const& attribute : *body.attributes()) {
+                        // TODO: handle meta-parameter
+                        if (attribute.op() != ast::attribute_operator::assignment) {
+                            throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
+                        }
+                        if (!resource->set_parameter(attribute.name().value(), _evaluator.evaluate(attribute.value()))) {
+                            throw evaluation_exception(attribute.position(), (boost::format("attribute name '%1%' has already been set in this resource body.") % attribute.name()).str());
+                        }
+                    }
+                }
+
+                // Add the resource type to the result
+                result.emplace_back(std::move(resource_type));
+            }
+            return result;
+        }
+
+        result_type operator()(ast::resource_defaults_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "resource defaults expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::resource_override_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "resource override expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::class_definition_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "class expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::defined_type_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "defined type expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::node_definition_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "node definition expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::collection_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "collection expressions are not yet implemented.");
+        }
+
+     private:
+        expression_evaluator& _evaluator;
+    };
+
     struct primary_expression_visitor : boost::static_visitor<value>
     {
         explicit primary_expression_visitor(expression_evaluator& evaluator) :
@@ -945,8 +1106,8 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::catalog_expression const& expr)
         {
-            // TODO: implement
-            throw evaluation_exception(get_position(expr), "catalog expression not yet implemented.");
+            catalog_expression_visitor visitor(_evaluator);
+            return boost::apply_visitor(visitor, expr);
         }
 
         result_type operator()(ast::unary_expression const& expr)

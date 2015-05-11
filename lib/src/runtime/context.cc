@@ -87,9 +87,24 @@ namespace puppet { namespace runtime {
         return _stack.empty() ? *_top : *_stack.top();
     }
 
+    logging::logger const& context::logger() const
+    {
+        return _logger;
+    }
+
     logging::logger& context::logger()
     {
         return _logger;
+    }
+
+    runtime::catalog const& context::catalog() const
+    {
+        return _catalog;
+    }
+
+    runtime::catalog& context::catalog()
+    {
+        return _catalog;
     }
 
     void context::warn(lexer::token_position const& position, string const& message) const

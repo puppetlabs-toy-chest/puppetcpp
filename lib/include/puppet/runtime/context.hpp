@@ -5,6 +5,7 @@
 #pragma once
 
 #include "scope.hpp"
+#include "catalog.hpp"
 #include "../logging/logger.hpp"
 #include "../lexer/token_position.hpp"
 #include <memory>
@@ -69,7 +70,25 @@ namespace puppet { namespace runtime {
          * Gets the logger.
          * @return Returns the logger.
          */
+        logging::logger const& logger() const;
+
+        /**
+         * Gets the logger.
+         * @return Returns the logger.
+         */
         logging::logger& logger();
+
+        /**
+         * Gets the evaluation context's catalog.
+         * @return Returns the evaluation context's catalog.
+         */
+        runtime::catalog const& catalog() const;
+
+        /**
+         * Gets the evaluation context's catalog.
+         * @return Returns the evaluation context's catalog.
+         */
+        runtime::catalog& catalog();
 
         /**
          * Emits a warning with the given position and message.
@@ -84,6 +103,7 @@ namespace puppet { namespace runtime {
         std::stack<std::shared_ptr<scope>> _stack;
         std::shared_ptr<scope> _top;
         std::function<void(lexer::token_position const&, std::string const&)> _warn;
+        runtime::catalog _catalog;
     };
 
     /**

@@ -96,7 +96,6 @@ add_library(puppet SHARED
     src/runtime/types/numeric.cc
     src/runtime/types/pattern.cc
     src/runtime/types/regexp.cc
-    src/runtime/types/resource.cc
     src/runtime/types/runtime.cc
     src/runtime/types/scalar.cc
     src/runtime/types/string.cc
@@ -106,6 +105,7 @@ add_library(puppet SHARED
     src/runtime/values/regex.cc
     src/runtime/values/undef.cc
     src/runtime/values/value.cc
+    src/runtime/catalog.cc
     src/runtime/context.cc
     src/runtime/dispatcher.cc
     src/runtime/expression_evaluator.cc

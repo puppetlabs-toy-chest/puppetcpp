@@ -40,12 +40,11 @@ int main(int argc, char* argv[])
                 logger.log(level::warning, get<1>(position), column, text, argv[1], message);
             });
             expression_evaluator evaluator(ctx);
-            for (auto &expression : *manifest.body()) {
+            for (auto& expression : *manifest.body()) {
                 // Top level expressions must be productive
                 evaluator.evaluate(expression, true);
             }
         }
-
     } catch (parse_exception const& ex) {
         string text;
         size_t column;

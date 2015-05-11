@@ -45,7 +45,13 @@ Expression evaluator status:
 * [x] method call expressions
 * [x] function call expressions
 * [x] lambdas
-* [ ] catalog expressions
+* [ ] resource expressions (partial implementation)
+* [ ] resource defaults expressions
+* [ ] resource override expressions
+* [ ] class definition expressions
+* [ ] defined type expressions
+* [ ] node type expressions
+* [ ] collection expressions
 * [x] access expressions
 * [x] global scope
 * [ ] local scope
@@ -72,7 +78,7 @@ Type system implemented:
 * [x] Optional
 * [x] Pattern
 * [x] Regexp
-* [ ] Resource
+* [x] Resource
 * [ ] Runtime
 * [x] Scalar
 * [x] String

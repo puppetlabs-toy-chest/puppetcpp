@@ -45,11 +45,8 @@ namespace puppet { namespace runtime { namespace types {
         bool is_specialization(Type const& other) const
         {
             // Resource and Class types are specializations
-            // Any specializations of Resource and Class are specializations
-            return boost::get<resource>(&other)        ||
-                   boost::get<klass>(&other)           ||
-                   resource().is_specialization(other) ||
-                   klass().is_specialization(other);
+            return boost::get<basic_resource<Type>>(&other) ||
+                   boost::get<klass>(&other);
         }
     };
 
