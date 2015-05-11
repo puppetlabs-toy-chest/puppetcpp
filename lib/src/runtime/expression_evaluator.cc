@@ -984,6 +984,102 @@ namespace puppet { namespace runtime {
         token_position& _position;
     };
 
+    struct catalog_expression_visitor : boost::static_visitor<value>
+    {
+        explicit catalog_expression_visitor(expression_evaluator& evaluator) :
+            _evaluator(evaluator)
+        {
+        }
+
+        result_type operator()(ast::resource_expression const& expr)
+        {
+            if (expr.status() == ast::resource_status::virtualized) {
+                // TODO: add to a list of virtual resources
+                throw evaluation_exception(expr.position(), "virtual resource expressions are not yet implemented.");
+            }
+            if (expr.status() == ast::resource_status::exported) {
+                // TODO: add to a list of virtual exported resources
+                throw evaluation_exception(expr.position(), "exported resource expressions are not yet implemented.");
+            }
+
+            // Realize the resources
+            values::array result;
+            auto& catalog = _evaluator.context().catalog();
+            for (auto const& body : expr.bodies()) {
+                // Evaluate the resource title
+                auto title = _evaluator.evaluate(body.title());
+                if (!as<string>(title)) {
+                    throw evaluation_exception(body.position(), (boost::format("expected %1% for resource title but found %2%.") % types::string::name() % get_type(title)).str());
+                }
+
+                types::resource resource_type(expr.type().value(), mutate_as<string>(title));
+
+                // Add the resource
+                auto resource = catalog.add_resource(resource_type.type_name(), resource_type.title());
+                if (!resource) {
+                    // TODO: inform the user about the previous declaration location
+                    throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared.") % resource_type).str());
+                }
+
+                // Set the parameters
+                if (body.attributes()) {
+                    for (auto const& attribute : *body.attributes()) {
+                        // TODO: handle meta-parameter
+                        if (attribute.op() != ast::attribute_operator::assignment) {
+                            throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
+                        }
+                        if (!resource->set_parameter(attribute.name().value(), _evaluator.evaluate(attribute.value()))) {
+                            throw evaluation_exception(attribute.position(), (boost::format("attribute name '%1%' has already been set in this resource body.") % attribute.name()).str());
+                        }
+                    }
+                }
+
+                // Add the resource type to the result
+                result.emplace_back(std::move(resource_type));
+            }
+            return result;
+        }
+
+        result_type operator()(ast::resource_defaults_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "resource defaults expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::resource_override_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "resource override expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::class_definition_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "class expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::defined_type_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "defined type expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::node_definition_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "node definition expressions are not yet implemented.");
+        }
+
+        result_type operator()(ast::collection_expression const& expr)
+        {
+            // TODO: implement
+            throw evaluation_exception(expr.position(), "collection expressions are not yet implemented.");
+        }
+
+     private:
+        expression_evaluator& _evaluator;
+    };
+
     struct primary_expression_visitor : boost::static_visitor<value>
     {
         explicit primary_expression_visitor(expression_evaluator& evaluator) :
@@ -1010,8 +1106,8 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::catalog_expression const& expr)
         {
-            // TODO: implement
-            throw evaluation_exception(get_position(expr), "catalog expression not yet implemented.");
+            catalog_expression_visitor visitor(_evaluator);
+            return boost::apply_visitor(visitor, expr);
         }
 
         result_type operator()(ast::unary_expression const& expr)

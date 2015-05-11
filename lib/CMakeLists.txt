@@ -105,6 +105,7 @@ add_library(puppet SHARED
     src/runtime/values/regex.cc
     src/runtime/values/undef.cc
     src/runtime/values/value.cc
+    src/runtime/catalog.cc
     src/runtime/context.cc
     src/runtime/dispatcher.cc
     src/runtime/expression_evaluator.cc

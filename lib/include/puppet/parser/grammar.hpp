@@ -76,9 +76,9 @@ namespace puppet { namespace parser {
             statement =
                 (statement_expression > *binary_statement) [ _val = phx::construct<ast::expression>(_1, _2) ];
             statement_expression =
-                resource_expression          [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ] |
-                resource_defaults_expression [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ] |
-                resource_override_expression [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ] |
+                class_definition_expression  [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ]      |
+                defined_type_expression      [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ]      |
+                node_definition_expression   [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ]      |
                 statement_call_expression    [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::control_flow_expression>(_1)) ] |
                 primary_expression           [ _val = _1 ];
             binary_statement =
@@ -187,9 +187,10 @@ namespace puppet { namespace parser {
             // Catalog expressions
             catalog_expression =
                 (
-                    class_definition_expression  |
-                    defined_type_expression      |
-                    node_definition_expression   |
+                    // class definitions, defined types, and node definitions are statement-level expressions only
+                    resource_expression          |
+                    resource_defaults_expression |
+                    resource_override_expression |
                     collection_expression
                 ) [ _val = phx::construct<ast::catalog_expression>(_1) ];
             resource_expression =
@@ -197,9 +198,8 @@ namespace puppet { namespace parser {
                 (raw_token(token_id::atat) > resource_type > raw_token('{') > (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}')) [ _val = phx::construct<ast::resource_expression>(_1, _2, ast::resource_status::exported) ] |
                 ((resource_type >> raw_token('{')) >> (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}'))                         [ _val = phx::construct<ast::resource_expression>(_1, _2) ];
             resource_type =
-                name                           [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(_1)) ] |
-                token(token_id::keyword_class) [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::basic_expression>(phx::construct<ast::name>(_1))) ] |
-                variable_type_expression       [ _val = _1 ];
+                name                           [ _val = _1 ] |
+                token(token_id::keyword_class) [ _val = phx::construct<ast::name>(_1) ];
             resource_body =
                 ((expression >> raw_token(':')) > -(attribute_expression % raw_token(',')) > -raw_token(',')) [ _val = phx::construct<ast::resource_body>(_1, _2) ];
             attribute_expression =
@@ -547,7 +547,7 @@ namespace puppet { namespace parser {
         // Catalog expressions
         boost::spirit::qi::rule<iterator_type, puppet::ast::catalog_expression()> catalog_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::resource_expression()> resource_expression;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression()> resource_type;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::name()> resource_type;
         boost::spirit::qi::rule<iterator_type, puppet::ast::resource_body()> resource_body;
         boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_expression()> attribute_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_operator()> attribute_operator;
