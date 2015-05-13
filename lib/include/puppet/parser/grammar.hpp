@@ -76,11 +76,16 @@ namespace puppet { namespace parser {
             statement =
                 (statement_expression > *binary_statement) [ _val = phx::construct<ast::expression>(_1, _2) ];
             statement_expression =
-                class_definition_expression  [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ]      |
-                defined_type_expression      [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ]      |
-                node_definition_expression   [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ]      |
-                statement_call_expression    [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::control_flow_expression>(_1)) ] |
-                primary_expression           [ _val = _1 ];
+                (
+                    resource_expression          |
+                    resource_defaults_expression |
+                    resource_override_expression |
+                    class_definition_expression  |
+                    defined_type_expression      |
+                    node_definition_expression
+                )                                  [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ]      |
+                statement_call_expression          [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::control_flow_expression>(_1)) ] |
+                primary_expression                 [ _val = _1 ];
             binary_statement =
                 (binary_operator > statement_expression) [ _val = phx::construct<ast::binary_expression>(_1, _2) ];
 
@@ -187,10 +192,7 @@ namespace puppet { namespace parser {
             // Catalog expressions
             catalog_expression =
                 (
-                    // class definitions, defined types, and node definitions are statement-level expressions only
-                    resource_expression          |
-                    resource_defaults_expression |
-                    resource_override_expression |
+                    // Everything but collection expressions are statement-level only
                     collection_expression
                 ) [ _val = phx::construct<ast::catalog_expression>(_1) ];
             resource_expression =
