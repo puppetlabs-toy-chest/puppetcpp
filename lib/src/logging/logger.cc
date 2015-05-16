@@ -1,6 +1,8 @@
 #include <puppet/logging/logger.hpp>
 #include <sstream>
 #include <iomanip>
+// TODO: fix istty support for windows
+#include <unistd.h>
 
 using namespace std;
 using boost::format;
@@ -48,79 +50,122 @@ namespace puppet { namespace logging {
         log(lvl, line, column, text, path, message.str());
     }
 
+    void stream_logger::log_message(level lvl, size_t line, size_t column, string const& text, string const& path, string const& message)
+    {
+        ostream& stream = get_stream(lvl);
 
-    stream_logger::stream_logger(ostream& out) :
-        _out(out)
+        // Colorize the output
+        colorize(lvl);
+
+        // Output the level
+        if (lvl == level::debug) {
+            stream << "Debug: ";
+        } else if (lvl == level::info) {
+            stream << "Info: ";
+        } else if (lvl == level::notice) {
+            stream << "Notice: ";
+        } else if (lvl == level::warning) {
+            stream << "Warning: ";
+        } else if (lvl == level::error) {
+            stream << "Error: ";
+        } else if (lvl == level::alert) {
+            stream << "Alert: ";
+        } else if (lvl == level::emergency) {
+            stream << "Emergency: ";
+        } else if (lvl == level::critical) {
+            stream << "Critical: ";
+        }
+
+        // If a location was given, write it out
+        if (!path.empty()) {
+            stream << path;
+            if (line > 0) {
+                stream << ":" << line;
+            }
+            if (column > 0) {
+                stream << ":" << column;
+            }
+            stream << ": ";
+        }
+
+        // Output the message
+        if (!message.empty()) {
+            stream << message;
+        }
+
+        stream << "\n";
+
+        // Output the offending line's text
+        if (!text.empty() && column > 0) {
+            stream << "    " << text << '\n';
+            stream << setfill(' ') << setw(column + 5) << "^\n";
+        }
+
+        // Reset the colorization
+        reset(lvl);
+    }
+
+    void stream_logger::colorize(level lvl) const
     {
     }
 
-    void stream_logger::log_message(level lvl, size_t line, size_t column, string const& text, string const& path, string const& message)
+    void stream_logger::reset(level lvl) const
+    {
+    }
+
+    ostream& console_logger::get_stream(level lvl) const
+    {
+        return lvl >= level::warning ? cerr : cout;
+    }
+
+    console_logger::console_logger() :
+        _colorize_stdout(isatty(fileno(stdout))),
+        _colorize_stderr(isatty(fileno(stderr)))
+    {
+    }
+
+    void console_logger::colorize(level lvl) const
     {
         static const string cyan = "\33[0;36m";
         static const string green = "\33[0;32m";
         static const string hyellow = "\33[1;33m";
         static const string hred = "\33[1;31m";
+
+        if (!should_colorize(lvl)) {
+            return;
+        }
+
+        auto& stream = get_stream(lvl);
+
+        if (lvl == level::debug) {
+            stream << cyan;
+        } else if (lvl == level::info) {
+            stream << green;
+        } else if (lvl == level::warning) {
+            stream << hyellow;
+        } else if (lvl >= level::error) {
+            stream << hred;
+        }
+    }
+
+    void console_logger::reset(level lvl) const
+    {
         static const string reset = "\33[0m";
 
-        // TODO: don't output color codes for platforms that don't support them (also non-TTY)
-        if (lvl == level::debug) {
-            _out << cyan;
-        } else if (lvl == level::info) {
-            _out << green;
-        } else if (lvl == level::warning) {
-            _out << hyellow;
-        } else if (lvl >= level::error) {
-            _out << hred;
+        if (!should_colorize(lvl)) {
+            return;
         }
 
-       // Output the level
-        if (lvl == level::debug) {
-            _out << "Debug: ";
-        } else if (lvl == level::info) {
-            _out << "Info: ";
-        } else if (lvl == level::notice) {
-            _out << "Notice: ";
-        } else if (lvl == level::warning) {
-            _out << "Warning: ";
-        } else if (lvl == level::error) {
-            _out << "Error: ";
-        } else if (lvl == level::alert) {
-            _out << "Alert: ";
-        } else if (lvl == level::emergency) {
-            _out << "Emergency: ";
-        } else if (lvl == level::critical) {
-            _out << "Critical: ";
-        }
+        auto& stream = get_stream(lvl);
 
-        // If a location was given, write it out
-        if (!path.empty()) {
-            _out << path;
-            if (line > 0) {
-                _out << ":" << line;
-            }
-            if (column > 0) {
-                _out << ":" << column;
-            }
-            _out << ": ";
-        }
-
-        // Output the message
-        if (!message.empty()) {
-            _out << message;
-        }
-
-        _out << "\n";
-
-        // Output the offending line's text
-        if (!text.empty() && column > 0) {
-            _out << "    " << text << '\n';
-            _out << setfill(' ') << setw(column + 5) << "^\n";
-        }
-
-        // Reset unless the level was notice (no color)
         if (lvl != level::notice) {
-            _out << reset;
+            stream << reset;
         }
+    }
+
+    bool console_logger::should_colorize(level lvl) const
+    {
+        return lvl >= level::warning ? _colorize_stderr : _colorize_stdout;
     }
 
 }}  // namespace puppet::logging

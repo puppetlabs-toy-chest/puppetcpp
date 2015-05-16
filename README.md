@@ -146,11 +146,10 @@ Catalog compiling status:
 The output of `puppetcpp` is currently the representation of the AST and its evaluation.
 Eventually it will output a JSON representation of a compiled catalog.
 
-Note: colorized output is currently always written, even if not supported.
-
 Build Requirements
 ------------------
 
+* OSX or Linux
 * GCC >= 5.0 or Clang >= 3.4 (with libc++)
 * CMake >= 3.0
 * Boost Libraries >= 1.57

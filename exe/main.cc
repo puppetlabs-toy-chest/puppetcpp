@@ -1,7 +1,6 @@
 #include <puppet/parser/parser.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
 #include <puppet/logging/logger.hpp>
-#include <iostream>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -17,7 +16,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    stream_logger logger(cerr);
+    console_logger logger;
 
     ifstream file(argv[1]);
     if (!file) {
@@ -27,10 +26,7 @@ int main(int argc, char* argv[])
 
     try {
         auto manifest = parser::parse(file);
-
-        cout << "parsed AST:\n" << manifest << endl;
-        cout << "\nevaluating:\n";
-
+        logger.log(level::debug, "parsed syntax tree:\n%1%", manifest);
         if (manifest.body()) {
             // Evaluate all expressions in the manifest's body
             context ctx(logger, [&](token_position const& position, string const& message) {
@@ -62,9 +58,12 @@ int main(int argc, char* argv[])
     auto errors = logger.errors();
     auto warnings = logger.warnings();
 
-    cout << "compilation " << (errors > 0 ? "failed" : "succeeded") << " with "
-         << errors << " error" << (errors != 1 ? "s" : "")
-         << " and " << warnings << " warning" << (warnings != 1 ? "s.\n" : ".\n");
-
+    logger.log(level::info, "compilation %1% with %2% %3% and %4% %5%.",
+        (errors > 0 ? "failed" : "succeeded"),
+        errors,
+        (errors != 1 ? "errors" : "error"),
+        warnings,
+        (warnings != 1 ? "warnings" : "warning")
+    );
     return errors > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }
