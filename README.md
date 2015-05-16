@@ -65,7 +65,7 @@ Type system implemented:
 * [x] Array
 * [x] Boolean
 * [ ] Callable
-* [ ] CatalogEntry
+* [x] CatalogEntry
 * [x] Collection
 * [x] Data
 * [x] Default
@@ -73,7 +73,7 @@ Type system implemented:
 * [x] Float
 * [x] Hash
 * [x] Integer
-* [ ] Class
+* [x] Class
 * [x] Numeric
 * [x] Optional
 * [x] Pattern

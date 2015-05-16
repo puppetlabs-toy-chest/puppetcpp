@@ -156,6 +156,7 @@ namespace puppet { namespace runtime {
                 { types::boolean::name(),       types::boolean() },
                 { types::callable::name(),      types::callable() },
                 { types::catalog_entry::name(), types::catalog_entry() },
+                { types::klass::name(),         types::klass() },
                 { types::collection::name(),    types::collection() },
                 { types::data::name(),          types::data() },
                 { types::defaulted::name(),     types::defaulted() },
@@ -826,6 +827,27 @@ namespace puppet { namespace runtime {
                     throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
                 }
                 result.emplace_back(types::resource(type_name, mutate_as<string>(_arguments[i])));
+            }
+            return result;
+        }
+
+        result_type operator()(types::klass const& type)
+        {
+            // If there is one parameter, return a class with a title
+            if (_arguments.size() == 1) {
+                if (!as<string>(_arguments[0])) {
+                    throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[0])).str());
+                }
+                return types::klass(mutate_as<string>(_arguments[0]));
+            }
+
+            // Otherwise, return an array of classes
+            values::array result;
+            for (size_t i = 0; i < _arguments.size(); ++i) {
+                if (!as<string>(_arguments[i])) {
+                    throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
+                }
+                result.emplace_back(types::klass(mutate_as<string>(_arguments[i])));
             }
             return result;
         }
