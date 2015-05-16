@@ -12,30 +12,18 @@ namespace puppet { namespace ast {
 
     struct hostname_visitor : boost::static_visitor<>
     {
-        void operator()(name const& n)
+        template <typename T>
+        void operator()(T const& part)
         {
             if (_ss.tellp() > 0) {
                 _ss << '.';
             }
-            _ss << n.value();
+            _ss << part.value();
 
             if (!_position) {
-                _position = n.position();
+                _position = part.position();
             }
         }
-
-        void operator()(number const& n)
-        {
-            if (_ss.tellp() > 0) {
-                _ss << '.';
-            }
-            _ss << n.value();
-
-            if (!_position) {
-                _position = n.position();
-            }
-        }
-
         std::string result() const
         {
             return _ss.str();
@@ -56,13 +44,13 @@ namespace puppet { namespace ast {
     {
     }
 
-    hostname::hostname(token_position position) :
-        _position(position),
+    hostname::hostname(ast::defaulted const& defaulted) :
+        _position(defaulted.position()),
         _regex(false)
     {
     }
 
-    hostname::hostname(vector<variant<name, number>> const& parts) :
+    hostname::hostname(vector<variant<name, bare_word, number>> const& parts) :
         _regex(false)
     {
         hostname_visitor visitor;
@@ -75,14 +63,16 @@ namespace puppet { namespace ast {
         }
     }
 
-    hostname::hostname(string name) :
-        _value(std::move(name.value())),
+    hostname::hostname(ast::string const& name) :
+        _position(name.position()),
+        _value(name.value()),
         _regex(false)
     {
     }
 
-    hostname::hostname(struct regex name) :
-        _value(std::move(name.value())),
+    hostname::hostname(ast::regex const& regx) :
+        _position(regx.position()),
+        _value(regx.value()),
         _regex(true)
     {
     }
@@ -99,7 +89,7 @@ namespace puppet { namespace ast {
 
     bool hostname::is_default() const
     {
-        return _value.empty();
+        return !_regex && _value.empty();
     }
 
     token_position const& hostname::position() const
@@ -111,6 +101,8 @@ namespace puppet { namespace ast {
     {
         if (name.is_default()) {
             os << "default";
+        } else if (name.regex()) {
+            os << '/' << name.value() << '/';
         } else {
             os << name.value();
         }

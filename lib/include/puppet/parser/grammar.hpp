@@ -243,10 +243,10 @@ namespace puppet { namespace parser {
             node_definition_expression =
                 (token(token_id::keyword_node) > (hostname % ',') > -raw_token(',') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::node_definition_expression>(get_token_position(_1), _2, _3) ];
             hostname =
-                string                             [ _val = phx::construct<ast::hostname>(_1) ] |
-                token(token_id::keyword_default)   [ _val = phx::construct<ast::hostname>(get_token_position(_1)) ] |
-                regex                              [ _val = phx::construct<ast::hostname>(_1) ] |
-                ((name | number) % raw_token('.')) [ _val = phx::construct<ast::hostname>(_1) ];
+                string                                         [ _val = phx::construct<ast::hostname>(_1) ] |
+                defaulted                                      [ _val = phx::construct<ast::hostname>(_1) ] |
+                regex                                          [ _val = phx::construct<ast::hostname>(_1) ] |
+                ((name | bare_word | number) % raw_token('.')) [ _val = phx::construct<ast::hostname>(_1) ];
             collection_expression =
                 ((type >> raw_token(token_id::left_collect)) > -query > *binary_query_expression > raw_token(token_id::right_collect))               [ _val = phx::construct<ast::collection_expression>(ast::collection_kind::all, _1, _2, _3) ] |
                 ((type >> raw_token(token_id::left_double_collect)) > -query > *binary_query_expression > raw_token(token_id::right_double_collect)) [ _val = phx::construct<ast::collection_expression>(ast::collection_kind::exported, _1, _2, _3) ];
