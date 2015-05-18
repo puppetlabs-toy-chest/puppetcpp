@@ -30,9 +30,15 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
         // Set the value in the current scope
-        auto value = context.evaluation_context().current().set(var->name(), std::move(context.right()));
+        auto value = context.evaluator().scope().set(var->name(), std::move(context.right()), get<1>(context.left_position()));
         if (!value) {
-            throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable already exists in the current scope.") % var->name()).str());
+            // Check where the variable was previously assigned
+            auto line = context.evaluator().scope().where(var->name());
+            if (line) {
+                throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % context.evaluator().path() % line).str());
+            }
+            // Assume it's a fact if we don't know where it was assigned
+            throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: a fact of the same name already exists.") % var->name()).str());
         }
 
         // Update the variable's value and return the variable reference

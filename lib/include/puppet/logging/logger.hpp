@@ -6,7 +6,8 @@
 
 #include <boost/format.hpp>
 #include <string>
-#include <ostream>
+#include <iostream>
+#include <functional>
 
 namespace puppet { namespace logging {
 
@@ -153,16 +154,10 @@ namespace puppet { namespace logging {
     };
 
     /**
-     * Implements a logger that logs to the a stream.
+     * Base type for stream loggers.
      */
     struct stream_logger : logger
     {
-        /**
-         * Constructs a stream logger.
-         * @param out The output stream to log to.
-         */
-        explicit stream_logger(std::ostream& out);
-
      protected:
         /**
          * Logs a message.
@@ -175,8 +170,61 @@ namespace puppet { namespace logging {
          */
         virtual void log_message(level lvl, size_t line, size_t column, std::string const& text, std::string const& path, std::string const& message) override;
 
+        /**
+         * Gets the stream to log to based on the message's log level.
+         * @param lvl The log level.
+         * @return Returns the stream to log to.
+         */
+        virtual std::ostream& get_stream(level lvl) const = 0;
+
+        /**
+         * Colorizes for the given log level.
+         * @param lvl The log level to colorize for.
+         */
+        virtual void colorize(level lvl) const;
+
+        /**
+         * Resets the colorization.
+         * @param lvl The log level that was colorized.
+         */
+        virtual void reset(level lvl) const;
+    };
+
+    /**
+     * Implements a logger that logs to a console.
+     */
+    struct console_logger : stream_logger
+    {
+     public:
+        /**
+         * Constructs a console logger.
+         */
+        console_logger();
+
+     protected:
+        /**
+         * Gets the stream to log to based on the message's log level.
+         * @param lvl The log level.
+         * @return Returns the stream to log to.
+         */
+        virtual std::ostream& get_stream(level lvl) const override;
+
+        /**
+         * Colorizes for the given log level.
+         * @param lvl The log level to colorize for.
+         */
+        virtual void colorize(level lvl) const override;
+
+        /**
+         * Resets the colorization.
+         * @param lvl The log level that was colorized.
+         */
+        virtual void reset(level lvl) const override;
+
      private:
-        std::ostream& _out;
+        bool should_colorize(level lvl) const;
+        bool _colorize_stdout;
+        bool _colorize_stderr;
     };
 
 }}  // namespace puppet::logger

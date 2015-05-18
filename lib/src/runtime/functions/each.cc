@@ -1,5 +1,4 @@
 #include <puppet/runtime/functions/each.hpp>
-#include <puppet/runtime/expression_evaluator.hpp>
 
 using namespace std;
 using namespace puppet::lexer;

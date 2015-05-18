@@ -6,23 +6,18 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace operators {
 
-    binary_context::binary_context(context& evaluation_context, value& left, token_position const& left_position, value& right, token_position const& right_position) :
+    binary_context::binary_context(expression_evaluator& evaluator, value& left, token_position const& left_position, value& right, token_position const& right_position) :
+        _evaluator(evaluator),
         _left(left),
         _left_position(left_position),
         _right(right),
-        _right_position(right_position),
-        _evaluation_context(evaluation_context)
+        _right_position(right_position)
     {
     }
 
-    context& binary_context::evaluation_context()
+    expression_evaluator& binary_context::evaluator()
     {
-        return _evaluation_context;
-    }
-
-    context const& binary_context::evaluation_context() const
-    {
-        return _evaluation_context;
+        return _evaluator;
     }
 
     value& binary_context::left()

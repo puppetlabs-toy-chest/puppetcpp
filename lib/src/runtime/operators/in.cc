@@ -9,8 +9,8 @@ namespace puppet { namespace runtime { namespace operators {
 
     struct in_visitor : boost::static_visitor<bool>
     {
-        explicit in_visitor(context& ctx) :
-            _context(ctx)
+        explicit in_visitor(binary_context& context) :
+            _context(context)
         {
         }
 
@@ -23,7 +23,7 @@ namespace puppet { namespace runtime { namespace operators {
         {
             smatch matches;
             bool result = left.pattern().empty() || regex_search(right, matches, left.value());
-            _context.current().set(matches);
+            _context.evaluator().scope().set(matches);
             return result;
         }
 
@@ -87,12 +87,12 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
     private:
-        context& _context;
+        binary_context& _context;
     };
 
     value in::operator()(binary_context& context) const
     {
-        in_visitor visitor(context.evaluation_context());
+        in_visitor visitor(context);
         return boost::apply_visitor(visitor, dereference(context.left()), dereference(context.right()));
     }
 

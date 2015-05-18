@@ -32,14 +32,14 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    static bool is_match(context& ctx, value& result, token_position const& result_position, value& expected, token_position const& expected_position)
+    static bool is_match(expression_evaluator& evaluator, value& result, token_position const& result_position, value& expected, token_position const& expected_position)
     {
         // If the expected value is a regex, use match
         auto regex = as<values::regex>(expected);
         if (regex) {
             // Only match against strings
             if (as<string>(result)) {
-                operators::binary_context context(ctx, result, result_position, expected, expected_position);
+                operators::binary_context context(evaluator, result, result_position, expected, expected_position);
                 if (is_truthy(operators::match()(context))) {
                     return true;
                 }
@@ -128,10 +128,10 @@ namespace puppet { namespace runtime {
                     throw evaluation_exception(var.position(), (boost::format("variable name $%1% is not a valid match variable name.") % var.name()).str());
                 }
                 // Look up the match
-                val = _evaluator.context().current().get(stoi(name));
+                val = _evaluator.scope().get(stoi(name));
                 match = true;
             } else {
-                val = _evaluator.context().lookup(name);
+                val = _evaluator.scope().get(name);
             }
             return variable(name, val, match);
         }
@@ -156,6 +156,7 @@ namespace puppet { namespace runtime {
                 { types::boolean::name(),       types::boolean() },
                 { types::callable::name(),      types::callable() },
                 { types::catalog_entry::name(), types::catalog_entry() },
+                { types::klass::name(),         types::klass() },
                 { types::collection::name(),    types::collection() },
                 { types::data::name(),          types::data() },
                 { types::defaulted::name(),     types::defaulted() },
@@ -234,7 +235,7 @@ namespace puppet { namespace runtime {
         result_type operator()(ast::case_expression const& expr)
         {
             // Case expressions create a new match scope
-            match_variable_scope match_scope(_evaluator.context().current());
+            match_variable_scope match_scope(_evaluator.scope());
 
             // Evaluate the case's expression
             value result = _evaluator.evaluate(expr.expression());
@@ -276,13 +277,13 @@ namespace puppet { namespace runtime {
                     auto unfold_array = _evaluator.unfold(option, option_value);
                     if (unfold_array) {
                         for (auto& element : *unfold_array) {
-                            if (is_match(_evaluator.context(), result, expr.position(), element, option.position())) {
+                            if (is_match(_evaluator, result, expr.position(), element, option.position())) {
                                 return execute_block(proposition.body());
                             }
                         }
                     }
 
-                    if (is_match(_evaluator.context(), result, expr.position(), option_value, option.position())) {
+                    if (is_match(_evaluator, result, expr.position(), option_value, option.position())) {
                         return execute_block(proposition.body());
                     }
                 }
@@ -300,7 +301,7 @@ namespace puppet { namespace runtime {
         result_type operator()(ast::if_expression const& expr)
         {
             // If expressions create a new match scope
-            match_variable_scope match_scope(_evaluator.context().current());
+            match_variable_scope match_scope(_evaluator.scope());
 
             if (is_truthy(_evaluator.evaluate(expr.conditional()))) {
                 return execute_block(expr.body());
@@ -321,7 +322,7 @@ namespace puppet { namespace runtime {
         result_type operator()(ast::unless_expression const& expr)
         {
             // Unless expressions create a new match scope
-            match_variable_scope match_scope(_evaluator.context().current());
+            match_variable_scope match_scope(_evaluator.scope());
 
             if (!is_truthy(_evaluator.evaluate(expr.conditional()))) {
                 return execute_block(expr.body());
@@ -830,6 +831,27 @@ namespace puppet { namespace runtime {
             return result;
         }
 
+        result_type operator()(types::klass const& type)
+        {
+            // If there is one parameter, return a class with a title
+            if (_arguments.size() == 1) {
+                if (!as<string>(_arguments[0])) {
+                    throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[0])).str());
+                }
+                return types::klass(mutate_as<string>(_arguments[0]));
+            }
+
+            // Otherwise, return an array of classes
+            values::array result;
+            for (size_t i = 0; i < _arguments.size(); ++i) {
+                if (!as<string>(_arguments[i])) {
+                    throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
+                }
+                result.emplace_back(types::klass(mutate_as<string>(_arguments[i])));
+            }
+            return result;
+        }
+
         template <typename T>
         result_type operator()(T const& target)
         {
@@ -911,7 +933,7 @@ namespace puppet { namespace runtime {
         result_type operator()(ast::selector_expression const& expr)
         {
             // Selector expressions create a new match scope
-            match_variable_scope match_scope(_evaluator.context().current());
+            match_variable_scope match_scope(_evaluator.scope());
 
             boost::optional<size_t> default_index;
 
@@ -931,7 +953,7 @@ namespace puppet { namespace runtime {
                 auto unfold_array = _evaluator.unfold(selector_case.selector(), selector);
                 if (unfold_array) {
                     for (auto& element : *unfold_array) {
-                        if (is_match(_evaluator.context(), _result, expr.position(), element, selector_case.position())) {
+                        if (is_match(_evaluator, _result, expr.position(), element, selector_case.position())) {
                             _result = _evaluator.evaluate(selector_case.result());
                             _position = selector_case.position();
                             _first_expression = nullptr;
@@ -940,7 +962,7 @@ namespace puppet { namespace runtime {
                     }
                 }
 
-                if (is_match(_evaluator.context(), _result, expr.position(), selector, selector_case.position())) {
+                if (is_match(_evaluator, _result, expr.position(), selector, selector_case.position())) {
                     _result = _evaluator.evaluate(selector_case.result());
                     _position = selector_case.position();
                     _first_expression = nullptr;
@@ -1004,7 +1026,7 @@ namespace puppet { namespace runtime {
 
             // Realize the resources
             values::array result;
-            auto& catalog = _evaluator.context().catalog();
+            auto& catalog = _evaluator.catalog();
             for (auto const& body : expr.bodies()) {
                 // Evaluate the resource title
                 auto title = _evaluator.evaluate(body.title());
@@ -1013,13 +1035,18 @@ namespace puppet { namespace runtime {
                 }
 
                 types::resource resource_type(expr.type().value(), mutate_as<string>(title));
-
-                // Add the resource
-                auto resource = catalog.add_resource(resource_type.type_name(), resource_type.title());
-                if (!resource) {
-                    // TODO: inform the user about the previous declaration location
-                    throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared.") % resource_type).str());
+                if (resource_type.title().empty()) {
+                    throw evaluation_exception(body.position(), "resource title cannot be empty.");
                 }
+
+                // Check to see if the resource already exists
+                resource* resource = nullptr;
+                if ((resource = catalog.find_resource(resource_type.type_name(), resource_type.title()))) {
+                    throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % resource_type % resource->file() % resource->line()).str());
+                }
+
+                // Add the resource to the catalog
+                resource = catalog.add_resource(resource_type.type_name(), resource_type.title(), _evaluator.path(), std::get<1>(body.position()));
 
                 // Set the parameters
                 if (body.attributes()) {
@@ -1029,7 +1056,7 @@ namespace puppet { namespace runtime {
                             throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
                         }
                         if (!resource->set_parameter(attribute.name().value(), _evaluator.evaluate(attribute.value()))) {
-                            throw evaluation_exception(attribute.position(), (boost::format("attribute name '%1%' has already been set in this resource body.") % attribute.name()).str());
+                            throw evaluation_exception(attribute.position(), (boost::format("attribute '%1%' has already been set in this resource body.") % attribute.name()).str());
                         }
                     }
                 }
@@ -1124,7 +1151,7 @@ namespace puppet { namespace runtime {
             }
 
             auto operand = boost::apply_visitor(*this, expr.operand());
-            operators::unary_context context(_evaluator.context(), operand, expr.position());
+            operators::unary_context context(_evaluator, operand, expr.position());
             return it->second(context);
         }
 
@@ -1150,9 +1177,74 @@ namespace puppet { namespace runtime {
         expression_evaluator& _evaluator;
     };
 
-    expression_evaluator::expression_evaluator(runtime::context& ctx) :
-        _context(ctx)
+    expression_evaluator::expression_evaluator(logging::logger& logger, runtime::catalog& catalog, string const& path, compiler::node& node, function<void(token_position const&, string const&)> const& warning) :
+        _logger(logger),
+        _catalog(catalog),
+        _path(path),
+        _node(node),
+        _warn(warning)
     {
+        // Add the top scope
+        push_scope(*add_scope("", runtime::scope("Class[main]")));
+    }
+
+    logging::logger& expression_evaluator::logger()
+    {
+        return _logger;
+    }
+
+    runtime::catalog& expression_evaluator::catalog()
+    {
+        return _catalog;
+    }
+
+    string const& expression_evaluator::path() const
+    {
+        return _path;
+    }
+
+    compiler::node& expression_evaluator::node()
+    {
+        return _node;
+    }
+
+    runtime::scope& expression_evaluator::scope()
+    {
+        return *_scope_stack.back();
+    }
+
+    runtime::scope& expression_evaluator::top()
+    {
+        return *_scope_stack.front();
+    }
+
+    runtime::scope* expression_evaluator::add_scope(std::string name, runtime::scope scope)
+    {
+        return &_scopes.emplace(make_pair(std::move(name), std::move(scope))).first->second;
+    }
+
+    runtime::scope* expression_evaluator::find_scope(std::string const& name)
+    {
+        auto it = _scopes.find(name);
+        if (it == _scopes.end()) {
+            return nullptr;
+        }
+        return &it->second;
+    }
+
+    void expression_evaluator::push_scope(runtime::scope& current)
+    {
+        _scope_stack.push_back(&current);
+    }
+
+    bool expression_evaluator::pop_scope()
+    {
+        // Don't pop the top scope
+        if (_scope_stack.size() == 1) {
+            return false;
+        }
+        _scope_stack.pop_back();
+        return true;
     }
 
     value expression_evaluator::evaluate(ast::expression const& expr, bool productive)
@@ -1179,16 +1271,6 @@ namespace puppet { namespace runtime {
         return boost::apply_visitor(visitor, expr);
     }
 
-    runtime::context const& expression_evaluator::context() const
-    {
-        return _context;
-    }
-
-    runtime::context& expression_evaluator::context()
-    {
-        return _context;
-    }
-
     boost::optional<values::array> expression_evaluator::unfold(ast::expression const& expr, value& result)
     {
         // An unfold expression is always unary with no further expressions
@@ -1213,6 +1295,14 @@ namespace puppet { namespace runtime {
             return unfold(*nested, evaluated);
         }
         return boost::none;
+    }
+
+    void expression_evaluator::warn(token_position const& position, string const& message) const
+    {
+        if (!_warn) {
+            return;
+        }
+        _warn(position, message);
     }
 
     bool expression_evaluator::is_productive(ast::expression const& expr)
@@ -1334,7 +1424,7 @@ namespace puppet { namespace runtime {
             throw evaluation_exception(left_position, "unexpected binary expression.");
         }
 
-        operators::binary_context context(_context, left, left_position, right, right_position);
+        operators::binary_context context(*this, left, left_position, right, right_position);
         left = it->second(context);
     }
 
@@ -1397,6 +1487,18 @@ namespace puppet { namespace runtime {
     bool expression_evaluator::is_right_associative(ast::binary_operator op)
     {
         return op == ast::binary_operator::assignment;
+    }
+
+    ephemeral_scope::ephemeral_scope(expression_evaluator& evaluator) :
+        _evaluator(evaluator),
+        _scope(string(), &evaluator.scope())
+    {
+        _evaluator.push_scope(_scope);
+    }
+
+    ephemeral_scope::~ephemeral_scope()
+    {
+        _evaluator.pop_scope();
     }
 
 }}  // namespace puppet::runtime

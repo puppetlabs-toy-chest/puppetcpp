@@ -11,7 +11,7 @@
 #include <sstream>
 #include <iomanip>
 
-namespace puppet { namespace parser {
+namespace puppet { namespace compiler {
 
     /**
      * Exception for parse errors.
@@ -27,11 +27,11 @@ namespace puppet { namespace parser {
 
         /**
          * Gets the token position where parsing failed.
-         * @return Returns the token     position where parsing failed.
+         * @return Returns the token position where parsing failed.
          */
         lexer::token_position const& position() const;
 
-    private:
+     private:
         lexer::token_position _position;
     };
 
@@ -141,4 +141,4 @@ namespace puppet { namespace parser {
         }
     };
 
-}}  // namespace puppet::parser
+}}  // namespace puppet::compiler

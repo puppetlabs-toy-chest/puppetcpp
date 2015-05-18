@@ -50,7 +50,9 @@ add_library(puppet SHARED
     src/ast/unless_expression.cc
     src/ast/variable.cc
     src/logging/logger.cc
-    src/parser/parser.cc
+    src/compiler/environment.cc
+    src/compiler/node.cc
+    src/compiler/parser.cc
     src/runtime/functions/assert_type.cc
     src/runtime/functions/each.cc
     src/runtime/functions/fail.cc
@@ -85,14 +87,12 @@ add_library(puppet SHARED
     src/runtime/types/any.cc
     src/runtime/types/boolean.cc
     src/runtime/types/callable.cc
-    src/runtime/types/catalog_entry.cc
     src/runtime/types/collection.cc
     src/runtime/types/data.cc
     src/runtime/types/defaulted.cc
     src/runtime/types/enumeration.cc
     src/runtime/types/floating.cc
     src/runtime/types/integer.cc
-    src/runtime/types/klass.cc
     src/runtime/types/numeric.cc
     src/runtime/types/pattern.cc
     src/runtime/types/regexp.cc
@@ -106,7 +106,6 @@ add_library(puppet SHARED
     src/runtime/values/undef.cc
     src/runtime/values/value.cc
     src/runtime/catalog.cc
-    src/runtime/context.cc
     src/runtime/dispatcher.cc
     src/runtime/expression_evaluator.cc
     src/runtime/scope.cc

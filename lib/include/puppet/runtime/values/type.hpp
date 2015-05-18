@@ -9,6 +9,7 @@
 #include "../types/boolean.hpp"
 #include "../types/callable.hpp"
 #include "../types/catalog_entry.hpp"
+#include "../types/class.hpp"
 #include "../types/collection.hpp"
 #include "../types/data.hpp"
 #include "../types/defaulted.hpp"
@@ -16,7 +17,6 @@
 #include "../types/floating.hpp"
 #include "../types/hash.hpp"
 #include "../types/integer.hpp"
-#include "../types/klass.hpp"
 #include "../types/numeric.hpp"
 #include "../types/optional.hpp"
 #include "../types/pattern.hpp"
@@ -39,6 +39,8 @@ namespace puppet { namespace runtime { namespace values {
     typedef boost::make_recursive_variant<
         types::any,
         types::basic_array<boost::recursive_variant_>,
+        types::basic_class<boost::recursive_variant_>,
+        types::basic_catalog_entry<boost::recursive_variant_>,
         types::basic_hash<boost::recursive_variant_>,
         types::basic_optional<boost::recursive_variant_>,
         types::basic_resource<boost::recursive_variant_>,
@@ -48,14 +50,12 @@ namespace puppet { namespace runtime { namespace values {
         types::basic_variant<boost::recursive_variant_>,
         types::boolean,
         types::callable,
-        types::catalog_entry,
         types::collection,
         types::data,
         types::defaulted,
         types::enumeration,
         types::floating,
         types::integer,
-        types::klass,
         types::numeric,
         types::pattern,
         types::regexp,
@@ -74,6 +74,16 @@ namespace puppet { namespace runtime { namespace types {
      * Represents the Array type.
      */
     typedef basic_array<values::type> array;
+
+    /**
+     * Represents the CatalogEntry type.
+     */
+    typedef basic_catalog_entry<values::type> catalog_entry;
+
+    /**
+     * Represents the Class type.
+     */
+    typedef basic_class<values::type> klass;
 
     /**
      * Represents the Hash type.

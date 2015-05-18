@@ -102,14 +102,18 @@ namespace puppet { namespace runtime { namespace types {
          */
         bool is_specialization(Type const& other) const
         {
-            // If the resource does not have a specialization, the other type cannot be one
-            if (_type_name.empty()) {
-                return false;
-            }
             // Check that the other Resource is specialized
             auto resource = boost::get<basic_resource<Type>>(&other);
-            if (!resource || resource->type_name() != _type_name) {
+            if (!resource) {
                 // Not the same type
+                return false;
+            }
+            // If this resource has no type name, the other is specialized if it does have one
+            if (_type_name.empty()) {
+                return !resource->type_name().empty();
+            }
+            // Otherwise, the types need to be the same
+            if (_type_name != resource->type_name()) {
                 return false;
             }
             // Otherwise, the other one is a specialization if this does not have a title but the other one does

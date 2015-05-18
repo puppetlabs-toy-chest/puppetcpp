@@ -23,28 +23,28 @@ namespace puppet { namespace ast {
         hostname();
 
         /**
-         * Constructs a hostname for the default hostname.
-         * @param position The position of the default keyword.
+         * Constructs a default hostname.
+         * @param defaulted The default value.
          */
-        explicit hostname(lexer::token_position position);
+        explicit hostname(ast::defaulted const& defaulted);
 
         /**
          * Constructs a hostname from a list of name or number parts.
          * @param parts The parts that make up the hostname.
          */
-        explicit hostname(std::vector<boost::variant<name, number>> const& parts);
+        explicit hostname(std::vector<boost::variant<name, bare_word, number>> const& parts);
 
         /**
          * Constructs a hostname from the given AST string.
-         * @param name The hostname string.
+         * @param name The hostname as a string.
          */
-        explicit hostname(string name);
+        explicit hostname(ast::string const& name);
 
         /**
          * Constructs a hostname from the given AST regex.
-         * @param name The hostname regex.
+         * @param name The hostname as a regex.
          */
-        explicit hostname(struct regex name);
+        explicit hostname(ast::regex const& name);
 
         /**
          * Gets the value of the hostname.
