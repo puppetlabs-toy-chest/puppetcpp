@@ -6,21 +6,16 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace operators {
 
-    unary_context::unary_context(context& evaluation_context, value& operand, token_position const& position) :
+    unary_context::unary_context(expression_evaluator& evaluator, value& operand, token_position const& position) :
+        _evaluator(evaluator),
         _operand(operand),
-        _position(position),
-        _evaluation_context(evaluation_context)
+        _position(position)
     {
     }
 
-    context& unary_context::evaluation_context()
+    expression_evaluator& unary_context::evaluator()
     {
-        return _evaluation_context;
-    }
-
-    context const& unary_context::evaluation_context() const
-    {
-        return _evaluation_context;
+        return _evaluator;
     }
 
     value& unary_context::operand()
@@ -37,7 +32,5 @@ namespace puppet { namespace runtime { namespace operators {
     {
         return _position;
     }
-
-
 
 }}}  // namespace puppet::runtime::operators

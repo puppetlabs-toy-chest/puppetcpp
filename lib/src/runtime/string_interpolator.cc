@@ -1,5 +1,5 @@
 #include <puppet/runtime/string_interpolator.hpp>
-#include <puppet/parser/parser.hpp>
+#include <puppet/compiler/parser.hpp>
 #include <boost/format.hpp>
 #include <codecvt>
 #include <cctype>
@@ -7,7 +7,7 @@
 
 using namespace std;
 using namespace puppet::lexer;
-using namespace puppet::parser;
+using namespace puppet::compiler;
 using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
@@ -67,7 +67,7 @@ namespace puppet { namespace runtime {
                 if (!token) {
                     return false;
                 }
-                val = evaluator.context().lookup(string(token->begin(), token->end()));
+                val = evaluator.scope().get(string(token->begin(), token->end()));
             } else if (token_begin != token_end && token_begin->id() == static_cast<size_t>(token_id::number)) {
                 auto token = get<number_token>(&token_begin->value());
                 if (!token) {
@@ -76,7 +76,7 @@ namespace puppet { namespace runtime {
                 if (token->base() != numeric_base::decimal || token->value().which() != 0) {
                     throw evaluation_exception(calculate_position(token->position()), (boost::format("'%1%' is not a valid match variable name.") % *token).str());
                 }
-                val = evaluator.context().current().get(get<int64_t>(token->value()));
+                val = evaluator.scope().get(get<int64_t>(token->value()));
             } else {
                 return false;
             }
@@ -239,7 +239,7 @@ namespace puppet { namespace runtime {
                 } else if (next != end) {
                     // Emit a warning for invalid escape sequence (unless single quoted string)
                     if (quote != '\'') {
-                        _evaluator.context().warn(calculate_position(begin.position()), (boost::format("invalid escape sequence '\\%1%'.") % *next).str());
+                        _evaluator.warn(calculate_position(begin.position()), (boost::format("invalid escape sequence '\\%1%'.") % *next).str());
                     }
                 }
             } else if (*begin == '\n') {
@@ -287,7 +287,7 @@ namespace puppet { namespace runtime {
                             begin.position(manifest.end());
                             ++begin;
                             continue;
-                        } catch (parser::parse_exception const& ex) {
+                        } catch (compiler::parse_exception const& ex) {
                             throw evaluation_exception(calculate_position(ex.position()), ex.what());
                         } catch (evaluation_exception const& ex) {
                             throw evaluation_exception(calculate_position(ex.position()), ex.what());
@@ -329,7 +329,7 @@ namespace puppet { namespace runtime {
             }
             // Check for valid hex digit
             if (!isxdigit(*begin)) {
-                _evaluator.context().warn(position, (boost::format("unicode escape sequence contains non-hexadecimal character '%1%'.") % *begin).str());
+                _evaluator.warn(position, (boost::format("unicode escape sequence contains non-hexadecimal character '%1%'.") % *begin).str());
                 return false;
             }
 
@@ -343,11 +343,11 @@ namespace puppet { namespace runtime {
 
         if (variable_length) {
             if (begin == end || *begin != '}') {
-                _evaluator.context().warn(position, "a closing '}' was not found for unicode escape sequence.");
+                _evaluator.warn(position, "a closing '}' was not found for unicode escape sequence.");
                 return false;
             }
             if (characters.empty() || characters.size() > 6) {
-                _evaluator.context().warn(position, "expected at least 1 and at most 6 hexadecimal digits for unicode escape sequence.");
+                _evaluator.warn(position, "expected at least 1 and at most 6 hexadecimal digits for unicode escape sequence.");
                 return false;
             }
         }
@@ -357,7 +357,7 @@ namespace puppet { namespace runtime {
         try {
             from = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(characters));
         } catch (boost::bad_lexical_cast const&) {
-            _evaluator.context().warn(position, "invalid unicode escape sequence.");
+            _evaluator.warn(position, "invalid unicode escape sequence.");
             return false;
         }
 
@@ -371,7 +371,7 @@ namespace puppet { namespace runtime {
 
         // Ensure all characters were converted (there was only one)
         if (next_from != &from + 1) {
-            _evaluator.context().warn(position, "invalid unicode code point.");
+            _evaluator.warn(position, "invalid unicode code point.");
             return false;
         }
 
@@ -381,4 +381,5 @@ namespace puppet { namespace runtime {
         }
         return true;
     }
+
 }}  // namespace puppet::runtime

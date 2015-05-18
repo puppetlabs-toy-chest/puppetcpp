@@ -4,8 +4,7 @@
  */
 #pragma once
 
-#include "../values/value.hpp"
-#include "../dispatcher.hpp"
+#include "../call_context.hpp"
 
 namespace puppet { namespace runtime { namespace functions {
 

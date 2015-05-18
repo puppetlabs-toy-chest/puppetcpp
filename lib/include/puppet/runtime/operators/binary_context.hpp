@@ -6,7 +6,7 @@
 
 #include "../../lexer/token_position.hpp"
 #include "../values/value.hpp"
-#include "../context.hpp"
+#include "../expression_evaluator.hpp"
 
 namespace puppet { namespace runtime { namespace operators {
 
@@ -17,25 +17,19 @@ namespace puppet { namespace runtime { namespace operators {
     {
         /**
          * Constructs a binary operator context.
-         * @param evaluation_context The current evaluation context.
+         * @param evaluator The expression evaluator.
          * @param left The left operand to the operator.
          * @param left_position The position of the left operand in the input.
          * @param right The right operand to the operator.
          * @param right_position The position of the right operand in the input.
          */
-        binary_context(context& evaluation_context, values::value& left, lexer::token_position const& left_position, values::value& right, lexer::token_position const& right_position);
+        binary_context(expression_evaluator& evaluator, values::value& left, lexer::token_position const& left_position, values::value& right, lexer::token_position const& right_position);
 
         /**
-         * Gets the current evaluation context.
-         * @return Returns the current evaluation context.
+         * Gets the expression evaluator.
+         * @return Returns the expression evaluator.
          */
-        context& evaluation_context();
-
-        /**
-         * Gets the current evaluation context.
-         * @return Returns the current evaluation context.
-         */
-        context const& evaluation_context() const;
+        expression_evaluator& evaluator();
 
         /**
          * Gets the left operand.
@@ -74,11 +68,11 @@ namespace puppet { namespace runtime { namespace operators {
         lexer::token_position const& right_position() const;
 
     private:
+        expression_evaluator& _evaluator;
         values::value& _left;
         lexer::token_position const& _left_position;
         values::value& _right;
         lexer::token_position const& _right_position;
-        context& _evaluation_context;
     };
 
 }}}  // puppet::runtime::operators

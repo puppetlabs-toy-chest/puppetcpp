@@ -1,6 +1,6 @@
 /**
  * @file
- * Declares the runtime evaluation context.
+ * Declares the runtime scope.
  */
 #pragma once
 
@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <regex>
 #include <deque>
-#include <boost/optional.hpp>
 
 namespace puppet { namespace runtime {
 
@@ -23,14 +22,21 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs a scope.
-         * @param name The name of the scope.
+         * @param name The name of the scope; empty for ephemeral scopes.
          * @param parent The parent scope.
          */
-        scope(std::string name, std::shared_ptr<scope> parent = nullptr);
+        explicit scope(std::string name = std::string(), scope* parent = nullptr);
+
+        /**
+         * Determines if the scope is ephemeral.
+         * @return Returns true if the scope is ephemeral or false if not.
+         */
+        bool ephemeral() const;
 
         /**
          * Gets the name of the scope.
-         * @return Returns the name of the scope.
+         * Note: for ephemeral scopes, this returns the name of the parent scope.
+         * @return Returns the name of scope.
          */
         std::string const& name() const;
 
@@ -38,20 +44,28 @@ namespace puppet { namespace runtime {
          * Sets a variable in the scope.
          * @param name The name of the variable.
          * @param val The value of the variable.
+         * @param line The line number where the variable is being assigned or 0 if unknown.
          * @return Returns a pointer to the value that was set or nullptr if the value already exists in this scope.
          */
-        values::value const* set(std::string name, values::value val);
+        values::value const* set(std::string name, values::value val, size_t line = 0);
 
         /**
          * Gets a variable in the scope.
          * @param name The name of the variable to get.
-         * @return Returns the value of the variable or nullptr if the value does not exist.
+         * @return Returns the tuple of path, line, and value for the variable.
          */
         values::value const* get(std::string const& name) const;
 
         /**
+         * Gets the line where the variable was assigned.
+         * @param name The variable name.
+         * @return Returns the line where the variable was assigned or 0 if unknown.
+         */
+        size_t where(std::string const& name);
+
+        /**
          * Gets the parent scope.
-         * @return Returns the parent scope.
+         * @return Returns the parent scope or nullptr if at top scope.
          */
         scope const* parent() const;
 
@@ -81,8 +95,8 @@ namespace puppet { namespace runtime {
 
      private:
         std::string _name;
-        std::shared_ptr<scope> _parent;
-        std::unordered_map<std::string, values::value> _variables;
+        scope* _parent;
+        std::unordered_map<std::string, std::tuple<values::value, size_t>> _variables;
         std::deque<std::vector<values::value>> _matches;
     };
 

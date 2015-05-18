@@ -1,5 +1,4 @@
 #include <puppet/runtime/functions/assert_type.hpp>
-#include <puppet/runtime/expression_evaluator.hpp>
 
 using namespace std;
 using namespace puppet::lexer;

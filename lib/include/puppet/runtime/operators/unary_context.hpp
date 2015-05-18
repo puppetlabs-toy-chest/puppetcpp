@@ -6,7 +6,7 @@
 
 #include "../../lexer/token_position.hpp"
 #include "../values/value.hpp"
-#include "../context.hpp"
+#include "../expression_evaluator.hpp"
 
 namespace puppet { namespace runtime { namespace operators {
 
@@ -17,23 +17,17 @@ namespace puppet { namespace runtime { namespace operators {
     {
         /**
          * Constructs a unary operator context.
-         * @param evaluation_context The current evaluation context.
+         * @param evaluator The expression evaluator.
          * @param operand The operand for the unary operator.
          * @param position The position of the operand.
          */
-        unary_context(context& evaluation_context, values::value& operand, lexer::token_position const& position);
+        unary_context(expression_evaluator& evaluator, values::value& operand, lexer::token_position const& position);
 
         /**
-         * Gets the current evaluation context.
-         * @return Returns the current evaluation context.
+         * Gets the expression evaluator.
+         * @return Returns the expression evaluator.
          */
-        context& evaluation_context();
-
-        /**
-         * Gets the current evaluation context.
-         * @return Returns the current evaluation context.
-         */
-        context const& evaluation_context() const;
+        expression_evaluator& evaluator();
 
         /**
          * Gets the operand.
@@ -54,9 +48,9 @@ namespace puppet { namespace runtime { namespace operators {
         lexer::token_position const& position() const;
 
     private:
+        expression_evaluator& _evaluator;
         values::value& _operand;
         lexer::token_position const& _position;
-        context& _evaluation_context;
     };
 
 }}}  // puppet::runtime::operators

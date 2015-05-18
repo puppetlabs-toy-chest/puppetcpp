@@ -6,12 +6,13 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    resource::resource(string type, string title, bool exported) :
+    resource::resource(string type, string title, string file, size_t line, bool exported) :
         _type(std::move(type)),
         _title(std::move(title)),
+        _file(std::move(file)),
+        _line(line),
         _exported(exported)
     {
-        // TODO: automatically set a tag for the type and each :: segment of the type
     }
 
     string const& resource::type() const
@@ -22,6 +23,16 @@ namespace puppet { namespace runtime {
     string const& resource::title() const
     {
         return _title;
+    }
+
+    string const& resource::file() const
+    {
+        return _file;
+    }
+
+    size_t resource::line() const
+    {
+        return _line;
     }
 
     unordered_set<string> const& resource::tags() const
@@ -44,7 +55,7 @@ namespace puppet { namespace runtime {
         _tags.emplace(std::move(tag));
     }
 
-    bool resource::set_parameter(std::string name, values::value val)
+    bool resource::set_parameter(std::string name, value val)
     {
         return _parameters.emplace(make_pair(std::move(name), std::move(val))).second;
     }
@@ -84,9 +95,9 @@ namespace puppet { namespace runtime {
         return &it->second;
     }
 
-    resource* catalog::add_resource(string const& type, string const& title, bool exported)
+    resource* catalog::add_resource(string const& type, string const& title, string const& file, size_t line, bool exported)
     {
-        auto result = _resources[type].emplace(make_pair(title, resource(type, title, exported)));
+        auto result = _resources[type].emplace(make_pair(title, resource(type, title, file, line, exported)));
         if (!result.second) {
             return nullptr;
         }

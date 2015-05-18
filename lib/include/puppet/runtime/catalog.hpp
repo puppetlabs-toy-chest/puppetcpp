@@ -22,9 +22,11 @@ namespace puppet { namespace runtime {
          * Creates a resource with the given type and title.
          * @param type The type of the resource (e.g. File).
          * @param title The title of the resource (e.g. '/tmp/foo').
+         * @param file The file defining the resource.
+         * @param line The line defining the resource.
          * @param exported True if the resource is exported or false if not.
          */
-        resource(std::string type, std::string title, bool exported = false);
+        resource(std::string type, std::string title, std::string file, size_t line, bool exported = false);
 
         /**
          * Gets the type of the resource.
@@ -37,6 +39,18 @@ namespace puppet { namespace runtime {
          * @return Returns the title of the resource.
          */
         std::string const& title() const;
+
+        /**
+         * Gets the file where the resource was defined.
+         * @return Returns the file where the resource was defined.
+         */
+        std::string const& file() const;
+
+        /**
+         * Gets the line where the resource was defined.
+         * @return Returns the line where the resource was defined.
+         */
+        size_t line() const;
 
         /**
          * Gets the tags of the resource.
@@ -73,6 +87,8 @@ namespace puppet { namespace runtime {
      private:
         std::string _type;
         std::string _title;
+        std::string _file;
+        size_t _line;
         std::unordered_set<std::string> _tags;
         std::unordered_map<std::string, values::value> _parameters;
         bool _exported;
@@ -158,10 +174,12 @@ namespace puppet { namespace runtime {
          * Adds a resource to the catalog.
          * @param type The type of resource to add.
          * @param title The title of the resource to add.
+         * @param file The file defining the resource.
+         * @param line The line defining the resource.
          * @param exported True if the resource is exported or false if it is not.
          * @return Returns the new resource in the catalog or nullptr if the resource already exists in the catalog.
          */
-        resource* add_resource(std::string const& type, std::string const& title, bool exported = false);
+        resource* add_resource(std::string const& type, std::string const& title, std::string const& file, size_t line, bool exported = false);
 
      private:
         resource_map _resources;

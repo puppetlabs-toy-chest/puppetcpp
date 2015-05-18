@@ -5,43 +5,57 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    scope::scope(string name, shared_ptr<scope> parent) :
+    scope::scope(string name, scope* parent) :
         _name(std::move(name)),
-        _parent(std::move(parent))
+        _parent(parent)
     {
         // Emplace an empty set of matches to start
         _matches.emplace_front();
     }
 
+    bool scope::ephemeral() const
+    {
+        return _name.empty();
+    }
+
     string const& scope::name() const
     {
-        if (!_name.empty() || !_parent) {
+        if (!_parent || !ephemeral()) {
             return _name;
         }
         return _parent->name();
     }
 
-    value const* scope::set(string name, value val)
+    value const* scope::set(string name, value val, size_t line)
     {
         if (_variables.count(name)) {
             return nullptr;
         }
-        auto result = _variables.emplace(make_pair(std::move(name), std::move(val)));
-        return &result.first->second;
+        auto result = _variables.emplace(make_pair(std::move(name), make_tuple(std::move(val), line)));
+        return &std::get<0>(result.first->second);
     }
 
     value const* scope::get(string const& name) const
     {
         auto it = _variables.find(name);
         if (it != _variables.end()) {
-            return &it->second;
+            return &std::get<0>(it->second);
         }
         return _parent ? _parent->get(name) : nullptr;
     }
 
+    size_t scope::where(string const& name)
+    {
+        auto it = _variables.find(name);
+        if (it == _variables.end()) {
+            return 0;
+        }
+        return std::get<1>(it->second);
+    }
+
     scope const* scope::parent() const
     {
-        return _parent.get();
+        return _parent;
     }
 
     void scope::set(smatch const& matches)

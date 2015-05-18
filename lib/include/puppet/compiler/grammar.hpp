@@ -11,7 +11,7 @@
 #include <boost/spirit/include/qi.hpp>
 #include <boost/phoenix.hpp>
 
-namespace puppet { namespace parser {
+namespace puppet { namespace compiler {
 
     /**
      * Lazy-evaluated helper for getting the position of a token.
@@ -587,4 +587,4 @@ namespace puppet { namespace parser {
         boost::spirit::qi::rule<iterator_type, puppet::ast::postfix_subexpression()> type_access_expression;
     };
 
-}}  // namespace puppet::parser
+}}  // namespace puppet::compiler

@@ -24,9 +24,9 @@ namespace puppet { namespace runtime {
         value* first_value,
         ast::primary_expression const* first_expression,
         lexer::token_position const* first_position) :
+            _evaluator(evaluator),
             _name(name),
             _position(position),
-            _context(evaluator.context()),
             _yielder(evaluator, _position, lambda)
     {
         _arguments.reserve((arguments ? arguments->size() : 0) + (first_value ? 1 : 0));
@@ -68,6 +68,11 @@ namespace puppet { namespace runtime {
         }
     }
 
+    expression_evaluator& call_context::evaluator()
+    {
+        return _evaluator;
+    }
+
     string const& call_context::name() const
     {
         return _name;
@@ -104,16 +109,6 @@ namespace puppet { namespace runtime {
     runtime::yielder& call_context::yielder()
     {
         return _yielder;
-    }
-
-    runtime::context const& call_context::evaluation_context() const
-    {
-        return _context;
-    }
-
-    runtime::context& call_context::evaluation_context()
-    {
-        return _context;
     }
 
     dispatcher::dispatcher(string const& name, token_position const& position) :

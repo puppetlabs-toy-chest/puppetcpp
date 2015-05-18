@@ -1,10 +1,10 @@
-#include <puppet/parser/parser.hpp>
+#include <puppet/compiler/parser.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
 using namespace boost::spirit;
 
-namespace puppet { namespace parser {
+namespace puppet { namespace compiler {
 
     parse_exception::parse_exception(token_position position, string const& message) :
         runtime_error(message),
@@ -82,4 +82,4 @@ namespace puppet { namespace parser {
         }
     }
 
-}}  // namespace puppet::parser
+}}  // namespace puppet::compiler
