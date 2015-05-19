@@ -156,6 +156,17 @@ namespace puppet { namespace runtime {
          */
         void warn(lexer::token_position const& position, std::string const& message) const;
 
+        /**
+         * Determines if a value is a "match" for an expected value.
+         * Uses the match operator for expected regex values or equality for other expected values.
+         * @param actual The actual value.
+         * @param actual_position The actual position.
+         * @param expected The expected value.
+         * @param expected_position The expected position.
+         * @return Returns true if the values match or false if not.
+         */
+        bool is_match(values::value& actual, lexer::token_position const& actual_position, values::value& expected, lexer::token_position const& expected_position);
+
      private:
         static bool is_productive(ast::expression const& expr);
         static bool is_productive(ast::primary_expression const& expr);

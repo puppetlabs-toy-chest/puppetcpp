@@ -53,6 +53,12 @@ add_library(puppet SHARED
     src/compiler/environment.cc
     src/compiler/node.cc
     src/compiler/parser.cc
+    src/runtime/evaluators/access.cc
+    src/runtime/evaluators/basic.cc
+    src/runtime/evaluators/catalog.cc
+    src/runtime/evaluators/control_flow.cc
+    src/runtime/evaluators/postfix.cc
+    src/runtime/evaluators/primary.cc
     src/runtime/functions/assert_type.cc
     src/runtime/functions/each.cc
     src/runtime/functions/fail.cc
