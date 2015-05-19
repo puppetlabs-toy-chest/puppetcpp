@@ -36,6 +36,8 @@ namespace puppet { namespace runtime { namespace evaluators {
         result_type operator()(ast::node_definition_expression const& expr);
         result_type operator()(ast::collection_expression const& expr);
 
+        void add_resource(std::vector<runtime::resource*>& resources, values::array& types, std::string const& type_name, values::value title, lexer::token_position const& position);
+
         expression_evaluator& _evaluator;
         ast::catalog_expression const& _expression;
     };

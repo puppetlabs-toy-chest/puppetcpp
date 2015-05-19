@@ -13,6 +13,9 @@
 
 namespace puppet { namespace runtime {
 
+    // Forward declaration for catalog.
+    struct catalog;
+
     /**
      * Represents a resource in a catalog.
      */
@@ -20,13 +23,20 @@ namespace puppet { namespace runtime {
     {
         /**
          * Creates a resource with the given type and title.
+         * @param catalog The catalog that contains the resource.
          * @param type The type of the resource (e.g. File).
          * @param title The title of the resource (e.g. '/tmp/foo').
          * @param file The file defining the resource.
          * @param line The line defining the resource.
          * @param exported True if the resource is exported or false if not.
          */
-        resource(std::string type, std::string title, std::string file, size_t line, bool exported = false);
+        resource(runtime::catalog& catalog, std::string type, std::string title, std::string file, size_t line, bool exported = false);
+
+        /**
+         * Gets the catalog that contains the resource.
+         * @return Returns the catalog that contains the resource.
+         */
+        runtime::catalog const& catalog() const;
 
         /**
          * Gets the type of the resource.
@@ -79,12 +89,26 @@ namespace puppet { namespace runtime {
         /**
          * Sets a parameter's value.
          * @param name The parameter name.
-         * @param val The parameter's value.
-         * @return Returns true if the parameter was set or false if the parameter already exists.
+         * @param name_position The position of the parameter's name in the input.
+         * @param value The parameter's value.
+         * @param value_position The position of the parameter's value in the input.
+         * @param override True if the parameter's value should be overridden or false if not.
          */
-        bool set_parameter(std::string name, values::value val);
+        void set_parameter(std::string const& name, lexer::token_position const& name_position, values::value value, lexer::token_position const& value_position, bool override = false);
+
+        /**
+         * Removes a parameter from the resource.
+         * @param name The name of the parameter to remove.
+         * @return Returns true if the parameter was removed or false if it did not exist.
+         */
+        bool remove_parameter(std::string const& name);
 
      private:
+        void store_parameter(std::string const& name, lexer::token_position const& name_position, values::value value, bool override);
+        bool handle_metaparameter(std::string const& name, lexer::token_position const& name_position, values::value& value, lexer::token_position const& value_position);
+        void create_alias(values::value const& value, lexer::token_position const& position);
+
+        runtime::catalog& _catalog;
         std::string _type;
         std::string _title;
         std::string _file;
@@ -142,6 +166,10 @@ namespace puppet { namespace runtime {
          * The type for resource map.
          */
         typedef std::unordered_map<std::string, std::unordered_map<std::string, resource>, type_hasher, type_equal_to> resource_map;
+        /**
+         * The type for resource alias map.
+         */
+        typedef std::unordered_map<std::string, std::unordered_map<std::string, resource*>, type_hasher, type_equal_to> resource_alias_map;
 
         /**
          * Constructs a catalog.
@@ -171,6 +199,15 @@ namespace puppet { namespace runtime {
         resource* find_resource(std::string const& type, std::string const& title);
 
         /**
+         * Aliases a resource.
+         * @param type The type of the resource to alias.
+         * @param title The title of the resource being aliased.
+         * @param alias The new alias name.
+         * @return Returns true if the resource was aliased or false if a resource with that name or alias already exists.
+         */
+        bool alias_resource(std::string const& type, std::string const& title, std::string const& alias);
+
+        /**
          * Adds a resource to the catalog.
          * @param type The type of resource to add.
          * @param title The title of the resource to add.
@@ -183,6 +220,7 @@ namespace puppet { namespace runtime {
 
      private:
         resource_map _resources;
+        resource_alias_map _aliases;
     };
 
 }}  // puppet::runtime
