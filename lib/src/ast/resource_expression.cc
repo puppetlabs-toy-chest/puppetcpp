@@ -1,6 +1,7 @@
 #include <puppet/ast/resource_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -34,9 +35,9 @@ namespace puppet { namespace ast {
     }
 
     attribute_expression::attribute_expression(struct name attribute_name, attribute_operator op, expression value) :
-        _name(std::move(attribute_name)),
+        _name(rvalue_cast(attribute_name)),
         _op(op),
-        _value(std::move(value))
+        _value(rvalue_cast(value))
     {
     }
 
@@ -74,8 +75,8 @@ namespace puppet { namespace ast {
     }
 
     resource_body::resource_body(expression title, optional<vector<attribute_expression>> attributes) :
-        _title(std::move(title)),
-        _attributes(std::move(attributes))
+        _title(rvalue_cast(title)),
+        _attributes(rvalue_cast(attributes))
     {
     }
 
@@ -111,8 +112,8 @@ namespace puppet { namespace ast {
     }
 
     resource_expression::resource_expression(ast::name type, vector<resource_body> bodies, resource_status status) :
-        _type(std::move(type)),
-        _bodies(std::move(bodies)),
+        _type(rvalue_cast(type)),
+        _bodies(rvalue_cast(bodies)),
         _status(status)
     {
     }

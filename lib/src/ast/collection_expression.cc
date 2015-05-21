@@ -1,5 +1,6 @@
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -30,9 +31,9 @@ namespace puppet { namespace ast {
     }
 
     query::query(name attribute, attribute_query_operator op, basic_expression value) :
-        _attribute(std::move(attribute)),
+        _attribute(rvalue_cast(attribute)),
         _op(op),
-        _value(std::move(value))
+        _value(rvalue_cast(value))
     {
     }
 
@@ -89,7 +90,7 @@ namespace puppet { namespace ast {
 
     binary_query_expression::binary_query_expression(binary_query_operator op, query operand) :
         _op(op),
-        _operand(std::move(operand))
+        _operand(rvalue_cast(operand))
     {
     }
 
@@ -125,9 +126,9 @@ namespace puppet { namespace ast {
 
     collection_expression::collection_expression(collection_kind kind, ast::type type, optional<query> first, vector<binary_query_expression> remainder) :
         _kind(kind),
-        _type(std::move(type)),
-        _first(std::move(first)),
-        _remainder(std::move(remainder))
+        _type(rvalue_cast(type)),
+        _first(rvalue_cast(first)),
+        _remainder(rvalue_cast(remainder))
     {
     }
 

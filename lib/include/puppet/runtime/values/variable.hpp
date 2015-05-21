@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <ostream>
 
@@ -30,7 +31,7 @@ namespace puppet { namespace runtime { namespace values {
          * @param match The variable is a match variable.
          */
         basic_variable(std::string name, value_type const* val, bool match) :
-            _name(std::move(name)),
+            _name(rvalue_cast(name)),
             _value(val),
             _match(match)
         {

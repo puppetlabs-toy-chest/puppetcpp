@@ -1,6 +1,7 @@
 #include <puppet/runtime/evaluators/basic.hpp>
 #include <puppet/runtime/string_interpolator.hpp>
 #include <puppet/ast/expression_def.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -153,7 +154,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     new_array.insert(new_array.end(), std::make_move_iterator(unfold_array->begin()), std::make_move_iterator(unfold_array->end()));
                     continue;
                 }
-                new_array.emplace_back(std::move(result));
+                new_array.emplace_back(rvalue_cast(result));
             }
         }
         return new_array;

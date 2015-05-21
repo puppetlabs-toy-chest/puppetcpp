@@ -1,5 +1,6 @@
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -14,10 +15,10 @@ namespace puppet { namespace ast {
 
     class_definition_expression::class_definition_expression(token_position position, ast::name name, optional<vector<parameter>> parameters, optional<ast::name> parent, optional<vector<expression>> body) :
         _position(position),
-        _name(std::move(name)),
-        _parameters(std::move(parameters)),
-        _parent(std::move(parent)),
-        _body(std::move(body))
+        _name(rvalue_cast(name)),
+        _parameters(rvalue_cast(parameters)),
+        _parent(rvalue_cast(parent)),
+        _body(rvalue_cast(body))
     {
     }
 

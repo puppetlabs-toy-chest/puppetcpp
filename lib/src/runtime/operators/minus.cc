@@ -1,5 +1,6 @@
 #include <puppet/runtime/operators/minus.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 #include <limits>
 #include <cfenv>
@@ -60,7 +61,7 @@ namespace puppet { namespace runtime { namespace operators {
             left.erase(remove_if(left.begin(), left.end(), [&](value const& v) {
                 return find_if(right.begin(), right.end(), [&](value const& v2) { return equals(v, v2); }) != right.end();
             }), left.end());
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         result_type operator()(values::array& left, values::hash const& right) const
@@ -77,7 +78,7 @@ namespace puppet { namespace runtime { namespace operators {
                 }
                 return equals((*ptr)[1], it->second);
             }), left.end());
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         template <typename Right>
@@ -85,7 +86,7 @@ namespace puppet { namespace runtime { namespace operators {
         {
             // Remove any elements in left that are equal to right
             left.erase(remove_if(left.begin(), left.end(), [&](value const& v) { return equals(v, right); }), left.end());
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         result_type operator()(values::hash& left, values::hash const& right) const
@@ -94,7 +95,7 @@ namespace puppet { namespace runtime { namespace operators {
             for (auto const& element : right) {
                 left.erase(element.first);
             }
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         result_type operator()(values::hash& left, values::array const& right) const
@@ -103,7 +104,7 @@ namespace puppet { namespace runtime { namespace operators {
             for (auto const& element : right) {
                 left.erase(element);
             }
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         template <typename Right>

@@ -7,6 +7,7 @@
 #include "tuple.hpp"
 #include "data.hpp"
 #include "../values/array.hpp"
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <limits>
 #include <ostream>
@@ -28,7 +29,7 @@ namespace puppet { namespace runtime { namespace types {
          * @param to The "to" type parameter.
          */
         explicit basic_array(Type type = data(), int64_t from = std::numeric_limits<int64_t>::min(), int64_t to = std::numeric_limits<int64_t>::max()) :
-            _element_type(std::move(type)),
+            _element_type(rvalue_cast(type)),
             _from(from),
             _to(to)
         {

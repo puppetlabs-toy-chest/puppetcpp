@@ -1,5 +1,6 @@
 #include <puppet/runtime/evaluators/catalog.hpp>
 #include <puppet/ast/expression_def.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -56,13 +57,13 @@ namespace puppet { namespace runtime { namespace evaluators {
                     // For the last resource, move the value; otherwise copy
                     values::value value;
                     if (i == resources.size() - 1) {
-                        value = std::move(attribute_value);
+                        value = rvalue_cast(attribute_value);
                     } else {
                         value = attribute_value;
                     }
 
                     // Set the parameter in the resource
-                    resource.set_parameter(attribute.name().value(), attribute.name().position(), std::move(value), attribute.value().position());
+                    resource.set_parameter(attribute.name().value(), attribute.name().position(), rvalue_cast(value), attribute.value().position());
                 }
             }
         }
@@ -99,7 +100,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     // For the last resource, move the value; otherwise copy
                     values::value value;
                     if (i == resources.size() - 1) {
-                        value = std::move(attribute_value);
+                        value = rvalue_cast(attribute_value);
                     } else {
                         value = attribute_value;
                     }
@@ -113,7 +114,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                             continue;
                         }
                         // Set the parameter in the resource
-                        resource.set_parameter(attribute.name().value(), attribute.name().position(), std::move(value), attribute.value().position());
+                        resource.set_parameter(attribute.name().value(), attribute.name().position(), rvalue_cast(value), attribute.value().position());
                     } else if (attribute.op() == ast::attribute_operator::append) {
                         // TODO: append parameter
                     }
@@ -170,14 +171,14 @@ namespace puppet { namespace runtime { namespace evaluators {
 
             // Add the resource and type to the bookkeeping lists
             resources.push_back(resource);
-            types.emplace_back(std::move(type));
+            types.emplace_back(rvalue_cast(type));
             return;
         }
         if (as<values::array>(title)) {
             // For arrays, recurse on each element
             auto titles = mutate_as<values::array>(title);
             for (auto& element : titles) {
-                add_resource(resources, types, type_name, std::move(element), position);
+                add_resource(resources, types, type_name, rvalue_cast(element), position);
             }
             return;
         }

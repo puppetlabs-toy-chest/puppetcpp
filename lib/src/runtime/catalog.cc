@@ -1,5 +1,6 @@
 #include <puppet/runtime/catalog.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -10,9 +11,9 @@ namespace puppet { namespace runtime {
 
     resource::resource(runtime::catalog& catalog, string type, string title, string file, size_t line, bool exported) :
         _catalog(catalog),
-        _type(std::move(type)),
-        _title(std::move(title)),
-        _file(std::move(file)),
+        _type(rvalue_cast(type)),
+        _title(rvalue_cast(title)),
+        _file(rvalue_cast(file)),
         _line(line),
         _exported(exported)
     {
@@ -60,7 +61,7 @@ namespace puppet { namespace runtime {
 
     void resource::add_tag(string tag)
     {
-        _tags.emplace(std::move(tag));
+        _tags.emplace(rvalue_cast(tag));
     }
 
     void resource::set_parameter(string const& name, token_position const& name_position, values::value value, token_position const& value_position, bool override)
@@ -70,7 +71,7 @@ namespace puppet { namespace runtime {
             return;
         }
 
-        store_parameter(name, name_position, std::move(value), override);
+        store_parameter(name, name_position, rvalue_cast(value), override);
     }
 
     bool resource::remove_parameter(string const& name)
@@ -90,17 +91,17 @@ namespace puppet { namespace runtime {
             if (!override) {
                 throw evaluation_exception(name_position, (boost::format("attribute '%1%' has already been set for resource %2%.") % name % create_reference()).str());
             }
-            it->second = std::move(value);
+            it->second = rvalue_cast(value);
             return;
         }
-        _parameters.emplace(make_pair(name, std::move(value)));
+        _parameters.emplace(make_pair(name, rvalue_cast(value)));
     }
 
     bool resource::handle_metaparameter(string const& name, token_position const& name_position, values::value& value, token_position const& value_position)
     {
         if (name == "alias") {
             create_alias(value, value_position);
-            store_parameter(name, name_position, std::move(value), false);
+            store_parameter(name, name_position, rvalue_cast(value), false);
             return true;
         } else if (name == "audit") {
             throw evaluation_exception(name_position, "the resource metaparameter 'audit' is not supported.");

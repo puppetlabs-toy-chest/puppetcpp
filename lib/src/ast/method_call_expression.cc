@@ -1,6 +1,7 @@
 #include <puppet/ast/method_call_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -13,9 +14,9 @@ namespace puppet { namespace ast {
     }
 
     method_call_expression::method_call_expression(name method, optional<vector<expression>> arguments, optional<struct lambda> lambda) :
-        _method(std::move(method)),
-        _arguments(std::move(arguments)),
-        _lambda(std::move(lambda))
+        _method(rvalue_cast(method)),
+        _arguments(rvalue_cast(arguments)),
+        _lambda(rvalue_cast(lambda))
     {
     }
 

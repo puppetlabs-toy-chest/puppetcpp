@@ -1,11 +1,12 @@
 #include <puppet/runtime/types/regexp.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
     regexp::regexp(string pattern) :
-        _pattern(std::move(pattern))
+        _pattern(rvalue_cast(pattern))
     {
     }
 

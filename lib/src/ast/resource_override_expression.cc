@@ -1,5 +1,6 @@
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -12,8 +13,8 @@ namespace puppet { namespace ast {
     }
 
     resource_override_expression::resource_override_expression(primary_expression reference, optional<vector<attribute_expression>> attributes) :
-        _reference(std::move(reference)),
-        _attributes(std::move(attributes))
+        _reference(rvalue_cast(reference)),
+        _attributes(rvalue_cast(attributes))
     {
     }
 

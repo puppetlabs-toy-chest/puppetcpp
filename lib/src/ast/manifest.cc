@@ -1,6 +1,7 @@
 #include <puppet/ast/manifest.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using boost::optional;
@@ -12,8 +13,8 @@ namespace puppet { namespace ast {
     }
 
     manifest::manifest(optional<vector<expression>> body, lexer::token_position end) :
-        _body(std::move(body)),
-        _end(std::move(end))
+        _body(rvalue_cast(body)),
+        _end(rvalue_cast(end))
     {
     }
 

@@ -1,5 +1,6 @@
 #include <puppet/runtime/values/value.hpp>
 #include <boost/algorithm/string.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 
@@ -41,7 +42,7 @@ namespace puppet { namespace runtime { namespace values {
             return dereference(v);
         }
         // Otherwise, just move the argument
-        return std::move(v);
+        return rvalue_cast(v);
     }
 
     value const& dereference(value const& val)
@@ -231,7 +232,7 @@ namespace puppet { namespace runtime { namespace values {
                 array element;
                 element.emplace_back(kvp.first);
                 element.emplace_back(kvp.second);
-                result.emplace_back(std::move(element));
+                result.emplace_back(rvalue_cast(element));
             }
         } else {
             // Otherwise, add the value as the only element

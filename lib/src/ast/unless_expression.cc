@@ -1,6 +1,7 @@
 #include <puppet/ast/unless_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -13,10 +14,10 @@ namespace puppet { namespace ast {
     }
 
     unless_expression::unless_expression(token_position position, expression conditional, optional<vector<expression>> body, optional<else_expression> else_) :
-        _position(std::move(position)),
-        _conditional(std::move(conditional)),
-        _body(std::move(body)),
-        _else(std::move(else_))
+        _position(rvalue_cast(position)),
+        _conditional(rvalue_cast(conditional)),
+        _body(rvalue_cast(body)),
+        _else(rvalue_cast(else_))
     {
     }
 

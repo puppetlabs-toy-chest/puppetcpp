@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "../../cast.hpp"
 #include "../values/array.hpp"
 #include <boost/functional/hash.hpp>
 #include <ostream>
@@ -27,7 +28,7 @@ namespace puppet { namespace runtime { namespace types {
          * @param to The "to" type parameter.
          */
         explicit basic_tuple(std::vector<Type> types = std::vector<Type>(), int64_t from = std::numeric_limits<int64_t>::min(), int64_t to = std::numeric_limits<int64_t>::max()) :
-            _types(std::move(types)),
+            _types(rvalue_cast(types)),
             _from(from),
             _to(to)
         {

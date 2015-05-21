@@ -11,6 +11,7 @@
 #include "type.hpp"
 #include "undef.hpp"
 #include "variable.hpp"
+#include "../../cast.hpp"
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
 #include <string>
@@ -103,7 +104,7 @@ namespace puppet { namespace runtime { namespace values {
             return boost::get<T>(dereference(v));
         }
         // Move the value
-        return std::move(boost::get<T>(v));
+        return rvalue_cast(boost::get<T>(v));
     }
 
     /**

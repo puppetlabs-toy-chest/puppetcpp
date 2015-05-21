@@ -1,4 +1,5 @@
 #include <puppet/ast/defaulted.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -10,7 +11,7 @@ namespace puppet { namespace ast {
     }
 
     defaulted::defaulted(token_position position) :
-        _position(std::move(position))
+        _position(rvalue_cast(position))
     {
     }
 

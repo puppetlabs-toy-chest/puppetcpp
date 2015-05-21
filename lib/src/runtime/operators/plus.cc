@@ -1,5 +1,6 @@
 #include <puppet/runtime/operators/plus.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 #include <limits>
 #include <cfenv>
@@ -59,9 +60,9 @@ namespace puppet { namespace runtime { namespace operators {
             // Move everything from the right into the left
             left.reserve(left.size() + right.size());
             for (auto& element : right) {
-                left.emplace_back(std::move(element));
+                left.emplace_back(rvalue_cast(element));
             }
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         result_type operator()(values::array& left, values::hash& right) const
@@ -71,17 +72,17 @@ namespace puppet { namespace runtime { namespace operators {
                 values::array subarray;
                 subarray.reserve(2);
                 subarray.push_back(element.first);
-                subarray.push_back(std::move(element.second));
-                left.emplace_back(std::move(subarray));
+                subarray.push_back(rvalue_cast(element.second));
+                left.emplace_back(rvalue_cast(subarray));
             }
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         template <typename Right>
         result_type operator()(values::array& left, Right& right) const
         {
-            left.emplace_back(std::move(right));
-            return std::move(left);
+            left.emplace_back(rvalue_cast(right));
+            return rvalue_cast(left);
         }
 
         result_type operator()(values::hash& left, values::hash& right) const
@@ -89,9 +90,9 @@ namespace puppet { namespace runtime { namespace operators {
             // Move everything from the right into the left
             left.reserve(left.size() + right.size());
             for (auto& element : right) {
-                left.emplace(make_pair(element.first, std::move(element.second)));
+                left.emplace(make_pair(element.first, rvalue_cast(element.second)));
             }
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         result_type operator()(values::hash& left, values::array& right) const
@@ -109,7 +110,7 @@ namespace puppet { namespace runtime { namespace operators {
             if (hash) {
                 for (auto& element : right) {
                     auto subarray = mutate_as<values::array>(element);
-                    left[std::move(subarray[0])] = std::move(subarray[1]);
+                    left[rvalue_cast(subarray[0])] = rvalue_cast(subarray[1]);
                 }
             } else {
                 // Otherwise, there should be an even number of elements
@@ -118,10 +119,10 @@ namespace puppet { namespace runtime { namespace operators {
                 }
 
                 for (size_t i = 0; i < right.size(); i += 2) {
-                    left[std::move(right[i])] = std::move(right[i + 1]);
+                    left[rvalue_cast(right[i])] = rvalue_cast(right[i + 1]);
                 }
             }
-            return std::move(left);
+            return rvalue_cast(left);
         }
 
         template <typename Right>

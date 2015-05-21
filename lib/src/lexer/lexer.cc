@@ -1,4 +1,5 @@
 #include <puppet/lexer/lexer.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace boost::spirit;
@@ -112,7 +113,7 @@ namespace puppet { namespace lexer {
             column += count(text.begin(), text.begin() + column, '\t') * (tab_width - 1);
         }
 
-        return make_tuple(move(text), column);
+        return make_tuple(rvalue_cast(text), column);
     }
 
     tuple<string, size_t> get_text_and_column(string const& input, size_t position, size_t tab_width)
@@ -132,7 +133,7 @@ namespace puppet { namespace lexer {
             column += count(text.begin(), text.begin() + column, '\t') * (tab_width - 1);
         }
 
-        return make_tuple(move(text), column);
+        return make_tuple(rvalue_cast(text), column);
     }
 
     token_position get_last_position(ifstream& input)

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "token_position.hpp"
+#include "../cast.hpp"
 #include <boost/spirit/include/lex_lexer.hpp>
 #include <string>
 #include <ostream>
@@ -47,13 +48,13 @@ namespace puppet { namespace lexer {
          * @param remove_break Remove a trailing line break from the string (heredoc only).
          */
         string_token(token_position position, iterator_type begin, iterator_type end, std::string escapes, char quote, bool interpolated = true, std::string format = std::string(), int margin = 0, bool remove_break = false) :
-            _position(std::move(position)),
-            _begin(std::move(begin)),
-            _end(std::move(end)),
-            _escapes(std::move(escapes)),
+            _position(rvalue_cast(position)),
+            _begin(rvalue_cast(begin)),
+            _end(rvalue_cast(end)),
+            _escapes(rvalue_cast(escapes)),
             _quote(quote),
             _interpolated(interpolated),
-            _format(std::move(format)),
+            _format(rvalue_cast(format)),
             _margin(margin),
             _remove_break(remove_break)
         {

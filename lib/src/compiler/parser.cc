@@ -1,4 +1,5 @@
 #include <puppet/compiler/parser.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -8,7 +9,7 @@ namespace puppet { namespace compiler {
 
     parse_exception::parse_exception(token_position position, string const& message) :
         runtime_error(message),
-        _position(std::move(position))
+        _position(rvalue_cast(position))
     {
     }
 

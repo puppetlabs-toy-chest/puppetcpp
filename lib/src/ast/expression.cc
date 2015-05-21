@@ -1,4 +1,5 @@
 #include <puppet/ast/expression_def.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -94,9 +95,9 @@ namespace puppet { namespace ast {
     }
 
     unary_expression::unary_expression(token_position position, unary_operator op, primary_expression operand) :
-        _position(std::move(position)),
+        _position(rvalue_cast(position)),
         _op(op),
-        _operand(std::move(operand))
+        _operand(rvalue_cast(operand))
     {
     }
 
@@ -213,7 +214,7 @@ namespace puppet { namespace ast {
 
     binary_expression::binary_expression(binary_operator op, primary_expression operand) :
         _op(op),
-        _operand(std::move(operand))
+        _operand(rvalue_cast(operand))
     {
     }
 
@@ -246,8 +247,8 @@ namespace puppet { namespace ast {
     }
 
     expression::expression(primary_expression primary, vector<binary_expression> binary) :
-        _primary(std::move(primary)),
-        _binary(std::move(binary))
+        _primary(rvalue_cast(primary)),
+        _binary(rvalue_cast(binary))
     {
     }
 

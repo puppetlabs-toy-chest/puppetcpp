@@ -1,6 +1,7 @@
 #include <puppet/compiler/node.hpp>
 #include <puppet/compiler/parser.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 #include <fstream>
 
 using namespace std;
@@ -12,10 +13,10 @@ namespace puppet { namespace compiler {
 
     compilation_exception::compilation_exception(string const& message, string path, size_t line, size_t column, string text) :
         runtime_error(message),
-        _path(std::move(path)),
+        _path(rvalue_cast(path)),
         _line(line),
         _column(column),
-        _text(std::move(text))
+        _text(rvalue_cast(text))
     {
     }
 
@@ -40,7 +41,7 @@ namespace puppet { namespace compiler {
     }
 
     node::node(string name, compiler::environment& environment) :
-        _name(std::move(name)),
+        _name(rvalue_cast(name)),
         _environment(environment)
     {
     }
@@ -103,12 +104,12 @@ namespace puppet { namespace compiler {
             string text;
             size_t column;
             tie(text, column) = get_text_and_column(file, get<0>(ex.position()));
-            throw compilation_exception(ex.what(), path, get<1>(ex.position()), column, std::move(text));
+            throw compilation_exception(ex.what(), path, get<1>(ex.position()), column, rvalue_cast(text));
         } catch (evaluation_exception const& ex) {
             string text;
             size_t column;
             tie(text, column) = get_text_and_column(file, get<0>(ex.position()));
-            throw compilation_exception(ex.what(), path, get<1>(ex.position()), column, std::move(text));
+            throw compilation_exception(ex.what(), path, get<1>(ex.position()), column, rvalue_cast(text));
         }
     }
 

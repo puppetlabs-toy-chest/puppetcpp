@@ -1,4 +1,5 @@
 #include <puppet/runtime/functions/assert_type.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -22,7 +23,7 @@ namespace puppet { namespace runtime { namespace functions {
 
         // If the value is an instance of the type, return it
         if (is_instance(arguments[1], *type)) {
-            return std::move(arguments[1]);
+            return rvalue_cast(arguments[1]);
         }
 
         // Otherwise, a lambda is required

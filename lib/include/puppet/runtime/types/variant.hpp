@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <ostream>
 #include <vector>
@@ -22,7 +23,7 @@ namespace puppet { namespace runtime { namespace types {
          * @param types The types that make up the variant.
          */
         explicit basic_variant(std::vector<Type> types = std::vector<Type>()) :
-            _types(std::move(types))
+            _types(rvalue_cast(types))
         {
         }
 

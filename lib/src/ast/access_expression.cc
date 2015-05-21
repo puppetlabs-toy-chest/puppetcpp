@@ -1,6 +1,7 @@
 #include <puppet/ast/access_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -12,8 +13,8 @@ namespace puppet { namespace ast {
     }
 
     access_expression::access_expression(token_position position, vector<expression> arguments) :
-        _position(std::move(position)),
-        _arguments(std::move(arguments))
+        _position(rvalue_cast(position)),
+        _arguments(rvalue_cast(arguments))
     {
     }
 

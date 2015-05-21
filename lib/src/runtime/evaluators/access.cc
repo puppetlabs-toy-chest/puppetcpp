@@ -1,5 +1,6 @@
 #include <puppet/runtime/evaluators/access.hpp>
 #include <puppet/ast/expression_def.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -24,7 +25,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                 continue;
             }
             _positions.push_back(expression.position());
-            _arguments.emplace_back(std::move(argument));
+            _arguments.emplace_back(rvalue_cast(argument));
         }
     }
 
@@ -217,7 +218,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
             pattern = mutate_as<string>(_arguments[0]);
         }
-        return types::regexp(std::move(pattern));
+        return types::regexp(rvalue_cast(pattern));
     }
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(types::enumeration const& type)
@@ -232,7 +233,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
             strings.emplace_back(mutate_as<string>(_arguments[i]));
         }
-        return types::enumeration(std::move(strings));
+        return types::enumeration(rvalue_cast(strings));
     }
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(types::pattern const& type)
@@ -276,7 +277,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     types::pattern::name() %
                     get_type(_arguments[i])).str());
         }
-        return types::pattern(std::move(patterns));
+        return types::pattern(rvalue_cast(patterns));
     }
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(types::array const& type)
@@ -343,7 +344,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
             types.emplace_back(mutate_as<values::type>(_arguments[i]));
         }
-        return types::tuple(std::move(types), from, to);
+        return types::tuple(rvalue_cast(types), from, to);
     }
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(types::optional const& type)
@@ -404,7 +405,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
             types.insert(make_pair(*key, mutate_as<values::type>(kvp.second)));
         }
-        return types::structure(std::move(types));
+        return types::structure(rvalue_cast(types));
     }
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(types::variant const& type)
@@ -418,7 +419,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
             types.emplace_back(mutate_as<values::type>(_arguments[i]));
         }
-        return types::variant(std::move(types));
+        return types::variant(rvalue_cast(types));
     }
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(types::resource const& type)

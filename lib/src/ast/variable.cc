@@ -1,4 +1,5 @@
 #include <puppet/ast/variable.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -10,8 +11,8 @@ namespace puppet { namespace ast {
     }
 
     variable::variable(string name, lexer::token_position position) :
-        _position(std::move(position)),
-        _name(std::move(name))
+        _position(rvalue_cast(position)),
+        _name(rvalue_cast(name))
     {
 
     }

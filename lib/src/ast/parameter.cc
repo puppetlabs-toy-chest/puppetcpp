@@ -1,6 +1,7 @@
 #include <puppet/ast/parameter.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -14,10 +15,10 @@ namespace puppet { namespace ast {
     }
 
     parameter::parameter(optional<primary_expression> type, bool captures, struct variable variable, optional<expression> default_value) :
-        _type(std::move(type)),
+        _type(rvalue_cast(type)),
         _captures(captures),
-        _variable(std::move(variable)),
-        _default_value(std::move(default_value))
+        _variable(rvalue_cast(variable)),
+        _default_value(rvalue_cast(default_value))
     {
     }
 

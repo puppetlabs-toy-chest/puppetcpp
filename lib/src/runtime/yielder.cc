@@ -1,4 +1,5 @@
 #include <puppet/runtime/yielder.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -80,7 +81,7 @@ namespace puppet { namespace runtime {
                     } else {
                         captured.emplace_back(_evaluator.evaluate(*parameter.default_value()));
                     }
-                    value = std::move(captured);
+                    value = rvalue_cast(captured);
                 } else {
                     if (has_optional_parameters && !parameter.default_value()) {
                         throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% is required but appears after optional parameters.") % name).str());
@@ -90,7 +91,7 @@ namespace puppet { namespace runtime {
 
                     if (i < arguments.size()) {
                         // Use the supplied argument
-                        value = std::move(arguments[i]);
+                        value = rvalue_cast(arguments[i]);
                     } else {
                         // Check for not present and without a default value
                         if (!parameter.default_value()) {
@@ -113,7 +114,7 @@ namespace puppet { namespace runtime {
                     }
                 }
 
-                if (!_evaluator.scope().set(std::move(name), std::move(value), get<1>(parameter.position()))) {
+                if (!_evaluator.scope().set(name, rvalue_cast(value), get<1>(parameter.position()))) {
                     throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }

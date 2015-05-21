@@ -1,6 +1,7 @@
 #include <puppet/ast/node_definition_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 #include <sstream>
 
 using namespace std;
@@ -114,9 +115,9 @@ namespace puppet { namespace ast {
     }
 
     node_definition_expression::node_definition_expression(token_position position, vector<hostname> names, optional<vector<expression>> body) :
-        _position(std::move(position)),
-        _names(std::move(names)),
-        _body(std::move(body))
+        _position(rvalue_cast(position)),
+        _names(rvalue_cast(names)),
+        _body(rvalue_cast(body))
     {
     }
 

@@ -1,5 +1,6 @@
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -12,10 +13,10 @@ namespace puppet { namespace ast {
     }
 
     defined_type_expression::defined_type_expression(lexer::token_position position, ast::name name, optional<vector<parameter>> parameters, optional<vector<expression>> body) :
-        _position(std::move(position)),
-        _name(std::move(name)),
-        _parameters(std::move(parameters)),
-        _body(std::move(body))
+        _position(rvalue_cast(position)),
+        _name(rvalue_cast(name)),
+        _parameters(rvalue_cast(parameters)),
+        _body(rvalue_cast(body))
     {
     }
 

@@ -9,6 +9,7 @@
 #include "token_id.hpp"
 #include "string_token.hpp"
 #include "number_token.hpp"
+#include "../cast.hpp"
 #include <string>
 #include <locale>
 #include <iostream>
@@ -110,7 +111,7 @@ namespace puppet { namespace lexer {
          */
         void position(token_position position)
         {
-            _position = std::move(position);
+            _position = rvalue_cast(position);
         }
 
     private:
@@ -517,7 +518,7 @@ namespace puppet { namespace lexer {
             auto next = doc_end;
             move_next_line(next, eoi);
             end.set_next(next);
-            context.set_value(string_token_type(doc_begin.position(), doc_begin, std::move(doc_end), std::move(escapes), 0, interpolated, std::move(format), margin, remove_break));
+            context.set_value(string_token_type(doc_begin.position(), doc_begin, rvalue_cast(doc_end), rvalue_cast(escapes), 0, interpolated, rvalue_cast(format), margin, remove_break));
         }
 
         void parse_single_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -532,7 +533,7 @@ namespace puppet { namespace lexer {
             for (auto current = start; current != end; ++current) {
                 last = current;
             }
-            context.set_value(string_token_type(position, std::move(start), std::move(last), "\\'", '\'', false));
+            context.set_value(string_token_type(position, rvalue_cast(start), rvalue_cast(last), "\\'", '\'', false));
         }
 
         void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -547,7 +548,7 @@ namespace puppet { namespace lexer {
             for (auto current = start; current != end; ++current) {
                 last = current;
             }
-            context.set_value(string_token_type(position, std::move(start), std::move(last), "\\\"'nrtsu$", '"'));
+            context.set_value(string_token_type(position, rvalue_cast(start), rvalue_cast(last), "\\\"'nrtsu$", '"'));
         }
 
         static void parse_number(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)

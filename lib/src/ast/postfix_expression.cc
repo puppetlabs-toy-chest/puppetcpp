@@ -1,6 +1,7 @@
 #include <puppet/ast/postfix_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -12,8 +13,8 @@ namespace puppet { namespace ast {
     }
 
     postfix_expression::postfix_expression(primary_expression primary, vector<postfix_subexpression> subexpressions) :
-        _primary(std::move(primary)),
-        _subexpressions(std::move(subexpressions))
+        _primary(rvalue_cast(primary)),
+        _subexpressions(rvalue_cast(subexpressions))
     {
     }
 

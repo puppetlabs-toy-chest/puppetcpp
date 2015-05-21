@@ -1,4 +1,5 @@
 #include <puppet/ast/boolean.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -11,7 +12,7 @@ namespace puppet { namespace ast {
     }
 
     boolean::boolean(token_position position, bool value) :
-        _position(std::move(position)),
+        _position(rvalue_cast(position)),
         _value(value)
     {
     }

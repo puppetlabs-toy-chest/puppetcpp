@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <boost/optional.hpp>
 #include <ostream>
@@ -22,7 +23,7 @@ namespace puppet { namespace runtime { namespace types {
          * @param type The optional type.
          */
         explicit basic_type(boost::optional<Type> type = boost::none) :
-            _type(std::move(type))
+            _type(rvalue_cast(type))
         {
         }
 

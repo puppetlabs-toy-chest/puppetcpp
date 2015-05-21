@@ -6,6 +6,7 @@
 #include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -44,7 +45,7 @@ namespace puppet { namespace runtime {
             }
             // Add the first argument if nothing was added above
             if (!added) {
-                _arguments.emplace_back(std::move(*first_value));
+                _arguments.emplace_back(rvalue_cast(*first_value));
                 _positions.push_back(first_position ? *first_position : position);
             }
         }
@@ -63,7 +64,7 @@ namespace puppet { namespace runtime {
                     continue;
                 }
                 _positions.push_back(expression.position());
-                _arguments.emplace_back(std::move(argument));
+                _arguments.emplace_back(rvalue_cast(argument));
             }
         }
     }

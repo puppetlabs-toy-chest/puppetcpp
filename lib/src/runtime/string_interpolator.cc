@@ -1,5 +1,6 @@
 #include <puppet/runtime/string_interpolator.hpp>
 #include <puppet/compiler/parser.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 #include <codecvt>
 #include <cctype>
@@ -146,7 +147,7 @@ namespace puppet { namespace runtime {
         if (variable_name.empty()) {
             return boost::none;
         }
-        return evaluator.evaluate(ast::expression(ast::postfix_expression(ast::basic_expression(ast::variable(std::move(variable_name), std::move(variable_position))), postfix->subexpressions()), expression.binary()));
+        return evaluator.evaluate(ast::expression(ast::postfix_expression(ast::basic_expression(ast::variable(rvalue_cast(variable_name), rvalue_cast(variable_position))), postfix->subexpressions()), expression.binary()));
     }
 
     string_interpolator::string_interpolator(expression_evaluator& evaluator) :

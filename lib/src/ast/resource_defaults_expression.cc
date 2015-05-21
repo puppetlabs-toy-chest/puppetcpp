@@ -1,5 +1,6 @@
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -12,8 +13,8 @@ namespace puppet { namespace ast {
     }
 
     resource_defaults_expression::resource_defaults_expression(ast::type type, optional<vector<attribute_expression>> attributes) :
-        _type(std::move(type)),
-        _attributes(std::move(attributes))
+        _type(rvalue_cast(type)),
+        _attributes(rvalue_cast(attributes))
     {
     }
 

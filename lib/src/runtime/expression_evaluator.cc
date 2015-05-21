@@ -21,6 +21,7 @@
 #include <puppet/runtime/operators/right_shift.hpp>
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/ast/expression_def.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -31,7 +32,7 @@ namespace puppet { namespace runtime {
 
     evaluation_exception::evaluation_exception(token_position position, string const& message) :
         runtime_error(message),
-        _position(std::move(position))
+        _position(rvalue_cast(position))
     {
     }
 
@@ -83,7 +84,7 @@ namespace puppet { namespace runtime {
 
     runtime::scope* expression_evaluator::add_scope(std::string name, runtime::scope scope)
     {
-        return &_scopes.emplace(make_pair(std::move(name), std::move(scope))).first->second;
+        return &_scopes.emplace(make_pair(rvalue_cast(name), rvalue_cast(scope))).first->second;
     }
 
     runtime::scope* expression_evaluator::find_scope(std::string const& name)

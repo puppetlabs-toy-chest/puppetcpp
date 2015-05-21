@@ -1,6 +1,7 @@
 #include <puppet/ast/lambda.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -13,9 +14,9 @@ namespace puppet { namespace ast {
     }
 
     lambda::lambda(token_position position, optional<vector<parameter>> parameters, optional<vector<expression>> body) :
-        _position(std::move(position)),
-        _parameters(std::move(parameters)),
-        _body(std::move(body))
+        _position(rvalue_cast(position)),
+        _parameters(rvalue_cast(parameters)),
+        _body(rvalue_cast(body))
     {
     }
 

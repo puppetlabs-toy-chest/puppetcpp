@@ -1,5 +1,6 @@
 #include <puppet/runtime/operators/left_shift.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -35,8 +36,8 @@ namespace puppet { namespace runtime { namespace operators {
         template <typename Right>
         result_type operator()(values::array& left, Right& right) const
         {
-            left.emplace_back(std::move(right));
-            return std::move(left);
+            left.emplace_back(rvalue_cast(right));
+            return rvalue_cast(left);
         }
 
         template <

@@ -1,4 +1,5 @@
 #include <puppet/runtime/values/regex.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 
@@ -11,7 +12,7 @@ namespace puppet { namespace runtime { namespace values {
     regex::regex(string pattern) :
         _regex(pattern)
     {
-        _pattern = std::move(pattern);
+        _pattern = rvalue_cast(pattern);
     }
 
     string const& regex::pattern() const

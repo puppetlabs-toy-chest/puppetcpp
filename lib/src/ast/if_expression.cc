@@ -1,6 +1,7 @@
 #include <puppet/ast/if_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -13,8 +14,8 @@ namespace puppet { namespace ast {
     }
 
     else_expression::else_expression(token_position position, optional<vector<expression>> body) :
-        _position(std::move(position)),
-        _body(std::move(body))
+        _position(rvalue_cast(position)),
+        _body(rvalue_cast(body))
     {
     }
 
@@ -36,9 +37,9 @@ namespace puppet { namespace ast {
     }
 
     elsif_expression::elsif_expression(token_position position, expression conditional, optional<vector<expression>> body) :
-        _position(std::move(position)),
-        _conditional(std::move(conditional)),
-        _body(std::move(body))
+        _position(rvalue_cast(position)),
+        _conditional(rvalue_cast(conditional)),
+        _body(rvalue_cast(body))
     {
     }
 
@@ -73,11 +74,11 @@ namespace puppet { namespace ast {
     }
 
     if_expression::if_expression(token_position position, expression conditional, optional<vector<expression>> body, optional<vector<elsif_expression>> elsifs, optional<else_expression> else_) :
-        _position(std::move(position)),
-        _conditional(std::move(conditional)),
-        _body(std::move(body)),
-        _elsifs(std::move(elsifs)),
-        _else(std::move(else_))
+        _position(rvalue_cast(position)),
+        _conditional(rvalue_cast(conditional)),
+        _body(rvalue_cast(body)),
+        _elsifs(rvalue_cast(elsifs)),
+        _else(rvalue_cast(else_))
     {
     }
 

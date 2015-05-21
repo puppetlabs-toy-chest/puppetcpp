@@ -1,6 +1,7 @@
 #include <puppet/ast/case_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -13,8 +14,8 @@ namespace puppet { namespace ast {
     }
 
     case_proposition::case_proposition(vector<expression> options, optional<vector<expression>> body) :
-        _options(std::move(options)),
-        _body(std::move(body))
+        _options(rvalue_cast(options)),
+        _body(rvalue_cast(body))
     {
         if (!_options.empty()) {
             _position = _options.front().position();
@@ -22,8 +23,8 @@ namespace puppet { namespace ast {
     }
 
     case_proposition::case_proposition(ast::lambda option, optional<vector<expression>> body) :
-        _lambda(std::move(option)),
-        _body(std::move(body))
+        _lambda(rvalue_cast(option)),
+        _body(rvalue_cast(body))
     {
         _position = _lambda->position();
     }
@@ -62,9 +63,9 @@ namespace puppet { namespace ast {
     }
 
     case_expression::case_expression(lexer::token_position position, struct expression expression, vector<case_proposition> propositions) :
-        _position(std::move(position)),
-        _expression(std::move(expression)),
-        _propositions(std::move(propositions))
+        _position(rvalue_cast(position)),
+        _expression(rvalue_cast(expression)),
+        _propositions(rvalue_cast(propositions))
     {
     }
 

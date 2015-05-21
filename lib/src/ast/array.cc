@@ -1,6 +1,7 @@
 #include <puppet/ast/array.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace boost;
@@ -14,8 +15,8 @@ namespace puppet { namespace ast {
     }
 
     array::array(token_position bracket_position, optional<vector<expression>> elements) :
-        _position(std::move(bracket_position)),
-        _elements(std::move(elements))
+        _position(rvalue_cast(bracket_position)),
+        _elements(rvalue_cast(elements))
     {
     }
 

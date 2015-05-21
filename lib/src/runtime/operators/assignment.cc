@@ -1,5 +1,6 @@
 #include <puppet/runtime/operators/assignment.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -30,7 +31,7 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
         // Set the value in the current scope
-        auto value = context.evaluator().scope().set(var->name(), std::move(context.right()), get<1>(context.left_position()));
+        auto value = context.evaluator().scope().set(var->name(), rvalue_cast(context.right()), get<1>(context.left_position()));
         if (!value) {
             // Check where the variable was previously assigned
             auto line = context.evaluator().scope().where(var->name());
@@ -43,7 +44,7 @@ namespace puppet { namespace runtime { namespace operators {
 
         // Update the variable's value and return the variable reference
         var->update(value);
-        return std::move(context.left());
+        return rvalue_cast(context.left());
     }
 
 }}}  // namespace puppet::runtime::operators

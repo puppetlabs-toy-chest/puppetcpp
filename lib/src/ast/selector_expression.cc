@@ -1,6 +1,7 @@
 #include <puppet/ast/selector_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -12,8 +13,8 @@ namespace puppet { namespace ast {
     }
 
     selector_case_expression::selector_case_expression(expression selector, expression result) :
-        _selector(std::move(selector)),
-        _result(std::move(result))
+        _selector(rvalue_cast(selector)),
+        _result(rvalue_cast(result))
     {
     }
 
@@ -43,8 +44,8 @@ namespace puppet { namespace ast {
     }
 
     selector_expression::selector_expression(token_position position, vector<selector_case_expression> cases) :
-        _position(std::move(position)),
-        _cases(std::move(cases))
+        _position(rvalue_cast(position)),
+        _cases(rvalue_cast(cases))
     {
     }
 
