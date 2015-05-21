@@ -78,12 +78,17 @@ namespace puppet { namespace runtime {
         return _parameters.erase(name) > 0;
     }
 
+    types::resource resource::create_reference() const
+    {
+        return types::resource(_type, _title);
+    }
+
     void resource::store_parameter(string const& name, token_position const& name_position, values::value value, bool override)
     {
         auto it = _parameters.find(name);
         if (it != _parameters.end()) {
             if (!override) {
-                throw evaluation_exception(name_position, (boost::format("attribute '%1%' has already been set for resource %2%.") % name % types::resource(_type, _title)).str());
+                throw evaluation_exception(name_position, (boost::format("attribute '%1%' has already been set for resource %2%.") % name % create_reference()).str());
             }
             it->second = std::move(value);
             return;

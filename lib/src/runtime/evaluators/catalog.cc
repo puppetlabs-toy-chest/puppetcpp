@@ -77,8 +77,51 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_override_expression const& expr)
     {
-        // TODO: implement
-        throw evaluation_exception(expr.position(), "resource override expressions are not yet implemented.");
+        auto reference = _evaluator.evaluate(expr.reference());
+
+        // Convert the value into an array of resource pointers
+        vector<resource*> resources;
+        find_resource(resources, reference, get_position(expr.reference()));
+
+        if (expr.attributes()) {
+            // Set the parameters
+            for (auto const& attribute : *expr.attributes()) {
+                // Evaluate the attribute value
+                auto attribute_value = _evaluator.evaluate(attribute.value());
+
+                // Loop through each resource
+                for (size_t i = 0; i < resources.size(); ++i) {
+                    auto& resource = *resources[i];
+
+                    // TODO: check the resource scope; if the current scope inherits from the resource's scope, allow overriding or removing of parameters
+                    bool override = false;
+
+                    // For the last resource, move the value; otherwise copy
+                    values::value value;
+                    if (i == resources.size() - 1) {
+                        value = std::move(attribute_value);
+                    } else {
+                        value = attribute_value;
+                    }
+
+                    if (attribute.op() == ast::attribute_operator::assignment) {
+                        if (is_undef(value)) {
+                            if (!override) {
+                                throw evaluation_exception(attribute.name().position(), (boost::format("cannot remove attribute '%1%' from resource %2%.") % attribute.name() % resource.create_reference()).str());
+                            }
+                            resource.remove_parameter(attribute.name().value());
+                            continue;
+                        }
+                        // Set the parameter in the resource
+                        resource.set_parameter(attribute.name().value(), attribute.name().position(), std::move(value), attribute.value().position());
+                    } else if (attribute.op() == ast::attribute_operator::append) {
+                        // TODO: append parameter
+                    }
+                }
+            }
+        }
+
+        return reference;
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::class_definition_expression const& expr)
@@ -139,6 +182,34 @@ namespace puppet { namespace runtime { namespace evaluators {
             return;
         }
         throw evaluation_exception(position, (boost::format("expected %1% resource title but found %2%.") % types::string::name() % get_type(title)).str());
+    }
+
+    void catalog_expression_evaluator::find_resource(vector<resource*>& resources, values::value const& reference, token_position const& position)
+    {
+        // Check for type reference
+        if (auto type = as<values::type>(reference)) {
+            // Make sure the type is a qualified Resource type
+            auto resource_type = boost::get<types::resource>(type);
+            if (!resource_type || resource_type->type_name().empty() || resource_type->title().empty()) {
+                throw evaluation_exception(position, (boost::format("expected qualified %1% but found %2%.") % types::resource::name() % get_type(reference)).str());
+            }
+
+            // Find the resource
+            auto resource = _evaluator.catalog().find_resource(resource_type->type_name(), resource_type->title());
+            if (!resource) {
+                throw evaluation_exception(position, (boost::format("resource %1% does not exist in the catalog.") % *resource_type).str());
+            }
+            resources.push_back(resource);
+            return;
+        }
+        if (auto references = as<values::array>(reference)) {
+            // For arrays, recurse on each element
+            for (auto& element : *references) {
+                find_resource(resources, element, position);
+            }
+            return;
+        }
+        throw evaluation_exception(position, (boost::format("expected qualified %1% but found %2%.") % types::resource::name() % get_type(reference)).str());
     }
 
 }}}  // namespace puppet::runtime::evaluators

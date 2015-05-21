@@ -103,6 +103,12 @@ namespace puppet { namespace runtime {
          */
         bool remove_parameter(std::string const& name);
 
+        /**
+         * Creates a reference to this resource.
+         * @return Returns a reference to this resource.
+         */
+        types::resource create_reference() const;
+
      private:
         void store_parameter(std::string const& name, lexer::token_position const& name_position, values::value value, bool override);
         bool handle_metaparameter(std::string const& name, lexer::token_position const& name_position, values::value& value, lexer::token_position const& value_position);
