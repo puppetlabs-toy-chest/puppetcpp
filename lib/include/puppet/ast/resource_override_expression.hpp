@@ -29,26 +29,14 @@ namespace puppet { namespace ast {
         resource_override_expression(primary_expression reference, boost::optional<std::vector<attribute_expression>> attributes);
 
         /**
-         * Gets the reference expression for the resources being overriden.
-         * @return Returns the reference expression for the resources being overriden.
+         * The resource reference to override.
          */
-        primary_expression const& reference() const;
+        primary_expression reference;
 
         /**
-         * Gets the optional attributes being overridden.
-         * @return Returns the attributes being overridden.
+         * The attributes to override.
          */
-        boost::optional<std::vector<attribute_expression>> const& attributes() const;
-
-        /**
-         * Gets the position of the resource override expression.
-         * @return Returns the position of the resource override expression.
-         */
-        lexer::token_position const& position() const;
-
-     private:
-        primary_expression _reference;
-        boost::optional<std::vector<attribute_expression>> _attributes;
+        boost::optional<std::vector<attribute_expression>> attributes;
     };
 
     /**

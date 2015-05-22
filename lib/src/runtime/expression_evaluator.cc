@@ -21,6 +21,7 @@
 #include <puppet/runtime/operators/right_shift.hpp>
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/ast/expression_def.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -29,18 +30,18 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    evaluation_exception::evaluation_exception(token_position position, string const& message) :
+    evaluation_exception::evaluation_exception(lexer::position position, string const& message) :
         runtime_error(message),
-        _position(std::move(position))
+        _position(rvalue_cast(position))
     {
     }
 
-    token_position const& evaluation_exception::position() const
+    lexer::position const& evaluation_exception::position() const
     {
         return _position;
     }
 
-    expression_evaluator::expression_evaluator(logging::logger& logger, runtime::catalog& catalog, string const& path, compiler::node& node, function<void(token_position const&, string const&)> const& warning) :
+    expression_evaluator::expression_evaluator(logging::logger& logger, runtime::catalog& catalog, string const& path, compiler::node& node, function<void(lexer::position const&, string const&)> const& warning) :
         _logger(logger),
         _catalog(catalog),
         _path(path),
@@ -83,7 +84,7 @@ namespace puppet { namespace runtime {
 
     runtime::scope* expression_evaluator::add_scope(std::string name, runtime::scope scope)
     {
-        return &_scopes.emplace(make_pair(std::move(name), std::move(scope))).first->second;
+        return &_scopes.emplace(make_pair(rvalue_cast(name), rvalue_cast(scope))).first->second;
     }
 
     runtime::scope* expression_evaluator::find_scope(std::string const& name)
@@ -117,13 +118,12 @@ namespace puppet { namespace runtime {
         }
 
         // Evaluate the primary expression
-        auto result = evaluate(expr.primary());
+        auto result = evaluate(expr.primary);
         auto position = expr.position();
 
         // Climb the remainder of the expression
-        auto& binary = expr.binary();
-        auto begin = binary.begin();
-        climb_expression(result, position, 0, begin, binary.end());
+        auto begin = expr.binary.begin();
+        climb_expression(result, position, 0, begin, expr.binary.end());
 
         return result;
     }
@@ -137,18 +137,18 @@ namespace puppet { namespace runtime {
     boost::optional<values::array> expression_evaluator::unfold(ast::expression const& expr, value& result)
     {
         // An unfold expression is always unary with no further expressions
-        if (!expr.binary().empty()) {
+        if (!expr.binary.empty()) {
             return boost::none;
         }
         // Unfold the first expression
-        return unfold(expr.primary(), result);
+        return unfold(expr.primary, result);
     }
 
     boost::optional<values::array> expression_evaluator::unfold(ast::primary_expression const& expression, value& evaluated)
     {
         // Determine if the given expression is a unary splat of an array
         auto unary = boost::get<ast::unary_expression>(&expression);
-        if (unary && unary->op() == ast::unary_operator::splat && as<values::array>(evaluated)) {
+        if (unary && unary->op == ast::unary_operator::splat && as<values::array>(evaluated)) {
             return mutate_as<values::array>(evaluated);
         }
 
@@ -160,7 +160,7 @@ namespace puppet { namespace runtime {
         return boost::none;
     }
 
-    void expression_evaluator::warn(token_position const& position, string const& message) const
+    void expression_evaluator::warn(lexer::position const& position, string const& message) const
     {
         if (!_warn) {
             return;
@@ -168,7 +168,7 @@ namespace puppet { namespace runtime {
         _warn(position, message);
     }
 
-    bool expression_evaluator::is_match(value& actual, token_position const& actual_position, value& expected, token_position const& expected_position)
+    bool expression_evaluator::is_match(value& actual, lexer::position const& actual_position, value& expected, lexer::position const& expected_position)
     {
         // If the expected value is a regex, use match
         auto regex = as<values::regex>(expected);
@@ -190,17 +190,17 @@ namespace puppet { namespace runtime {
     bool expression_evaluator::is_productive(ast::expression const& expr)
     {
         // Check if the primary expression itself is productive
-        if (is_productive(expr.primary())) {
+        if (is_productive(expr.primary)) {
             return true;
         }
 
         // Expressions followed by an assignment or relationship operator are productive
-        for (auto const& binary : expr.binary()) {
-            if (binary.op() == ast::binary_operator::assignment ||
-                binary.op() == ast::binary_operator::in_edge ||
-                binary.op() == ast::binary_operator::in_edge_subscribe ||
-                binary.op() == ast::binary_operator::out_edge ||
-                binary.op() == ast::binary_operator::out_edge_subscribe) {
+        for (auto const& binary : expr.binary) {
+            if (binary.op == ast::binary_operator::assignment ||
+                binary.op == ast::binary_operator::in_edge ||
+                binary.op == ast::binary_operator::in_edge_subscribe ||
+                binary.op == ast::binary_operator::out_edge ||
+                binary.op == ast::binary_operator::out_edge_subscribe) {
                 return true;
             }
         }
@@ -219,7 +219,7 @@ namespace puppet { namespace runtime {
 
         // Check for unary expression
         if (auto ptr = boost::get<ast::unary_expression>(&expr)) {
-            if (is_productive(ptr->operand())) {
+            if (is_productive(ptr->operand)) {
                 return true;
             }
         }
@@ -232,10 +232,10 @@ namespace puppet { namespace runtime {
 
         // Postfix method calls are productive
         if (auto ptr = boost::get<ast::postfix_expression>(&expr)) {
-            if (is_productive(ptr->primary())) {
+            if (is_productive(ptr->primary)) {
                 return true;
             }
-            for (auto const& subexpression : ptr->subexpressions()) {
+            for (auto const& subexpression : ptr->subexpressions) {
                 if (boost::get<ast::method_call_expression>(&subexpression)) {
                     return true;
                 }
@@ -246,17 +246,17 @@ namespace puppet { namespace runtime {
 
     void expression_evaluator::climb_expression(
         value& left,
-        token_position& left_position,
+        lexer::position& left_position,
         uint8_t min_precedence,
         vector<ast::binary_expression>::const_iterator& begin,
         vector<ast::binary_expression>::const_iterator const& end)
     {
         // This member implements precedence climbing for binary expressions
         uint8_t precedence;
-        while (begin != end && (precedence = get_precedence(begin->op())) >= min_precedence)
+        while (begin != end && (precedence = get_precedence(begin->op)) >= min_precedence)
         {
-            auto op = begin->op();
-            auto& operand = begin->operand();
+            auto op = begin->op;
+            auto& operand = begin->operand;
             auto right_position = begin->position();
             ++begin;
 
@@ -274,10 +274,10 @@ namespace puppet { namespace runtime {
 
     void expression_evaluator::evaluate(
         value& left,
-        token_position const& left_position,
+        lexer::position const& left_position,
         ast::binary_operator op,
         value& right,
-        token_position& right_position)
+        lexer::position& right_position)
     {
         static const unordered_map<ast::binary_operator, std::function<values::value(operators::binary_context&)>> binary_operators = {
             { ast::binary_operator::assignment,         operators::assignment() },

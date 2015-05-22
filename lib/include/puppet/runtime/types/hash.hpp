@@ -9,6 +9,7 @@
 #include "struct.hpp"
 #include "string.hpp"
 #include "../values/hash.hpp"
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <ostream>
 
@@ -29,8 +30,8 @@ namespace puppet { namespace runtime { namespace types {
          * @param to The "to" type parameter.
          */
         explicit basic_hash(Type key_type = scalar(), Type element_type = data(), int64_t from = std::numeric_limits<int64_t>::min(), int64_t to = std::numeric_limits<int64_t>::max()) :
-            _key_type(std::move(key_type)),
-            _element_type(std::move(element_type)),
+            _key_type(rvalue_cast(key_type)),
+            _element_type(rvalue_cast(element_type)),
             _from(from),
             _to(to)
         {

@@ -4,8 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
-#include <boost/range.hpp>
+#include "../lexer/position.hpp"
 #include <iostream>
 
 namespace puppet { namespace ast {
@@ -15,33 +14,19 @@ namespace puppet { namespace ast {
      */
     struct boolean
     {
-        /**
-         * Default constructor for boolean.
-         */
         boolean();
 
-        /**
-         * Constructs a boolean with the given value.
-         * @param position The position where the literal boolean appeared.
-         * @param value The value of the literal boolean.
-         */
-        boolean(lexer::token_position position, bool value);
+        boolean(lexer::position position, bool value);
 
         /**
-         * Gets the value of the boolean.
-         * @return Returns the value of the boolean.
+         * The position of the boolean.
          */
-        bool value() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the boolean.
-         * @return Returns the position of the boolean.
+         * The value of the boolean.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        bool _value;
+        bool value;
     };
 
     /**

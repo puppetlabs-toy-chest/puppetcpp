@@ -22,9 +22,9 @@ Expression evaluator status:
 * [x] % operator
 * [x] << operator
 * [x] >> operator
-* [x] logical and
-* [x] logical or
-* [x] logical not
+* [x] logical `and`
+* [x] logical `or`
+* [x] logical `not`
 * [x] == operator
 * [x] != operator
 * [x] =~ operator
@@ -37,7 +37,7 @@ Expression evaluator status:
 * [ ] ~> operator
 * [ ] <- operator
 * [ ] <~ operator
-* [x] "in" operator
+* [x] `in` operator
 * [x] if expressions
 * [x] unless expressions
 * [x] selector expressions
@@ -45,9 +45,22 @@ Expression evaluator status:
 * [x] method call expressions
 * [x] function call expressions
 * [x] lambdas
-* [ ] resource expressions (partial implementation)
+* [x] resource expressions
+* [x] `alias` metaparameter
+* [x] `audit` metaparameter (explicitly not supported)
+* [ ] `before` metaparameter
+* [ ] `loglevel` metaparameter
+* [ ] `noop` metaparameter
+* [ ] `notify` metaparameter
+* [ ] `require` metaparameter
+* [ ] `schedule` metaparameter
+* [ ] `stage` metaparameter
+* [ ] `subscribe` metaparameter
+* [ ] `tag` metaparameter
+* [ ] virtual resource expressions
+* [ ] exported resource expressions
 * [ ] resource defaults expressions
-* [ ] resource override expressions
+* [ ] resource override expressions (partial: scope check and `+>` not yet implemented)
 * [ ] class definition expressions
 * [ ] defined type expressions
 * [ ] node type expressions

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "expression.hpp"
 #include "type.hpp"
 #include "variable.hpp"
@@ -31,43 +31,33 @@ namespace puppet { namespace ast {
          * @param variable The variable of the parameter.
          * @param default_value The optional default value expression.
          */
-        parameter(boost::optional<primary_expression> type, bool captures, struct variable variable, boost::optional<expression> default_value);
+        parameter(boost::optional<primary_expression> type, bool captures, ast::variable variable, boost::optional<expression> default_value);
 
         /**
-         * Gets the optional type of the parameter.
-         * @return Returns the optional type of the parameter.
+         * The optional type of the parameter.
          */
-        boost::optional<primary_expression> const& type() const;
+        boost::optional<primary_expression> type;
 
         /**
-         * Determines if the parameter captures the remaining arguments.
-         * @return Returns true if the parameter captures the remaining arguments or false if not.
+         * Whether or not the parameter captures rest.
          */
-        bool captures() const;
+        bool captures;
 
         /**
-         * Gets the variable of the parameter.
-         * @return Returns the variable of the parameter.
+         * The variable of the parameter.
          */
-        ast::variable const& variable() const;
+        ast::variable variable;
 
         /**
-         * Gets the optional default value expression of the parameter.
-         * @return Returns the optional default value expression of the parameter.
+         * The optional default value for the parameter.
          */
-        boost::optional<expression> const& default_value() const;
+        boost::optional<expression> default_value;
 
         /**
-         * Gets the position of the parameter.
-         * @return Returns the position of the parameter.
+         * Gets the position of the expression.
+         * @return Returns the position of the expression.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        boost::optional<primary_expression> _type;
-        bool _captures;
-        struct variable _variable;
-        boost::optional<expression> _default_value;
+        lexer::position const& position() const;
     };
 
     /**

@@ -1,11 +1,12 @@
 #include <puppet/runtime/types/pattern.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
     pattern::pattern(vector<values::regex> patterns) :
-        _patterns(std::move(patterns))
+        _patterns(rvalue_cast(patterns))
     {
     }
 

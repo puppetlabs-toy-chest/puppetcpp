@@ -32,10 +32,10 @@ namespace puppet { namespace runtime {
          * @param remove_break True if a trailing line break should be removed or false if not.
          * @return Returns the interpolated string.
          */
-        std::string interpolate(lexer::token_position const& position, std::string const& text, std::string const& escapes, char quote, bool full = true, int margin = 0, bool remove_break = false);
+        std::string interpolate(lexer::position const& position, std::string const& text, std::string const& escapes, char quote, bool full = true, int margin = 0, bool remove_break = false);
 
      private:
-        bool write_unicode_escape_sequence(lexer::token_position const& position, lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end, std::string& result);
+        bool write_unicode_escape_sequence(lexer::position const& position, lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end, std::string& result);
 
         expression_evaluator& _evaluator;
     };

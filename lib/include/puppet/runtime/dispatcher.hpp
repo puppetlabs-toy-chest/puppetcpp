@@ -25,7 +25,7 @@ namespace puppet { namespace runtime {
          * @param name The function name to dispatch.
          * @param position The position of the function call.
          */
-        dispatcher(std::string const& name, lexer::token_position const& position);
+        dispatcher(std::string const& name, lexer::position const& position);
 
         /**
          * Dispatches the function call.
@@ -43,7 +43,7 @@ namespace puppet { namespace runtime {
             boost::optional<ast::lambda> const& lambda,
             values::value* first_value = nullptr,
             ast::primary_expression const* first_expression = nullptr,
-            lexer::token_position const* first_position = nullptr) const;
+            lexer::position const* first_position = nullptr) const;
 
         /**
          * Gets the name of the function being dispatched.
@@ -55,11 +55,11 @@ namespace puppet { namespace runtime {
          * Gets the position of the function call itself.
          * @return Returns the position of the function call itself.
          */
-        lexer::token_position const& position() const;
+        lexer::position const& position() const;
 
      private:
         std::string const& _name;
-        lexer::token_position const& _position;
+        lexer::position const& _position;
         function_type const* _function;
     };
 

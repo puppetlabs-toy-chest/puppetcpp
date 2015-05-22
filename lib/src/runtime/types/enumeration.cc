@@ -1,11 +1,12 @@
 #include <puppet/runtime/types/enumeration.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
     enumeration::enumeration(vector<string> strings) :
-        _strings(std::move(strings))
+        _strings(rvalue_cast(strings))
     {
     }
 

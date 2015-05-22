@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "expression.hpp"
 #include "name.hpp"
 #include "lambda.hpp"
@@ -29,36 +29,27 @@ namespace puppet { namespace ast {
          * @param arguments The optional arguments to the method.
          * @param lambda The optional lambda to the method.
          */
-        method_call_expression(name method, boost::optional<std::vector<expression>> arguments, boost::optional<struct lambda> lambda);
+        method_call_expression(name method, boost::optional<std::vector<expression>> arguments, boost::optional<ast::lambda> lambda);
 
         /**
-         * Gets the method name.
-         * @return Returns the method name.
+         * The name of the method.
          */
-        name const& method() const;
+        name method;
 
         /**
-         * Gets the optional argument expressions.
-         * @return Returns the argument expressions.
+         * The arguments to the method.
          */
-        boost::optional<std::vector<expression>> const& arguments() const;
+        boost::optional<std::vector<expression>> arguments;
 
         /**
-         * Gets the optional lambda.
-         * @return Returns the optional lambda.
+         * The optional lambda to the method.
          */
-        boost::optional<ast::lambda> const& lambda() const;
+        boost::optional<ast::lambda> lambda;
 
         /**
-         * Gets the position of the method call expression.
-         * @return Returns the position of the method call expression.
+         * Gets the position of the expression.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        name _method;
-        boost::optional<std::vector<expression>> _arguments;
-        boost::optional<struct lambda> _lambda;
+        lexer::position const& position() const;
     };
 
     /**

@@ -56,13 +56,13 @@ namespace puppet { namespace runtime { namespace evaluators {
             { ast::unary_operator::splat,       operators::splat() }
         };
 
-        auto it = unary_operators.find(expr.op());
+        auto it = unary_operators.find(expr.op);
         if (it == unary_operators.end()) {
-            throw evaluation_exception(expr.position(), "unexpected unary expression.");
+            throw evaluation_exception(expr.position, "unexpected unary expression.");
         }
 
-        auto operand = boost::apply_visitor(*this, expr.operand());
-        operators::unary_context context(_evaluator, operand, expr.position());
+        auto operand = boost::apply_visitor(*this, expr.operand);
+        operators::unary_context context(_evaluator, operand, expr.position);
         return it->second(context);
     }
 

@@ -26,20 +26,20 @@ namespace puppet { namespace runtime {
          * @param position The position of the function call that was passed the lambda.
          * @param lambda The AST lambda being yielded to.
          */
-        yielder(expression_evaluator& evaluator, lexer::token_position const& position, boost::optional<ast::lambda> const& lambda);
+        yielder(expression_evaluator& evaluator, lexer::position const& position, boost::optional<ast::lambda> const& lambda);
 
         /**
          * Gets the position of the lambda itself.
          * @return Returns the position of the lambda itself.
          */
-        lexer::token_position const& position() const;
+        lexer::position const& position() const;
 
         /**
          * Gets the position of an parameter to the lambda.
          * @param index The index of the parameter.
          * @return Returns the position of the parameter.
          */
-        lexer::token_position const& position(size_t index) const;
+        lexer::position const& position(size_t index) const;
 
         /**
          * Determines if the lambda was given to the function.
@@ -68,7 +68,7 @@ namespace puppet { namespace runtime {
 
      private:
         expression_evaluator& _evaluator;
-        lexer::token_position const& _position;
+        lexer::position const& _position;
         boost::optional<ast::lambda> const& _lambda;
     };
 

@@ -1,5 +1,6 @@
 #include <puppet/runtime/operators/left_shift.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -10,7 +11,7 @@ namespace puppet { namespace runtime { namespace operators {
 
     struct left_shift_visitor : boost::static_visitor<value>
     {
-        left_shift_visitor(token_position const& left_position, token_position const& right_position) :
+        left_shift_visitor(lexer::position const& left_position, lexer::position const& right_position) :
             _left_position(left_position),
             _right_position(right_position)
         {
@@ -35,8 +36,8 @@ namespace puppet { namespace runtime { namespace operators {
         template <typename Right>
         result_type operator()(values::array& left, Right& right) const
         {
-            left.emplace_back(std::move(right));
-            return std::move(left);
+            left.emplace_back(rvalue_cast(right));
+            return rvalue_cast(left);
         }
 
         template <
@@ -55,8 +56,8 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
      private:
-        token_position const& _left_position;
-        token_position const& _right_position;
+        lexer::position const& _left_position;
+        lexer::position const& _right_position;
     };
 
     value left_shift::operator()(binary_context& context) const

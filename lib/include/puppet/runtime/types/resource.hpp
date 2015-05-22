@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string.hpp>
 #include <ostream>
@@ -24,8 +25,8 @@ namespace puppet { namespace runtime { namespace types {
          * @param title The title of the resource (e.g. '/foo').  If empty, represents all instances of the resource type.
          */
         explicit basic_resource(std::string type_name = {}, std::string title = {}) :
-            _type_name(std::move(type_name)),
-            _title(std::move(title))
+            _type_name(rvalue_cast(type_name)),
+            _title(rvalue_cast(title))
         {
             // Make the type name lowercase
             boost::to_lower(_type_name);

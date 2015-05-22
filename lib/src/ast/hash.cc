@@ -1,6 +1,7 @@
 #include <puppet/ast/hash.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace boost;
@@ -19,26 +20,16 @@ namespace puppet { namespace ast {
     {
     }
 
-    hash::hash(token_position brace_position, optional<vector<pair<expression, expression>>> elements) :
-        _position(std::move(brace_position)),
-        _elements(std::move(elements))
+    hash::hash(lexer::position position, optional<vector<pair<expression, expression>>> elements) :
+        position(rvalue_cast(position)),
+        elements(rvalue_cast(elements))
     {
-    }
-
-    optional<vector<hash_pair>> const& hash::elements() const
-    {
-        return _elements;
-    }
-
-    lexer::token_position const& hash::position() const
-    {
-        return _position;
     }
 
     ostream& operator<<(ostream& os, hash const& hash)
     {
         os << "{";
-        pretty_print(os, hash.elements(), ", ");
+        pretty_print(os, hash.elements, ", ");
         os << "}";
         return os;
     }

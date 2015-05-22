@@ -26,26 +26,19 @@ namespace puppet { namespace ast {
         selector_case_expression(expression selector, expression result);
 
         /**
-         * Gets the selector expression.
-         * @return Returns the selector expression.
+         * The selector expression.
          */
-        expression const& selector() const;
+        expression selector;
 
         /**
-         * Gets the result expression.
-         * @return Returns the result expression.
+         * The resulting value.
          */
-        expression const& result() const;
+        expression result;
 
         /**
-         * Gets the position of the selector case expression.
-         * @return Returns the position of the selector case expression.
+         * Gets the position of the expression.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        expression _selector;
-        expression _result;
+        lexer::position const& position() const;
     };
 
     /**
@@ -71,23 +64,17 @@ namespace puppet { namespace ast {
          * @param position The position of the selector expression.
          * @param cases The selector cases.
          */
-        selector_expression(lexer::token_position position, std::vector<selector_case_expression> cases);
+        selector_expression(lexer::position position, std::vector<selector_case_expression> cases);
 
         /**
-         * Gets the selector case expressions.
-         * @return Returns the selector case expressions.
+         * The position of the selector expression.
          */
-        std::vector<selector_case_expression> const& cases() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the selector expression.
-         * @return Returns the position of the selector expression.
+         * The selector's case expressions.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        std::vector<selector_case_expression> _cases;
+        std::vector<selector_case_expression> cases;
     };
 
     /**

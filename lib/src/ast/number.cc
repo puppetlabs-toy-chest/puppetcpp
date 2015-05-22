@@ -10,24 +10,14 @@ namespace puppet { namespace ast {
     }
 
     number::number(number_token const& token) :
-        _position(token.position()),
-        _value(token.value())
+        position(token.position()),
+        value(token.value())
     {
-    }
-
-    number::value_type const& number::value() const
-    {
-        return _value;
-    }
-
-    token_position const& number::position() const
-    {
-        return _position;
     }
 
     ostream& operator<<(ostream& os, number const& number)
     {
-        os << number.value();
+        os << number.value;
         return os;
     }
 

@@ -1,18 +1,27 @@
 #include <puppet/runtime/catalog.hpp>
-#include <boost/algorithm/string.hpp>
+#include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
+using namespace puppet::lexer;
 using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    resource::resource(string type, string title, string file, size_t line, bool exported) :
-        _type(std::move(type)),
-        _title(std::move(title)),
-        _file(std::move(file)),
+    resource::resource(runtime::catalog& catalog, string type, string title, string file, size_t line, bool exported) :
+        _catalog(catalog),
+        _type(rvalue_cast(type)),
+        _title(rvalue_cast(title)),
+        _file(rvalue_cast(file)),
         _line(line),
         _exported(exported)
     {
+    }
+
+    runtime::catalog const& resource::catalog() const
+    {
+        return _catalog;
     }
 
     string const& resource::type() const
@@ -52,12 +61,74 @@ namespace puppet { namespace runtime {
 
     void resource::add_tag(string tag)
     {
-        _tags.emplace(std::move(tag));
+        _tags.emplace(rvalue_cast(tag));
     }
 
-    bool resource::set_parameter(std::string name, value val)
+    void resource::set_parameter(string const& name, lexer::position const& name_position, values::value value, lexer::position const& value_position, bool override)
     {
-        return _parameters.emplace(make_pair(std::move(name), std::move(val))).second;
+        // Handle metaparameters
+        if (handle_metaparameter(name, name_position, value, value_position)) {
+            return;
+        }
+
+        store_parameter(name, name_position, rvalue_cast(value), override);
+    }
+
+    bool resource::remove_parameter(string const& name)
+    {
+        return _parameters.erase(name) > 0;
+    }
+
+    types::resource resource::create_reference() const
+    {
+        return types::resource(_type, _title);
+    }
+
+    void resource::store_parameter(string const& name, lexer::position const& name_position, values::value value, bool override)
+    {
+        auto it = _parameters.find(name);
+        if (it != _parameters.end()) {
+            if (!override) {
+                throw evaluation_exception(name_position, (boost::format("attribute '%1%' has already been set for resource %2%.") % name % create_reference()).str());
+            }
+            it->second = rvalue_cast(value);
+            return;
+        }
+        _parameters.emplace(make_pair(name, rvalue_cast(value)));
+    }
+
+    bool resource::handle_metaparameter(string const& name, lexer::position const& name_position, values::value& value, lexer::position const& value_position)
+    {
+        if (name == "alias") {
+            create_alias(value, value_position);
+            store_parameter(name, name_position, rvalue_cast(value), false);
+            return true;
+        } else if (name == "audit") {
+            throw evaluation_exception(name_position, "the resource metaparameter 'audit' is not supported.");
+        }
+        return false;
+    }
+
+    void resource::create_alias(values::value const& name, lexer::position const& position)
+    {
+        if (auto alias = as<string>(name)) {
+            if (alias->empty()) {
+                throw evaluation_exception(position, "alias name cannot be empty.");
+            }
+            // Alias this resource
+            if (!_catalog.alias_resource(_type, _title, *alias)) {
+                throw evaluation_exception(position, (boost::format("a %1% resource with name or alias '%2%' already exists in the catalog.") % _type % *alias).str());
+            }
+            return;
+        }
+        if (auto aliases = as<values::array>(name)) {
+            // For arrays, recurse on each element
+            for (auto& element : *aliases) {
+                create_alias(element, position);
+            }
+            return;
+        }
+        throw evaluation_exception(position, (boost::format("expected %1% for alias name but found %2%.") % types::string::name() % get_type(name)).str());
     }
 
     catalog::catalog()
@@ -84,6 +155,16 @@ namespace puppet { namespace runtime {
 
     resource* catalog::find_resource(string const& type, string const& title)
     {
+        // Check for an alias first
+        auto aliases = _aliases.find(type);
+        if (aliases != _aliases.end()) {
+            auto alias = aliases->second.find(title);
+            if (alias != aliases->second.end()) {
+                return alias->second;
+            }
+        }
+
+        // Otherwise find the resource type and title
         auto resources = _resources.find(type);
         if (resources == _resources.end()) {
             return nullptr;
@@ -95,9 +176,27 @@ namespace puppet { namespace runtime {
         return &it->second;
     }
 
+    bool catalog::alias_resource(string const& type, string const& title, string const& alias)
+    {
+        // Check if a resource with the alias name already exists
+        if (find_resource(type, alias)) {
+            return false;
+        }
+
+        // Find the resource being aliased
+        auto resource = find_resource(type, title);
+        if (!resource) {
+            return false;
+        }
+
+        _aliases[type].emplace(make_pair(alias, resource));
+        return true;
+    }
+
     resource* catalog::add_resource(string const& type, string const& title, string const& file, size_t line, bool exported)
     {
-        auto result = _resources[type].emplace(make_pair(title, resource(type, title, file, line, exported)));
+        // Add a new resource
+        auto result = _resources[type].emplace(make_pair(title, resource(*this, type, title, file, line, exported)));
         if (!result.second) {
             return nullptr;
         }

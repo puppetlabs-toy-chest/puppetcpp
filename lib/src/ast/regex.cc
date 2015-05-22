@@ -9,19 +9,9 @@ namespace puppet { namespace ast {
     {
     }
 
-    string const& regex::value() const
-    {
-        return _value;
-    }
-
-    token_position const& regex::position() const
-    {
-        return _position;
-    }
-
     ostream& operator<<(ostream& os, regex const& regex)
     {
-        os << "/" << regex.value() << "/";
+        os << "/" << regex.value << "/";
         return os;
     }
 

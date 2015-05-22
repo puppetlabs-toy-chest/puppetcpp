@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "parameter.hpp"
 #include <boost/optional.hpp>
 #include <vector>
@@ -28,30 +28,22 @@ namespace puppet { namespace ast {
          * @param parameters The optional parameters of the lambda.
          * @param body The optional expressions of the lambda's body.
          */
-        lambda(lexer::token_position position, boost::optional<std::vector<parameter>> parameters, boost::optional<std::vector<expression>> body);
+        lambda(lexer::position position, boost::optional<std::vector<parameter>> parameters, boost::optional<std::vector<expression>> body);
 
         /**
-         * Gets the parameters of the lambda.
-         * @return Returns the parameters of the lambda.
+         * The position of the lambda.
          */
-        boost::optional<std::vector<parameter>> const& parameters() const;
+        lexer::position position;
 
         /**
-         * Gets the expressions of the lambda's body.
-         * @return Returns the expressions of the lambda's body.
+         * The parameters of the lambda.
          */
-        boost::optional<std::vector<expression>> const& body() const;
+        boost::optional<std::vector<parameter>> parameters;
 
         /**
-         * Gets the position of the lambda.
-         * @return Returns the position of the lambda.
+         * The body of the lambda.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        boost::optional<std::vector<parameter>> _parameters;
-        boost::optional<std::vector<expression>> _body;
+        boost::optional<std::vector<expression>> body;
     };
 
     /**

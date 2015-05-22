@@ -1,4 +1,5 @@
 #include <puppet/lexer/lexer.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace boost::spirit;
@@ -112,7 +113,7 @@ namespace puppet { namespace lexer {
             column += count(text.begin(), text.begin() + column, '\t') * (tab_width - 1);
         }
 
-        return make_tuple(move(text), column);
+        return make_tuple(rvalue_cast(text), column);
     }
 
     tuple<string, size_t> get_text_and_column(string const& input, size_t position, size_t tab_width)
@@ -132,53 +133,53 @@ namespace puppet { namespace lexer {
             column += count(text.begin(), text.begin() + column, '\t') * (tab_width - 1);
         }
 
-        return make_tuple(move(text), column);
+        return make_tuple(rvalue_cast(text), column);
     }
 
-    token_position get_last_position(ifstream& input)
+    position get_last_position(ifstream& input)
     {
         // We need to read the entire file looking for new lines
         scoped_file_position guard(input);
 
         input.seekg(0);
 
-        std::size_t position = 0, line = 1;
-        std::size_t current_position = 0, current_line = 1;
+        std::size_t offset = 0, line = 1;
+        std::size_t current_offset = 0, current_line = 1;
         for (std::istreambuf_iterator<char> it(input), end; it != end; ++it) {
             if (*it == '\n') {
                 ++current_line;
             }
-            ++current_position;
+            ++current_offset;
 
             // If not whitespace, point the last position to that location
             if (!isspace(*it)) {
-                position = current_position;
+                offset = current_offset;
                 line = current_line;
             }
         }
-        return make_tuple(position, line);
+        return position(offset, line);
     }
 
-    token_position get_last_position(string const& input)
+    position get_last_position(string const& input)
     {
-        std::size_t position = 0, line = 1;
-        std::size_t current_position = 0, current_line = 1;
+        std::size_t offset = 0, line = 1;
+        std::size_t current_offset = 0, current_line = 1;
         for (auto it = input.begin(); it != input.end(); ++it) {
             if (*it == '\n') {
                 ++current_line;
             }
-            ++current_position;
+            ++current_offset;
 
             // If not whitespace, point the last position to that location
             if (!isspace(*it)) {
-                position = current_position;
+                offset = current_offset;
                 line = current_line;
             }
         }
-        return make_tuple(position, line);
+        return position(offset, line);
     }
 
-    token_position get_last_position(boost::iterator_range<lexer_string_iterator> const& range)
+    position get_last_position(boost::iterator_range<lexer_string_iterator> const& range)
     {
         // Get the last position in the range (end is non-inclusive)
         auto last = range.begin();

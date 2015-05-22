@@ -6,7 +6,7 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace operators {
 
-    unary_context::unary_context(expression_evaluator& evaluator, value& operand, token_position const& position) :
+    unary_context::unary_context(expression_evaluator& evaluator, value& operand, lexer::position const& position) :
         _evaluator(evaluator),
         _operand(operand),
         _position(position)
@@ -28,7 +28,7 @@ namespace puppet { namespace runtime { namespace operators {
         return _operand;
     }
 
-    token_position const& unary_context::position() const
+    lexer::position const& unary_context::position() const
     {
         return _position;
     }

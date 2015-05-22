@@ -1,4 +1,5 @@
 #include <puppet/ast/variable.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -9,26 +10,15 @@ namespace puppet { namespace ast {
     {
     }
 
-    variable::variable(string name, lexer::token_position position) :
-        _position(std::move(position)),
-        _name(std::move(name))
+    variable::variable(lexer::position position, string name) :
+        position(rvalue_cast(position)),
+        name(rvalue_cast(name))
     {
-
-    }
-
-    string const& variable::name() const
-    {
-        return _name;
-    }
-
-    token_position const& variable::position() const
-    {
-        return _position;
     }
 
     ostream& operator<<(ostream& os, variable const& var)
     {
-        os << "$" << var.name();
+        os << "$" << var.name;
         return os;
     }
 

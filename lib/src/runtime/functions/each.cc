@@ -1,4 +1,5 @@
 #include <puppet/runtime/functions/each.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -129,7 +130,7 @@ namespace puppet { namespace runtime { namespace functions {
 
         // Visit the argument and return it
         boost::apply_visitor(each_visitor(context), dereference(arguments[0]));
-        return std::move(arguments[0]);
+        return rvalue_cast(arguments[0]);
     }
 
 }}}  // namespace puppet::runtime::functions

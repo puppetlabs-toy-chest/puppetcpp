@@ -6,6 +6,7 @@
 
 #include "../values/hash.hpp"
 #include "../values/undef.hpp"
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <ostream>
 #include <unordered_map>
@@ -25,7 +26,7 @@ namespace puppet { namespace runtime { namespace types {
          * @param types The types that make up the struct.
          */
         explicit basic_struct(std::unordered_map<std::string, Type> types = std::unordered_map<std::string, Type>()) :
-            _types(std::move(types))
+            _types(rvalue_cast(types))
         {
         }
 

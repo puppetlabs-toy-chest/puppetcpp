@@ -1,6 +1,7 @@
 #include <puppet/ast/node_definition_expression.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/cast.hpp>
 #include <sstream>
 
 using namespace std;
@@ -18,10 +19,10 @@ namespace puppet { namespace ast {
             if (_ss.tellp() > 0) {
                 _ss << '.';
             }
-            _ss << part.value();
+            _ss << part.value;
 
             if (!_position) {
-                _position = part.position();
+                _position = part.position;
             }
         }
         std::string result() const
@@ -29,82 +30,62 @@ namespace puppet { namespace ast {
             return _ss.str();
         }
 
-        optional<token_position> const& position() const
+        optional<lexer::position> const& position() const
         {
             return _position;
         }
 
      private:
         ostringstream _ss;
-        optional<token_position> _position;
+        optional<lexer::position> _position;
     };
 
     hostname::hostname() :
-        _regex(false)
+        regex(false)
     {
     }
 
-    hostname::hostname(ast::defaulted const& defaulted) :
-        _position(defaulted.position()),
-        _regex(false)
+    hostname::hostname(ast::defaulted defaulted) :
+        position(rvalue_cast(defaulted.position)),
+        regex(false)
     {
     }
 
     hostname::hostname(vector<variant<name, bare_word, number>> const& parts) :
-        _regex(false)
+        regex(false)
     {
         hostname_visitor visitor;
         for (auto const& part : parts) {
             boost::apply_visitor(visitor, part);
         }
-        _value = visitor.result();
+        value = visitor.result();
         if (visitor.position()) {
-            _position = *visitor.position();
+            position = *visitor.position();
         }
     }
 
-    hostname::hostname(ast::string const& name) :
-        _position(name.position()),
-        _value(name.value()),
-        _regex(false)
+    hostname::hostname(ast::string name) :
+        position(rvalue_cast(name.position)),
+        value(rvalue_cast(name.value)),
+        regex(false)
     {
     }
 
-    hostname::hostname(ast::regex const& regx) :
-        _position(regx.position()),
-        _value(regx.value()),
-        _regex(true)
+    hostname::hostname(ast::regex regx) :
+        position(rvalue_cast(regx.position)),
+        value(rvalue_cast(regx.value)),
+        regex(true)
     {
-    }
-
-    std::string const& hostname::value() const
-    {
-        return _value;
-    }
-
-    bool hostname::regex() const
-    {
-        return _regex;
-    }
-
-    bool hostname::is_default() const
-    {
-        return !_regex && _value.empty();
-    }
-
-    token_position const& hostname::position() const
-    {
-        return _position;
     }
 
     ostream& operator<<(ostream& os, hostname const& name)
     {
-        if (name.is_default()) {
+        if (!name.regex && name.value.empty()) {
             os << "default";
-        } else if (name.regex()) {
-            os << '/' << name.value() << '/';
+        } else if (name.regex) {
+            os << '/' << name.value << '/';
         } else {
-            os << name.value();
+            os << name.value;
         }
         return os;
     }
@@ -113,38 +94,23 @@ namespace puppet { namespace ast {
     {
     }
 
-    node_definition_expression::node_definition_expression(token_position position, vector<hostname> names, optional<vector<expression>> body) :
-        _position(std::move(position)),
-        _names(std::move(names)),
-        _body(std::move(body))
+    node_definition_expression::node_definition_expression(lexer::position position, vector<hostname> names, optional<vector<expression>> body) :
+        position(rvalue_cast(position)),
+        names(rvalue_cast(names)),
+        body(rvalue_cast(body))
     {
     }
 
-    vector<hostname> const& node_definition_expression::names() const
+    ostream& operator<<(ostream& os, node_definition_expression const& expr)
     {
-        return _names;
-    }
-
-    optional<vector<expression>> const& node_definition_expression::body() const
-    {
-        return _body;
-    }
-
-    token_position const& node_definition_expression::position() const
-    {
-        return _position;
-    }
-
-    ostream& operator<<(ostream& os, node_definition_expression const& stmt)
-    {
-        if (stmt.names().empty()) {
+        if (expr.names.empty()) {
             return os;
         }
 
         os << "node ";
-        pretty_print(os, stmt.names(), ", ");
+        pretty_print(os, expr.names, ", ");
         os << " { ";
-        pretty_print(os, stmt.body(), "; ");
+        pretty_print(os, expr.body, "; ");
         os << " }";
         return os;
     }

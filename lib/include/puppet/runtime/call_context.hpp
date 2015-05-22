@@ -29,12 +29,12 @@ namespace puppet { namespace runtime {
         call_context(
             expression_evaluator& evaluator,
             std::string const& name,
-            lexer::token_position const& position,
+            lexer::position const& position,
             boost::optional<std::vector<ast::expression>> const& arguments,
             boost::optional<ast::lambda> const& lambda,
             values::value* first_value = nullptr,
             ast::primary_expression const* first_expression = nullptr,
-            lexer::token_position const* first_position = nullptr);
+            lexer::position const* first_position = nullptr);
 
         /**
          * Gets the expression evaluator.
@@ -52,14 +52,14 @@ namespace puppet { namespace runtime {
          * Gets the position of the function call itself.
          * @return Returns the position of the function call itself.
          */
-        lexer::token_position const& position() const;
+        lexer::position const& position() const;
 
         /**
          * Gets the position of an argument to the function.
          * @param index The index of the argument.
          * @return Returns the position of the argument.
          */
-        lexer::token_position const& position(size_t index) const;
+        lexer::position const& position(size_t index) const;
 
         /**
          * Gets the arguments.
@@ -88,9 +88,9 @@ namespace puppet { namespace runtime {
     private:
         expression_evaluator& _evaluator;
         std::string const& _name;
-        lexer::token_position const& _position;
+        lexer::position const& _position;
         values::array _arguments;
-        std::vector<lexer::token_position> _positions;
+        std::vector<lexer::position> _positions;
         runtime::yielder _yielder;
     };
 

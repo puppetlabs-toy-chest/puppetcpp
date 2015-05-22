@@ -1,5 +1,6 @@
 #include <puppet/runtime/functions/filter.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -31,7 +32,7 @@ namespace puppet { namespace runtime { namespace functions {
                     arguments.push_back(value);
                 }
                 if (is_true(_context.yielder().yield(arguments))) {
-                    result.emplace_back(std::move(value));
+                    result.emplace_back(rvalue_cast(value));
                 }
             }
             return result;
@@ -60,7 +61,7 @@ namespace puppet { namespace runtime { namespace functions {
                     arguments.push_back(argument[i]);
                 }
                 if (is_true(_context.yielder().yield(arguments))) {
-                    result.emplace_back(std::move(argument[i]));
+                    result.emplace_back(rvalue_cast(argument[i]));
                 }
             }
             return result;
@@ -81,7 +82,7 @@ namespace puppet { namespace runtime { namespace functions {
                     arguments.push_back(kvp.second);
                 }
                 if (is_true(_context.yielder().yield(arguments))) {
-                    result.emplace(make_pair(kvp.first, std::move(kvp.second)));
+                    result.emplace(make_pair(kvp.first, rvalue_cast(kvp.second)));
                 }
             }
             return result;

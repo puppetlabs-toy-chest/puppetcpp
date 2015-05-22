@@ -1,12 +1,13 @@
 #include <puppet/compiler/environment.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 
 namespace puppet { namespace compiler {
 
     environment::environment(string name, string base) :
-        _name(std::move(name)),
-        _base(std::move(base))
+        _name(rvalue_cast(name)),
+        _base(rvalue_cast(base))
     {
     }
 

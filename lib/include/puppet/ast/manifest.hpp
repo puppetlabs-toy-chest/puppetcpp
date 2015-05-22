@@ -26,23 +26,17 @@ namespace puppet { namespace ast {
          * @param body The body of the manifest.
          * @param end The ending token position for the manifest (applicable to interpolation).
          */
-        manifest(boost::optional<std::vector<expression>> body, lexer::token_position end = lexer::token_position());
+        manifest(boost::optional<std::vector<expression>> body, lexer::position end = lexer::position());
 
         /**
-         * Gets the expressions that make up the body of the manifest.
-         * @return Returns the expressions that make up the body of the manifest.
+         * The body of the lambda.
          */
-        boost::optional<std::vector<expression>> const& body() const;
+        boost::optional<std::vector<expression>> body;
 
         /**
-         * Gets the end token position for interpolation.
-         * @return Returns the end token position for interpolation or nullptr if not interpolated.
+         * The end position of the manifest (used in string interpolation).
          */
-        lexer::token_position const& end() const;
-
-    private:
-        boost::optional<std::vector<expression>> _body;
-        lexer::token_position _end;
+        lexer::position end;
     };
 
     /**

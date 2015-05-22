@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "expression.hpp"
 #include <vector>
 
@@ -16,32 +16,26 @@ namespace puppet { namespace ast {
     struct access_expression
     {
         /**
-         * Default constructor for access_expression.
+         * Default constructor for access expression.
          */
-        access_expression();
+        access_expression() = default;
 
         /**
          * Constructs an access expression with the given argument expressions.
          * @param position The position of the access expression.
          * @param arguments The argument expressions to access.
          */
-        access_expression(lexer::token_position position, std::vector<expression> arguments);
+        access_expression(lexer::position position, std::vector<expression> arguments);
 
         /**
-         * Gets the argument expressions.
-         * @return Returns the argument expressions.
+         * The position of the access expression.
          */
-        std::vector<expression> const& arguments() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the access expression.
-         * @return Returns the position of the access expression.
+         * The arguments to the access expression.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        lexer::token_position _position;
-        std::vector<expression> _arguments;
+        std::vector<expression> arguments;
     };
 
     /**

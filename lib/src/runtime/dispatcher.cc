@@ -6,6 +6,7 @@
 #include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
+#include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -18,12 +19,12 @@ namespace puppet { namespace runtime {
     call_context::call_context(
         expression_evaluator& evaluator,
         string const& name,
-        lexer::token_position const& position,
+        lexer::position const& position,
         optional<vector<ast::expression>> const& arguments,
         optional<ast::lambda> const& lambda,
         value* first_value,
         ast::primary_expression const* first_expression,
-        lexer::token_position const* first_position) :
+        lexer::position const* first_position) :
             _evaluator(evaluator),
             _name(name),
             _position(position),
@@ -44,7 +45,7 @@ namespace puppet { namespace runtime {
             }
             // Add the first argument if nothing was added above
             if (!added) {
-                _arguments.emplace_back(std::move(*first_value));
+                _arguments.emplace_back(rvalue_cast(*first_value));
                 _positions.push_back(first_position ? *first_position : position);
             }
         }
@@ -63,7 +64,7 @@ namespace puppet { namespace runtime {
                     continue;
                 }
                 _positions.push_back(expression.position());
-                _arguments.emplace_back(std::move(argument));
+                _arguments.emplace_back(rvalue_cast(argument));
             }
         }
     }
@@ -78,12 +79,12 @@ namespace puppet { namespace runtime {
         return _name;
     }
 
-    token_position const& call_context::position() const
+    lexer::position const& call_context::position() const
     {
         return _position;
     }
 
-    token_position const& call_context::position(size_t index) const
+        lexer::position const& call_context::position(size_t index) const
     {
         if (index >= _positions.size()) {
             throw runtime_error("argument index out of range.");
@@ -111,7 +112,7 @@ namespace puppet { namespace runtime {
         return _yielder;
     }
 
-    dispatcher::dispatcher(string const& name, token_position const& position) :
+    dispatcher::dispatcher(string const& name, lexer::position const& position) :
         _name(name),
         _position(position)
     {
@@ -147,7 +148,7 @@ namespace puppet { namespace runtime {
         optional<ast::lambda> const& lambda,
         value* first_value,
         ast::primary_expression const* first_expression,
-        lexer::token_position const* first_position) const
+        lexer::position const* first_position) const
     {
         // Dispatch the call
         call_context ctx(evaluator, _name, _position, arguments, lambda, first_value, first_expression, first_position);
@@ -159,7 +160,7 @@ namespace puppet { namespace runtime {
         return _name;
     }
 
-    token_position const& dispatcher::position() const
+    lexer::position const& dispatcher::position() const
     {
         return _position;
     }

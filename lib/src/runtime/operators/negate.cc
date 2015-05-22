@@ -11,7 +11,7 @@ namespace puppet { namespace runtime { namespace operators {
 
     struct negate_visitor : boost::static_visitor<value>
     {
-        negate_visitor(token_position const& position) :
+        negate_visitor(lexer::position const& position) :
             _position(position)
         {
         }
@@ -36,7 +36,7 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
      private:
-        token_position const& _position;
+        lexer::position const& _position;
     };
 
     value negate::operator()(unary_context& context) const

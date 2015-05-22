@@ -23,16 +23,16 @@ namespace puppet { namespace compiler {
          * @param position The token position where parsing failed.
          * @param message The exception message.
          */
-        parse_exception(lexer::token_position position, std::string const& message);
+        parse_exception(lexer::position position, std::string const& message);
 
         /**
          * Gets the token position where parsing failed.
          * @return Returns the token position where parsing failed.
          */
-        lexer::token_position const& position() const;
+        lexer::position const& position() const;
 
      private:
-        lexer::token_position _position;
+        lexer::position _position;
     };
 
     /**

@@ -1,6 +1,7 @@
 #include <puppet/compiler/node.hpp>
 #include <puppet/compiler/parser.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/cast.hpp>
 #include <fstream>
 
 using namespace std;
@@ -12,10 +13,10 @@ namespace puppet { namespace compiler {
 
     compilation_exception::compilation_exception(string const& message, string path, size_t line, size_t column, string text) :
         runtime_error(message),
-        _path(std::move(path)),
+        _path(rvalue_cast(path)),
         _line(line),
         _column(column),
-        _text(std::move(text))
+        _text(rvalue_cast(text))
     {
     }
 
@@ -40,7 +41,7 @@ namespace puppet { namespace compiler {
     }
 
     node::node(string name, compiler::environment& environment) :
-        _name(std::move(name)),
+        _name(rvalue_cast(name)),
         _environment(environment)
     {
     }
@@ -68,11 +69,11 @@ namespace puppet { namespace compiler {
             logger.log(level::debug, "parsed syntax tree:\n%1%", manifest);
 
             // Create a helper warning function
-            auto warning = [&](token_position const& position, string const& message) {
+            auto warning = [&](lexer::position const& position, string const& message) {
                 string text;
                 size_t column;
-                tie(text, column) = get_text_and_column(file, get<0>(position));
-                logger.log(level::warning, get<1>(position), column, text, path, message);
+                tie(text, column) = get_text_and_column(file, position.offset());
+                logger.log(level::warning, position.line(), column, text, path, message);
             };
 
             runtime::catalog catalog;
@@ -82,9 +83,9 @@ namespace puppet { namespace compiler {
             // TODO: create settings scope in catalog
 
             // Evaluate all the top level expressions in the manifest
-            if (manifest.body()) {
+            if (manifest.body) {
                 expression_evaluator evaluator(logger, catalog, path, *this, warning);
-                for (auto& expression : *manifest.body()) {
+                for (auto& expression : *manifest.body) {
                     // Top level expressions must be productive
                     evaluator.evaluate(expression, true);
                 }
@@ -102,13 +103,13 @@ namespace puppet { namespace compiler {
         } catch (parse_exception const& ex) {
             string text;
             size_t column;
-            tie(text, column) = get_text_and_column(file, get<0>(ex.position()));
-            throw compilation_exception(ex.what(), path, get<1>(ex.position()), column, std::move(text));
+            tie(text, column) = get_text_and_column(file, ex.position().offset());
+            throw compilation_exception(ex.what(), path, ex.position().line(), column, rvalue_cast(text));
         } catch (evaluation_exception const& ex) {
             string text;
             size_t column;
-            tie(text, column) = get_text_and_column(file, get<0>(ex.position()));
-            throw compilation_exception(ex.what(), path, get<1>(ex.position()), column, std::move(text));
+            tie(text, column) = get_text_and_column(file, ex.position().offset());
+            throw compilation_exception(ex.what(), path, ex.position().line(), column, rvalue_cast(text));
         }
     }
 

@@ -58,33 +58,19 @@ namespace puppet { namespace ast {
         query(name attribute, attribute_query_operator op, basic_expression value);
 
         /**
-         * Gets the attribute being queried.
-         * @return Returns the attribute being queried.
+         * The attribute name to query.
          */
-        name const& attribute() const;
+        name attribute;
 
         /**
-         * Gets the attribute query operator.
-         * @return Returns the query operator.
+         * The attribute query operator.
          */
-        attribute_query_operator op() const;
+        attribute_query_operator op;
 
         /**
-         * Gets the query value.
-         * @return Returns the query value.
+         * The attribute value to query.
          */
-        basic_expression const& value() const;
-
-        /**
-         * Gets the position of the query.
-         * @return Returns the position of the query.
-         */
-        lexer::token_position const& position() const;
-
-     private:
-        name _attribute;
-        attribute_query_operator _op;
-        basic_expression _value;
+        basic_expression value;
     };
 
     /**
@@ -142,26 +128,14 @@ namespace puppet { namespace ast {
         binary_query_expression(binary_query_operator op, query operand);
 
         /**
-         * Gets the binary query operator in the expression.
-         * @return Returns the binary query operator in the expression.
+         * The binary query operator.
          */
-        binary_query_operator op() const;
+        binary_query_operator op;
 
         /**
-         * Gets the right-hand operand of the binary query expression.
-         * @return Returns the right-hand operand of the binary query expression.
+         * The right-hand operand.
          */
-        query const& operand() const;
-
-        /**
-         * Gets the position of the binary query expression.
-         * @return Returns the position of the binary query expression.
-         */
-        lexer::token_position const& position() const;
-
-     private:
-        binary_query_operator _op;
-        query _operand;
+        query operand;
     };
 
     /**
@@ -213,40 +187,29 @@ namespace puppet { namespace ast {
         collection_expression(collection_kind kind, ast::type type, boost::optional<query> first, std::vector<binary_query_expression> remainder = std::vector<binary_query_expression>());
 
         /**
-         * Gets the kind of collection expression.
-         * @return Returns the kind of the collection expression.
+         * The collection kind.
          */
-        collection_kind kind() const;
+        collection_kind kind;
 
         /**
-         * Gets the type being collected.
-         * @return Returns the type being collected.
+         * The type being collected.
          */
-        ast::type const& type() const;
+        ast::type type;
 
         /**
-         * Gets the optional first query in the expression.
-         * @return Returns the first query in the expression.
+         * The first query.
          */
-        boost::optional<query> const& first() const;
+        boost::optional<query> first;
 
         /**
-         * Gets the remainder of the expression (for binary query expressions).
-         * @return Returns the remainder of the expression.
+         * The remaining binary query expressions.
          */
-        std::vector<binary_query_expression> const& remainder() const;
+        std::vector<binary_query_expression> remainder;
 
         /**
          * Gets the position of the expression.
-         * @return Returns the position of the expression.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        collection_kind _kind;
-        ast::type _type;
-        boost::optional<query> _first;
-        std::vector<binary_query_expression> _remainder;
+        lexer::position const& position() const;
     };
 
     /**

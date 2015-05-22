@@ -6,7 +6,7 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace operators {
 
-    binary_context::binary_context(expression_evaluator& evaluator, value& left, token_position const& left_position, value& right, token_position const& right_position) :
+    binary_context::binary_context(expression_evaluator& evaluator, value& left, lexer::position const& left_position, value& right, lexer::position const& right_position) :
         _evaluator(evaluator),
         _left(left),
         _left_position(left_position),
@@ -30,7 +30,7 @@ namespace puppet { namespace runtime { namespace operators {
         return _left;
     }
 
-    token_position const& binary_context::left_position() const
+    lexer::position const& binary_context::left_position() const
     {
         return _left_position;
     }
@@ -45,7 +45,7 @@ namespace puppet { namespace runtime { namespace operators {
         return _right;
     }
 
-    token_position const& binary_context::right_position() const
+    lexer::position const& binary_context::right_position() const
     {
         return _right_position;
     }

@@ -1,39 +1,34 @@
 /**
  * @file
- * Declares the AST undef.
+ * Declares the AST "undef".
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
-#include <boost/range.hpp>
+#include "../lexer/position.hpp"
 #include <iostream>
 
 namespace puppet { namespace ast {
 
     /**
-     * Represents an AST undef.
+     * Represents an AST "undef".
      */
     struct undef
     {
         /**
          * Default constructor for undef.
          */
-        undef();
+        undef() = default;
 
         /**
          * Constructs the undef with the given position.
-         * @param position The position of the undef.
+         * @name position The position of the undef keyword.
          */
-        explicit undef(lexer::token_position position);
+        undef(lexer::position position);
 
         /**
-         * Gets the position of the undef.
-         * @return Returns the position of the undef.
+         * The position of the undef keyword.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
+        lexer::position position;
     };
 
     /**

@@ -1,4 +1,5 @@
 #include <puppet/runtime/scope.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 using namespace puppet::runtime::values;
@@ -6,7 +7,7 @@ using namespace puppet::runtime::values;
 namespace puppet { namespace runtime {
 
     scope::scope(string name, scope* parent) :
-        _name(std::move(name)),
+        _name(rvalue_cast(name)),
         _parent(parent)
     {
         // Emplace an empty set of matches to start
@@ -31,7 +32,7 @@ namespace puppet { namespace runtime {
         if (_variables.count(name)) {
             return nullptr;
         }
-        auto result = _variables.emplace(make_pair(std::move(name), make_tuple(std::move(val), line)));
+        auto result = _variables.emplace(make_pair(rvalue_cast(name), make_tuple(rvalue_cast(val), line)));
         return &std::get<0>(result.first->second);
     }
 

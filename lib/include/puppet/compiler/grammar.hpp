@@ -5,30 +5,14 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "token_pos.hpp"
 #include "../lexer/token_id.hpp"
 #include "../ast/manifest.hpp"
+#include "../cast.hpp"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/phoenix.hpp>
 
 namespace puppet { namespace compiler {
-
-    /**
-     * Lazy-evaluated helper for getting the position of a token.
-     * @tparam Iterator The underlying iterator type of the token.
-     * @param range The token iterator range.
-     * @return Returns the token's position.
-     */
-    template <typename Iterator>
-    puppet::lexer::token_position get_token_position(boost::iterator_range<Iterator> const& range)
-    {
-        return range.begin().position();
-    }
-
-    /**
-     * Adapts the get_token_position function for binding with Boost.Phoenix.
-     */
-    BOOST_PHOENIX_ADAPT_FUNCTION(puppet::lexer::token_position, get_token_position, get_token_position, 1);
 
     /**
      * Represents the Puppet language grammar.
@@ -54,15 +38,12 @@ namespace puppet { namespace compiler {
             using namespace boost::spirit::qi;
             using namespace puppet::lexer;
             namespace phx = boost::phoenix;
-            namespace ast = puppet::ast;
-
-            // TODO: improve semantic action readability
-
+            
             // A manifest is a sequence of statements
             // For string interpolation, end at the first '}' token that isn't part of the grammar
             if (interpolation) {
                 manifest =
-                    (raw_token('{') > statements > token('}')) [_val = phx::construct<ast::manifest>(_1, get_token_position(_2))];
+                    (raw_token('{') > statements > token_pos('}')) [_val = phx::construct<ast::manifest>(_1, _2)];
             } else {
                 manifest =
                     statements [ _val = phx::construct<ast::manifest>(_1) ];
@@ -83,9 +64,9 @@ namespace puppet { namespace compiler {
                     class_definition_expression  |
                     defined_type_expression      |
                     node_definition_expression
-                )                                  [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::catalog_expression>(_1)) ]      |
-                statement_call_expression          [ _val = phx::construct<ast::primary_expression>(phx::construct<ast::control_flow_expression>(_1)) ] |
-                primary_expression                 [ _val = _1 ];
+                )                         [ _val = phx::construct<ast::catalog_expression>(_1) ]      |
+                statement_call_expression [ _val = phx::construct<ast::control_flow_expression>(_1) ] |
+                primary_expression;
             binary_statement =
                 (binary_operator > statement_expression) [ _val = phx::construct<ast::binary_expression>(_1, _2) ];
 
@@ -107,35 +88,33 @@ namespace puppet { namespace compiler {
                         control_flow_expression |
                         basic_expression |
                         (raw_token('(') > expression > raw_token(')'))
-                    ) [ _a = phx::construct<ast::primary_expression>(_1) ] >>
+                    ) [ _a = _1 ] >>
                         -(
-                            (+postfix_subexpression) [ _a = phx::construct<ast::primary_expression>(phx::construct<ast::postfix_expression>(_a, _1)) ]
+                            (+postfix_subexpression) [ _a = phx::construct<ast::postfix_expression>(_a, _1) ]
                          )
                 ) [ _val = _a ];
 
             // Basic expressions
             basic_expression =
-                (
-                    undef     |
-                    defaulted |
-                    boolean   |
-                    number    |
-                    string    |
-                    regex     |
-                    variable  |
-                    name      |
-                    bare_word |
-                    type      |
-                    array     |
-                    hash
-                ) [ _val = phx::construct<ast::basic_expression>(_1) ];
+                undef     |
+                defaulted |
+                boolean   |
+                number    |
+                string    |
+                regex     |
+                variable  |
+                name      |
+                bare_word |
+                type      |
+                array     |
+                hash;
             undef =
-                token(token_id::keyword_undef) [ _val = phx::construct<ast::undef>(get_token_position(_1)) ];
+                token_pos(token_id::keyword_undef) [ _val = phx::construct<ast::undef>(_1) ];
             defaulted =
-                token(token_id::keyword_default) [ _val = phx::construct<ast::defaulted>(get_token_position(_1)) ];
+                token_pos(token_id::keyword_default) [ _val = phx::construct<ast::defaulted>(_1) ];
             boolean =
-                token(token_id::keyword_true)  [ _val = phx::construct<ast::boolean>(get_token_position(_1), true) ] |
-                token(token_id::keyword_false) [ _val = phx::construct<ast::boolean>(get_token_position(_1), false) ];
+                token_pos(token_id::keyword_true)  [ _val = phx::construct<ast::boolean>(_1, true) ] |
+                token_pos(token_id::keyword_false) [ _val = phx::construct<ast::boolean>(_1, false) ];
             number =
                 lexer.number [ _val = phx::construct<ast::number>(_1) ];
             string =
@@ -151,64 +130,59 @@ namespace puppet { namespace compiler {
             type =
                 token(token_id::type) [ _val = phx::construct<ast::type>(_1) ];
             array =
-                ((token('[') | token(token_id::array_start)) > -expressions > raw_token(']'))                   [ _val = phx::construct<ast::array>(get_token_position(_1), _2) ];
+                ((token_pos('[') | token_pos(token_id::array_start)) > -expressions > raw_token(']')) [ _val = phx::construct<ast::array>(_1, _2) ];
             hash =
-                (token('{') > -(hash_pair % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::hash>(get_token_position(_1), _2) ];
+                (token_pos('{') > -(hash_pair % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::hash>(_1, _2) ];
             hash_pair =
                 (expression > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::hash_pair>(_1, _2) ];
 
             // Control-flow expressions
             control_flow_expression =
-                (
-                    // Selector expression is a postfix expression
-                    case_expression |
-                    if_expression |
-                    unless_expression |
-                    function_call_expression
-                    // Method call is a postfix expression
-                ) [ _val = phx::construct<ast::control_flow_expression>(_1) ];
+                // Selector and method call expressions are postfix
+                case_expression |
+                if_expression |
+                unless_expression |
+                function_call_expression;
             case_expression =
-                (token(token_id::keyword_case) > expression > raw_token('{') > +case_proposition > raw_token('}')) [ _val = phx::construct<ast::case_expression>(get_token_position(_1), _2, _3) ];
+                (token_pos(token_id::keyword_case) > expression > raw_token('{') > +case_proposition > raw_token('}')) [ _val = phx::construct<ast::case_expression>(_1, _2, _3) ];
             case_proposition =
                 (lambda > raw_token(':') > raw_token('{') > statements > raw_token('}'))      [ _val = phx::construct<ast::case_proposition>(_1, _2) ] |
                 (expressions > raw_token(':') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::case_proposition>(_1, _2) ];
             if_expression =
-                (token(token_id::keyword_if) > expression > raw_token('{') > statements > raw_token('}') > *elsif_expression > -else_expression) [ _val = phx::construct<ast::if_expression>(get_token_position(_1), _2, _3, _4, _5) ];
+                (token_pos(token_id::keyword_if) > expression > raw_token('{') > statements > raw_token('}') > *elsif_expression > -else_expression) [ _val = phx::construct<ast::if_expression>(_1, _2, _3, _4, _5) ];
             elsif_expression =
-                (token(token_id::keyword_elsif) > expression > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::elsif_expression>(get_token_position(_1), _2, _3) ];
+                (token_pos(token_id::keyword_elsif) > expression > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::elsif_expression>(_1, _2, _3) ];
             else_expression =
-                (token(token_id::keyword_else) > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::else_expression>(get_token_position(_1), _2) ];
+                (token_pos(token_id::keyword_else) > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::else_expression>(_1, _2) ];
             unless_expression =
-                (token(token_id::keyword_unless) > expression > raw_token('{') > statements > raw_token('}') > -else_expression) [ _val = phx::construct<ast::unless_expression>(get_token_position(_1), _2, _3, _4) ];
+                (token_pos(token_id::keyword_unless) > expression > raw_token('{') > statements > raw_token('}') > -else_expression) [ _val = phx::construct<ast::unless_expression>(_1, _2, _3, _4) ];
             function_call_expression =
                 ((name >> raw_token('(')) > -expressions > raw_token(')') > -lambda) [ _val = phx::construct<ast::function_call_expression>(_1, _2, _3) ];
             statement_call_expression =
                 (token(token_id::statement_call) >> !raw_token('(') >> expressions >> -lambda) [ _val = phx::construct<ast::function_call_expression>(phx::construct<ast::name>(_1), _2, _3) ];
             lambda =
-                (token('|') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token('|') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::lambda>(get_token_position(_1), _2, _3) ];
+                (token_pos('|') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token('|') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::lambda>(_1, _2, _3) ];
             parameter =
                 (-type_expression >> matches[raw_token('*')] >> variable >> -(raw_token('=') > expression)) [ _val = phx::construct<ast::parameter>(_1, _2, _3, _4) ];
 
             // Catalog expressions
             catalog_expression =
-                (
-                    // Everything but collection expressions are statement-level only
-                    collection_expression
-                ) [ _val = phx::construct<ast::catalog_expression>(_1) ];
+                // Everything but collection expressions are statement-level only
+                collection_expression;
             resource_expression =
                 (raw_token('@') > resource_type > raw_token('{') > (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}'))            [ _val = phx::construct<ast::resource_expression>(_1, _2, ast::resource_status::virtualized) ] |
                 (raw_token(token_id::atat) > resource_type > raw_token('{') > (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}')) [ _val = phx::construct<ast::resource_expression>(_1, _2, ast::resource_status::exported) ] |
                 ((resource_type >> raw_token('{')) >> (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}'))                         [ _val = phx::construct<ast::resource_expression>(_1, _2) ];
             resource_type =
-                name                           [ _val = _1 ] |
+                name |
                 token(token_id::keyword_class) [ _val = phx::construct<ast::name>(_1) ];
             resource_body =
                 ((expression >> raw_token(':')) > -(attribute_expression % raw_token(',')) > -raw_token(',')) [ _val = phx::construct<ast::resource_body>(_1, _2) ];
             attribute_expression =
                 (attribute_name >> attribute_operator >> expression) [ _val = phx::construct<ast::attribute_expression>(_1, _2, _3) ];
             attribute_operator =
-                raw_token(token_id::fat_arrow)  [ _val = phx::construct<ast::attribute_operator>(ast::attribute_operator::assignment) ] |
-                raw_token(token_id::plus_arrow) [ _val = phx::construct<ast::attribute_operator>(ast::attribute_operator::append) ];
+                raw_token(token_id::fat_arrow)  [ _val = ast::attribute_operator::assignment ] |
+                raw_token(token_id::plus_arrow) [ _val = ast::attribute_operator::append ];
             attribute_name =
                 (
                     token(token_id::name)             |
@@ -237,11 +211,11 @@ namespace puppet { namespace compiler {
             resource_override_expression =
                 ((variable_type_expression >> raw_token('{')) > -(attribute_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::resource_override_expression>(_1, _2) ];
             class_definition_expression =
-                (token(token_id::keyword_class) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > -(raw_token(token_id::keyword_inherits) > name) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::class_definition_expression>(get_token_position(_1), _2, _3, _4, _5) ];
+                (token_pos(token_id::keyword_class) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > -(raw_token(token_id::keyword_inherits) > name) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::class_definition_expression>(_1, _2, _3, _4, _5) ];
             defined_type_expression =
-                (token(token_id::keyword_define) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::defined_type_expression>(get_token_position(_1), _2, _3, _4) ];
+                (token_pos(token_id::keyword_define) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::defined_type_expression>(_1, _2, _3, _4) ];
             node_definition_expression =
-                (token(token_id::keyword_node) > (hostname % ',') > -raw_token(',') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::node_definition_expression>(get_token_position(_1), _2, _3) ];
+                (token_pos(token_id::keyword_node) > (hostname % ',') > -raw_token(',') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::node_definition_expression>(_1, _2, _3) ];
             hostname =
                 string                                         [ _val = phx::construct<ast::hostname>(_1) ] |
                 defaulted                                      [ _val = phx::construct<ast::hostname>(_1) ] |
@@ -253,13 +227,13 @@ namespace puppet { namespace compiler {
             binary_query_expression =
                 (binary_query_operator > query) [ _val = phx::construct<ast::binary_query_expression>(_1, _2) ];
             binary_query_operator =
-                raw_token(token_id::keyword_and) [ _val = phx::construct<ast::binary_query_operator>(ast::binary_query_operator::logical_and) ] |
-                raw_token(token_id::keyword_or)  [ _val = phx::construct<ast::binary_query_operator>(ast::binary_query_operator::logical_or) ];
+                raw_token(token_id::keyword_and) [ _val = ast::binary_query_operator::logical_and ] |
+                raw_token(token_id::keyword_or)  [ _val = ast::binary_query_operator::logical_or ];
             query =
                 (name > attribute_query_operator > attribute_query_value) [ _val = phx::construct<ast::query>(_1, _2, _3) ];
             attribute_query_operator =
-                raw_token(token_id::equals)     [ _val = phx::construct<ast::attribute_query_operator>(ast::attribute_query_operator::equals) ] |
-                raw_token(token_id::not_equals) [ _val = phx::construct<ast::attribute_query_operator>(ast::attribute_query_operator::not_equals) ];
+                raw_token(token_id::equals)     [ _val = ast::attribute_query_operator::equals ] |
+                raw_token(token_id::not_equals) [ _val = ast::attribute_query_operator::not_equals ];
             attribute_query_value =
                 (
                     variable |
@@ -271,23 +245,21 @@ namespace puppet { namespace compiler {
 
             // Unary expressions
             unary_expression =
-                (token('-') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_token_position(_1), ast::unary_operator::negate, _2) ] |
-                (token('*') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_token_position(_1), ast::unary_operator::splat, _2) ]  |
-                (token('!') > primary_expression) [ _val = phx::construct<ast::unary_expression>(get_token_position(_1), ast::unary_operator::logical_not, _2) ];
+                (token_pos('-') > primary_expression) [ _val = phx::construct<ast::unary_expression>(_1, ast::unary_operator::negate, _2) ] |
+                (token_pos('*') > primary_expression) [ _val = phx::construct<ast::unary_expression>(_1, ast::unary_operator::splat, _2) ]  |
+                (token_pos('!') > primary_expression) [ _val = phx::construct<ast::unary_expression>(_1, ast::unary_operator::logical_not, _2) ];
 
             // Postfix expressions
             postfix_subexpression =
-                (
-                    selector_expression     |
-                    access_expression       |
-                    method_call_expression
-                ) [ _val = phx::construct<ast::postfix_subexpression>(_1) ];
+                selector_expression |
+                access_expression   |
+                method_call_expression;
             selector_expression =
-                (token('?') > raw_token('{') > (selector_case_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::selector_expression>(get_token_position(_1), _2) ];
+                (token_pos('?') > raw_token('{') > (selector_case_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::selector_expression>(_1, _2) ];
             selector_case_expression =
                 (expression > raw_token(token_id::fat_arrow) > expression) [ _val = phx::construct<ast::selector_case_expression>(_1, _2) ];
             access_expression =
-                (token('[') > expressions > raw_token(']')) [ _val = phx::construct<ast::access_expression>(get_token_position(_1), _2) ];
+                (token_pos('[') > expressions > raw_token(']')) [ _val = phx::construct<ast::access_expression>(_1, _2) ];
             method_call_expression =
                 (raw_token('.') > name > -(raw_token('(') > expressions > raw_token(')')) > -lambda) [ _val = phx::construct<ast::method_call_expression>(_1, _2, _3) ];
 
@@ -295,29 +267,29 @@ namespace puppet { namespace compiler {
             binary_expression =
                 (binary_operator > primary_expression) [ _val = phx::construct<ast::binary_expression>(_1, _2) ];
             binary_operator =
-                raw_token(token_id::keyword_in)     [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::in) ] |
-                raw_token(token_id::match)          [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::match) ]             |
-                raw_token(token_id::not_match)      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::not_match) ]         |
-                raw_token('*')                      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::multiply) ]          |
-                raw_token('/')                      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::divide) ]            |
-                raw_token('%')                      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::modulo) ]            |
-                raw_token('+')                      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::plus) ]              |
-                raw_token('-')                      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::minus) ]             |
-                raw_token(token_id::left_shift)     [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::left_shift) ]        |
-                raw_token(token_id::right_shift)    [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::right_shift) ]       |
-                raw_token(token_id::equals)         [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::equals) ]            |
-                raw_token(token_id::not_equals)     [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::not_equals) ]        |
-                raw_token('>')                      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::greater_than) ]      |
-                raw_token(token_id::greater_equals) [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::greater_equals) ]    |
-                raw_token('<')                      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::less_than) ]         |
-                raw_token(token_id::less_equals)    [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::less_equals) ]       |
-                raw_token(token_id::keyword_and)    [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::logical_and) ]       |
-                raw_token(token_id::keyword_or)     [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::logical_or) ]        |
-                raw_token('=')                      [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::assignment) ]        |
-                raw_token(token_id::in_edge)        [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::in_edge) ]           |
-                raw_token(token_id::in_edge_sub)    [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::in_edge_subscribe) ] |
-                raw_token(token_id::out_edge)       [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::out_edge) ]          |
-                raw_token(token_id::out_edge_sub)   [ _val = phx::construct<ast::binary_operator>(ast::binary_operator::out_edge_subscribe) ];
+                raw_token(token_id::keyword_in)     [ _val = ast::binary_operator::in ]                |
+                raw_token(token_id::match)          [ _val = ast::binary_operator::match ]             |
+                raw_token(token_id::not_match)      [ _val = ast::binary_operator::not_match ]         |
+                raw_token('*')                      [ _val = ast::binary_operator::multiply ]          |
+                raw_token('/')                      [ _val = ast::binary_operator::divide ]            |
+                raw_token('%')                      [ _val = ast::binary_operator::modulo ]            |
+                raw_token('+')                      [ _val = ast::binary_operator::plus ]              |
+                raw_token('-')                      [ _val = ast::binary_operator::minus ]             |
+                raw_token(token_id::left_shift)     [ _val = ast::binary_operator::left_shift ]        |
+                raw_token(token_id::right_shift)    [ _val = ast::binary_operator::right_shift ]       |
+                raw_token(token_id::equals)         [ _val = ast::binary_operator::equals ]            |
+                raw_token(token_id::not_equals)     [ _val = ast::binary_operator::not_equals ]        |
+                raw_token('>')                      [ _val = ast::binary_operator::greater_than ]      |
+                raw_token(token_id::greater_equals) [ _val = ast::binary_operator::greater_equals ]    |
+                raw_token('<')                      [ _val = ast::binary_operator::less_than ]         |
+                raw_token(token_id::less_equals)    [ _val = ast::binary_operator::less_equals ]       |
+                raw_token(token_id::keyword_and)    [ _val = ast::binary_operator::logical_and ]       |
+                raw_token(token_id::keyword_or)     [ _val = ast::binary_operator::logical_or ]        |
+                raw_token('=')                      [ _val = ast::binary_operator::assignment ]        |
+                raw_token(token_id::in_edge)        [ _val = ast::binary_operator::in_edge ]           |
+                raw_token(token_id::in_edge_sub)    [ _val = ast::binary_operator::in_edge_subscribe ] |
+                raw_token(token_id::out_edge)       [ _val = ast::binary_operator::out_edge ]          |
+                raw_token(token_id::out_edge_sub)   [ _val = ast::binary_operator::out_edge_subscribe ];
 
             // Type expression
             type_expression =
@@ -325,7 +297,7 @@ namespace puppet { namespace compiler {
             variable_type_expression =
                 ((type | variable) > *type_access_expression) [ _val = phx::construct<ast::postfix_expression>(phx::construct<ast::basic_expression>(_1), _2) ];
             type_access_expression =
-                access_expression [ _val = phx::construct<ast::postfix_subexpression>(_1) ];
+                access_expression;
 
             // Manifest
             manifest.name("manifest");

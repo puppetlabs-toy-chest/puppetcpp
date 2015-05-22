@@ -29,44 +29,32 @@ namespace puppet { namespace ast {
          * @param parent The optional parent name.
          * @param body The class body expressions.
          */
-        class_definition_expression(lexer::token_position position, ast::name name, boost::optional<std::vector<parameter>> parameters, boost::optional<ast::name> parent, boost::optional<std::vector<expression>> body);
+        class_definition_expression(lexer::position position, ast::name name, boost::optional<std::vector<parameter>> parameters, boost::optional<ast::name> parent, boost::optional<std::vector<expression>> body);
 
         /**
-         * Gets the name of the class.
-         * @return Returns the name of the class.
+         * The position of the class definition.
          */
-        ast::name const& name() const;
+        lexer::position position;
 
         /**
-         * Gets the class parameters.
-         * @return Returns the class parameters.
+         * The name of the class.
          */
-        boost::optional<std::vector<parameter>> const& parameters() const;
+        ast::name name;
 
         /**
-         * Gets the optional parent name.
-         * @return Returns the optional parent name.
+         * The parameters to the class.
          */
-        boost::optional<ast::name> const& parent() const;
+        boost::optional<std::vector<parameter>> parameters;
 
         /**
-         * Gets the optional body expressions.
-         * @return Returns the optional body expressions.
+         * The optional parent class.
          */
-        boost::optional<std::vector<expression>> const& body() const;
+        boost::optional<ast::name> parent;
 
         /**
-         * Gets the position of the expression.
-         * @return Returns the position of the expression.
+         * The body of the class.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        lexer::token_position _position;
-        ast::name _name;
-        boost::optional<std::vector<parameter>> _parameters;
-        boost::optional<ast::name> _parent;
-        boost::optional<std::vector<expression>> _body;
+        boost::optional<std::vector<expression>> body;
     };
 
     /**

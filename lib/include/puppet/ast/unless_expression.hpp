@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "expression.hpp"
 #include "if_expression.hpp"
 #include <boost/optional.hpp>
@@ -29,36 +29,27 @@ namespace puppet { namespace ast {
          * @param body The expressions making up the unless' body.
          * @param else_ The optional else expression.
          */
-        unless_expression(lexer::token_position position, expression conditional, boost::optional<std::vector<expression>> body, boost::optional<else_expression> else_);
+        unless_expression(lexer::position position, expression conditional, boost::optional<std::vector<expression>> body, boost::optional<else_expression> else_);
 
         /**
-         * Gets the conditional of the "unless" expression.
-         * @return Returns the conditional of the "unless" expression.
+         * The position of the unless expression.
          */
-        expression const& conditional() const;
+        lexer::position position;
 
         /**
-         * Gets the optional expressions that make up the body.
-         * @return Returns the optional expressions that make up the body.
+         * The conditional of the unless expression.
          */
-        boost::optional<std::vector<expression>> const& body() const;
-        /**
-         * Gets the optional "else" expression.
-         * @return Returns the optional "else" expression.
-         */
-        boost::optional<else_expression> const& else_() const;
+        expression conditional;
 
         /**
-         * Gets the position of the "unless" expression.
-         * @return Returns the position of the "unless" expression.
+         * The body of the unless expression.
          */
-        lexer::token_position const& position() const;
+        boost::optional<std::vector<expression>> body;
 
-    private:
-        lexer::token_position _position;
-        expression _conditional;
-        boost::optional<std::vector<expression>> _body;
-        boost::optional<else_expression> _else;
+        /**
+         * The else of the unless expression.
+         */
+        boost::optional<else_expression> else_;
     };
 
     /**

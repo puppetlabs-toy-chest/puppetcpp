@@ -24,19 +24,19 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluator exception.
-         * @param position The token position where evaluation failed.
+         * @param position The position where evaluation failed.
          * @param message The exception message.
          */
-        evaluation_exception(lexer::token_position position, std::string const& message);
+        evaluation_exception(lexer::position position, std::string const& message);
 
         /**
-         * Gets the token position where evaluation failed.
-         * @return Returns the token position where evaluation failed.
+         * Gets the position where evaluation failed.
+         * @return Returns the position where evaluation failed.
          */
-        lexer::token_position const& position() const;
+        lexer::position const& position() const;
 
      private:
-        lexer::token_position _position;
+        lexer::position _position;
     };
 
     /**
@@ -52,7 +52,7 @@ namespace puppet { namespace runtime {
          * @param node The node being compiled.
          * @param warning A function to call to output a warning at a given position.
          */
-        explicit expression_evaluator(logging::logger& logger, runtime::catalog& catalog, std::string const& path, compiler::node& node, std::function<void(lexer::token_position const&, std::string const&)> const& warning);
+        explicit expression_evaluator(logging::logger& logger, runtime::catalog& catalog, std::string const& path, compiler::node& node, std::function<void(lexer::position const&, std::string const&)> const& warning);
 
         /**
          * Gets the logger used for logging messages.
@@ -154,7 +154,7 @@ namespace puppet { namespace runtime {
          * @param position The position of the warning.
          * @param message The warning message.
          */
-        void warn(lexer::token_position const& position, std::string const& message) const;
+        void warn(lexer::position const& position, std::string const& message) const;
 
         /**
          * Determines if a value is a "match" for an expected value.
@@ -165,7 +165,7 @@ namespace puppet { namespace runtime {
          * @param expected_position The expected position.
          * @return Returns true if the values match or false if not.
          */
-        bool is_match(values::value& actual, lexer::token_position const& actual_position, values::value& expected, lexer::token_position const& expected_position);
+        bool is_match(values::value& actual, lexer::position const& actual_position, values::value& expected, lexer::position const& expected_position);
 
      private:
         static bool is_productive(ast::expression const& expr);
@@ -173,17 +173,17 @@ namespace puppet { namespace runtime {
 
         void climb_expression(
             values::value& left,
-            lexer::token_position& left_position,
+            lexer::position& left_position,
             std::uint8_t min_precedence,
             std::vector<ast::binary_expression>::const_iterator& begin,
             std::vector<ast::binary_expression>::const_iterator const& end);
 
         void evaluate(
             values::value& left,
-            lexer::token_position const& left_position,
+            lexer::position const& left_position,
             ast::binary_operator op,
             values::value& right,
-            lexer::token_position& right_position);
+            lexer::position& right_position);
 
         static uint8_t get_precedence(ast::binary_operator op);
         static bool is_right_associative(ast::binary_operator op);
@@ -194,7 +194,7 @@ namespace puppet { namespace runtime {
         compiler::node& _node;
         std::unordered_map<std::string, runtime::scope> _scopes;
         std::deque<runtime::scope*> _scope_stack;
-        std::function<void(lexer::token_position const&, std::string const&)> const& _warn;
+        std::function<void(lexer::position const&, std::string const&)> const& _warn;
     };
 
     /**

@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string.hpp>
 #include <ostream>
@@ -23,7 +24,7 @@ namespace puppet { namespace runtime { namespace types {
          * @param title The title of the class (e.g. 'main').  If empty, represents all instances of the class type.
          */
         explicit basic_class(std::string title = {}) :
-            _title(std::move(title))
+            _title(rvalue_cast(title))
         {
         }
 
