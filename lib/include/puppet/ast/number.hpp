@@ -6,7 +6,6 @@
 
 #include "../lexer/number_token.hpp"
 #include <iostream>
-#include <string>
 
 namespace puppet { namespace ast {
 
@@ -32,20 +31,14 @@ namespace puppet { namespace ast {
         explicit number(lexer::number_token const& token);
 
         /**
-         * Gets the value of the number.
-         * @return Returns the value of the number.
+         * The position of the number.
          */
-        value_type const& value() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the number.
-         * @return Returns the position of the number.
+         * The value of the number.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        value_type _value;
+        value_type value;
     };
 
     /**

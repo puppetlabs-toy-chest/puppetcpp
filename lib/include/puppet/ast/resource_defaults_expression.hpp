@@ -28,26 +28,19 @@ namespace puppet { namespace ast {
         resource_defaults_expression(ast::type type, boost::optional<std::vector<attribute_expression>> attributes);
 
         /**
-         * Gets the type of the resource being defaulted.
-         * @return Returns the type of the resource being defaulted.
+         * The type of the resource default.
          */
-        ast::type const& type() const;
+        ast::type type;
 
         /**
-         * Gets the optional attributes being defaulted.
-         * @return Returns the attributes being defaulted.
+         * The optional attributes being defaulted.
          */
-        boost::optional<std::vector<attribute_expression>> const& attributes() const;
+        boost::optional<std::vector<attribute_expression>> attributes;
 
         /**
          * Gets the position of the expression.
-         * @return Returns the position of the expression.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        ast::type _type;
-        boost::optional<std::vector<attribute_expression>> _attributes;
+        lexer::position const& position() const;
     };
 
     /**

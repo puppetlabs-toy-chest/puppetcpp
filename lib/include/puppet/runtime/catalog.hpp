@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "values/value.hpp"
 #include <string>
 #include <functional>
@@ -94,7 +94,7 @@ namespace puppet { namespace runtime {
          * @param value_position The position of the parameter's value in the input.
          * @param override True if the parameter's value should be overridden or false if not.
          */
-        void set_parameter(std::string const& name, lexer::token_position const& name_position, values::value value, lexer::token_position const& value_position, bool override = false);
+        void set_parameter(std::string const& name, lexer::position const& name_position, values::value value, lexer::position const& value_position, bool override = false);
 
         /**
          * Removes a parameter from the resource.
@@ -110,9 +110,9 @@ namespace puppet { namespace runtime {
         types::resource create_reference() const;
 
      private:
-        void store_parameter(std::string const& name, lexer::token_position const& name_position, values::value value, bool override);
-        bool handle_metaparameter(std::string const& name, lexer::token_position const& name_position, values::value& value, lexer::token_position const& value_position);
-        void create_alias(values::value const& value, lexer::token_position const& position);
+        void store_parameter(std::string const& name, lexer::position const& name_position, values::value value, bool override);
+        bool handle_metaparameter(std::string const& name, lexer::position const& name_position, values::value& value, lexer::position const& value_position);
+        void create_alias(values::value const& value, lexer::position const& position);
 
         runtime::catalog& _catalog;
         std::string _type;

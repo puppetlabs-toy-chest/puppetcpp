@@ -12,21 +12,21 @@ namespace puppet { namespace lexer {
     }
 
 
-    number_token::number_token(token_position position, int64_t value, numeric_base base) :
+    number_token::number_token(lexer::position position, int64_t value, numeric_base base) :
         _position(rvalue_cast(position)),
         _value(value),
         _base(base)
     {
     }
 
-    number_token::number_token(token_position position, long double value) :
+    number_token::number_token(lexer::position position, long double value) :
         _position(rvalue_cast(position)),
         _value(value),
         _base(numeric_base::decimal)
     {
     }
 
-    token_position const& number_token::position() const
+    lexer::position const& number_token::position() const
     {
         return _position;
     }

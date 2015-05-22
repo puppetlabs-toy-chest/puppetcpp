@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include <boost/range.hpp>
 #include <iostream>
 #include <string>
@@ -28,26 +28,20 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit type(boost::iterator_range<Iterator> const& token) :
-            _position(token.begin().position()),
-            _name(token.begin(), token.end())
+            position(token.begin().position()),
+            name(token.begin(), token.end())
         {
         }
 
         /**
-         * Gets the name of the type.
-         * @return Returns the name of the type.
+         * The position of the type.
          */
-        std::string const& name() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the type.
-         * @return Returns the position of the type.
+         * The name of the type.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        std::string _name;
+        std::string name;
     };
 
     /**

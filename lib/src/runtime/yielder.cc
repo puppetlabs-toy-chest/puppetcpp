@@ -8,30 +8,30 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    yielder::yielder(expression_evaluator& evaluator, token_position const& position, boost::optional<ast::lambda> const& lambda) :
+    yielder::yielder(expression_evaluator& evaluator, lexer::position const& position, boost::optional<ast::lambda> const& lambda) :
         _evaluator(evaluator),
         _position(position),
         _lambda(lambda)
     {
     }
 
-    token_position const& yielder::position() const
+    lexer::position const& yielder::position() const
     {
         if (!_lambda) {
             return _position;
         }
-        return _lambda->position();
+        return _lambda->position;
     }
 
-    token_position const& yielder::position(size_t index) const
+    lexer::position const& yielder::position(size_t index) const
     {
-        if (!_lambda || !_lambda->parameters()) {
+        if (!_lambda || !_lambda->parameters) {
             return position();
         }
-        if (index >= _lambda->parameters()->size()) {
+        if (index >= _lambda->parameters->size()) {
             throw runtime_error("parameter index out of range.");
         }
-        return (*_lambda->parameters())[index].position();
+        return (*_lambda->parameters)[index].position();
     }
 
     bool yielder::lambda_given() const
@@ -41,10 +41,10 @@ namespace puppet { namespace runtime {
 
     size_t yielder::parameter_count() const
     {
-        if (!_lambda || !_lambda->parameters()) {
+        if (!_lambda || !_lambda->parameters) {
             return 0;
         }
-        return _lambda->parameters()->size();
+        return _lambda->parameters->size();
     }
 
     value yielder::yield() const
@@ -63,48 +63,48 @@ namespace puppet { namespace runtime {
         ephemeral_scope ephemeral(_evaluator);
 
         bool has_optional_parameters = false;
-        if (_lambda->parameters()) {
-            for (size_t i = 0; i < _lambda->parameters()->size(); ++i) {
-                auto const& parameter = (*_lambda->parameters())[i];
-                auto const& name = parameter.variable().name();
+        if (_lambda->parameters) {
+            for (size_t i = 0; i < _lambda->parameters->size(); ++i) {
+                auto const& parameter = (*_lambda->parameters)[i];
+                auto const& name = parameter.variable.name;
                 values::value value;
 
                 // Check for capture
-                if (parameter.captures()) {
-                    if (i != _lambda->parameters()->size() - 1) {
+                if (parameter.captures) {
+                    if (i != _lambda->parameters->size() - 1) {
                         throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% \"captures rest\" but is not the last parameter.") % name).str());
                     }
                     values::array captured;
                     if (i < arguments.size()) {
                         captured.reserve(arguments.size() - i);
                         captured.insert(captured.end(), std::make_move_iterator(arguments.begin() + i), std::make_move_iterator(arguments.end()));
-                    } else {
-                        captured.emplace_back(_evaluator.evaluate(*parameter.default_value()));
+                    } else if (parameter.default_value) {
+                        captured.emplace_back(_evaluator.evaluate(*parameter.default_value));
                     }
                     value = rvalue_cast(captured);
                 } else {
-                    if (has_optional_parameters && !parameter.default_value()) {
+                    if (has_optional_parameters && !parameter.default_value) {
                         throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% is required but appears after optional parameters.") % name).str());
                     }
 
-                    has_optional_parameters = static_cast<bool>(parameter.default_value());
+                    has_optional_parameters = static_cast<bool>(parameter.default_value);
 
                     if (i < arguments.size()) {
                         // Use the supplied argument
                         value = rvalue_cast(arguments[i]);
                     } else {
                         // Check for not present and without a default value
-                        if (!parameter.default_value()) {
+                        if (!parameter.default_value) {
                             throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% is required but no value was given.") % name).str());
                         }
 
-                        value = _evaluator.evaluate(*parameter.default_value());
+                        value = _evaluator.evaluate(*parameter.default_value);
                     }
                 }
 
                 // Verify the value matches the parameter type
-                if (parameter.type()) {
-                    auto result = _evaluator.evaluate(*parameter.type());
+                if (parameter.type) {
+                    auto result = _evaluator.evaluate(*parameter.type);
                     auto type = as<values::type>(result);
                     if (!type) {
                         throw evaluation_exception(parameter.position(), (boost::format("expected %1% for parameter type but found %2%.") % types::type::name() % get_type(type)).str());
@@ -114,7 +114,7 @@ namespace puppet { namespace runtime {
                     }
                 }
 
-                if (!_evaluator.scope().set(name, rvalue_cast(value), get<1>(parameter.position()))) {
+                if (!_evaluator.scope().set(name, rvalue_cast(value), parameter.position().line())) {
                     throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }
@@ -122,11 +122,11 @@ namespace puppet { namespace runtime {
 
         // Evaluate the body
         value result;
-        if (_lambda->body()) {
-            for (size_t i = 0; i < _lambda->body()->size(); ++i) {
-                auto& expression = (*_lambda->body())[i];
+        if (_lambda->body) {
+            for (size_t i = 0; i < _lambda->body->size(); ++i) {
+                auto& expression = (*_lambda->body)[i];
                 // The last expression in the block is allowed to be unproductive (i.e. the return value)
-                result = _evaluator.evaluate(expression, i < ( _lambda->body()->size() - 1));
+                result = _evaluator.evaluate(expression, i < ( _lambda->body->size() - 1));
             }
         }
         // Return a mutated result in case we're returning a local variable

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include <boost/range.hpp>
 #include <iostream>
 #include <string>
@@ -17,7 +17,7 @@ namespace puppet { namespace ast {
     struct bare_word
     {
         /**
-         * Default constructor for bare_word.
+         * Default constructor for bare word.
          */
         bare_word();
 
@@ -28,26 +28,20 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit bare_word(boost::iterator_range<Iterator> const& token) :
-            _position(token.begin().position()),
-            _value(token.begin(), token.end())
+            position(token.begin().position()),
+            value(token.begin(), token.end())
         {
         }
 
         /**
-         * Gets the value of the bare word.
-         * @return Returns the value of the bare word.
+         * The position of the bare word.
          */
-        std::string const& value() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the bare word.
-         * @return Returns the position of the bare word.
+         * The string value of the bare word.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        lexer::token_position _position;
-        std::string _value;
+        std::string value;
     };
 
     /**

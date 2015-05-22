@@ -7,13 +7,13 @@ using namespace boost::spirit;
 
 namespace puppet { namespace compiler {
 
-    parse_exception::parse_exception(token_position position, string const& message) :
+    parse_exception::parse_exception(lexer::position position, string const& message) :
         runtime_error(message),
         _position(rvalue_cast(position))
     {
     }
 
-    token_position const& parse_exception::position() const
+    lexer::position const& parse_exception::position() const
     {
         return _position;
     }

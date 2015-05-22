@@ -13,43 +13,28 @@ namespace puppet { namespace ast {
     {
     }
 
-    function_call_expression::function_call_expression(name function, optional<vector<expression>> arguments, optional<struct lambda> lambda) :
-        _function(rvalue_cast(function)),
-        _arguments(rvalue_cast(arguments)),
-        _lambda(rvalue_cast(lambda))
+    function_call_expression::function_call_expression(name function, optional<vector<expression>> arguments, optional<ast::lambda> lambda) :
+        function(rvalue_cast(function)),
+        arguments(rvalue_cast(arguments)),
+        lambda(rvalue_cast(lambda))
     {
     }
 
-    name const& function_call_expression::function() const
+    lexer::position const& function_call_expression::position() const
     {
-        return _function;
-    }
-
-    optional<vector<expression>> const& function_call_expression::arguments() const
-    {
-        return _arguments;
-    }
-
-    optional<lambda> const& function_call_expression::lambda() const
-    {
-        return _lambda;
-    }
-
-    token_position const& function_call_expression::position() const
-    {
-        return _function.position();
+        return function.position;
     }
 
     ostream& operator<<(ostream& os, function_call_expression const& expr)
     {
-        if (expr.function().value().empty()) {
+        if (expr.function.value.empty()) {
             return os;
         }
-        os << expr.function() << "(";
-        pretty_print(os, expr.arguments(), ", ");
+        os << expr.function << "(";
+        pretty_print(os, expr.arguments, ", ");
         os << ")";
-        if (expr.lambda()) {
-            os << " " << *expr.lambda();
+        if (expr.lambda) {
+            os << " " << *expr.lambda;
         }
         return os;
     }

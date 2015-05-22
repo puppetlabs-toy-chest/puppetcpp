@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "expression.hpp"
 #include <boost/optional.hpp>
 #include <iostream>
@@ -18,32 +18,26 @@ namespace puppet { namespace ast {
     struct array
     {
         /**
-         * Default contructor for array.
+         * Default constructor for array.
          */
-        array();
+        array() = default;
 
         /**
          * Constructs an array with the given optional elements.
-         * @param bracket_position Tracks the position of the array's opening bracket.
+         * @param position The position of the array.
          * @param elements The optional expressions that make up the elements of the array.
          */
-        array(lexer::token_position bracket_position, boost::optional<std::vector<expression>> elements);
+        array(lexer::position position, boost::optional<std::vector<expression>> elements);
 
         /**
-         * Gets the optional elements of the array.
-         * @return Returns the optional elements of the array.
+         * The position of the array.
          */
-        boost::optional<std::vector<expression>> const& elements() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the array.
-         * @return Returns the position of the array.
+         * The elements of the array.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        lexer::token_position _position;
-        boost::optional<std::vector<expression>> _elements;
+        boost::optional<std::vector<expression>> elements;
     };
 
     /**

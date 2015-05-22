@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include <boost/range.hpp>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
@@ -29,7 +29,7 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit regex(boost::iterator_range<Iterator> const& token) :
-            _position(token.begin().position())
+            position(token.begin().position())
         {
             auto start = token.begin();
             auto end = token.end();
@@ -43,24 +43,18 @@ namespace puppet { namespace ast {
             for (auto current = start; current != end; ++current) {
                 last = current;
             }
-            _value.assign(start, last);
+            value.assign(start, last);
         }
 
         /**
-         * Gets the value of the regex.
-         * @return Returns the value of the regex.
+         * Gets the position of the regex.
          */
-        std::string const& value() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the regex.
-         * @return Returns the position of the regex.
+         * Gets the value of the regex.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        lexer::token_position _position;
-        std::string _value;
+        std::string value;
     };
 
     /**

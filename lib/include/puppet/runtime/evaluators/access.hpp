@@ -53,13 +53,13 @@ namespace puppet { namespace runtime { namespace evaluators {
         result_type operator()(types::resource const& type);
         result_type operator()(types::klass const& type);
 
-        void add_resource_reference(values::array& result, std::string const& type_name, values::value& argument, lexer::token_position const& position);
-        void add_class_reference(values::array& result, values::value& argument, lexer::token_position const& position);
+        void add_resource_reference(values::array& result, std::string const& type_name, values::value& argument, lexer::position const& position);
+        void add_class_reference(values::array& result, values::value& argument, lexer::position const& position);
 
         template <typename T>
         result_type operator()(T const& target)
         {
-            throw evaluation_exception(_expression.position(), (boost::format("access expression is not supported for %1%.") % values::get_type(target)).str());
+            throw evaluation_exception(_expression.position, (boost::format("access expression is not supported for %1%.") % values::get_type(target)).str());
         }
 
         template <typename Value, typename Type>
@@ -123,7 +123,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         expression_evaluator& _evaluator;
         ast::access_expression const& _expression;
         values::array _arguments;
-        std::vector<lexer::token_position> _positions;
+        std::vector<lexer::position> _positions;
     };
 
 }}}  // puppet::runtime::evaluators

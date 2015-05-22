@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "token_position.hpp"
+#include "position.hpp"
 #include <boost/spirit/include/lex_lexer.hpp>
 #include <boost/variant.hpp>
 #include <cstdint>
@@ -53,20 +53,20 @@ namespace puppet { namespace lexer {
          * @param value The integral value of the token.
          * @param base The numeric base of the token.
          */
-        number_token(token_position position, std::int64_t value, numeric_base base);
+        number_token(lexer::position position, std::int64_t value, numeric_base base);
 
         /**
          * Constructs a number token with the given position and floating point value.
          * @param position The position of the token.
          * @param value The floating point value of the token.
          */
-        number_token(token_position position, long double value);
+        number_token(lexer::position position, long double value);
 
         /**
          * Gets the position of the token.
          * @return Returns the position of the token.
          */
-        token_position const& position() const;
+        lexer::position const& position() const;
 
         /**
          * Gets the value of the token.
@@ -81,7 +81,7 @@ namespace puppet { namespace lexer {
         numeric_base base() const;
 
      private:
-        token_position _position;
+        lexer::position _position;
         value_type _value;
         numeric_base _base;
     };

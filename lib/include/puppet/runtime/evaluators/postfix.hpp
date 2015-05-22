@@ -35,7 +35,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         expression_evaluator& _evaluator;
         ast::postfix_expression const& _expression;
         values::value _result;
-        lexer::token_position _position;
+        lexer::position _position;
         ast::primary_expression const* _first_expression;
     };
 

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../../lexer/token_position.hpp"
+#include "../../lexer/position.hpp"
 #include "../values/value.hpp"
 #include "../expression_evaluator.hpp"
 
@@ -21,7 +21,7 @@ namespace puppet { namespace runtime { namespace operators {
          * @param operand The operand for the unary operator.
          * @param position The position of the operand.
          */
-        unary_context(expression_evaluator& evaluator, values::value& operand, lexer::token_position const& position);
+        unary_context(expression_evaluator& evaluator, values::value& operand, lexer::position const& position);
 
         /**
          * Gets the expression evaluator.
@@ -45,12 +45,12 @@ namespace puppet { namespace runtime { namespace operators {
          * Gets the position of the operand.
          * @return Returns the position of the operand.
          */
-        lexer::token_position const& position() const;
+        lexer::position const& position() const;
 
     private:
         expression_evaluator& _evaluator;
         values::value& _operand;
-        lexer::token_position const& _position;
+        lexer::position const& _position;
     };
 
 }}}  // puppet::runtime::operators

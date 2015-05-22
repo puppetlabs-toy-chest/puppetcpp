@@ -61,13 +61,6 @@ namespace puppet { namespace ast {
     > basic_expression;
 
     /**
-     * Gets the position of the basic expression.
-     * @param expr The basic expression to get the position of.
-     * @return Returns the position of the basic expression.
-     */
-    lexer::token_position const& get_position(basic_expression const& expr);
-
-    /**
      * Represents a control-flow expression.
      */
     typedef boost::variant<
@@ -76,13 +69,6 @@ namespace puppet { namespace ast {
         boost::recursive_wrapper<unless_expression>,
         boost::recursive_wrapper<function_call_expression>
     > control_flow_expression;
-
-    /**
-     * Gets the position of the control flow expression.
-     * @param expr The control flow expression to get the position of.
-     * @return Returns the position of the control flow expression.
-     */
-    lexer::token_position const& get_position(control_flow_expression const& expr);
 
     /**
      * Represents a catalog expression.
@@ -96,13 +82,6 @@ namespace puppet { namespace ast {
         boost::recursive_wrapper<node_definition_expression>,
         boost::recursive_wrapper<collection_expression>
     > catalog_expression;
-
-    /**
-     * Gets the position of the catalog expression.
-     * @param expr The catalog expression to get the position of.
-     * @return Returns the position of the catalog expression.
-     */
-    lexer::token_position const& get_position(catalog_expression const& expr);
 
     /**
      * Represents a primary expression.
@@ -122,7 +101,7 @@ namespace puppet { namespace ast {
      * @param expr The primary expression to get the position of.
      * @return Returns the position of the primary expression.
      */
-    lexer::token_position const& get_position(primary_expression const& expr);
+    lexer::position const& get_position(primary_expression const& expr);
 
     /**
      * Determines if the expression is blank.
@@ -177,30 +156,22 @@ namespace puppet { namespace ast {
          * @param op The unary operator for the expression.
          * @param operand The primary expression operand.
          */
-        unary_expression(lexer::token_position position, unary_operator op, primary_expression operand);
+        unary_expression(lexer::position position, unary_operator op, primary_expression operand);
 
         /**
-         * Gets the unary operator for the expression.
-         * @return Returns the unary operator for the expression.
+         * The position of the unary expression.
          */
-        unary_operator op() const;
+        lexer::position position;
 
         /**
-         * Gets the operand for the expression.
-         * @return Returns the operand for the expression.
+         * The unary operator.
          */
-        primary_expression const& operand() const;
+        unary_operator op;
 
         /**
-         * Gets the position of the unary expression.
-         * @return Returns the position of the unary expression.
+         * The operand.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        unary_operator _op;
-        primary_expression _operand;
+        primary_expression operand;
     };
 
     /**
@@ -340,26 +311,20 @@ namespace puppet { namespace ast {
         binary_expression(binary_operator op, primary_expression operand);
 
         /**
-         * Gets the binary operator in the expression.
-         * @return Returns the binary operator in the expression.
+         * The binary operator.
          */
-        binary_operator op() const;
+        binary_operator op;
 
         /**
-         * Gets the right-hand operand of the binary expression.
-         * @return Returns the right-hand operand of the binary expression.
+         * The right-hand side of the binary expression.
          */
-        primary_expression const& operand() const;
+        primary_expression operand;
 
         /**
-         * Gets the position of the binary expression.
-         * @return Returns the position of the binary expression.
+         * Gets the position of the expression.
+         * @return Returns the position of the expression.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        binary_operator _op;
-        primary_expression _operand;
+        lexer::position const& position() const;
     };
 
     /**
@@ -388,32 +353,19 @@ namespace puppet { namespace ast {
         explicit expression(primary_expression primary, std::vector<binary_expression> binary = std::vector<binary_expression>());
 
         /**
-         * Gets the primary expression.
-         * @return Returns the primary expression.
+         * The primary expression.
          */
-        primary_expression const& primary() const;
+        primary_expression primary;
 
         /**
-         * Gets the binary expressions.
-         * @return Returns the binary expressions.
+         * The remaining binary expressions.
          */
-        std::vector<binary_expression> const& binary() const;
+        std::vector<binary_expression> binary;
 
         /**
          * Gets the position of the expression.
-         * @return Returns the position of the expression.
          */
-        lexer::token_position const& position() const;
-
-        /**
-         * Determines if the expression is blank.
-         * @return Returns true if the expression is blank or false if not.
-         */
-        bool blank() const;
-
-     private:
-        primary_expression _primary;
-        std::vector<binary_expression> _binary;
+        lexer::position const& position() const;
     };
 
     /**

@@ -36,7 +36,7 @@ namespace puppet { namespace runtime {
         expression_evaluator& evaluator,
         lexer_string_iterator& begin,
         lexer_string_iterator const& end,
-        function<token_position(token_position const&)> const& calculate_position)
+        function<lexer::position(lexer::position const&)> const& calculate_position)
     {
         try {
             bool bracket = begin != end && *begin == '{';
@@ -110,44 +110,44 @@ namespace puppet { namespace runtime {
     static boost::optional<value> transform_expression(expression_evaluator& evaluator, ast::expression const& expression)
     {
         // Check for a postfix expression
-        auto postfix = boost::get<ast::postfix_expression>(&expression.primary());
-        if (!postfix || postfix->subexpressions().empty()) {
+        auto postfix = boost::get<ast::postfix_expression>(&expression.primary);
+        if (!postfix || postfix->subexpressions.empty()) {
             return boost::none;
         }
 
         // Check for access or method call
-        auto& subexpression = postfix->subexpressions().front();
+        auto& subexpression = postfix->subexpressions.front();
         if (!boost::get<ast::access_expression>(&subexpression) &&
             !boost::get<ast::method_call_expression>(&subexpression)) {
             return boost::none;
         }
 
         // If the expression is a name followed by an access operation or method call, treat as a variable
-        auto basic = boost::get<ast::basic_expression>(&postfix->primary());
+        auto basic = boost::get<ast::basic_expression>(&postfix->primary);
         if (!basic) {
             return boost::none;
         }
 
-        token_position variable_position;
+        lexer::position variable_position;
         string variable_name;
 
         // Check for name
         auto name = boost::get<ast::name>(basic);
         if (name) {
-            variable_position = name->position();
-            variable_name = name->value();
+            variable_position = name->position;
+            variable_name = name->value;
         } else {
             // Also check for bare word
             auto word = boost::get<ast::bare_word>(basic);
             if (word) {
-                variable_position = word->position();
-                variable_name = word->value();
+                variable_position = word->position;
+                variable_name = word->value;
             }
         }
         if (variable_name.empty()) {
             return boost::none;
         }
-        return evaluator.evaluate(ast::expression(ast::postfix_expression(ast::basic_expression(ast::variable(rvalue_cast(variable_name), rvalue_cast(variable_position))), postfix->subexpressions()), expression.binary()));
+        return evaluator.evaluate(ast::expression(ast::postfix_expression(ast::basic_expression(ast::variable(rvalue_cast(variable_position), rvalue_cast(variable_name))), postfix->subexpressions), expression.binary));
     }
 
     string_interpolator::string_interpolator(expression_evaluator& evaluator) :
@@ -155,11 +155,11 @@ namespace puppet { namespace runtime {
     {
     }
 
-    string string_interpolator::interpolate(token_position const& position, string const& text, string const& escapes, char quote, bool full, int margin, bool remove_break)
+    string string_interpolator::interpolate(lexer::position const& position, string const& text, string const& escapes, char quote, bool full, int margin, bool remove_break)
     {
         // Helper function for calculating a position inside the string being interpolated
-        function<token_position(token_position const&)> calculate_position = [&](token_position const& other) {
-            return make_tuple(get<0>(position) + get<0>(other) + (quote ? 1 : 0), get<1>(position) + get<1>(other) - 1);
+        function<lexer::position(lexer::position const&)> calculate_position = [&](lexer::position const& other) {
+            return lexer::position(position.offset() + other.offset() + (quote ? 1 : 0), position.line() + other.line() - 1);
         };
 
         lexer_string_iterator begin(text.begin());
@@ -262,11 +262,11 @@ namespace puppet { namespace runtime {
                             // Parse the rest of the string as a manifest
                             // The parsing will stop at the first unmatched } token
                             auto manifest = parser::parser::parse(next, end, true);
-                            if (manifest.body()) {
+                            if (manifest.body) {
                                 // Evaluate the body and add the result to the string
                                 value val;
                                 bool first = true;
-                                for (auto& expression : *manifest.body()) {
+                                for (auto& expression : *manifest.body) {
                                     // For the first expression, transform certain constructs to their "variable" forms
                                     if (first) {
                                         first = false;
@@ -284,8 +284,8 @@ namespace puppet { namespace runtime {
                             }
 
                             // Move past where parsing stopped (must have been at the closing })
-                            begin = lexer_string_iterator(text.begin() + get<0>(manifest.end()));
-                            begin.position(manifest.end());
+                            begin = lexer_string_iterator(text.begin() + manifest.end.offset());
+                            begin.position(manifest.end);
                             ++begin;
                             continue;
                         } catch (compiler::parse_exception const& ex) {
@@ -312,7 +312,7 @@ namespace puppet { namespace runtime {
         return result;
     }
 
-    bool string_interpolator::write_unicode_escape_sequence(token_position const& position, lexer_string_iterator& begin, lexer_string_iterator const& end, string& result)
+    bool string_interpolator::write_unicode_escape_sequence(lexer::position const& position, lexer_string_iterator& begin, lexer_string_iterator const& end, string& result)
     {
         // Check for a variable length unicode escape sequence
         bool variable_length = false;

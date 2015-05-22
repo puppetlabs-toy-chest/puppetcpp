@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "token_position.hpp"
+#include "position.hpp"
 #include "../cast.hpp"
 #include <boost/spirit/include/lex_lexer.hpp>
 #include <string>
@@ -47,7 +47,7 @@ namespace puppet { namespace lexer {
          * @param margin The margin for the string (heredoc only).
          * @param remove_break Remove a trailing line break from the string (heredoc only).
          */
-        string_token(token_position position, iterator_type begin, iterator_type end, std::string escapes, char quote, bool interpolated = true, std::string format = std::string(), int margin = 0, bool remove_break = false) :
+        string_token(lexer::position position, iterator_type begin, iterator_type end, std::string escapes, char quote, bool interpolated = true, std::string format = std::string(), int margin = 0, bool remove_break = false) :
             _position(rvalue_cast(position)),
             _begin(rvalue_cast(begin)),
             _end(rvalue_cast(end)),
@@ -64,7 +64,7 @@ namespace puppet { namespace lexer {
          * Gets the position of the token.
          * @return Returns the position of the token.
          */
-        token_position const& position() const
+        lexer::position const& position() const
         {
             return _position;
         }
@@ -143,7 +143,7 @@ namespace puppet { namespace lexer {
         }
 
      private:
-        token_position _position;
+        lexer::position _position;
         iterator_type _begin;
         iterator_type _end;
         std::string _escapes;

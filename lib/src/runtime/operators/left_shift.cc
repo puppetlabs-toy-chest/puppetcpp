@@ -11,7 +11,7 @@ namespace puppet { namespace runtime { namespace operators {
 
     struct left_shift_visitor : boost::static_visitor<value>
     {
-        left_shift_visitor(token_position const& left_position, token_position const& right_position) :
+        left_shift_visitor(lexer::position const& left_position, lexer::position const& right_position) :
             _left_position(left_position),
             _right_position(right_position)
         {
@@ -56,8 +56,8 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
      private:
-        token_position const& _left_position;
-        token_position const& _right_position;
+        lexer::position const& _left_position;
+        lexer::position const& _right_position;
     };
 
     value left_shift::operator()(binary_context& context) const

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "expression.hpp"
 #include <boost/optional.hpp>
 #include <vector>
@@ -26,23 +26,17 @@ namespace puppet { namespace ast {
          * @param position The position of the "else" expression.
          * @param body The optional expressions making up the "else" expression's body.
          */
-        else_expression(lexer::token_position position, boost::optional<std::vector<expression>> body);
+        else_expression(lexer::position position, boost::optional<std::vector<expression>> body);
 
         /**
-         * Gets the optional expressions that make up the body.
-         * @return Returns the optional expressions that make up the body.
+         * The position of the else expression.
          */
-        boost::optional<std::vector<expression>> const& body() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the "else" expression.
-         * @return Returns the position of the "else" expression.
+         * The body of the else expression.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        boost::optional<std::vector<expression>> _body;
+        boost::optional<std::vector<expression>> body;
     };
 
     /**
@@ -69,30 +63,22 @@ namespace puppet { namespace ast {
          * @param conditional The conditional to test.
          * @param body The optional expressions making up the "else if" expression's body.
          */
-        elsif_expression(lexer::token_position position, expression conditional, boost::optional<std::vector<expression>> body);
+        elsif_expression(lexer::position position, expression conditional, boost::optional<std::vector<expression>> body);
 
         /**
-         * Gets the conditional of the "else if" expression.
-         * @return Returns the conditional of the "else if" expression.
+         * The position of the elsif expression.
          */
-        expression const& conditional() const;
+        lexer::position position;
 
         /**
-         * Gets the optional expressions that make up the body.
-         * @return Returns the optional expressions that make up the body.
+         * The conditional expression.
          */
-        boost::optional<std::vector<expression>> const& body() const;
+        expression conditional;
 
         /**
-         * Gets the position of the "else if" expression.
-         * @return Returns the position of the "else if" expression.
+         * The body of the elsif expression.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        lexer::token_position _position;
-        expression _conditional;
-        boost::optional<std::vector<expression>> _body;
+        boost::optional<std::vector<expression>> body;
     };
 
     /**
@@ -122,48 +108,36 @@ namespace puppet { namespace ast {
          * @param else_ The optional else expression.
          */
         if_expression(
-            lexer::token_position position,
+            lexer::position position,
             expression conditional,
             boost::optional<std::vector<expression>> body,
             boost::optional<std::vector<elsif_expression>> elsifs,
             boost::optional<else_expression> else_);
 
         /**
-         * Gets the conditional of the "if" expression.
-         * @return Returns the conditional of the "if" expression.
+         * The position of the if expression.
          */
-        expression const& conditional() const;
+        lexer::position position;
 
         /**
-         * Gets the optional expressions that make up the body.
-         * @return Returns the optional expressions that make up the body.
+         * The conditional expression.
          */
-        boost::optional<std::vector<expression>> const& body() const;
+        expression conditional;
 
         /**
-         * Gets the optional list of "else if" expressions.
-         * @return Returns the optional list of "else if" expressions.
+         * The body of the if expression.
          */
-        boost::optional<std::vector<elsif_expression>> const& elsifs() const;
+        boost::optional<std::vector<expression>> body;
 
         /**
-         * Gets the optional "else" expression.
-         * @return Returns the optional "else" expression.
+         * The elsifs of the if expression.
          */
-        boost::optional<else_expression> const& else_() const;
+        boost::optional<std::vector<elsif_expression>> elsifs;
 
         /**
-         * Gets the position of the "if" expression.
-         * @return Returns the position of the "if" expression.
+         * The else of the if expression.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        expression _conditional;
-        boost::optional<std::vector<expression>> _body;
-        boost::optional<std::vector<elsif_expression>> _elsifs;
-        boost::optional<else_expression> _else;
+        boost::optional<else_expression> else_;
     };
 
     /**

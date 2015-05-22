@@ -36,35 +36,24 @@ namespace puppet { namespace ast {
         case_proposition(lambda option, boost::optional<std::vector<expression>> body);
 
         /**
-         * Gets the case proposition options.
-         * @return Returns the case proposition options.
+         * The position of the case proposition.
          */
-        std::vector<expression> const& options() const;
+        lexer::position position;
 
         /**
-         * Gets the optional case proposition lambda.
-         * If present, this should be respected over the option expressions.
-         * @return Returns the optional case proposition lambda.
+         * The options of the case proposition.
          */
-        boost::optional<ast::lambda> const& lambda() const;
+        std::vector<expression> options;
 
         /**
-         * Gets the expressions that make up the body of the proposition.
-         * @return Returns the expressions that make up the body of the proposition.
+         * The lambda of the case proposition.
          */
-        boost::optional<std::vector<expression>> const& body() const;
+        boost::optional<ast::lambda> lambda;
 
         /**
-         * Gets the position of the case proposition.
-         * @return Returns the position of the case proposition.
+         * The body of the case proposition.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        std::vector<expression> _options;
-        boost::optional<ast::lambda> _lambda;
-        boost::optional<std::vector<expression>> _body;
+        boost::optional<std::vector<expression>> body;
     };
 
     /**
@@ -91,30 +80,22 @@ namespace puppet { namespace ast {
          * @param expression The case expression.
          * @param propositions The case propositions.
          */
-        case_expression(lexer::token_position position, ast::expression expression, std::vector<case_proposition> propositions);
+        case_expression(lexer::position position, ast::expression expression, std::vector<case_proposition> propositions);
 
         /**
-         * Gets the case expression.
-         * @return Returns the case expression.
+         * The position of the case expression.
          */
-        ast::expression const& expression() const;
+        lexer::position position;
 
         /**
-         * Gets the case propositions.
-         * @return Returns the case propositions.
+         * The case expression.
          */
-        std::vector<case_proposition> const& propositions() const;
+        ast::expression expression;
 
         /**
-         * Gets the position of the case expression.
-         * @return Returns the position of the case expression.
+         * The case propositions.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        struct expression _expression;
-        std::vector<case_proposition> _propositions;
+        std::vector<case_proposition> propositions;
     };
 
     /**

@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/token_position.hpp"
+#include "../lexer/position.hpp"
 #include "expression.hpp"
 #include <boost/optional.hpp>
 #include <iostream>
@@ -37,26 +37,20 @@ namespace puppet { namespace ast {
 
         /**
          * Constructs a hash with the given position and optional name-value pair elements.
-         * @param brace_position The position of the hash's opening brace.
+         * @param position The position of the hash.
          * @param elements The optional name-value pair elements of the hash.
          */
-        hash(lexer::token_position brace_position, boost::optional<std::vector<hash_pair>> elements);
+        hash(lexer::position position, boost::optional<std::vector<hash_pair>> elements);
 
         /**
-         * Gets the optional elements (name-value pairs) of the hash.
-         * @return Returns the optinoal name-value pair elements of the hash.
+         * The position of the hash.
          */
-        boost::optional<std::vector<hash_pair>> const& elements() const;
+        lexer::position position;
 
         /**
-         * Gets the position of the hash.
-         * @return Returns the position of the hash.
+         * The elements of the hash.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        lexer::token_position _position;
-        boost::optional<std::vector<hash_pair>> _elements;
+        boost::optional<std::vector<hash_pair>> elements;
     };
 
     /**

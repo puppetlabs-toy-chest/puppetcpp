@@ -129,8 +129,8 @@ void lex_bad_string(string const& input, size_t expected_offset, size_t expected
         for (auto token = lexer.begin(input_begin, input_end), end = lexer.end(); token != end; ++token);
         FAIL("no exception was thrown");
     } catch (lexer_exception<lexer_string_iterator> const& ex) {
-        REQUIRE(get<0>(ex.location().position()) == expected_offset);
-        REQUIRE(get<1>(ex.location().position()) == expected_line);
+        REQUIRE(ex.location().position().offset() == expected_offset);
+        REQUIRE(ex.location().position().line() == expected_line);
         REQUIRE(ex.what() == expected_message);
     }
 }

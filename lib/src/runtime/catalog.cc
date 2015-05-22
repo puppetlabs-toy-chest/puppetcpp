@@ -64,7 +64,7 @@ namespace puppet { namespace runtime {
         _tags.emplace(rvalue_cast(tag));
     }
 
-    void resource::set_parameter(string const& name, token_position const& name_position, values::value value, token_position const& value_position, bool override)
+    void resource::set_parameter(string const& name, lexer::position const& name_position, values::value value, lexer::position const& value_position, bool override)
     {
         // Handle metaparameters
         if (handle_metaparameter(name, name_position, value, value_position)) {
@@ -84,7 +84,7 @@ namespace puppet { namespace runtime {
         return types::resource(_type, _title);
     }
 
-    void resource::store_parameter(string const& name, token_position const& name_position, values::value value, bool override)
+    void resource::store_parameter(string const& name, lexer::position const& name_position, values::value value, bool override)
     {
         auto it = _parameters.find(name);
         if (it != _parameters.end()) {
@@ -97,7 +97,7 @@ namespace puppet { namespace runtime {
         _parameters.emplace(make_pair(name, rvalue_cast(value)));
     }
 
-    bool resource::handle_metaparameter(string const& name, token_position const& name_position, values::value& value, token_position const& value_position)
+    bool resource::handle_metaparameter(string const& name, lexer::position const& name_position, values::value& value, lexer::position const& value_position)
     {
         if (name == "alias") {
             create_alias(value, value_position);
@@ -109,7 +109,7 @@ namespace puppet { namespace runtime {
         return false;
     }
 
-    void resource::create_alias(values::value const& name, token_position const& position)
+    void resource::create_alias(values::value const& name, lexer::position const& position)
     {
         if (auto alias = as<string>(name)) {
             if (alias->empty()) {

@@ -2,34 +2,23 @@
 #include <puppet/cast.hpp>
 
 using namespace std;
-using namespace puppet::lexer;
 
 namespace puppet { namespace ast {
 
     boolean::boolean() :
-        _value(false)
+        value(false)
     {
     }
 
-    boolean::boolean(token_position position, bool value) :
-        _position(rvalue_cast(position)),
-        _value(value)
+    boolean::boolean(lexer::position position, bool value) :
+        position(rvalue_cast(position)),
+        value(value)
     {
-    }
-
-    bool boolean::value() const
-    {
-        return _value;
-    }
-
-    token_position const& boolean::position() const
-    {
-        return _position;
     }
 
     ostream& operator<<(ostream& os, boolean const& b)
     {
-        os << (b.value() ? "true" : "false");
+        os << (b.value ? "true" : "false");
         return os;
     }
 

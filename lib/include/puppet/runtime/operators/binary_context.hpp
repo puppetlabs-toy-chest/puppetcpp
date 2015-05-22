@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../../lexer/token_position.hpp"
+#include "../../lexer/position.hpp"
 #include "../values/value.hpp"
 #include "../expression_evaluator.hpp"
 
@@ -23,7 +23,7 @@ namespace puppet { namespace runtime { namespace operators {
          * @param right The right operand to the operator.
          * @param right_position The position of the right operand in the input.
          */
-        binary_context(expression_evaluator& evaluator, values::value& left, lexer::token_position const& left_position, values::value& right, lexer::token_position const& right_position);
+        binary_context(expression_evaluator& evaluator, values::value& left, lexer::position const& left_position, values::value& right, lexer::position const& right_position);
 
         /**
          * Gets the expression evaluator.
@@ -47,7 +47,7 @@ namespace puppet { namespace runtime { namespace operators {
          * Gets the position of the left operand.
          * @return Returns the position of the left operand.
          */
-        lexer::token_position const& left_position() const;
+        lexer::position const& left_position() const;
 
         /**
          * Gets the right operand.
@@ -65,14 +65,14 @@ namespace puppet { namespace runtime { namespace operators {
          * Gets the position of the right operand.
          * @return Returns the position of the right operand.
          */
-        lexer::token_position const& right_position() const;
+        lexer::position const& right_position() const;
 
     private:
         expression_evaluator& _evaluator;
         values::value& _left;
-        lexer::token_position const& _left_position;
+        lexer::position const& _left_position;
         values::value& _right;
-        lexer::token_position const& _right_position;
+        lexer::position const& _right_position;
     };
 
 }}}  // puppet::runtime::operators

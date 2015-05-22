@@ -56,33 +56,24 @@ namespace puppet { namespace ast {
         attribute_expression(ast::name attribute_name, attribute_operator op, expression value);
 
         /**
-         * Gets the name of the attribute.
-         * @return Returns the name of the attribute.
+         * The name of the attribute.
          */
-        ast::name const& name() const;
+        ast::name name;
 
         /**
-         * Gets the attribute operator.
-         * @return Returns the attribute operator.
+         * The attribute operator.
          */
-        attribute_operator op() const;
+        attribute_operator op;
 
         /**
-         * Gets the attribute's value expression.
-         * @return Returns the attribute's value expression.
+         * The value of the attribute.
          */
-        expression const& value() const;
+        expression value;
 
         /**
-         * Gets the position of the attribute expression.
-         * @return Returns the position of the attribute expression.
+         * Gets the position of the attribute.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        ast::name _name;
-        attribute_operator _op;
-        expression _value;
+        lexer::position const& position() const;
     };
 
     /**
@@ -111,26 +102,19 @@ namespace puppet { namespace ast {
         resource_body(expression title, boost::optional<std::vector<attribute_expression>> attributes);
 
         /**
-         * Gets the resource body's title expression.
-         * @return Returns the resource body's title expression.
+         * The title of the resource.
          */
-        expression const& title() const;
+        expression title;
 
         /**
-         * Gets the optional attributes of the resource.
-         * @return Returns optional the attributes of the resource.
+         * The attributes of the resource.
          */
-        boost::optional<std::vector<attribute_expression>> const& attributes() const;
+        boost::optional<std::vector<attribute_expression>> attributes;
 
         /**
          * Gets the position of the resource body.
-         * @return Returns the position of the resource body.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        expression _title;
-        boost::optional<std::vector<attribute_expression>> _attributes;
+        lexer::position const& position() const;
     };
 
     /**
@@ -179,33 +163,24 @@ namespace puppet { namespace ast {
         resource_expression(ast::name type, std::vector<resource_body> bodies, resource_status status = resource_status::realized);
 
         /**
-         * Gets the type expression of the resource being defined.
-         * @return Returns the type expression of the resource being defined.
+         * The type of resource.
          */
-        ast::name const& type() const;
+        ast::name type;
 
         /**
-         * Gets the resource bodies that are being defined.
-         * @return Returns the resource bodies that are being defined.
+         * The resource bodies.
          */
-        std::vector<resource_body> bodies() const;
+        std::vector<resource_body> bodies;
 
         /**
-         * Gets the status of the resource.
-         * @return Returns the status of the resource.
+         * The status of the resource.
          */
-        resource_status status() const;
+        resource_status status;
 
         /**
-         * Gets the position of the resource expression.
-         * @return Returns the position of the resource expression.
+         * Gets the position of the expression.
          */
-        lexer::token_position const& position() const;
-
-     private:
-        ast::name _type;
-        std::vector<resource_body> _bodies;
-        resource_status _status;
+        lexer::position const& position() const;
     };
 
     /**

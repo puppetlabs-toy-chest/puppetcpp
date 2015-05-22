@@ -100,7 +100,7 @@ namespace puppet { namespace lexer {
          * Gets the position of the iterator.
          * @return Returns the position of the iterator.
          */
-        token_position const& position() const
+        lexer::position const& position() const
         {
             return _position;
         }
@@ -109,7 +109,7 @@ namespace puppet { namespace lexer {
          * Sets the position of the iterator.
          * @param position The new position of the iterator.
          */
-        void position(token_position position)
+        void position(lexer::position position)
         {
             _position = rvalue_cast(position);
         }
@@ -150,21 +150,17 @@ namespace puppet { namespace lexer {
                 _next_iter = boost::none;
 
                 _position = _next_position;
-                _next_position = token_position();
+                _next_position = lexer::position();
             } else {
                 // Otherwise, check for a new line and increment the line counter
-                if (current == '\n') {
-                    ++std::get<1>(_position);
-                }
-
-                ++std::get<0>(_position);
+                _position.increment(current == '\n');
                 ++base;
             }
         }
 
-        token_position _position;
+        lexer::position _position;
         boost::optional<Iterator> _next_iter;
-        token_position _next_position;
+        lexer::position _next_position;
     };
 
     /**
@@ -533,7 +529,7 @@ namespace puppet { namespace lexer {
             for (auto current = start; current != end; ++current) {
                 last = current;
             }
-            context.set_value(string_token_type(position, rvalue_cast(start), rvalue_cast(last), "\\'", '\'', false));
+            context.set_value(string_token_type(rvalue_cast(position), rvalue_cast(start), rvalue_cast(last), "\\'", '\'', false));
         }
 
         void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -548,7 +544,7 @@ namespace puppet { namespace lexer {
             for (auto current = start; current != end; ++current) {
                 last = current;
             }
-            context.set_value(string_token_type(position, rvalue_cast(start), rvalue_cast(last), "\\\"'nrtsu$", '"'));
+            context.set_value(string_token_type(rvalue_cast(position), rvalue_cast(start), rvalue_cast(last), "\\\"'nrtsu$", '"'));
         }
 
         static void parse_number(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -758,26 +754,26 @@ namespace puppet { namespace lexer {
      * @param input The input file stream.
      * @return Returns the last position in the file stream.
      */
-    token_position get_last_position(std::ifstream& input);
+    position get_last_position(std::ifstream& input);
 
     /**
      * Gets the last position for the given input string.
      * @param input The input string.
      * @return Returns the last position in the input string.
      */
-    token_position get_last_position(std::string const& input);
+    position get_last_position(std::string const& input);
 
     /**
      * Gets the last position for the given input string iterator range.
      * @param input The input string iterator range.
      * @return Returns the last position in the iterator range.
      */
-    token_position get_last_position(boost::iterator_range<lexer_string_iterator> const& range);
+    position get_last_position(boost::iterator_range<lexer_string_iterator> const& range);
 
     /**
      * Utility type for visiting tokens for position and line information.
      */
-    struct token_position_visitor : boost::static_visitor<token_position>
+    struct token_position_visitor : boost::static_visitor<position>
     {
         /**
          * Called for tokens that contain iterator ranges.
@@ -812,7 +808,7 @@ namespace puppet { namespace lexer {
      * @return Returns the token's position.
      */
     template <typename Input, typename Token>
-    token_position get_position(Input& input, Token const& token)
+    position get_position(Input& input, Token const& token)
     {
         if (token == Token()) {
             return get_last_position(input);

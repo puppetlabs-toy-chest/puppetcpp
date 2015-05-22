@@ -28,37 +28,27 @@ namespace puppet { namespace ast {
          * @param parameters The optional type parameters.
          * @param body The defined type's body expressions.
          */
-        defined_type_expression(lexer::token_position position, ast::name name, boost::optional<std::vector<parameter>> parameters, boost::optional<std::vector<expression>> body);
+        defined_type_expression(lexer::position position, ast::name name, boost::optional<std::vector<parameter>> parameters, boost::optional<std::vector<expression>> body);
 
         /**
-         * Gets the name of the type.
-         * @return Returns the name of the type.
+         * The position of the defined type.
          */
-        ast::name const& name() const;
+        lexer::position position;
 
         /**
-         * Gets the type parameters.
-         * @return Returns the type parameters.
+         * The name of the defined type.
          */
-        boost::optional<std::vector<parameter>> const& parameters() const;
+        ast::name name;
 
         /**
-         * Gets the optional body expressions.
-         * @return Returns the optional body expressions.
+         * The parameters of the defined type.
          */
-        boost::optional<std::vector<expression>> const& body() const;
+        boost::optional<std::vector<parameter>> parameters;
 
         /**
-         * Gets the position of the expression.
-         * @return Returns the position of the expression.
+         * The body of the defined type.
          */
-        lexer::token_position const& position() const;
-
-    private:
-        lexer::token_position _position;
-        ast::name _name;
-        boost::optional<std::vector<parameter>> _parameters;
-        boost::optional<std::vector<expression>> _body;
+        boost::optional<std::vector<expression>> body;
     };
 
     /**

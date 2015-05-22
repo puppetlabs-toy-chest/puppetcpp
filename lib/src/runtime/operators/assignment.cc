@@ -31,7 +31,7 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
         // Set the value in the current scope
-        auto value = context.evaluator().scope().set(var->name(), rvalue_cast(context.right()), get<1>(context.left_position()));
+        auto value = context.evaluator().scope().set(var->name(), rvalue_cast(context.right()), context.left_position().line());
         if (!value) {
             // Check where the variable was previously assigned
             auto line = context.evaluator().scope().where(var->name());
