@@ -66,7 +66,7 @@ namespace puppet { namespace compiler {
                     node_definition_expression
                 )                         [ _val = phx::construct<ast::catalog_expression>(_1) ]      |
                 statement_call_expression [ _val = phx::construct<ast::control_flow_expression>(_1) ] |
-                primary_expression;
+                primary_expression        [ _val = _1 ];
             binary_statement =
                 (binary_operator > statement_expression) [ _val = phx::construct<ast::binary_expression>(_1, _2) ];
 
@@ -235,13 +235,11 @@ namespace puppet { namespace compiler {
                 raw_token(token_id::equals)     [ _val = ast::attribute_query_operator::equals ] |
                 raw_token(token_id::not_equals) [ _val = ast::attribute_query_operator::not_equals ];
             attribute_query_value =
-                (
-                    variable |
-                    string   |
-                    boolean  |
-                    number   |
-                    name
-                ) [ _val = phx::construct<ast::basic_expression>(_1) ];
+                variable |
+                string   |
+                boolean  |
+                number   |
+                name;
 
             // Unary expressions
             unary_expression =
