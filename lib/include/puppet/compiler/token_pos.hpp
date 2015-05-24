@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../lexer/position.hpp"
+#include "../lexer/lexer.hpp"
 #include <boost/spirit/include/qi_parse.hpp>
 
 namespace puppet { namespace compiler {
@@ -73,7 +74,7 @@ namespace puppet { namespace compiler {
 
             if (first != last) {
                 if (static_cast<typename Iterator::value_type::id_type>(_id) == first->id()) {
-                    //attr = first.position();
+                    attr = boost::apply_visitor(lexer::token_position_visitor(), first->value());
                     ++first;
                     return true;
                 }
