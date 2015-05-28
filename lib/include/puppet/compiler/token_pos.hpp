@@ -71,7 +71,6 @@ namespace puppet { namespace compiler {
         bool parse(Iterator& first, Iterator const& last, Context&, Skipper const& skipper, Attribute& attr) const
         {
             boost::spirit::qi::skip_over(first, last, skipper);
-
             if (first != last) {
                 if (static_cast<typename Iterator::value_type::id_type>(_id) == first->id()) {
                     attr = boost::apply_visitor(lexer::token_position_visitor(), first->value());
@@ -89,7 +88,7 @@ namespace puppet { namespace compiler {
         template <typename Context>
         boost::spirit::info what(Context&) const
         {
-            return boost::spirit::info("token_pos", "token_pos(" + boost::lexical_cast<std::string>(_id) + ")");
+            return boost::spirit::info("token", boost::lexical_cast<std::string>(_id));
         }
 
      private:
