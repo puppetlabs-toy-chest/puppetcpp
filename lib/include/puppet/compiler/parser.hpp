@@ -77,7 +77,7 @@ namespace puppet { namespace compiler {
         };
 
         template <typename Iterator>
-        static std::string to_string(boost::spirit::qi::expectation_failure<Iterator> const& ex)
+        static std::string to_string(boost::spirit::qi::expectation_failure<Iterator> const& ex, bool interpolation)
         {
             using namespace std;
             using namespace puppet::lexer;
@@ -90,7 +90,12 @@ namespace puppet { namespace compiler {
             expectation_info_printer printer(ss);
             boost::apply_visitor(basic_info_walker<expectation_info_printer>(printer, ex.what_.tag, 0), ex.what_.value);
 
-            ss << " but found " << static_cast<token_id>(ex.first->id()) << ".";
+            ss << " but found " << static_cast<token_id>(ex.first->id());
+
+            if (interpolation) {
+                ss << " during string interpolation";
+            }
+            ss << ".";
             return ss.str();
         }
 
@@ -121,7 +126,7 @@ namespace puppet { namespace compiler {
             } catch (lexer_exception<Iterator> const& ex) {
                 throw parse_exception(ex.location().position(), ex.what());
             } catch (qi::expectation_failure<typename Lexer::iterator_type> const& ex) {
-                throw parse_exception(get_position(input, *ex.first), to_string(ex));
+                throw parse_exception(get_position(input, *ex.first), to_string(ex, interpolation));
             }
 
             // Unexpected character in the input
