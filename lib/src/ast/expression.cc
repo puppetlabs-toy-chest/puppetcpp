@@ -28,58 +28,22 @@ namespace puppet { namespace ast {
             return boost::apply_visitor(*this, expr);
         }
 
-        result_type operator()(function_call_expression const& expr) const
-        {
-            return expr.position();
-        }
-
-        result_type operator()(resource_expression const& expr) const
-        {
-            return expr.position();
-        }
-
-        result_type operator()(resource_defaults_expression const& expr) const
-        {
-            return expr.position();
-        }
-
-        result_type operator()(collection_expression const& expr) const
-        {
-            return expr.position();
-        }
-
-        result_type operator()(resource_override_expression const& expr) const
-        {
-            return get_position(expr.reference);
-        }
-
-        result_type operator()(postfix_expression const& expr) const
-        {
-            return expr.position();
-        }
-
-        result_type operator()(expression const& expr) const
-        {
-            return expr.position();
-        }
-
         template <typename T>
         result_type operator()(T const& element) const
         {
-            return element.position;
+            return element.position();
         }
 
-    private:
+     private:
         static lexer::position default_position;
     };
+
+    lexer::position position_visitor::default_position;
 
     lexer::position const& get_position(primary_expression const& expr)
     {
         return boost::apply_visitor(position_visitor(), expr);
     }
-
-    lexer::position position_visitor::default_position;
-
 
     bool is_blank(primary_expression const& expr)
     {
@@ -111,24 +75,39 @@ namespace puppet { namespace ast {
     }
 
     unary_expression::unary_expression() :
-        op(unary_operator::none)
+        _op(unary_operator::none)
     {
     }
 
     unary_expression::unary_expression(lexer::position position, unary_operator op, primary_expression operand) :
-        position(rvalue_cast(position)),
-        op(op),
-        operand(rvalue_cast(operand))
+        _position(rvalue_cast(position)),
+        _op(op),
+        _operand(rvalue_cast(operand))
     {
+    }
+
+    unary_operator unary_expression::op() const
+    {
+        return _op;
+    }
+
+    primary_expression const& unary_expression::operand() const
+    {
+        return _operand;
+    }
+
+    lexer::position const& unary_expression::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, unary_expression const& expr)
     {
-        if (expr.op == unary_operator::none) {
-            os << expr.operand;
+        if (expr.op() == unary_operator::none) {
+            os << expr.operand();
             return os;
         }
-        os << expr.op << expr.operand;
+        os << expr.op() << expr.operand();
         return os;
     }
 
@@ -214,27 +193,37 @@ namespace puppet { namespace ast {
     }
 
     binary_expression::binary_expression() :
-        op(binary_operator::none)
+        _op(binary_operator::none)
     {
     }
 
     binary_expression::binary_expression(binary_operator op, primary_expression operand) :
-        op(op),
-        operand(rvalue_cast(operand))
+        _op(op),
+        _operand(rvalue_cast(operand))
     {
+    }
+
+    binary_operator binary_expression::op() const
+    {
+        return _op;
+    }
+
+    primary_expression const& binary_expression::operand() const
+    {
+        return _operand;
     }
 
     lexer::position const& binary_expression::position() const
     {
-        return get_position(operand);
+        return get_position(_operand);
     }
 
     ostream& operator<<(ostream& os, binary_expression const& expr)
     {
-        if (expr.op == binary_operator::none) {
+        if (expr.op() == binary_operator::none) {
             return os;
         }
-        os << " " << expr.op << " " << expr.operand;
+        os << " " << expr.op() << " " << expr.operand();
         return os;
     }
 
@@ -243,20 +232,35 @@ namespace puppet { namespace ast {
     }
 
     expression::expression(primary_expression primary, vector<binary_expression> binary) :
-        primary(rvalue_cast(primary)),
-        binary(rvalue_cast(binary))
+        _primary(rvalue_cast(primary)),
+        _binary(rvalue_cast(binary))
     {
+    }
+
+    primary_expression const& expression::primary() const
+    {
+        return _primary;
+    }
+
+    vector<binary_expression> const& expression::binary() const
+    {
+        return _binary;
     }
 
     lexer::position const& expression::position() const
     {
-        return get_position(primary);
+        return get_position(_primary);
+    }
+
+    bool expression::blank() const
+    {
+        return is_blank(_primary);
     }
 
     ostream& operator<<(ostream& os, expression const& expr)
     {
-        os << "(" << expr.primary;
-        for (auto const& binary : expr.binary) {
+        os << "(" << expr.primary();
+        for (auto const& binary : expr.binary()) {
             os << binary;
         }
         os << ")";

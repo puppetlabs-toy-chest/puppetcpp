@@ -13,14 +13,24 @@ namespace puppet { namespace ast {
     }
 
     manifest::manifest(optional<vector<expression>> body, lexer::position end) :
-        body(rvalue_cast(body)),
-        end(rvalue_cast(end))
+        _body(rvalue_cast(body)),
+        _end(rvalue_cast(end))
     {
+    }
+
+    optional<vector<expression>> const& manifest::body() const
+    {
+        return _body;
+    }
+
+    lexer::position const& manifest::end() const
+    {
+        return _end;
     }
 
     ostream& operator<<(ostream& os, ast::manifest const& manifest)
     {
-        pretty_print(os, manifest.body, "; ");
+        pretty_print(os, manifest.body(), "; ");
         return os;
     }
 

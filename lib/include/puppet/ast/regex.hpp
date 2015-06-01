@@ -29,7 +29,7 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit regex(boost::iterator_range<Iterator> const& token) :
-            position(token.begin().position())
+            _position(token.begin().position())
         {
             auto start = token.begin();
             auto end = token.end();
@@ -43,18 +43,24 @@ namespace puppet { namespace ast {
             for (auto current = start; current != end; ++current) {
                 last = current;
             }
-            value.assign(start, last);
+            _value.assign(start, last);
         }
 
         /**
-         * Gets the position of the regex.
+         * Gets the value of the regex.
+         * @return Returns the value of the regex.
          */
-        lexer::position position;
+        std::string const& value() const;
 
         /**
-         * Gets the value of the regex.
+         * Gets the position of the regex.
+         * @return Returns the position of the regex.
          */
-        std::string value;
+        lexer::position const& position() const;
+
+    private:
+        lexer::position _position;
+        std::string _value;
     };
 
     /**

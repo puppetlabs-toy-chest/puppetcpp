@@ -83,9 +83,9 @@ namespace puppet { namespace compiler {
             // TODO: create settings scope in catalog
 
             // Evaluate all the top level expressions in the manifest
-            if (manifest.body) {
+            if (manifest.body()) {
                 expression_evaluator evaluator(logger, catalog, path, *this, warning);
-                for (auto& expression : *manifest.body) {
+                for (auto& expression : *manifest.body()) {
                     // Top level expressions must be productive
                     evaluator.evaluate(expression, true);
                 }

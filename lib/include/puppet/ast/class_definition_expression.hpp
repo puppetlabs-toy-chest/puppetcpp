@@ -32,29 +32,41 @@ namespace puppet { namespace ast {
         class_definition_expression(lexer::position position, ast::name name, boost::optional<std::vector<parameter>> parameters, boost::optional<ast::name> parent, boost::optional<std::vector<expression>> body);
 
         /**
-         * The position of the class definition.
+         * Gets the name of the class.
+         * @return Returns the name of the class.
          */
-        lexer::position position;
+        ast::name const& name() const;
 
         /**
-         * The name of the class.
+         * Gets the class parameters.
+         * @return Returns the class parameters.
          */
-        ast::name name;
+        boost::optional<std::vector<parameter>> const& parameters() const;
 
         /**
-         * The parameters to the class.
+         * Gets the optional parent name.
+         * @return Returns the optional parent name.
          */
-        boost::optional<std::vector<parameter>> parameters;
+        boost::optional<ast::name> const& parent() const;
 
         /**
-         * The optional parent class.
+         * Gets the optional body expressions.
+         * @return Returns the optional body expressions.
          */
-        boost::optional<ast::name> parent;
+        boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * The body of the class.
+         * Gets the position of the expression.
+         * @return Returns the position of the expression.
          */
-        boost::optional<std::vector<expression>> body;
+        lexer::position const& position() const;
+
+    private:
+        lexer::position _position;
+        ast::name _name;
+        boost::optional<std::vector<parameter>> _parameters;
+        boost::optional<ast::name> _parent;
+        boost::optional<std::vector<expression>> _body;
     };
 
     /**

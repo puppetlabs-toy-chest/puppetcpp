@@ -34,30 +34,40 @@ namespace puppet { namespace ast {
         parameter(boost::optional<primary_expression> type, bool captures, ast::variable variable, boost::optional<expression> default_value);
 
         /**
-         * The optional type of the parameter.
+         * Gets the optional type of the parameter.
+         * @return Returns the optional type of the parameter.
          */
-        boost::optional<primary_expression> type;
+        boost::optional<primary_expression> const& type() const;
 
         /**
-         * Whether or not the parameter captures rest.
+         * Determines if the parameter captures the remaining arguments.
+         * @return Returns true if the parameter captures the remaining arguments or false if not.
          */
-        bool captures;
+        bool captures() const;
 
         /**
-         * The variable of the parameter.
+         * Gets the variable of the parameter.
+         * @return Returns the variable of the parameter.
          */
-        ast::variable variable;
+        ast::variable const& variable() const;
 
         /**
-         * The optional default value for the parameter.
+         * Gets the optional default value expression of the parameter.
+         * @return Returns the optional default value expression of the parameter.
          */
-        boost::optional<expression> default_value;
+        boost::optional<expression> const& default_value() const;
 
         /**
-         * Gets the position of the expression.
-         * @return Returns the position of the expression.
+         * Gets the position of the parameter.
+         * @return Returns the position of the parameter.
          */
         lexer::position const& position() const;
+
+     private:
+        boost::optional<primary_expression> _type;
+        bool _captures;
+        ast::variable _variable;
+        boost::optional<expression> _default_value;
     };
 
     /**

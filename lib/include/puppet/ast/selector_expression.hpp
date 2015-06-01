@@ -26,19 +26,26 @@ namespace puppet { namespace ast {
         selector_case_expression(expression selector, expression result);
 
         /**
-         * The selector expression.
+         * Gets the selector expression.
+         * @return Returns the selector expression.
          */
-        expression selector;
+        expression const& selector() const;
 
         /**
-         * The resulting value.
+         * Gets the result expression.
+         * @return Returns the result expression.
          */
-        expression result;
+        expression const& result() const;
 
         /**
-         * Gets the position of the expression.
+         * Gets the position of the selector case expression.
+         * @return Returns the position of the selector case expression.
          */
         lexer::position const& position() const;
+
+     private:
+        expression _selector;
+        expression _result;
     };
 
     /**
@@ -67,14 +74,20 @@ namespace puppet { namespace ast {
         selector_expression(lexer::position position, std::vector<selector_case_expression> cases);
 
         /**
-         * The position of the selector expression.
+         * Gets the selector case expressions.
+         * @return Returns the selector case expressions.
          */
-        lexer::position position;
+        std::vector<selector_case_expression> const& cases() const;
 
         /**
-         * The selector's case expressions.
+         * Gets the position of the selector expression.
+         * @return Returns the position of the selector expression.
          */
-        std::vector<selector_case_expression> cases;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        std::vector<selector_case_expression> _cases;
     };
 
     /**

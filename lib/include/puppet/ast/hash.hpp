@@ -43,14 +43,20 @@ namespace puppet { namespace ast {
         hash(lexer::position position, boost::optional<std::vector<hash_pair>> elements);
 
         /**
-         * The position of the hash.
+         * Gets the optional elements (name-value pairs) of the hash.
+         * @return Returns the optinoal name-value pair elements of the hash.
          */
-        lexer::position position;
+        boost::optional<std::vector<hash_pair>> const& elements() const;
 
         /**
-         * The elements of the hash.
+         * Gets the position of the hash.
+         * @return Returns the position of the hash.
          */
-        boost::optional<std::vector<hash_pair>> elements;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        boost::optional<std::vector<hash_pair>> _elements;
     };
 
     /**

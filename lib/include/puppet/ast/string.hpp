@@ -27,56 +27,75 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit string(puppet::lexer::string_token<Iterator>& token) :
-            position(token.position()),
-            value(token.begin(), token.end()),
-            escapes(token.escapes()),
-            quote(token.quote()),
-            interpolated(token.interpolated()),
-            format(token.format()),
-            margin(token.margin()),
-            remove_break(token.remove_break())
+            _position(token.position()),
+            _value(token.begin(), token.end()),
+            _escapes(token.escapes()),
+            _quote(token.quote()),
+            _interpolated(token.interpolated()),
+            _format(token.format()),
+            _margin(token.margin()),
+            _remove_break(token.remove_break())
         {
         }
 
         /**
-         * The position of the string.
+         * Gets the value of the string.
+         * @return Returns the value of the string.
          */
-        lexer::position position;
+        std::string const& value() const;
 
         /**
-         * The value of the string.
+         * Gets the valid escape characters for the string token.
+         * @return Returns the valid escape characters for the string token.
          */
-        std::string value;
+        std::string const& escapes() const;
 
         /**
-         * The supported escape characters for the string.
+         * Gets the quote character of the token (null character for heredocs).
+         * @return Returns the quote character of the token.
          */
-        std::string escapes;
+        char quote() const;
 
         /**
-         * The quote character for the string.
+         * Gets whether or not the string should be interpolated.
+         * @return Returns whether or not the string should be interpolated.
          */
-        char quote;
+        bool interpolated() const;
 
         /**
-         * Whether or not the string is interpolated.
+         * Gets the format of the string token (heredoc tokens only).
+         * An empty format means "regular string".
+         * @return Returns the format of the string token.
          */
-        bool interpolated;
+        std::string const& format() const;
 
         /**
-         * The format of the string (empty for regular strings).
+         * Gets the margin of the string token (heredoc tokens only)
+         * @return Returns the margin of the string token.
          */
-        std::string format;
+        int margin() const;
 
         /**
-         * The margin of the string (heredoc only).
+         * Gets whether or not a trailing line break should be removed from the string (heredoc tokens only).
+         * @return Returns whether or not to remove a trailing line break.
          */
-        int margin;
+        bool remove_break() const;
 
         /**
-         * Whether or not any trailing line break should be removed (heredoc only).
+         * Gets the position of the string.
+         * @return Returns the position of the string.
          */
-        bool remove_break;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        std::string _value;
+        std::string _escapes;
+        char _quote;
+        bool _interpolated;
+        std::string _format;
+        int _margin;
+        bool _remove_break;
     };
 
     /**

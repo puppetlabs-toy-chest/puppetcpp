@@ -21,34 +21,34 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_expression const& expr)
     {
-        if (expr.status == ast::resource_status::virtualized) {
+        if (expr.status() == ast::resource_status::virtualized) {
             // TODO: add to a list of virtual resources
             throw evaluation_exception(expr.position(), "virtual resource expressions are not yet implemented.");
         }
-        if (expr.status == ast::resource_status::exported) {
+        if (expr.status() == ast::resource_status::exported) {
             // TODO: add to a list of virtual exported resources
             throw evaluation_exception(expr.position(), "exported resource expressions are not yet implemented.");
         }
 
         values::array types;
         vector<resource*> resources;
-        for (auto const& body : expr.bodies) {
+        for (auto const& body : expr.bodies()) {
             // Add the resource(s) to the catalog
             resources.clear();
-            add_resource(resources, types, expr.type.value, _evaluator.evaluate(body.title), body.position());
-            if (!body.attributes) {
+            add_resource(resources, types, expr.type().value(), _evaluator.evaluate(body.title()), body.position());
+            if (!body.attributes()) {
                 continue;
             }
 
             // Set the parameters
-            for (auto const& attribute : *body.attributes) {
+            for (auto const& attribute : *body.attributes()) {
                 // Ensure only assignment for resource bodies
-                if (attribute.op != ast::attribute_operator::assignment) {
-                    throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op % ast::attribute_operator::assignment).str());
+                if (attribute.op() != ast::attribute_operator::assignment) {
+                    throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
                 }
 
                 // Evaluate the attribute value
-                auto attribute_value = _evaluator.evaluate(attribute.value);
+                auto attribute_value = _evaluator.evaluate(attribute.value());
 
                 // Loop through each resource in this body
                 for (size_t i = 0; i < resources.size(); ++i) {
@@ -63,7 +63,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     }
 
                     // Set the parameter in the resource
-                    resource.set_parameter(attribute.name.value, attribute.name.position, rvalue_cast(value), attribute.value.position());
+                    resource.set_parameter(attribute.name().value(), attribute.name().position(), rvalue_cast(value), attribute.value().position());
                 }
             }
         }
@@ -78,17 +78,17 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_override_expression const& expr)
     {
-        auto reference = _evaluator.evaluate(expr.reference);
+        auto reference = _evaluator.evaluate(expr.reference());
 
         // Convert the value into an array of resource pointers
         vector<resource*> resources;
-        find_resource(resources, reference, get_position(expr.reference));
+        find_resource(resources, reference, get_position(expr.reference()));
 
-        if (expr.attributes) {
+        if (expr.attributes()) {
             // Set the parameters
-            for (auto const& attribute : *expr.attributes) {
+            for (auto const& attribute : *expr.attributes()) {
                 // Evaluate the attribute value
-                auto attribute_value = _evaluator.evaluate(attribute.value);
+                auto attribute_value = _evaluator.evaluate(attribute.value());
 
                 // Loop through each resource
                 for (size_t i = 0; i < resources.size(); ++i) {
@@ -105,17 +105,17 @@ namespace puppet { namespace runtime { namespace evaluators {
                         value = attribute_value;
                     }
 
-                    if (attribute.op == ast::attribute_operator::assignment) {
+                    if (attribute.op() == ast::attribute_operator::assignment) {
                         if (is_undef(value)) {
                             if (!override) {
-                                throw evaluation_exception(attribute.position(), (boost::format("cannot remove attribute '%1%' from resource %2%.") % attribute.name % resource.create_reference()).str());
+                                throw evaluation_exception(attribute.name().position(), (boost::format("cannot remove attribute '%1%' from resource %2%.") % attribute.name() % resource.create_reference()).str());
                             }
-                            resource.remove_parameter(attribute.name.value);
+                            resource.remove_parameter(attribute.name().value());
                             continue;
                         }
                         // Set the parameter in the resource
-                        resource.set_parameter(attribute.name.value, attribute.name.position, rvalue_cast(value), attribute.value.position());
-                    } else if (attribute.op == ast::attribute_operator::append) {
+                        resource.set_parameter(attribute.name().value(), attribute.name().position(), rvalue_cast(value), attribute.value().position());
+                    } else if (attribute.op() == ast::attribute_operator::append) {
                         // TODO: append parameter
                     }
                 }
@@ -128,19 +128,19 @@ namespace puppet { namespace runtime { namespace evaluators {
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::class_definition_expression const& expr)
     {
         // TODO: implement
-        throw evaluation_exception(expr.position, "class expressions are not yet implemented.");
+        throw evaluation_exception(expr.position(), "class expressions are not yet implemented.");
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::defined_type_expression const& expr)
     {
         // TODO: implement
-        throw evaluation_exception(expr.position, "defined type expressions are not yet implemented.");
+        throw evaluation_exception(expr.position(), "defined type expressions are not yet implemented.");
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::node_definition_expression const& expr)
     {
         // TODO: implement
-        throw evaluation_exception(expr.position, "node definition expressions are not yet implemented.");
+        throw evaluation_exception(expr.position(), "node definition expressions are not yet implemented.");
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::collection_expression const& expr)

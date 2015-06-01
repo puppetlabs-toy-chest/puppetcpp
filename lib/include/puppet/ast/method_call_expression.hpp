@@ -32,24 +32,33 @@ namespace puppet { namespace ast {
         method_call_expression(name method, boost::optional<std::vector<expression>> arguments, boost::optional<ast::lambda> lambda);
 
         /**
-         * The name of the method.
+         * Gets the method name.
+         * @return Returns the method name.
          */
-        name method;
+        name const& method() const;
 
         /**
-         * The arguments to the method.
+         * Gets the optional argument expressions.
+         * @return Returns the argument expressions.
          */
-        boost::optional<std::vector<expression>> arguments;
+        boost::optional<std::vector<expression>> const& arguments() const;
 
         /**
-         * The optional lambda to the method.
+         * Gets the optional lambda.
+         * @return Returns the optional lambda.
          */
-        boost::optional<ast::lambda> lambda;
+        boost::optional<ast::lambda> const& lambda() const;
 
         /**
-         * Gets the position of the expression.
+         * Gets the position of the method call expression.
+         * @return Returns the position of the method call expression.
          */
         lexer::position const& position() const;
+
+     private:
+        name _method;
+        boost::optional<std::vector<expression>> _arguments;
+        boost::optional<ast::lambda> _lambda;
     };
 
     /**

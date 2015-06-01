@@ -11,14 +11,25 @@ namespace puppet { namespace ast {
     }
 
     variable::variable(lexer::position position, string name) :
-        position(rvalue_cast(position)),
-        name(rvalue_cast(name))
+        _position(rvalue_cast(position)),
+        _name(rvalue_cast(name))
     {
+
+    }
+
+    string const& variable::name() const
+    {
+        return _name;
+    }
+
+    lexer::position const& variable::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, variable const& var)
     {
-        os << "$" << var.name;
+        os << "$" << var.name();
         return os;
     }
 

@@ -25,23 +25,43 @@ namespace puppet { namespace ast {
     }
 
     query::query() :
-        op(attribute_query_operator::none)
+        _op(attribute_query_operator::none)
     {
     }
 
     query::query(name attribute, attribute_query_operator op, basic_expression value) :
-        attribute(rvalue_cast(attribute)),
-        op(op),
-        value(rvalue_cast(value))
+        _attribute(rvalue_cast(attribute)),
+        _op(op),
+        _value(rvalue_cast(value))
     {
+    }
+
+    name const& query::attribute() const
+    {
+        return _attribute;
+    }
+
+    attribute_query_operator query::op() const
+    {
+        return _op;
+    }
+
+    basic_expression const& query::value() const
+    {
+        return _value;
+    }
+
+    lexer::position const& query::position() const
+    {
+        return _attribute.position();
     }
 
     ostream& operator<<(ostream& os, ast::query const& query)
     {
-        if (query.attribute.value.empty()) {
+        if (query.attribute().value().empty()) {
             return os;
         }
-        os << query.attribute << " " << query.op << " " << query.value;
+        os << query.attribute() << " " << query.op() << " " << query.value();
         return os;
     }
 
@@ -63,57 +83,92 @@ namespace puppet { namespace ast {
     }
 
     binary_query_expression::binary_query_expression() :
-        op(binary_query_operator::none)
+        _op(binary_query_operator::none)
     {
     }
 
     binary_query_expression::binary_query_expression(binary_query_operator op, query operand) :
-        op(op),
-        operand(rvalue_cast(operand))
+        _op(op),
+        _operand(rvalue_cast(operand))
     {
+    }
+
+    binary_query_operator binary_query_expression::op() const
+    {
+        return _op;
+    }
+
+    query const& binary_query_expression::operand() const
+    {
+        return _operand;
+    }
+
+    lexer::position const& binary_query_expression::position() const
+    {
+        return _operand.position();
     }
 
     ostream& operator<<(ostream& os, binary_query_expression const& expr)
     {
-        if (expr.op == binary_query_operator::none) {
+        if (expr.op() == binary_query_operator::none) {
             return os;
         }
 
-        os << expr.op << " " << expr.operand;
+        os << expr.op() << " " << expr.operand();
         return os;
     }
 
     collection_expression::collection_expression() :
-        kind(collection_kind::none)
+        _kind(collection_kind::none)
     {
     }
 
     collection_expression::collection_expression(collection_kind kind, ast::type type, optional<query> first, vector<binary_query_expression> remainder) :
-        kind(kind),
-        type(rvalue_cast(type)),
-        first(rvalue_cast(first)),
-        remainder(rvalue_cast(remainder))
+        _kind(kind),
+        _type(rvalue_cast(type)),
+        _first(rvalue_cast(first)),
+        _remainder(rvalue_cast(remainder))
     {
+    }
+
+    collection_kind collection_expression::kind() const
+    {
+        return _kind;
+    }
+
+    ast::type const& collection_expression::type() const
+    {
+        return _type;
+    }
+
+    optional<query> const& collection_expression::first() const
+    {
+        return _first;
+    }
+
+    vector<binary_query_expression> const& collection_expression::remainder() const
+    {
+        return _remainder;
     }
 
     lexer::position const& collection_expression::position() const
     {
-        return type.position;
+        return _type.position();
     }
 
     ostream& operator<<(ostream& os, collection_expression const& expr)
     {
-        if (expr.kind == collection_kind::none) {
+        if (expr.kind() == collection_kind::none) {
             return os;
         }
-        os << expr.type << " " << (expr.kind == collection_kind::all ? "<| " : "<<| ");
-        if (expr.first) {
-            os << *expr.first;
+        os << expr.type() << " " << (expr.kind() == collection_kind::all ? "<| " : "<<| ");
+        if (expr.first()) {
+            os << *expr.first();
         }
-        for (auto const& bexpr : expr.remainder) {
+        for (auto const& bexpr : expr.remainder()) {
             os << bexpr;
         }
-        os << (expr.kind == collection_kind::all ? " |>" : " |>>");
+        os << (expr.kind() == collection_kind::all ? " |>" : " |>>");
         return os;
     }
 

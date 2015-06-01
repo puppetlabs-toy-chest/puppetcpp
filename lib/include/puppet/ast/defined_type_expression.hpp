@@ -31,24 +31,34 @@ namespace puppet { namespace ast {
         defined_type_expression(lexer::position position, ast::name name, boost::optional<std::vector<parameter>> parameters, boost::optional<std::vector<expression>> body);
 
         /**
-         * The position of the defined type.
+         * Gets the name of the type.
+         * @return Returns the name of the type.
          */
-        lexer::position position;
+        ast::name const& name() const;
 
         /**
-         * The name of the defined type.
+         * Gets the type parameters.
+         * @return Returns the type parameters.
          */
-        ast::name name;
+        boost::optional<std::vector<parameter>> const& parameters() const;
 
         /**
-         * The parameters of the defined type.
+         * Gets the optional body expressions.
+         * @return Returns the optional body expressions.
          */
-        boost::optional<std::vector<parameter>> parameters;
+        boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * The body of the defined type.
+         * Gets the position of the expression.
+         * @return Returns the position of the expression.
          */
-        boost::optional<std::vector<expression>> body;
+        lexer::position const& position() const;
+
+    private:
+        lexer::position _position;
+        ast::name _name;
+        boost::optional<std::vector<parameter>> _parameters;
+        boost::optional<std::vector<expression>> _body;
     };
 
     /**

@@ -31,19 +31,27 @@ namespace puppet { namespace ast {
         lambda(lexer::position position, boost::optional<std::vector<parameter>> parameters, boost::optional<std::vector<expression>> body);
 
         /**
-         * The position of the lambda.
+         * Gets the parameters of the lambda.
+         * @return Returns the parameters of the lambda.
          */
-        lexer::position position;
+        boost::optional<std::vector<parameter>> const& parameters() const;
 
         /**
-         * The parameters of the lambda.
+         * Gets the expressions of the lambda's body.
+         * @return Returns the expressions of the lambda's body.
          */
-        boost::optional<std::vector<parameter>> parameters;
+        boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * The body of the lambda.
+         * Gets the position of the lambda.
+         * @return Returns the position of the lambda.
          */
-        boost::optional<std::vector<expression>> body;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        boost::optional<std::vector<parameter>> _parameters;
+        boost::optional<std::vector<expression>> _body;
     };
 
     /**

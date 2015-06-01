@@ -4,13 +4,19 @@ using namespace std;
 
 namespace puppet { namespace ast {
 
-    bare_word::bare_word()
+    string const& bare_word::value() const
     {
+        return _value;
+    }
+
+    lexer::position const& bare_word::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, bare_word const& word)
     {
-        os << word.value;
+        os << word.value();
         return os;
     }
 

@@ -13,19 +13,29 @@ namespace puppet { namespace ast {
     }
 
     selector_case_expression::selector_case_expression(expression selector, expression result) :
-        selector(rvalue_cast(selector)),
-        result(rvalue_cast(result))
+        _selector(rvalue_cast(selector)),
+        _result(rvalue_cast(result))
     {
+    }
+
+    expression const& selector_case_expression::selector() const
+    {
+        return _selector;
+    }
+
+    expression const& selector_case_expression::result() const
+    {
+        return _result;
     }
 
     lexer::position const& selector_case_expression::position() const
     {
-        return selector.position();
+        return _selector.position();
     }
 
     ostream& operator<<(ostream& os, selector_case_expression const& expr)
     {
-        os << expr.selector << " => " << expr.result;
+        os << expr.selector() << " => " << expr.result();
         return os;
     }
 
@@ -34,15 +44,25 @@ namespace puppet { namespace ast {
     }
 
     selector_expression::selector_expression(lexer::position position, vector<selector_case_expression> cases) :
-        position(rvalue_cast(position)),
-        cases(rvalue_cast(cases))
+        _position(rvalue_cast(position)),
+        _cases(rvalue_cast(cases))
     {
+    }
+
+    vector<selector_case_expression> const& selector_expression::cases() const
+    {
+        return _cases;
+    }
+
+    lexer::position const& selector_expression::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, selector_expression const& expr)
     {
         os << " ? { ";
-        pretty_print(os, expr.cases, ", ");
+        pretty_print(os, expr.cases(), ", ");
         os << " }";
         return os;
     }

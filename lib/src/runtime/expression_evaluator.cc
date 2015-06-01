@@ -118,12 +118,13 @@ namespace puppet { namespace runtime {
         }
 
         // Evaluate the primary expression
-        auto result = evaluate(expr.primary);
+        auto result = evaluate(expr.primary());
         auto position = expr.position();
 
         // Climb the remainder of the expression
-        auto begin = expr.binary.begin();
-        climb_expression(result, position, 0, begin, expr.binary.end());
+        auto& binary = expr.binary();
+        auto begin = binary.begin();
+        climb_expression(result, position, 0, begin, binary.end());
 
         return result;
     }
@@ -137,18 +138,18 @@ namespace puppet { namespace runtime {
     boost::optional<values::array> expression_evaluator::unfold(ast::expression const& expr, value& result)
     {
         // An unfold expression is always unary with no further expressions
-        if (!expr.binary.empty()) {
+        if (!expr.binary().empty()) {
             return boost::none;
         }
         // Unfold the first expression
-        return unfold(expr.primary, result);
+        return unfold(expr.primary(), result);
     }
 
     boost::optional<values::array> expression_evaluator::unfold(ast::primary_expression const& expression, value& evaluated)
     {
         // Determine if the given expression is a unary splat of an array
         auto unary = boost::get<ast::unary_expression>(&expression);
-        if (unary && unary->op == ast::unary_operator::splat && as<values::array>(evaluated)) {
+        if (unary && unary->op() == ast::unary_operator::splat && as<values::array>(evaluated)) {
             return mutate_as<values::array>(evaluated);
         }
 
@@ -190,17 +191,17 @@ namespace puppet { namespace runtime {
     bool expression_evaluator::is_productive(ast::expression const& expr)
     {
         // Check if the primary expression itself is productive
-        if (is_productive(expr.primary)) {
+        if (is_productive(expr.primary())) {
             return true;
         }
 
         // Expressions followed by an assignment or relationship operator are productive
-        for (auto const& binary : expr.binary) {
-            if (binary.op == ast::binary_operator::assignment ||
-                binary.op == ast::binary_operator::in_edge ||
-                binary.op == ast::binary_operator::in_edge_subscribe ||
-                binary.op == ast::binary_operator::out_edge ||
-                binary.op == ast::binary_operator::out_edge_subscribe) {
+        for (auto const& binary : expr.binary()) {
+            if (binary.op() == ast::binary_operator::assignment ||
+                binary.op() == ast::binary_operator::in_edge ||
+                binary.op() == ast::binary_operator::in_edge_subscribe ||
+                binary.op() == ast::binary_operator::out_edge ||
+                binary.op() == ast::binary_operator::out_edge_subscribe) {
                 return true;
             }
         }
@@ -219,7 +220,7 @@ namespace puppet { namespace runtime {
 
         // Check for unary expression
         if (auto ptr = boost::get<ast::unary_expression>(&expr)) {
-            if (is_productive(ptr->operand)) {
+            if (is_productive(ptr->operand())) {
                 return true;
             }
         }
@@ -232,10 +233,10 @@ namespace puppet { namespace runtime {
 
         // Postfix method calls are productive
         if (auto ptr = boost::get<ast::postfix_expression>(&expr)) {
-            if (is_productive(ptr->primary)) {
+            if (is_productive(ptr->primary())) {
                 return true;
             }
-            for (auto const& subexpression : ptr->subexpressions) {
+            for (auto const& subexpression : ptr->subexpressions()) {
                 if (boost::get<ast::method_call_expression>(&subexpression)) {
                     return true;
                 }
@@ -253,10 +254,10 @@ namespace puppet { namespace runtime {
     {
         // This member implements precedence climbing for binary expressions
         uint8_t precedence;
-        while (begin != end && (precedence = get_precedence(begin->op)) >= min_precedence)
+        while (begin != end && (precedence = get_precedence(begin->op())) >= min_precedence)
         {
-            auto op = begin->op;
-            auto& operand = begin->operand;
+            auto op = begin->op();
+            auto& operand = begin->operand();
             auto right_position = begin->position();
             ++begin;
 

@@ -30,14 +30,20 @@ namespace puppet { namespace ast {
         array(lexer::position position, boost::optional<std::vector<expression>> elements);
 
         /**
-         * The position of the array.
+         * Gets the optional elements of the array.
+         * @return Returns the optional elements of the array.
          */
-        lexer::position position;
+        boost::optional<std::vector<expression>> const& elements() const;
 
         /**
-         * The elements of the array.
+         * Gets the position of the array.
+         * @return Returns the position of the array.
          */
-        boost::optional<std::vector<expression>> elements;
+        lexer::position const& position() const;
+
+    private:
+        lexer::position _position;
+        boost::optional<std::vector<expression>> _elements;
     };
 
     /**

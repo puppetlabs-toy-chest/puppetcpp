@@ -159,19 +159,27 @@ namespace puppet { namespace ast {
         unary_expression(lexer::position position, unary_operator op, primary_expression operand);
 
         /**
-         * The position of the unary expression.
+         * Gets the unary operator for the expression.
+         * @return Returns the unary operator for the expression.
          */
-        lexer::position position;
+        unary_operator op() const;
 
         /**
-         * The unary operator.
+         * Gets the operand for the expression.
+         * @return Returns the operand for the expression.
          */
-        unary_operator op;
+        primary_expression const& operand() const;
 
         /**
-         * The operand.
+         * Gets the position of the unary expression.
+         * @return Returns the position of the unary expression.
          */
-        primary_expression operand;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        unary_operator _op;
+        primary_expression _operand;
     };
 
     /**
@@ -311,20 +319,26 @@ namespace puppet { namespace ast {
         binary_expression(binary_operator op, primary_expression operand);
 
         /**
-         * The binary operator.
+         * Gets the binary operator in the expression.
+         * @return Returns the binary operator in the expression.
          */
-        binary_operator op;
+        binary_operator op() const;
 
         /**
-         * The right-hand side of the binary expression.
+         * Gets the right-hand operand of the binary expression.
+         * @return Returns the right-hand operand of the binary expression.
          */
-        primary_expression operand;
+        primary_expression const& operand() const;
 
         /**
-         * Gets the position of the expression.
-         * @return Returns the position of the expression.
+         * Gets the position of the binary expression.
+         * @return Returns the position of the binary expression.
          */
         lexer::position const& position() const;
+
+     private:
+        binary_operator _op;
+        primary_expression _operand;
     };
 
     /**
@@ -353,19 +367,32 @@ namespace puppet { namespace ast {
         explicit expression(primary_expression primary, std::vector<binary_expression> binary = std::vector<binary_expression>());
 
         /**
-         * The primary expression.
+         * Gets the primary expression.
+         * @return Returns the primary expression.
          */
-        primary_expression primary;
+        primary_expression const& primary() const;
 
         /**
-         * The remaining binary expressions.
+         * Gets the binary expressions.
+         * @return Returns the binary expressions.
          */
-        std::vector<binary_expression> binary;
+        std::vector<binary_expression> const& binary() const;
 
         /**
          * Gets the position of the expression.
+         * @return Returns the position of the expression.
          */
         lexer::position const& position() const;
+
+        /**
+         * Determines if the expression is blank.
+         * @return Returns true if the expression is blank or false if not.
+         */
+        bool blank() const;
+
+     private:
+        primary_expression _primary;
+        std::vector<binary_expression> _binary;
     };
 
     /**

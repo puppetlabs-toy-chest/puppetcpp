@@ -28,12 +28,12 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit variable(boost::iterator_range<Iterator> const& token) :
-            position(token.begin().position())
+            _position(token.begin().position())
         {
             // Remove the $ from the name
             auto it = token.begin();
             ++it;
-            name.assign(it, token.end());
+            _name.assign(it, token.end());
         }
 
         /**
@@ -44,14 +44,20 @@ namespace puppet { namespace ast {
         variable(lexer::position position, std::string name);
 
         /**
-         * The position of the variable.
+         * Gets the name of the variable.
+         * @return Returns the name of the variable.
          */
-        lexer::position position;
+        std::string const& name() const;
 
         /**
-         * The name of the variable.
+         * Gets the position of the variable.
+         * @return Returns the position of the variable.
          */
-        std::string name;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        std::string _name;
     };
 
     /**

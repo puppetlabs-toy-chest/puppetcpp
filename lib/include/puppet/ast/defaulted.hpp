@@ -21,14 +21,18 @@ namespace puppet { namespace ast {
 
         /**
          * Constructs the defaulted with the given position.
-         * @name position The position of the default keyword.
+         * @param position The position of the default keyword.
          */
-        defaulted(lexer::position position);
+        explicit defaulted(lexer::position position);
 
         /**
-         * The position of the default keyword.
+         * Gets the position of the default keyword.
+         * @return Returns the position of the default keyword.
          */
-        lexer::position position;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
     };
 
     /**

@@ -8,9 +8,19 @@ namespace puppet { namespace ast {
     {
     }
 
+    string const& name::value() const
+    {
+        return _value;
+    }
+
+    lexer::position const& name::position() const
+    {
+        return _position;
+    }
+
     ostream& operator<<(ostream& os, name const& name)
     {
-        os << name.value;
+        os << name.value();
         return os;
     }
 

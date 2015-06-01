@@ -110,20 +110,20 @@ namespace puppet { namespace runtime {
     static boost::optional<value> transform_expression(expression_evaluator& evaluator, ast::expression const& expression)
     {
         // Check for a postfix expression
-        auto postfix = boost::get<ast::postfix_expression>(&expression.primary);
-        if (!postfix || postfix->subexpressions.empty()) {
+        auto postfix = boost::get<ast::postfix_expression>(&expression.primary());
+        if (!postfix || postfix->subexpressions().empty()) {
             return boost::none;
         }
 
         // Check for access or method call
-        auto& subexpression = postfix->subexpressions.front();
+        auto& subexpression = postfix->subexpressions().front();
         if (!boost::get<ast::access_expression>(&subexpression) &&
             !boost::get<ast::method_call_expression>(&subexpression)) {
             return boost::none;
         }
 
         // If the expression is a name followed by an access operation or method call, treat as a variable
-        auto basic = boost::get<ast::basic_expression>(&postfix->primary);
+        auto basic = boost::get<ast::basic_expression>(&postfix->primary());
         if (!basic) {
             return boost::none;
         }
@@ -134,20 +134,20 @@ namespace puppet { namespace runtime {
         // Check for name
         auto name = boost::get<ast::name>(basic);
         if (name) {
-            variable_position = name->position;
-            variable_name = name->value;
+            variable_position = name->position();
+            variable_name = name->value();
         } else {
             // Also check for bare word
             auto word = boost::get<ast::bare_word>(basic);
             if (word) {
-                variable_position = word->position;
-                variable_name = word->value;
+                variable_position = word->position();
+                variable_name = word->value();
             }
         }
         if (variable_name.empty()) {
             return boost::none;
         }
-        return evaluator.evaluate(ast::expression(ast::postfix_expression(ast::basic_expression(ast::variable(rvalue_cast(variable_position), rvalue_cast(variable_name))), postfix->subexpressions), expression.binary));
+        return evaluator.evaluate(ast::expression(ast::postfix_expression(ast::basic_expression(ast::variable(rvalue_cast(variable_position), rvalue_cast(variable_name))), postfix->subexpressions()), expression.binary()));
     }
 
     string_interpolator::string_interpolator(expression_evaluator& evaluator) :
@@ -262,11 +262,11 @@ namespace puppet { namespace runtime {
                             // Parse the rest of the string as a manifest
                             // The parsing will stop at the first unmatched } token
                             auto manifest = parser::parser::parse(next, end, true);
-                            if (manifest.body) {
+                            if (manifest.body()) {
                                 // Evaluate the body and add the result to the string
                                 value val;
                                 bool first = true;
-                                for (auto& expression : *manifest.body) {
+                                for (auto& expression : *manifest.body()) {
                                     // For the first expression, transform certain constructs to their "variable" forms
                                     if (first) {
                                         first = false;
@@ -284,8 +284,8 @@ namespace puppet { namespace runtime {
                             }
 
                             // Move past where parsing stopped (must have been at the closing })
-                            begin = lexer_string_iterator(text.begin() + manifest.end.offset());
-                            begin.position(manifest.end);
+                            begin = lexer_string_iterator(text.begin() + manifest.end().offset());
+                            begin.position(manifest.end());
                             ++begin;
                             continue;
                         } catch (compiler::parse_exception const& ex) {

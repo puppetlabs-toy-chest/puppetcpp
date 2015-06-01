@@ -13,7 +13,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         _expression(expression)
     {
         // Evaluate all the expressions for the access
-        for (auto& expression : expression.arguments) {
+        for (auto& expression : expression.arguments()) {
             auto argument = _evaluator.evaluate(expression);
 
             // If unfolding, append the array's elements
@@ -302,7 +302,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // At least 2 and at most 4 arguments to Hash
         if (_arguments.size() < 2) {
-            throw evaluation_exception(_expression.position, (boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
+            throw evaluation_exception(_expression.position(), (boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
         }
         if (_arguments.size() > 4) {
             throw evaluation_exception(_positions[4], (boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());

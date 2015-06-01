@@ -21,15 +21,25 @@ namespace puppet { namespace ast {
     }
 
     hash::hash(lexer::position position, optional<vector<pair<expression, expression>>> elements) :
-        position(rvalue_cast(position)),
-        elements(rvalue_cast(elements))
+        _position(rvalue_cast(position)),
+        _elements(rvalue_cast(elements))
     {
+    }
+
+    optional<vector<hash_pair>> const& hash::elements() const
+    {
+        return _elements;
+    }
+
+    lexer::position const& hash::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, hash const& hash)
     {
         os << "{";
-        pretty_print(os, hash.elements, ", ");
+        pretty_print(os, hash.elements(), ", ");
         os << "}";
         return os;
     }
