@@ -175,7 +175,7 @@ namespace puppet { namespace compiler {
                 (raw_token(token_id::atat) > resource_type > raw_token('{') > (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}')) [ _val = phx::construct<ast::resource_expression>(_1, _2, ast::resource_status::exported) ] |
                 ((resource_type >> raw_token('{')) >> (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}'))                         [ _val = phx::construct<ast::resource_expression>(_1, _2) ];
             resource_type =
-                name |
+                name                           [ _val = _1 ] |
                 token(token_id::keyword_class) [ _val = phx::construct<ast::name>(_1) ];
             resource_body =
                 ((expression >> raw_token(':')) > -(attribute_expression % raw_token(',')) > -raw_token(',')) [ _val = phx::construct<ast::resource_body>(_1, _2) ];
