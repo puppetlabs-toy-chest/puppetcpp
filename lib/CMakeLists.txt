@@ -29,7 +29,6 @@ add_library(puppet SHARED
     src/ast/hash.cc
     src/ast/if_expression.cc
     src/ast/lambda.cc
-    src/ast/manifest.cc
     src/ast/method_call_expression.cc
     src/ast/name.cc
     src/ast/node_definition_expression.cc
@@ -38,6 +37,7 @@ add_library(puppet SHARED
     src/ast/postfix_expression.cc
     src/ast/regex.cc
     src/ast/selector_expression.cc
+    src/ast/syntax_tree.cc
     src/ast/undef.cc
     src/ast/resource_defaults_expression.cc
     src/ast/resource_expression.cc
@@ -113,6 +113,7 @@ add_library(puppet SHARED
     src/runtime/values/undef.cc
     src/runtime/values/value.cc
     src/runtime/catalog.cc
+    src/runtime/context.cc
     src/runtime/dispatcher.cc
     src/runtime/expression_evaluator.cc
     src/runtime/scope.cc

@@ -82,7 +82,7 @@ namespace puppet { namespace compiler {
         compiler::environment& environment();
 
         /**
-         * Compiles an AST manifest into a catalog for this node.
+         * Compiles a manifest into a catalog for this node.
          * @param logger The logger to use.
          * @param path The path of the manifest file being compiled.
          * @return Returns the compiled catalog for the node.

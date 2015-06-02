@@ -159,8 +159,8 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
 
             // Add the resource to the catalog
-            auto& catalog = _evaluator.catalog();
-            auto resource = catalog.add_resource(type.type_name(), type.title(), _evaluator.path(), position.line());
+            auto& catalog = _evaluator.context().catalog();
+            auto resource = catalog.add_resource(type.type_name(), type.title(), _evaluator.tree()->path(), position.line());
             if (!resource) {
                 resource = catalog.find_resource(type.type_name(), type.title());
                 if (resource) {
@@ -196,7 +196,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
 
             // Find the resource
-            auto resource = _evaluator.catalog().find_resource(resource_type->type_name(), resource_type->title());
+            auto resource = _evaluator.context().catalog().find_resource(resource_type->type_name(), resource_type->title());
             if (!resource) {
                 throw evaluation_exception(position, (boost::format("resource %1% does not exist in the catalog.") % *resource_type).str());
             }

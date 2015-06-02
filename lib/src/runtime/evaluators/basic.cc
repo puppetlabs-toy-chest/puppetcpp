@@ -70,6 +70,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         static const std::regex match_variable_patterh("^\\d+$");
 
         auto& name = var.name();
+        auto& scope = _evaluator.context().scope();
 
         bool match = false;
         value const* val = nullptr;
@@ -79,10 +80,10 @@ namespace puppet { namespace runtime { namespace evaluators {
                 throw evaluation_exception(var.position(), (boost::format("variable name $%1% is not a valid match variable name.") % var.name()).str());
             }
             // Look up the match
-            val = _evaluator.scope().get(stoi(name));
+            val = scope.get(stoi(name));
             match = true;
         } else {
-            val = _evaluator.scope().get(name);
+            val = scope.get(name);
         }
         return variable(name, val, match);
     }

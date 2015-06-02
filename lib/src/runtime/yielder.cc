@@ -60,7 +60,7 @@ namespace puppet { namespace runtime {
         }
 
         // Create an ephemeral scope
-        ephemeral_scope ephemeral(_evaluator);
+        ephemeral_scope ephemeral(_evaluator.context());
 
         bool has_optional_parameters = false;
         if (_lambda->parameters()) {
@@ -114,7 +114,7 @@ namespace puppet { namespace runtime {
                     }
                 }
 
-                if (!_evaluator.scope().set(name, rvalue_cast(value), parameter.position().line())) {
+                if (!_evaluator.context().scope().set(name, rvalue_cast(value), parameter.position().line())) {
                     throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }

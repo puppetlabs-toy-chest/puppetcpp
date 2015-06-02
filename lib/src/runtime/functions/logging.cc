@@ -18,7 +18,7 @@ namespace puppet { namespace runtime { namespace functions {
         join(ss, context.arguments(), " ");
         string message = ss.str();
 
-        context.evaluator().logger().log(_level, "%1%: %2%", context.evaluator().scope(), message);
+        context.evaluator().context().logger().log(_level, "%1%: %2%", context.evaluator().context().scope(), message);
         return message;
     }
 

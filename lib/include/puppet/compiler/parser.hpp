@@ -10,6 +10,7 @@
 #include <boost/optional.hpp>
 #include <sstream>
 #include <iomanip>
+#include <memory>
 
 namespace puppet { namespace compiler {
 
@@ -41,28 +42,29 @@ namespace puppet { namespace compiler {
     struct parser
     {
         /**
-         * Parses the given file into an AST manifest.
+         * Parses the given file into a syntax tree.
+         * @param path The path to the file to parse.
          * @param input The input file to parse.
          * @param interpolation True if parsing for string interpolation or false if not.
-         * @return Returns the AST manifest if parsing succeeds or nullptr if not.
+         * @return Returns the syntax tree if parsing succeeds throws parse_exception if not.
          */
-        static ast::manifest parse(std::ifstream& input, bool interpolation = false);
+        static std::shared_ptr<ast::syntax_tree> parse(std::string const& path, std::ifstream& input, bool interpolation = false);
         /**
-         * Parses the given string into an AST manifest.
+         * Parses the given string into a syntax tree.
          * @param input The input string to parse.
          * @param interpolation True if parsing for string interpolation or false if not.
-         * @return Returns the AST manifest if parsing succeeds or nullptr if not.
+         * @return Returns the syntax tree if parsing succeeds throws parse_exception if not.
          */
-        static ast::manifest parse(std::string const& input, bool interpolation = false);
+        static std::shared_ptr<ast::syntax_tree> parse(std::string const& input, bool interpolation = false);
 
         /**
-         * Parses the given iterator range into an AST manifest.
+         * Parses the given iterator range into a syntax tree.
          * @param begin The beginning of the input.
          * @param end The end of the input.  If interpolating, the parsing may terminate before the end (stops at non-matching '}' token).
          * @param interpolation True if parsing for string interpolation or false if not.
-         * @return Returns the AST manifest if parsing succeeds or nullptr if not.
+         * @return Returns the syntax tree if parsing succeeds throws parse_exception if not.
          */
-        static ast::manifest parse(lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end, bool interpolation = false);
+        static std::shared_ptr<ast::syntax_tree> parse(lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end, bool interpolation = false);
 
      private:
         struct expectation_info_printer
@@ -100,7 +102,7 @@ namespace puppet { namespace compiler {
         }
 
         template <typename Lexer, typename Input, typename Iterator>
-        static ast::manifest parse(Lexer& lexer, Input& input, Iterator& begin, Iterator const& end, bool interpolation)
+        static std::shared_ptr<ast::syntax_tree> parse(Lexer& lexer, std::string const& path, Input& input, Iterator& begin, Iterator const& end, bool interpolation)
         {
             using namespace std;
             using namespace puppet::lexer;
@@ -112,11 +114,11 @@ namespace puppet { namespace compiler {
                 auto token_begin = lexer.begin(begin, end);
                 auto token_end = lexer.end();
 
-                // Parse the input into an AST manifest
-                ast::manifest manifest;
-                if (qi::parse(token_begin, token_end, grammar<Lexer>(lexer, interpolation), manifest) &&
+                // Parse the input into a syntax tree
+                auto tree = make_shared<ast::syntax_tree>();
+                if (qi::parse(token_begin, token_end, grammar<Lexer>(lexer, path, interpolation), *tree) &&
                     (token_begin == token_end || token_begin->id() == boost::lexer::npos || interpolation)) {
-                    return manifest;
+                    return tree;
                 }
 
                 // If not all tokens were processed and the iterator points at a valid token, handle unexpected token
