@@ -66,7 +66,7 @@ namespace puppet { namespace compiler {
         try {
             // Parse the file
             auto tree = parser::parse(path, file);
-            logger.log(level::debug, "parsed syntax tree:\n%1%", tree);
+            logger.log(level::debug, "parsed syntax tree:\n%1%", *tree);
 
             // Create a helper warning function
             auto warning = [&](lexer::position const& position, string const& message) {
