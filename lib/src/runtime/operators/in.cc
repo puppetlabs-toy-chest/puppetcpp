@@ -23,7 +23,7 @@ namespace puppet { namespace runtime { namespace operators {
         {
             smatch matches;
             bool result = left.pattern().empty() || regex_search(right, matches, left.value());
-            _context.evaluator().scope().set(matches);
+            _context.evaluator().context().scope().set(matches);
             return result;
         }
 
@@ -86,7 +86,7 @@ namespace puppet { namespace runtime { namespace operators {
             return false;
         }
 
-    private:
+     private:
         binary_context& _context;
     };
 

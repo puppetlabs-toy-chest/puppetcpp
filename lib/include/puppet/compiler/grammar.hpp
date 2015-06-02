@@ -1,13 +1,13 @@
 /**
  * @file
  * Declares the Puppet language grammar.
- * The grammar defines the Puppet language and is responsible for populating an AST manifest.
+ * The grammar defines the Puppet language and is responsible for populating a syntax tree.
  */
 #pragma once
 
 #include "token_pos.hpp"
 #include "../lexer/token_id.hpp"
-#include "../ast/manifest.hpp"
+#include "../ast/syntax_tree.hpp"
 #include "../cast.hpp"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/phoenix.hpp>
@@ -16,11 +16,11 @@ namespace puppet { namespace compiler {
 
     /**
      * Represents the Puppet language grammar.
-     * The grammar is responsible for transforming a stream of tokens into a AST manifest.
+     * The grammar is responsible for transforming a stream of tokens into a syntax tree.
      * @tparam Lexer The lexer type to use for token definitions.
      */
     template <typename Lexer>
-    struct grammar : boost::spirit::qi::grammar<typename Lexer::iterator_type, puppet::ast::manifest()>
+    struct grammar : boost::spirit::qi::grammar<typename Lexer::iterator_type, puppet::ast::syntax_tree()>
     {
         /**
          * The token iterator type of the grammar.
@@ -30,23 +30,24 @@ namespace puppet { namespace compiler {
         /**
          * Constructs a Puppet language grammar for the given lexer.
          * @param lexer The lexer to use for token definitions.
+         * @param path The path to the file being parsed.
          * @param interpolation True if the grammar is being used for string interpolation or false if not.
          */
-        grammar(Lexer const& lexer, bool interpolation = false) :
-            boost::spirit::qi::grammar<iterator_type, puppet::ast::manifest()>(manifest)
+        grammar(Lexer const& lexer, std::string const& path, bool interpolation = false) :
+            boost::spirit::qi::grammar<iterator_type, puppet::ast::syntax_tree()>(syntax_tree)
         {
             using namespace boost::spirit::qi;
             using namespace puppet::lexer;
             namespace phx = boost::phoenix;
             
-            // A manifest is a sequence of statements
+            // A syntax tree is a sequence of statements
             // For string interpolation, end at the first '}' token that isn't part of the grammar
             if (interpolation) {
-                manifest =
-                    (raw_token('{') > statements > token_pos('}')) [_val = phx::construct<ast::manifest>(_1, _2)];
+                syntax_tree =
+                    (raw_token('{') > statements > token_pos('}')) [_val = phx::construct<ast::syntax_tree>(phx::ref(path), _1, _2)];
             } else {
-                manifest =
-                    statements [ _val = phx::construct<ast::manifest>(_1) ];
+                syntax_tree =
+                    statements [ _val = phx::construct<ast::syntax_tree>(phx::ref(path), _1) ];
             }
 
             // Statements
@@ -297,8 +298,8 @@ namespace puppet { namespace compiler {
             type_access_expression =
                 access_expression;
 
-            // Manifest
-            manifest.name("manifest");
+            // Syntax tree
+            syntax_tree.name("syntax tree");
 
             // Statements
             statements.name("statements");
@@ -383,8 +384,8 @@ namespace puppet { namespace compiler {
             type_access_expression.name("type access expression");
 
 #ifndef NDEBUG
-            // Manifest
-            debug(manifest);
+            // Syntax tree
+            debug(syntax_tree);
 
             // Statements
             debug(statements);
@@ -471,8 +472,8 @@ namespace puppet { namespace compiler {
         }
 
      private:
-        // Manifest
-        boost::spirit::qi::rule<iterator_type, puppet::ast::manifest()> manifest;
+        // Syntax tree
+        boost::spirit::qi::rule<iterator_type, puppet::ast::syntax_tree()> syntax_tree;
 
         // Statements
         boost::spirit::qi::rule<iterator_type, boost::optional<std::vector<puppet::ast::expression>>()> statements;

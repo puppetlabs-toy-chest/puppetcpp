@@ -14,19 +14,33 @@ namespace puppet { namespace ast {
      */
     struct boolean
     {
+        /**
+         * Default constructor for boolean.
+         */
         boolean();
 
+        /**
+         * Constructs a boolean with the given value.
+         * @param position The position where the literal boolean appeared.
+         * @param value The value of the literal boolean.
+         */
         boolean(lexer::position position, bool value);
 
         /**
-         * The position of the boolean.
+         * Gets the value of the boolean.
+         * @return Returns the value of the boolean.
          */
-        lexer::position position;
+        bool value() const;
 
         /**
-         * The value of the boolean.
+         * Gets the position of the boolean.
+         * @return Returns the position of the boolean.
          */
-        bool value;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        bool _value;
     };
 
     /**

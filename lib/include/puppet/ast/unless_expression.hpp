@@ -32,24 +32,33 @@ namespace puppet { namespace ast {
         unless_expression(lexer::position position, expression conditional, boost::optional<std::vector<expression>> body, boost::optional<else_expression> else_);
 
         /**
-         * The position of the unless expression.
+         * Gets the conditional of the "unless" expression.
+         * @return Returns the conditional of the "unless" expression.
          */
-        lexer::position position;
+        expression const& conditional() const;
 
         /**
-         * The conditional of the unless expression.
+         * Gets the optional expressions that make up the body.
+         * @return Returns the optional expressions that make up the body.
          */
-        expression conditional;
+        boost::optional<std::vector<expression>> const& body() const;
+        /**
+         * Gets the optional "else" expression.
+         * @return Returns the optional "else" expression.
+         */
+        boost::optional<else_expression> const& else_() const;
 
         /**
-         * The body of the unless expression.
+         * Gets the position of the "unless" expression.
+         * @return Returns the position of the "unless" expression.
          */
-        boost::optional<std::vector<expression>> body;
+        lexer::position const& position() const;
 
-        /**
-         * The else of the unless expression.
-         */
-        boost::optional<else_expression> else_;
+    private:
+        lexer::position _position;
+        expression _conditional;
+        boost::optional<std::vector<expression>> _body;
+        boost::optional<else_expression> _else;
     };
 
     /**

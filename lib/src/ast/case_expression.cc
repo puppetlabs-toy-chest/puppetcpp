@@ -14,26 +14,46 @@ namespace puppet { namespace ast {
     }
 
     case_proposition::case_proposition(vector<expression> options, optional<vector<expression>> body) :
-        options(rvalue_cast(options)),
-        body(rvalue_cast(body))
+        _options(rvalue_cast(options)),
+        _body(rvalue_cast(body))
     {
-        if (!options.empty()) {
-            position = options.front().position();
+        if (!_options.empty()) {
+            _position = _options.front().position();
         }
     }
 
     case_proposition::case_proposition(ast::lambda option, optional<vector<expression>> body) :
-        lambda(rvalue_cast(option)),
-        body(rvalue_cast(body))
+        _lambda(rvalue_cast(option)),
+        _body(rvalue_cast(body))
     {
-        position = lambda->position;
+        _position = _lambda->position();
+    }
+
+    vector<expression> const& case_proposition::options() const
+    {
+        return _options;
+    }
+
+    optional<ast::lambda> const& case_proposition::lambda() const
+    {
+        return _lambda;
+    }
+
+    optional<vector<expression>> const& case_proposition::body() const
+    {
+        return _body;
+    }
+
+    lexer::position const& case_proposition::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, case_proposition const& proposition)
     {
-        pretty_print(os, proposition.options, ", ");
+        pretty_print(os, proposition.options(), ", ");
         os << ": {";
-        pretty_print(os, proposition.body, "; ");
+        pretty_print(os, proposition.body(), "; ");
         os << "}";
         return os;
     }
@@ -43,19 +63,34 @@ namespace puppet { namespace ast {
     }
 
     case_expression::case_expression(lexer::position position, struct expression expression, vector<case_proposition> propositions) :
-        position(rvalue_cast(position)),
-        expression(rvalue_cast(expression)),
-        propositions(rvalue_cast(propositions))
+        _position(rvalue_cast(position)),
+        _expression(rvalue_cast(expression)),
+        _propositions(rvalue_cast(propositions))
     {
+    }
+
+    expression const& case_expression::expression() const
+    {
+        return _expression;
+    }
+
+    vector<case_proposition> const& case_expression::propositions() const
+    {
+        return _propositions;
+    }
+
+    lexer::position const& case_expression::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, case_expression const& expr)
     {
-        if (is_blank(expr.expression)) {
+        if (expr.expression().blank()) {
             return os;
         }
-        os << "case " << expr.expression << " { ";
-        pretty_print(os, expr.propositions, " ");
+        os << "case " << expr.expression() << " { ";
+        pretty_print(os, expr.propositions(), " ");
         os << " }";
         return os;
     }

@@ -21,14 +21,18 @@ namespace puppet { namespace ast {
 
         /**
          * Constructs the undef with the given position.
-         * @name position The position of the undef keyword.
+         * @param position The position of the undef keyword.
          */
         undef(lexer::position position);
 
         /**
-         * The position of the undef keyword.
+         * Gets the position of the undef.
+         * @return Returns the position of the undef.
          */
-        lexer::position position;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
     };
 
     /**

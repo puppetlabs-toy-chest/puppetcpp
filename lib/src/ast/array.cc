@@ -9,15 +9,25 @@ using boost::optional;
 namespace puppet { namespace ast {
 
     array::array(lexer::position position, optional<vector<expression>> elements) :
-        position(rvalue_cast(position)),
-        elements(rvalue_cast(elements))
+        _position(rvalue_cast(position)),
+        _elements(rvalue_cast(elements))
     {
+    }
+
+    optional<vector<expression>> const&array::elements() const
+    {
+        return _elements;
+    }
+
+    lexer::position const& array::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, array const& array)
     {
         os << '[';
-        pretty_print(os, array.elements, ", ");
+        pretty_print(os, array.elements(), ", ");
         os << ']';
         return os;
     }

@@ -64,9 +64,9 @@ namespace puppet { namespace compiler {
         }
 
         try {
-            // Parse the manifest file
-            auto manifest = parser::parse(file);
-            logger.log(level::debug, "parsed syntax tree:\n%1%", manifest);
+            // Parse the file
+            auto tree = parser::parse(path, file);
+            logger.log(level::debug, "parsed syntax tree:\n%1%", tree);
 
             // Create a helper warning function
             auto warning = [&](lexer::position const& position, string const& message) {
@@ -77,15 +77,16 @@ namespace puppet { namespace compiler {
             };
 
             runtime::catalog catalog;
+            runtime::context context(logger, *this, catalog, warning);
 
             // TODO: set parameters and facts in the top scope
 
             // TODO: create settings scope in catalog
 
-            // Evaluate all the top level expressions in the manifest
-            if (manifest.body) {
-                expression_evaluator evaluator(logger, catalog, path, *this, warning);
-                for (auto& expression : *manifest.body) {
+            // Evaluate all the top level expressions
+            if (tree->body()) {
+                expression_evaluator evaluator(context, tree);
+                for (auto& expression : *tree->body()) {
                     // Top level expressions must be productive
                     evaluator.evaluate(expression, true);
                 }

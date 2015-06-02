@@ -7,8 +7,13 @@ using namespace puppet::lexer;
 namespace puppet { namespace ast {
 
     undef::undef(lexer::position position) :
-        position(rvalue_cast(position))
+        _position(rvalue_cast(position))
     {
+    }
+
+    lexer::position const& undef::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, undef const&)

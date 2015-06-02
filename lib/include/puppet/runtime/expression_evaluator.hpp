@@ -4,16 +4,12 @@
  */
 #pragma once
 
-#include "../compiler/node.hpp"
-#include "../logging/logger.hpp"
-#include "../ast/expression.hpp"
-#include "scope.hpp"
-#include "catalog.hpp"
+#include "../ast/syntax_tree.hpp"
+#include "context.hpp"
 #include <cstdint>
 #include <vector>
 #include <exception>
-#include <functional>
-#include <deque>
+#include <memory>
 
 namespace puppet { namespace runtime {
 
@@ -46,77 +42,28 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs a expression evaluator.
-         * @param logger The logger to use for logging messages.
-         * @param catalog The catalog being compiled.
-         * @param path The path to the file being compiled.
-         * @param node The node being compiled.
-         * @param warning A function to call to output a warning at a given position.
+         * @param context The runtime evaluation context.
+         * @param tree The syntax tree being evaluated.
          */
-        explicit expression_evaluator(logging::logger& logger, runtime::catalog& catalog, std::string const& path, compiler::node& node, std::function<void(lexer::position const&, std::string const&)> const& warning);
+        expression_evaluator(runtime::context& context, std::shared_ptr<ast::syntax_tree> tree);
 
         /**
-         * Gets the logger used for logging messages.
-         * @return Returns the logger used for logging messages.
+         * Gets the current evaluation context.
+         * @return Returns the current evaluation context.
          */
-        logging::logger& logger();
+        runtime::context& context();
 
         /**
-         * Gets the catalog being compiled.
-         * @return Returns the catalog being compiled.
+         * Gets the current evaluation context.
+         * @return Returns the current evaluation context.
          */
-        runtime::catalog& catalog();
+        runtime::context const& context() const;
 
         /**
-         * Gets the path to the file being compiled.
-         * @return Returns the path to the file being compiled.
+         * Gets the syntax tree being evaluated.
+         * @return Returns the syntax tree being evaluated.
          */
-        std::string const& path() const;
-
-        /**
-         * Gets the current compilation node.
-         * @return Returns the current compilation node.
-         */
-        compiler::node& node();
-
-        /**
-         * Gets the current scope.
-         * @return Returns the current scope.
-         */
-        runtime::scope& scope();
-
-        /**
-         * Gets the top scope.
-         * @return Returns the top scope.
-         */
-        runtime::scope& top();
-
-        /**
-         * Adds a scope with the given name.
-         * Note: if a scope of the same name already exists, the existing scope is returned unmodified.
-         * @param name The name of the scope to add.
-         * @param scope The scope to add.
-         * @return Returns the scope.
-         */
-        runtime::scope* add_scope(std::string name, runtime::scope scope);
-
-        /**
-         * Finds a scope by name.
-         * @param name The name of the scope to find.
-         * @return Returns a pointer to the scope if found or nullptr if the scope is not found.
-         */
-        runtime::scope* find_scope(std::string const& name);
-
-        /**
-         * Pushes the given scope.
-         * @param current The new current scope.
-         */
-        void push_scope(runtime::scope& current);
-
-        /**
-         * Pops the current scope.
-         * @return Returns true if the scope was popped or false if not (i.e. already at top scope).
-         */
-        bool pop_scope();
+        std::shared_ptr<ast::syntax_tree> const& tree() const;
 
         /**
          * Evaluates the given AST expression and returns the resulting runtime value.
@@ -150,13 +97,6 @@ namespace puppet { namespace runtime {
         boost::optional<values::array> unfold(ast::primary_expression const& expression, values::value& evaluated);
 
         /**
-         * Emits a warning with the given position and message.
-         * @param position The position of the warning.
-         * @param message The warning message.
-         */
-        void warn(lexer::position const& position, std::string const& message) const;
-
-        /**
          * Determines if a value is a "match" for an expected value.
          * Uses the match operator for expected regex values or equality for other expected values.
          * @param actual The actual value.
@@ -188,34 +128,8 @@ namespace puppet { namespace runtime {
         static uint8_t get_precedence(ast::binary_operator op);
         static bool is_right_associative(ast::binary_operator op);
 
-        logging::logger& _logger;
-        runtime::catalog& _catalog;
-        std::string const& _path;
-        compiler::node& _node;
-        std::unordered_map<std::string, runtime::scope> _scopes;
-        std::deque<runtime::scope*> _scope_stack;
-        std::function<void(lexer::position const&, std::string const&)> const& _warn;
-    };
-
-    /**
-     * Helper for creating an ephemeral scope.
-     */
-    struct ephemeral_scope
-    {
-        /**
-         * Constructs an ephemeral scope.
-         * @param evaluator The current expression evaluator.
-         */
-        explicit ephemeral_scope(expression_evaluator& evaluator);
-
-        /**
-         * Destructs the ephemeral scope.
-         */
-        ~ephemeral_scope();
-
-    private:
-        expression_evaluator& _evaluator;
-        scope _scope;
+        runtime::context& _context;
+        std::shared_ptr<ast::syntax_tree> _tree;
     };
 
 }}  // namespace puppet::runtime

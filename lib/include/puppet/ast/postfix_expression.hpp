@@ -38,19 +38,26 @@ namespace puppet { namespace ast {
         postfix_expression(primary_expression primary, std::vector<postfix_subexpression> subexpressions);
 
         /**
-         * The primary expression to the postfix expression.
+         * Gets the primary expression.
+         * @return Returns the primary expression.
          */
-        primary_expression primary;
+        primary_expression const& primary() const;
 
         /**
-         * The postfix subexpressions.
+         * Gets the postfix subexpressions.
+         * @return Returns the postfix subexpressions.
          */
-        std::vector<postfix_subexpression> subexpressions;
+        std::vector<postfix_subexpression> const& subexpressions() const;
 
         /**
-         * Gets the position of the expression.
+         * Gets the position of the postfix expression.
+         * @return Returns the position of the postfix expression.
          */
         lexer::position const& position() const;
+
+     private:
+        primary_expression _primary;
+        std::vector<postfix_subexpression> _subexpressions;
     };
 
     /**

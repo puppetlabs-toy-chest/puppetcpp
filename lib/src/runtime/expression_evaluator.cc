@@ -41,74 +41,25 @@ namespace puppet { namespace runtime {
         return _position;
     }
 
-    expression_evaluator::expression_evaluator(logging::logger& logger, runtime::catalog& catalog, string const& path, compiler::node& node, function<void(lexer::position const&, string const&)> const& warning) :
-        _logger(logger),
-        _catalog(catalog),
-        _path(path),
-        _node(node),
-        _warn(warning)
+    expression_evaluator::expression_evaluator(runtime::context& context, shared_ptr<ast::syntax_tree> tree) :
+        _context(context),
+        _tree(rvalue_cast(tree))
     {
-        // Add the top scope
-        push_scope(*add_scope("", runtime::scope("Class[main]")));
     }
 
-    logging::logger& expression_evaluator::logger()
+    runtime::context& expression_evaluator::context()
     {
-        return _logger;
+        return _context;
     }
 
-    runtime::catalog& expression_evaluator::catalog()
+    runtime::context const& expression_evaluator::context() const
     {
-        return _catalog;
+        return _context;
     }
 
-    string const& expression_evaluator::path() const
+    shared_ptr<ast::syntax_tree> const& expression_evaluator::tree() const
     {
-        return _path;
-    }
-
-    compiler::node& expression_evaluator::node()
-    {
-        return _node;
-    }
-
-    runtime::scope& expression_evaluator::scope()
-    {
-        return *_scope_stack.back();
-    }
-
-    runtime::scope& expression_evaluator::top()
-    {
-        return *_scope_stack.front();
-    }
-
-    runtime::scope* expression_evaluator::add_scope(std::string name, runtime::scope scope)
-    {
-        return &_scopes.emplace(make_pair(rvalue_cast(name), rvalue_cast(scope))).first->second;
-    }
-
-    runtime::scope* expression_evaluator::find_scope(std::string const& name)
-    {
-        auto it = _scopes.find(name);
-        if (it == _scopes.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
-
-    void expression_evaluator::push_scope(runtime::scope& current)
-    {
-        _scope_stack.push_back(&current);
-    }
-
-    bool expression_evaluator::pop_scope()
-    {
-        // Don't pop the top scope
-        if (_scope_stack.size() == 1) {
-            return false;
-        }
-        _scope_stack.pop_back();
-        return true;
+        return _tree;
     }
 
     value expression_evaluator::evaluate(ast::expression const& expr, bool productive)
@@ -118,12 +69,13 @@ namespace puppet { namespace runtime {
         }
 
         // Evaluate the primary expression
-        auto result = evaluate(expr.primary);
+        auto result = evaluate(expr.primary());
         auto position = expr.position();
 
         // Climb the remainder of the expression
-        auto begin = expr.binary.begin();
-        climb_expression(result, position, 0, begin, expr.binary.end());
+        auto& binary = expr.binary();
+        auto begin = binary.begin();
+        climb_expression(result, position, 0, begin, binary.end());
 
         return result;
     }
@@ -137,18 +89,18 @@ namespace puppet { namespace runtime {
     boost::optional<values::array> expression_evaluator::unfold(ast::expression const& expr, value& result)
     {
         // An unfold expression is always unary with no further expressions
-        if (!expr.binary.empty()) {
+        if (!expr.binary().empty()) {
             return boost::none;
         }
         // Unfold the first expression
-        return unfold(expr.primary, result);
+        return unfold(expr.primary(), result);
     }
 
     boost::optional<values::array> expression_evaluator::unfold(ast::primary_expression const& expression, value& evaluated)
     {
         // Determine if the given expression is a unary splat of an array
         auto unary = boost::get<ast::unary_expression>(&expression);
-        if (unary && unary->op == ast::unary_operator::splat && as<values::array>(evaluated)) {
+        if (unary && unary->op() == ast::unary_operator::splat && as<values::array>(evaluated)) {
             return mutate_as<values::array>(evaluated);
         }
 
@@ -158,14 +110,6 @@ namespace puppet { namespace runtime {
             return unfold(*nested, evaluated);
         }
         return boost::none;
-    }
-
-    void expression_evaluator::warn(lexer::position const& position, string const& message) const
-    {
-        if (!_warn) {
-            return;
-        }
-        _warn(position, message);
     }
 
     bool expression_evaluator::is_match(value& actual, lexer::position const& actual_position, value& expected, lexer::position const& expected_position)
@@ -190,17 +134,17 @@ namespace puppet { namespace runtime {
     bool expression_evaluator::is_productive(ast::expression const& expr)
     {
         // Check if the primary expression itself is productive
-        if (is_productive(expr.primary)) {
+        if (is_productive(expr.primary())) {
             return true;
         }
 
         // Expressions followed by an assignment or relationship operator are productive
-        for (auto const& binary : expr.binary) {
-            if (binary.op == ast::binary_operator::assignment ||
-                binary.op == ast::binary_operator::in_edge ||
-                binary.op == ast::binary_operator::in_edge_subscribe ||
-                binary.op == ast::binary_operator::out_edge ||
-                binary.op == ast::binary_operator::out_edge_subscribe) {
+        for (auto const& binary : expr.binary()) {
+            if (binary.op() == ast::binary_operator::assignment ||
+                binary.op() == ast::binary_operator::in_edge ||
+                binary.op() == ast::binary_operator::in_edge_subscribe ||
+                binary.op() == ast::binary_operator::out_edge ||
+                binary.op() == ast::binary_operator::out_edge_subscribe) {
                 return true;
             }
         }
@@ -219,7 +163,7 @@ namespace puppet { namespace runtime {
 
         // Check for unary expression
         if (auto ptr = boost::get<ast::unary_expression>(&expr)) {
-            if (is_productive(ptr->operand)) {
+            if (is_productive(ptr->operand())) {
                 return true;
             }
         }
@@ -232,10 +176,10 @@ namespace puppet { namespace runtime {
 
         // Postfix method calls are productive
         if (auto ptr = boost::get<ast::postfix_expression>(&expr)) {
-            if (is_productive(ptr->primary)) {
+            if (is_productive(ptr->primary())) {
                 return true;
             }
-            for (auto const& subexpression : ptr->subexpressions) {
+            for (auto const& subexpression : ptr->subexpressions()) {
                 if (boost::get<ast::method_call_expression>(&subexpression)) {
                     return true;
                 }
@@ -253,10 +197,10 @@ namespace puppet { namespace runtime {
     {
         // This member implements precedence climbing for binary expressions
         uint8_t precedence;
-        while (begin != end && (precedence = get_precedence(begin->op)) >= min_precedence)
+        while (begin != end && (precedence = get_precedence(begin->op())) >= min_precedence)
         {
-            auto op = begin->op;
-            auto& operand = begin->operand;
+            auto op = begin->op();
+            auto& operand = begin->operand();
             auto right_position = begin->position();
             ++begin;
 
@@ -369,18 +313,6 @@ namespace puppet { namespace runtime {
     bool expression_evaluator::is_right_associative(ast::binary_operator op)
     {
         return op == ast::binary_operator::assignment;
-    }
-
-    ephemeral_scope::ephemeral_scope(expression_evaluator& evaluator) :
-        _evaluator(evaluator),
-        _scope(string(), &evaluator.scope())
-    {
-        _evaluator.push_scope(_scope);
-    }
-
-    ephemeral_scope::~ephemeral_scope()
-    {
-        _evaluator.pop_scope();
     }
 
 }}  // namespace puppet::runtime

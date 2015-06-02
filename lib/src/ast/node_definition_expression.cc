@@ -19,10 +19,10 @@ namespace puppet { namespace ast {
             if (_ss.tellp() > 0) {
                 _ss << '.';
             }
-            _ss << part.value;
+            _ss << part.value();
 
             if (!_position) {
-                _position = part.position;
+                _position = part.position();
             }
         }
         std::string result() const
@@ -41,51 +41,71 @@ namespace puppet { namespace ast {
     };
 
     hostname::hostname() :
-        regex(false)
+        _regex(false)
     {
     }
 
-    hostname::hostname(ast::defaulted defaulted) :
-        position(rvalue_cast(defaulted.position)),
-        regex(false)
+    hostname::hostname(ast::defaulted const& defaulted) :
+        _position(defaulted.position()),
+        _regex(false)
     {
     }
 
     hostname::hostname(vector<variant<name, bare_word, number>> const& parts) :
-        regex(false)
+        _regex(false)
     {
         hostname_visitor visitor;
         for (auto const& part : parts) {
             boost::apply_visitor(visitor, part);
         }
-        value = visitor.result();
+        _value = visitor.result();
         if (visitor.position()) {
-            position = *visitor.position();
+            _position = *visitor.position();
         }
     }
 
-    hostname::hostname(ast::string name) :
-        position(rvalue_cast(name.position)),
-        value(rvalue_cast(name.value)),
-        regex(false)
+    hostname::hostname(ast::string const& name) :
+        _position(name.position()),
+        _value(name.value()),
+        _regex(false)
     {
     }
 
-    hostname::hostname(ast::regex regx) :
-        position(rvalue_cast(regx.position)),
-        value(rvalue_cast(regx.value)),
-        regex(true)
+    hostname::hostname(ast::regex const& regx) :
+        _position(regx.position()),
+        _value(regx.value()),
+        _regex(true)
     {
+    }
+
+    std::string const& hostname::value() const
+    {
+        return _value;
+    }
+
+    bool hostname::regex() const
+    {
+        return _regex;
+    }
+
+    bool hostname::is_default() const
+    {
+        return !_regex && _value.empty();
+    }
+
+    lexer::position const& hostname::position() const
+    {
+        return _position;
     }
 
     ostream& operator<<(ostream& os, hostname const& name)
     {
-        if (!name.regex && name.value.empty()) {
+        if (name.is_default()) {
             os << "default";
-        } else if (name.regex) {
-            os << '/' << name.value << '/';
+        } else if (name.regex()) {
+            os << '/' << name.value() << '/';
         } else {
-            os << name.value;
+            os << name.value();
         }
         return os;
     }
@@ -95,22 +115,37 @@ namespace puppet { namespace ast {
     }
 
     node_definition_expression::node_definition_expression(lexer::position position, vector<hostname> names, optional<vector<expression>> body) :
-        position(rvalue_cast(position)),
-        names(rvalue_cast(names)),
-        body(rvalue_cast(body))
+        _position(rvalue_cast(position)),
+        _names(rvalue_cast(names)),
+        _body(rvalue_cast(body))
     {
     }
 
-    ostream& operator<<(ostream& os, node_definition_expression const& expr)
+    vector<hostname> const& node_definition_expression::names() const
     {
-        if (expr.names.empty()) {
+        return _names;
+    }
+
+    optional<vector<expression>> const& node_definition_expression::body() const
+    {
+        return _body;
+    }
+
+    lexer::position const& node_definition_expression::position() const
+    {
+        return _position;
+    }
+
+    ostream& operator<<(ostream& os, node_definition_expression const& stmt)
+    {
+        if (stmt.names().empty()) {
             return os;
         }
 
         os << "node ";
-        pretty_print(os, expr.names, ", ");
+        pretty_print(os, stmt.names(), ", ");
         os << " { ";
-        pretty_print(os, expr.body, "; ");
+        pretty_print(os, stmt.body(), "; ");
         os << " }";
         return os;
     }

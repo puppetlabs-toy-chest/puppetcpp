@@ -31,12 +31,13 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
         // Set the value in the current scope
-        auto value = context.evaluator().scope().set(var->name(), rvalue_cast(context.right()), context.left_position().line());
+        auto& scope = context.evaluator().context().scope();
+        auto value = scope.set(var->name(), rvalue_cast(context.right()), context.left_position().line());
         if (!value) {
             // Check where the variable was previously assigned
-            auto line = context.evaluator().scope().where(var->name());
+            auto line = scope.where(var->name());
             if (line) {
-                throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % context.evaluator().path() % line).str());
+                throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % context.evaluator().tree()->path() % line).str());
             }
             // Assume it's a fact if we don't know where it was assigned
             throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: a fact of the same name already exists.") % var->name()).str());

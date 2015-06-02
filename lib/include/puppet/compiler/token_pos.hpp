@@ -17,7 +17,7 @@ namespace boost { namespace spirit {
 
     /**
      * Enables token_pos as a terminal in parser expressions.
-     * @typename A0 The type of the first argument to the terminal.
+     * @tparam A0 The type of the first argument to the terminal.
      */
     template <typename A0>
     struct use_terminal<qi::domain, terminal_ex<puppet::compiler::tag::token_pos, fusion::vector1<A0>>> : mpl::or_<is_integral<A0>, is_enum<A0>>
@@ -43,6 +43,9 @@ namespace puppet { namespace compiler {
         template <typename Context, typename Iterator>
         struct attribute
         {
+            /**
+             * The type of the attribute for the parser.
+             */
             typedef lexer::position type;
         };
 

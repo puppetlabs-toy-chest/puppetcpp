@@ -19,7 +19,7 @@ namespace puppet { namespace ast {
         /**
          * Default constructor for bare word.
          */
-        bare_word();
+        bare_word() = default;
 
         /**
          * Constructs a bare word from a token.
@@ -28,20 +28,26 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit bare_word(boost::iterator_range<Iterator> const& token) :
-            position(token.begin().position()),
-            value(token.begin(), token.end())
+            _position(token.begin().position()),
+            _value(token.begin(), token.end())
         {
         }
 
         /**
-         * The position of the bare word.
+         * Gets the value of the bare word.
+         * @return Returns the value of the bare word.
          */
-        lexer::position position;
+        std::string const& value() const;
 
         /**
-         * The string value of the bare word.
+         * Gets the position of the bare word.
+         * @return Returns the position of the bare word.
          */
-        std::string value;
+        lexer::position const& position() const;
+
+    private:
+        lexer::position _position;
+        std::string _value;
     };
 
     /**

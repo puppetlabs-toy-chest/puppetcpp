@@ -30,28 +30,43 @@ namespace puppet { namespace ast {
     }
 
     attribute_expression::attribute_expression() :
-        op(attribute_operator::none)
+        _op(attribute_operator::none)
     {
     }
 
     attribute_expression::attribute_expression(struct name attribute_name, attribute_operator op, expression value) :
-        name(rvalue_cast(attribute_name)),
-        op(op),
-        value(rvalue_cast(value))
+        _name(rvalue_cast(attribute_name)),
+        _op(op),
+        _value(rvalue_cast(value))
     {
+    }
+
+    name const& attribute_expression::name() const
+    {
+        return _name;
+    }
+
+    attribute_operator attribute_expression::op() const
+    {
+        return _op;
+    }
+
+    expression const& attribute_expression::value() const
+    {
+        return _value;
     }
 
     lexer::position const& attribute_expression::position() const
     {
-        return name.position;
+        return _name.position();
     }
 
     ostream& operator<<(ostream& os, attribute_expression const& attribute)
     {
-        if (attribute.op == attribute_operator::none) {
+        if (attribute.op() == attribute_operator::none) {
             return os;
         }
-        os << attribute.name << " " << attribute.op << " " << attribute.value;
+        os << attribute.name() << " " << attribute.op() << " " << attribute.value();
         return os;
     }
 
@@ -60,56 +75,81 @@ namespace puppet { namespace ast {
     }
 
     resource_body::resource_body(expression title, optional<vector<attribute_expression>> attributes) :
-        title(rvalue_cast(title)),
-        attributes(rvalue_cast(attributes))
+        _title(rvalue_cast(title)),
+        _attributes(rvalue_cast(attributes))
     {
+    }
+
+    expression const& resource_body::title() const
+    {
+        return _title;
+    }
+
+    optional<vector<attribute_expression>> const& resource_body::attributes() const
+    {
+        return _attributes;
     }
 
     lexer::position const& resource_body::position() const
     {
-        return title.position();
+        return _title.position();
     }
 
     ostream& operator<<(ostream& os, resource_body const& body)
     {
-        if (is_blank(body.title)) {
+        if (body.title().blank()) {
             return os;
         }
-        os << body.title << ": { ";
-        pretty_print(os, body.attributes, ", ");
+        os << body.title() << ": { ";
+        pretty_print(os, body.attributes(), ", ");
         os << " }";
         return os;
     }
 
     resource_expression::resource_expression() :
-        status(resource_status::realized)
+        _status(resource_status::realized)
     {
     }
 
     resource_expression::resource_expression(ast::name type, vector<resource_body> bodies, resource_status status) :
-        type(rvalue_cast(type)),
-        bodies(rvalue_cast(bodies)),
-        status(status)
+        _type(rvalue_cast(type)),
+        _bodies(rvalue_cast(bodies)),
+        _status(status)
     {
+    }
+
+    ast::name const& resource_expression::type() const
+    {
+        return _type;
+    }
+
+    vector<resource_body> resource_expression::bodies() const
+    {
+        return _bodies;
+    }
+
+    resource_status resource_expression::status() const
+    {
+        return _status;
     }
 
     lexer::position const& resource_expression::position() const
     {
-        return type.position;
+        return _type.position();
     }
 
     ostream& operator<<(ostream& os, resource_expression const& expression)
     {
-        if (expression.type.value.empty()) {
+        if (expression.type().value().empty()) {
             return os;
         }
-        if (expression.status == resource_status::virtualized) {
+        if (expression.status() == resource_status::virtualized) {
             os << "@";
-        } else if (expression.status == resource_status::exported) {
+        } else if (expression.status() == resource_status::exported) {
             os << "@@";
         }
-        os << expression.type << " { ";
-        pretty_print(os, expression.bodies, "; ");
+        os << expression.type() << " { ";
+        pretty_print(os, expression.bodies(), "; ");
         os << " }";
         return os;
     }

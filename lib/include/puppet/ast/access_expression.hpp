@@ -28,14 +28,20 @@ namespace puppet { namespace ast {
         access_expression(lexer::position position, std::vector<expression> arguments);
 
         /**
-         * The position of the access expression.
+         * Gets the argument expressions.
+         * @return Returns the argument expressions.
          */
-        lexer::position position;
+        std::vector<expression> const& arguments() const;
 
         /**
-         * The arguments to the access expression.
+         * Gets the position of the access expression.
+         * @return Returns the position of the access expression.
          */
-        std::vector<expression> arguments;
+        lexer::position const& position() const;
+
+    private:
+        lexer::position _position;
+        std::vector<expression> _arguments;
     };
 
     /**

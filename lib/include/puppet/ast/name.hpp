@@ -28,20 +28,26 @@ namespace puppet { namespace ast {
          */
         template <typename Iterator>
         explicit name(boost::iterator_range<Iterator> const& token) :
-            position(token.begin().position()),
-            value(token.begin(), token.end())
+            _position(token.begin().position()),
+            _value(token.begin(), token.end())
         {
         }
 
         /**
-         * The position of the name.
+         * Gets the value of the name.
+         * @return Returns the value of the name.
          */
-        lexer::position position;
+        std::string const& value() const;
 
         /**
-         * The value of the name.
+         * Gets the position of the name.
+         * @return Returns the position of the name.
          */
-        std::string value;
+        lexer::position const& position() const;
+
+    private:
+        lexer::position _position;
+        std::string _value;
     };
 
     /**

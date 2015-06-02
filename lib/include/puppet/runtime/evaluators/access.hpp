@@ -59,7 +59,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         template <typename T>
         result_type operator()(T const& target)
         {
-            throw evaluation_exception(_expression.position, (boost::format("access expression is not supported for %1%.") % values::get_type(target)).str());
+            throw evaluation_exception(_expression.position(), (boost::format("access expression is not supported for %1%.") % values::get_type(target)).str());
         }
 
         template <typename Value, typename Type>

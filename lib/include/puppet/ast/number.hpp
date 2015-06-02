@@ -31,14 +31,20 @@ namespace puppet { namespace ast {
         explicit number(lexer::number_token const& token);
 
         /**
-         * The position of the number.
+         * Gets the value of the number.
+         * @return Returns the value of the number.
          */
-        lexer::position position;
+        value_type const& value() const;
 
         /**
-         * The value of the number.
+         * Gets the position of the number.
+         * @return Returns the position of the number.
          */
-        value_type value;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        value_type _value;
     };
 
     /**

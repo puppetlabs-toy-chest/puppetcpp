@@ -29,14 +29,20 @@ namespace puppet { namespace ast {
         else_expression(lexer::position position, boost::optional<std::vector<expression>> body);
 
         /**
-         * The position of the else expression.
+         * Gets the optional expressions that make up the body.
+         * @return Returns the optional expressions that make up the body.
          */
-        lexer::position position;
+        boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * The body of the else expression.
+         * Gets the position of the "else" expression.
+         * @return Returns the position of the "else" expression.
          */
-        boost::optional<std::vector<expression>> body;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        boost::optional<std::vector<expression>> _body;
     };
 
     /**
@@ -66,19 +72,27 @@ namespace puppet { namespace ast {
         elsif_expression(lexer::position position, expression conditional, boost::optional<std::vector<expression>> body);
 
         /**
-         * The position of the elsif expression.
+         * Gets the conditional of the "else if" expression.
+         * @return Returns the conditional of the "else if" expression.
          */
-        lexer::position position;
+        expression const& conditional() const;
 
         /**
-         * The conditional expression.
+         * Gets the optional expressions that make up the body.
+         * @return Returns the optional expressions that make up the body.
          */
-        expression conditional;
+        boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * The body of the elsif expression.
+         * Gets the position of the "else if" expression.
+         * @return Returns the position of the "else if" expression.
          */
-        boost::optional<std::vector<expression>> body;
+        lexer::position const& position() const;
+
+    private:
+        lexer::position _position;
+        expression _conditional;
+        boost::optional<std::vector<expression>> _body;
     };
 
     /**
@@ -115,29 +129,41 @@ namespace puppet { namespace ast {
             boost::optional<else_expression> else_);
 
         /**
-         * The position of the if expression.
+         * Gets the conditional of the "if" expression.
+         * @return Returns the conditional of the "if" expression.
          */
-        lexer::position position;
+        expression const& conditional() const;
 
         /**
-         * The conditional expression.
+         * Gets the optional expressions that make up the body.
+         * @return Returns the optional expressions that make up the body.
          */
-        expression conditional;
+        boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * The body of the if expression.
+         * Gets the optional list of "else if" expressions.
+         * @return Returns the optional list of "else if" expressions.
          */
-        boost::optional<std::vector<expression>> body;
+        boost::optional<std::vector<elsif_expression>> const& elsifs() const;
 
         /**
-         * The elsifs of the if expression.
+         * Gets the optional "else" expression.
+         * @return Returns the optional "else" expression.
          */
-        boost::optional<std::vector<elsif_expression>> elsifs;
+        boost::optional<else_expression> const& else_() const;
 
         /**
-         * The else of the if expression.
+         * Gets the position of the "if" expression.
+         * @return Returns the position of the "if" expression.
          */
-        boost::optional<else_expression> else_;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        expression _conditional;
+        boost::optional<std::vector<expression>> _body;
+        boost::optional<std::vector<elsif_expression>> _elsifs;
+        boost::optional<else_expression> _else;
     };
 
     /**

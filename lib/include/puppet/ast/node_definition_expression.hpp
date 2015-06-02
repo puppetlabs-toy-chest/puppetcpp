@@ -26,7 +26,7 @@ namespace puppet { namespace ast {
          * Constructs a default hostname.
          * @param defaulted The default value.
          */
-        explicit hostname(ast::defaulted defaulted);
+        explicit hostname(ast::defaulted const& defaulted);
 
         /**
          * Constructs a hostname from a list of name or number parts.
@@ -38,28 +38,42 @@ namespace puppet { namespace ast {
          * Constructs a hostname from the given AST string.
          * @param name The hostname as a string.
          */
-        explicit hostname(ast::string name);
+        explicit hostname(ast::string const& name);
 
         /**
          * Constructs a hostname from the given AST regex.
          * @param name The hostname as a regex.
          */
-        explicit hostname(ast::regex name);
+        explicit hostname(ast::regex const& name);
 
         /**
-         * The position of the hostname.
+         * Gets the value of the hostname.
+         * @return Returns the value of the hostname.
          */
-        lexer::position position;
+        std::string const& value() const;
 
         /**
-         * The value of the hostname.
+         * Determines if the hostname is a regex.
+         * @return Returns true if the hostname is a regex or false if it is a regular string.
          */
-        std::string value;
+        bool regex() const;
 
         /**
-         * Whether or not the value of the hostname is a regex.
+         * Determines if the hostname is the default hostname.
+         * @return Returns true if the hostname is the default hostname or false if it is not.
          */
-        bool regex;
+        bool is_default() const;
+
+        /**
+         * Gets the position of the hostname.
+         * @return Returns the position of the hostname.
+         */
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        std::string _value;
+        bool _regex;
     };
 
     /**
@@ -89,19 +103,27 @@ namespace puppet { namespace ast {
         node_definition_expression(lexer::position position, std::vector<hostname> names, boost::optional<std::vector<expression>> body);
 
         /**
-         * The position of the node definition.
+         * Gets the list of hostnames for the node definition.
+         * @return Returne the hostnames for the node definition.
          */
-        lexer::position position;
+        std::vector<hostname> const& names() const;
 
         /**
-         * The hostnames of the node definition.
+         * Gets the optionl expressions that make up the definition'd body.
+         * @return Returns the optional expressions that make up the definition's body.
          */
-        std::vector<hostname> names;
+        boost::optional<std::vector<expression>> const& body() const;
 
         /**
-         * The body of the node definition.
+         * Gets the position of the node definition expression.
+         * @return Returns the position of the node definition expression.
          */
-        boost::optional<std::vector<expression>> body;
+        lexer::position const& position() const;
+
+     private:
+        lexer::position _position;
+        std::vector<hostname> _names;
+        boost::optional<std::vector<expression>> _body;
     };
 
     /**

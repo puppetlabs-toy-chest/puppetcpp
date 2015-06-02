@@ -32,7 +32,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::boolean const& boolean)
     {
-        return boolean.value;
+        return boolean.value();
     }
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(int64_t integer)
@@ -47,21 +47,21 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::number const& number)
     {
-        return boost::apply_visitor(*this, number.value);
+        return boost::apply_visitor(*this, number.value());
     }
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::string const& str)
     {
         string_interpolator interpolator(_evaluator);
-        return interpolator.interpolate(str.position, str.value, str.escapes, str.quote, str.interpolated, str.margin, str.remove_break);
+        return interpolator.interpolate(str.position(), str.value(), str.escapes(), str.quote(), str.interpolated(), str.margin(), str.remove_break());
     }
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::regex const& regx)
     {
         try {
-            return values::regex(regx.value);
+            return values::regex(regx.value());
         } catch (std::regex_error const& ex) {
-            throw evaluation_exception(regx.position, ex.what());
+            throw evaluation_exception(regx.position(), ex.what());
         }
     }
 
@@ -69,32 +69,35 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         static const std::regex match_variable_patterh("^\\d+$");
 
+        auto& name = var.name();
+        auto& scope = _evaluator.context().scope();
+
         bool match = false;
         value const* val = nullptr;
-        if (regex_match(var.name, match_variable_patterh)) {
+        if (regex_match(name, match_variable_patterh)) {
             // Check for invalid match name
-            if (var.name.size() > 1 && var.name[0] == '0') {
-                throw evaluation_exception(var.position, (boost::format("variable name $%1% is not a valid match variable name.") % var.name).str());
+            if (name.size() > 1 && name[0] == '0') {
+                throw evaluation_exception(var.position(), (boost::format("variable name $%1% is not a valid match variable name.") % var.name()).str());
             }
             // Look up the match
-            val = _evaluator.scope().get(stoi(var.name));
+            val = scope.get(stoi(name));
             match = true;
         } else {
-            val = _evaluator.scope().get(var.name);
+            val = scope.get(name);
         }
-        return variable(var.name, val, match);
+        return variable(name, val, match);
     }
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::name const& name)
     {
         // Treat as a string
-        return name.value;
+        return name.value();
     }
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::bare_word const& word)
     {
         // Treat as a string
-        return word.value;
+        return word.value();
     }
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::type const& type)
@@ -129,10 +132,10 @@ namespace puppet { namespace runtime { namespace evaluators {
             { types::variant::name(),       types::variant() },
         };
 
-        auto it = names.find(type.name);
+        auto it = names.find(type.name());
         if (it == names.end()) {
             // Assume the unknown type is a resource
-            return types::resource(type.name);
+            return types::resource(type.name());
         }
         return it->second;
     }
@@ -141,8 +144,8 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         values::array new_array;
 
-        if (array.elements) {
-            for (auto& element : *array.elements) {
+        if (array.elements()) {
+            for (auto& element : *array.elements()) {
                 auto result = _evaluator.evaluate(element);
 
                 // If unfolding, append the array's elements
@@ -162,8 +165,8 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         values::hash new_hash;
 
-        if (hash.elements) {
-            for (auto& element : *hash.elements) {
+        if (hash.elements()) {
+            for (auto& element : *hash.elements()) {
                 new_hash.emplace(_evaluator.evaluate(element.first), _evaluator.evaluate(element.second));
             }
         }
