@@ -1,77 +1,64 @@
-#include <puppet/runtime/yielder.hpp>
+#include <puppet/runtime/executor.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
 using namespace puppet::runtime::values;
+using boost::optional;
 
 namespace puppet { namespace runtime {
 
-    yielder::yielder(expression_evaluator& evaluator, lexer::position const& position, boost::optional<ast::lambda> const& lambda) :
+    executor::executor(expression_evaluator& evaluator, lexer::position const& position, optional<vector<ast::parameter>> const& parameters, optional<vector<ast::expression>> const& body) :
         _evaluator(evaluator),
         _position(position),
-        _lambda(lambda)
+        _parameters(parameters),
+        _body(body)
     {
     }
 
-    lexer::position const& yielder::position() const
+    lexer::position const& executor::position() const
     {
-        if (!_lambda) {
-            return _position;
-        }
-        return _lambda->position();
+        return _position;
     }
 
-    lexer::position const& yielder::position(size_t index) const
+    lexer::position const& executor::position(size_t index) const
     {
-        if (!_lambda || !_lambda->parameters()) {
-            return position();
-        }
-        if (index >= _lambda->parameters()->size()) {
+        if (index >= parameter_count()) {
             throw runtime_error("parameter index out of range.");
         }
-        return (*_lambda->parameters())[index].position();
+        return (*_parameters)[index].position();
     }
 
-    bool yielder::lambda_given() const
+    size_t executor::parameter_count() const
     {
-        return static_cast<bool>(_lambda);
-    }
-
-    size_t yielder::parameter_count() const
-    {
-        if (!_lambda || !_lambda->parameters()) {
+        if (!_parameters) {
             return 0;
         }
-        return _lambda->parameters()->size();
+        return _parameters->size();
     }
 
-    value yielder::yield() const
+    value executor::execute() const
     {
         values::array arguments;
-        return yield(arguments);
+        return execute(arguments);
     }
 
-    value yielder::yield(values::array& arguments) const
+    value executor::execute(values::array& arguments) const
     {
-        if (!lambda_given()) {
-            throw evaluation_exception(_position, "function call requires a lambda but one was not given.");
-        }
-
         // Create an ephemeral scope
         ephemeral_scope ephemeral(_evaluator.context());
 
         bool has_optional_parameters = false;
-        if (_lambda->parameters()) {
-            for (size_t i = 0; i < _lambda->parameters()->size(); ++i) {
-                auto const& parameter = (*_lambda->parameters())[i];
+        if (_parameters) {
+            for (size_t i = 0; i < _parameters->size(); ++i) {
+                auto const& parameter = (*_parameters)[i];
                 auto const& name = parameter.variable().name();
                 values::value value;
 
                 // Check for capture
                 if (parameter.captures()) {
-                    if (i != _lambda->parameters()->size() - 1) {
+                    if (i != _parameters->size() - 1) {
                         throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% \"captures rest\" but is not the last parameter.") % name).str());
                     }
                     values::array captured;
@@ -122,11 +109,11 @@ namespace puppet { namespace runtime {
 
         // Evaluate the body
         value result;
-        if (_lambda->body()) {
-            for (size_t i = 0; i < _lambda->body()->size(); ++i) {
-                auto& expression = (*_lambda->body())[i];
+        if (_body) {
+            for (size_t i = 0; i < _body->size(); ++i) {
+                auto& expression = (*_body)[i];
                 // The last expression in the block is allowed to be unproductive (i.e. the return value)
-                result = _evaluator.evaluate(expression, i < ( _lambda->body()->size() - 1));
+                result = _evaluator.evaluate(expression, i < (_body->size() - 1));
             }
         }
         // Return a mutated result in case we're returning a local variable

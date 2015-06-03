@@ -42,9 +42,10 @@ namespace puppet { namespace runtime { namespace evaluators {
                     arguments.push_back(result);
                 }
 
-                // Yield to the lambda and execute the block if truthy
-                runtime::yielder yielder(_evaluator, proposition.position(), proposition.lambda());
-                if (is_truthy(yielder.yield(arguments))) {
+                // Execute the lambda and execute the block if truthy
+                auto const& lambda = *proposition.lambda();
+                runtime::executor executor(_evaluator, proposition.position(), lambda.parameters(), lambda.body());
+                if (is_truthy(executor.execute(arguments))) {
                     return execute_block(proposition.body());
                 }
                 continue;

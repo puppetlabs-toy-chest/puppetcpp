@@ -115,10 +115,10 @@ add_library(puppet SHARED
     src/runtime/catalog.cc
     src/runtime/context.cc
     src/runtime/dispatcher.cc
+    src/runtime/executor.cc
     src/runtime/expression_evaluator.cc
     src/runtime/scope.cc
     src/runtime/string_interpolator.cc
-    src/runtime/yielder.cc
 )
 add_dependencies(puppet generate_static_lexer)
 

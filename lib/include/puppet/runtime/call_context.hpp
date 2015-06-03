@@ -5,7 +5,7 @@
 #pragma once
 
 #include "values/value.hpp"
-#include "yielder.hpp"
+#include "executor.hpp"
 #include "expression_evaluator.hpp"
 
 namespace puppet { namespace runtime {
@@ -74,16 +74,16 @@ namespace puppet { namespace runtime {
         values::array& arguments();
 
         /**
-         * Gets the yielder for a lambda.
-         * @return Returns the yielder for a lambda.
+         * Gets the executor for the lambda.
+         * @return Returns the executor for the lambda.
          */
-        runtime::yielder const& yielder() const;
+        runtime::executor const& lambda() const;
 
         /**
-         * Gets the yielder for a lambda.
-         * @return Returns the yielder for a lambda.
+         * Determines if a lambda was passed to the function.
+         * @return Returns true if a lambda was passed or false if one was not.
          */
-        runtime::yielder& yielder();
+        bool lambda_given() const;
 
     private:
         expression_evaluator& _evaluator;
@@ -91,7 +91,8 @@ namespace puppet { namespace runtime {
         lexer::position const& _position;
         values::array _arguments;
         std::vector<lexer::position> _positions;
-        runtime::yielder _yielder;
+        runtime::executor _executor;
+        bool _lambda_given;
     };
 
 }}  // puppet::runtime

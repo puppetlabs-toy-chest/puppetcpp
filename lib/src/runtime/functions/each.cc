@@ -20,13 +20,13 @@ namespace puppet { namespace runtime { namespace functions {
             arguments.reserve(2);
             for (size_t i = 0; i < argument.size(); ++i) {
                 arguments.clear();
-                if (_context.yielder().parameter_count() == 1) {
+                if (_context.lambda().parameter_count() == 1) {
                     arguments.push_back(string(1, argument[i]));
                 } else {
                     arguments.push_back(static_cast<int64_t>(i));
                     arguments.push_back(string(1, argument[i]));
                 }
-                _context.yielder().yield(arguments);
+                _context.lambda().execute(arguments);
             }
         }
 
@@ -43,13 +43,13 @@ namespace puppet { namespace runtime { namespace functions {
             arguments.reserve(2);
             for (size_t i = 0; i < argument.size(); ++i) {
                 arguments.clear();
-                if (_context.yielder().parameter_count() == 1) {
+                if (_context.lambda().parameter_count() == 1) {
                     arguments.push_back(argument[i]);
                 } else {
                     arguments.push_back(static_cast<int64_t>(i));
                     arguments.push_back(argument[i]);
                 }
-                _context.yielder().yield(arguments);
+                _context.lambda().execute(arguments);
             }
         }
 
@@ -59,13 +59,13 @@ namespace puppet { namespace runtime { namespace functions {
             arguments.reserve(2);
             for (auto const& kvp : argument) {
                 arguments.clear();
-                if (_context.yielder().parameter_count() == 1) {
+                if (_context.lambda().parameter_count() == 1) {
                     arguments.emplace_back(values::array { kvp.first, kvp.second });
                 } else {
                     arguments.push_back(kvp.first);
                     arguments.push_back(kvp.second);
                 }
-                _context.yielder().yield(arguments);
+                _context.lambda().execute(arguments);
             }
         }
 
@@ -95,13 +95,13 @@ namespace puppet { namespace runtime { namespace functions {
             arguments.reserve(2);
             range.each([&](int64_t index, int64_t value) {
                 arguments.clear();
-                if (_context.yielder().parameter_count() == 1) {
+                if (_context.lambda().parameter_count() == 1) {
                     arguments.push_back(value);
                 } else {
                     arguments.push_back(index);
                     arguments.push_back(value);
                 }
-                _context.yielder().yield(arguments);
+                _context.lambda().execute(arguments);
                 return true;
             });
         }
@@ -111,8 +111,6 @@ namespace puppet { namespace runtime { namespace functions {
 
     value each::operator()(call_context& context) const
     {
-        auto& yielder = context.yielder();
-
         // Check the argument count
         auto& arguments = context.arguments();
         if (arguments.size() != 1) {
@@ -120,12 +118,12 @@ namespace puppet { namespace runtime { namespace functions {
         }
 
         // Check the lambda
-        if (!yielder.lambda_given()) {
+        if (!context.lambda_given()) {
             throw evaluation_exception(context.position(), "expected a lambda to 'each' function but one was not given.");
         }
-        auto count = yielder.parameter_count();
+        auto count = context.lambda().parameter_count();
         if (count == 0 || count > 2) {
-            throw evaluation_exception(yielder.position(), (boost::format("expected 1 or 2 lambda parameters but %1% were given.") % count).str());
+            throw evaluation_exception(context.lambda().position(), (boost::format("expected 1 or 2 lambda parameters but %1% were given.") % count).str());
         }
 
         // Visit the argument and return it
