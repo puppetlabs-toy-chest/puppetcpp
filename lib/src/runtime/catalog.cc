@@ -142,6 +142,15 @@ namespace puppet { namespace runtime {
 
     resource const* catalog::find_resource(string const& type, string const& title) const
     {
+        // Check for an alias first
+        auto aliases = _aliases.find(type);
+        if (aliases != _aliases.end()) {
+            auto alias = aliases->second.find(title);
+            if (alias != aliases->second.end()) {
+                return alias->second;
+            }
+        }
+
         auto resources = _resources.find(type);
         if (resources == _resources.end()) {
             return nullptr;
@@ -189,14 +198,25 @@ namespace puppet { namespace runtime {
             return false;
         }
 
-        _aliases[type].emplace(make_pair(alias, resource));
+        // Add a new map for the type if needed
+        auto aliases = _aliases.find(type);
+        if (aliases == _aliases.end()) {
+            aliases = _aliases.emplace(make_pair(type, resource_alias_map::mapped_type())).first;
+        }
+
+        aliases->second.emplace(make_pair(alias, resource));
         return true;
     }
 
     resource* catalog::add_resource(string const& type, string const& title, string const& file, size_t line, bool exported)
     {
-        // Add a new resource
-        auto result = _resources[type].emplace(make_pair(title, resource(*this, type, title, file, line, exported)));
+        // Add a new map for the type if needed
+        auto resources = _resources.find(type);
+        if (resources == _resources.end()) {
+            resources = _resources.emplace(make_pair(type, resource_map::mapped_type())).first;
+        }
+        // Add the resource
+        auto result = resources->second.emplace(make_pair(title, resource(*this, type, title, file, line, exported)));
         if (!result.second) {
             return nullptr;
         }

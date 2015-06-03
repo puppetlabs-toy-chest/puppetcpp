@@ -144,9 +144,9 @@ namespace puppet { namespace runtime { namespace values {
             return types::regexp();
         }
 
-        result_type operator()(type const&) const
+        result_type operator()(type const& t) const
         {
-            return types::type();
+            return t;
         }
 
         result_type operator()(variable const& var) const
