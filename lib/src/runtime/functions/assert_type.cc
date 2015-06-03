@@ -27,12 +27,12 @@ namespace puppet { namespace runtime { namespace functions {
         }
 
         // Otherwise, a lambda is required
-        if (!context.yielder().lambda_given()) {
+        if (!context.lambda_given()) {
             throw evaluation_exception(context.position(1), (boost::format("type assertion failure: expected %1% but found %2%.") % *type % get_type(arguments[1])).str());
         }
 
         arguments[1] = get_type(arguments[1]);
-        return context.yielder().yield(arguments);
+        return context.lambda().execute(arguments);
     }
 
 }}}  // namespace puppet::runtime::functions

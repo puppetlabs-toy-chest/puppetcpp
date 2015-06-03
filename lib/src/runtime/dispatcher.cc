@@ -16,6 +16,24 @@ using boost::optional;
 
 namespace puppet { namespace runtime {
 
+    static optional<vector<ast::parameter>> const& lambda_parameters(optional<ast::lambda> const& lambda)
+    {
+        static optional<vector<ast::parameter>> none;
+        if (!lambda) {
+            return none;
+        }
+        return lambda->parameters();
+    }
+
+    static optional<vector<ast::expression>> const& lamda_body(optional<ast::lambda> const& lambda)
+    {
+        static optional<vector<ast::expression>> none;
+        if (!lambda) {
+            return none;
+        }
+        return lambda->body();
+    }
+
     call_context::call_context(
         expression_evaluator& evaluator,
         string const& name,
@@ -28,7 +46,8 @@ namespace puppet { namespace runtime {
             _evaluator(evaluator),
             _name(name),
             _position(position),
-            _yielder(evaluator, _position, lambda)
+            _executor(evaluator, _position, lambda_parameters(lambda), lamda_body(lambda)),
+            _lambda_given(lambda)
     {
         _arguments.reserve((arguments ? arguments->size() : 0) + (first_value ? 1 : 0));
         if (first_value) {
@@ -102,14 +121,14 @@ namespace puppet { namespace runtime {
         return _arguments;
     }
 
-    runtime::yielder const& call_context::yielder() const
+    runtime::executor const& call_context::lambda() const
     {
-        return _yielder;
+        return _executor;
     }
 
-    runtime::yielder& call_context::yielder()
+    bool call_context::lambda_given() const
     {
-        return _yielder;
+        return _lambda_given;
     }
 
     dispatcher::dispatcher(string const& name, lexer::position const& position) :
@@ -151,8 +170,8 @@ namespace puppet { namespace runtime {
         lexer::position const* first_position) const
     {
         // Dispatch the call
-        call_context ctx(evaluator, _name, _position, arguments, lambda, first_value, first_expression, first_position);
-        return (*_function)(ctx);
+        call_context context(evaluator, _name, _position, arguments, lambda, first_value, first_expression, first_position);
+        return (*_function)(context);
     }
 
     string const& dispatcher::name() const
