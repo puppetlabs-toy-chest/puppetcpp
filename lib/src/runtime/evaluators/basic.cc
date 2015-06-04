@@ -70,7 +70,6 @@ namespace puppet { namespace runtime { namespace evaluators {
         static const std::regex match_variable_patterh("^\\d+$");
 
         auto& name = var.name();
-        auto& scope = _evaluator.context().scope();
 
         bool match = false;
         value const* val = nullptr;
@@ -80,10 +79,10 @@ namespace puppet { namespace runtime { namespace evaluators {
                 throw evaluation_exception(var.position(), (boost::format("variable name $%1% is not a valid match variable name.") % var.name()).str());
             }
             // Look up the match
-            val = scope.get(stoi(name));
+            val = _evaluator.context().scope().get(stoi(name));
             match = true;
         } else {
-            val = scope.get(name);
+            val = _evaluator.context().lookup(name, &var.position());
         }
         return variable(name, val, match);
     }
@@ -108,7 +107,6 @@ namespace puppet { namespace runtime { namespace evaluators {
             { types::boolean::name(),       types::boolean() },
             { types::callable::name(),      types::callable() },
             { types::catalog_entry::name(), types::catalog_entry() },
-            { types::klass::name(),         types::klass() },
             { types::collection::name(),    types::collection() },
             { types::data::name(),          types::data() },
             { types::defaulted::name(),     types::defaulted() },

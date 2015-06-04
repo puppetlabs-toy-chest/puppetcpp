@@ -22,10 +22,16 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs a scope.
-         * @param name The name of the scope; empty for ephemeral scopes.
+         * @param name The name of the scope (e.g. foo).
+         * @param display_name The display name of the scope (e.g. Class[Foo]).
          * @param parent The parent scope.
          */
-        explicit scope(std::string name = std::string(), scope* parent = nullptr);
+        explicit scope(std::string name, std::string display_name, scope* parent = nullptr);
+
+        /**
+         * Constructs an ephemeral scope.
+         */
+        explicit scope(scope* parent);
 
         /**
          * Determines if the scope is ephemeral.
@@ -41,6 +47,20 @@ namespace puppet { namespace runtime {
         std::string const& name() const;
 
         /**
+         * Gets the display name of the scope.
+         * Note: for ephemeral scopes, this returns the display name of the parent scope.
+         * @return Returns the display name of scope.
+         */
+        std::string const& display_name() const;
+
+        /**
+         * Qualifies the given name using the scope's name.
+         * @param name The name to qualify.
+         * @return Returns the fully-qualified name.
+         */
+        std::string qualify(std::string const& name) const;
+
+        /**
          * Sets a variable in the scope.
          * @param name The name of the variable.
          * @param val The value of the variable.
@@ -52,7 +72,7 @@ namespace puppet { namespace runtime {
         /**
          * Gets a variable in the scope.
          * @param name The name of the variable to get.
-         * @return Returns the tuple of path, line, and value for the variable.
+         * @return Returns the value of the variable or nullptr if not found.
          */
         values::value const* get(std::string const& name) const;
 
@@ -95,6 +115,7 @@ namespace puppet { namespace runtime {
 
      private:
         std::string _name;
+        std::string _display_name;
         scope* _parent;
         std::unordered_map<std::string, std::tuple<values::value, size_t>> _variables;
         std::deque<std::vector<values::value>> _matches;

@@ -34,6 +34,9 @@ namespace puppet { namespace runtime { namespace types {
             // Now uppercase every start of a type name
             boost::split_iterator<std::string::iterator> end;
             for (auto it = boost::make_split_iterator(_type_name, boost::first_finder("::", boost::is_equal())); it != end; ++it) {
+                if (!*it) {
+                    continue;
+                }
                 auto range = boost::make_iterator_range(it->begin(), it->begin() + 1);
                 boost::to_upper(range);
             }

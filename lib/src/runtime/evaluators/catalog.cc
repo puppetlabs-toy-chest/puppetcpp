@@ -1,6 +1,7 @@
 #include <puppet/runtime/evaluators/catalog.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -127,8 +128,28 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::class_definition_expression const& expr)
     {
-        // TODO: implement
-        throw evaluation_exception(expr.position(), "class expressions are not yet implemented.");
+        if (boost::starts_with(expr.name().value(), "::")) {
+            throw evaluation_exception(expr.name().position(), (boost::format("'%1%' is not a valid class name.") % expr.name().value()).str());
+        }
+
+        auto name = _evaluator.context().scope().qualify(expr.name().value());
+
+        // Ensure the base class exists
+        if (expr.parent()) {
+            if (!_evaluator.context().find_class(expr.parent()->value())) {
+                throw evaluation_exception(expr.parent()->position(), (boost::format("parent class '%1%' has not been defined.") % expr.parent()->value()).str());
+            }
+        }
+
+        // Ensure the class being defined does not exist
+        auto definition = _evaluator.context().find_class(name);
+        if (definition) {
+            throw evaluation_exception(expr.name().position(), (boost::format("class '%1%' has already been defined at %2%:%3%.") % name % definition->path() % definition->line()).str());
+        }
+
+        // Define the class
+        _evaluator.context().define_class(_evaluator.tree(), expr);
+        return types::klass(name);
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::defined_type_expression const& expr)

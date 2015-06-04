@@ -6,9 +6,16 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    scope::scope(string name, scope* parent) :
+    scope::scope(string name, string display_name, scope* parent) :
         _name(rvalue_cast(name)),
+        _display_name(rvalue_cast(display_name)),
         _parent(parent)
+    {
+        // Emplace an empty set of matches to start
+        _matches.emplace_front();
+    }
+
+    scope::scope(scope* parent)
     {
         // Emplace an empty set of matches to start
         _matches.emplace_front();
@@ -16,7 +23,7 @@ namespace puppet { namespace runtime {
 
     bool scope::ephemeral() const
     {
-        return _name.empty();
+        return _name.empty() && _display_name.empty();
     }
 
     string const& scope::name() const
@@ -25,6 +32,23 @@ namespace puppet { namespace runtime {
             return _name;
         }
         return _parent->name();
+    }
+
+    string const& scope::display_name() const
+    {
+        if (!_parent || !ephemeral()) {
+            return _display_name;
+        }
+        return _parent->display_name();
+    }
+
+    string scope::qualify(string const& name) const
+    {
+        auto& scope_name = this->name();
+        if (scope_name.empty()) {
+            return name;
+        }
+        return scope_name + "::" + name;
     }
 
     value const* scope::set(string name, value val, size_t line)
@@ -103,7 +127,7 @@ namespace puppet { namespace runtime {
 
     ostream& operator<<(ostream& os, scope const& s)
     {
-        os << "Scope(" << s.name() << ")";
+        os << "Scope(" << s.display_name() << ")";
         return os;
     }
 

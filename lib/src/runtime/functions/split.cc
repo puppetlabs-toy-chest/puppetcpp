@@ -22,6 +22,9 @@ namespace puppet { namespace runtime { namespace functions {
             values::array result;
             boost::split_iterator<string::const_iterator> end;
             for (auto it = boost::make_split_iterator(first, boost::first_finder(second, boost::is_equal())); it != end; ++it) {
+                if (!*it) {
+                    continue;
+                }
                 result.emplace_back(boost::copy_range<string>(*it));
             }
             return result;
