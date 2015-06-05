@@ -51,6 +51,7 @@ add_library(puppet SHARED
     src/lexer/position.cc
     src/lexer/token_id.cc
     src/logging/logger.cc
+    src/compiler/context.cc
     src/compiler/environment.cc
     src/compiler/node.cc
     src/compiler/parser.cc
@@ -64,6 +65,7 @@ add_library(puppet SHARED
     src/runtime/functions/each.cc
     src/runtime/functions/fail.cc
     src/runtime/functions/filter.cc
+    src/runtime/functions/include.cc
     src/runtime/functions/logging.cc
     src/runtime/functions/split.cc
     src/runtime/functions/with.cc
@@ -114,6 +116,7 @@ add_library(puppet SHARED
     src/runtime/values/value.cc
     src/runtime/catalog.cc
     src/runtime/context.cc
+    src/runtime/definition_scanner.cc
     src/runtime/dispatcher.cc
     src/runtime/executor.cc
     src/runtime/expression_evaluator.cc

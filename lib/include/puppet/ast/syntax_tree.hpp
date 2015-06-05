@@ -24,17 +24,10 @@ namespace puppet { namespace ast {
 
         /**
          * Constructs a syntax tree with the given optional list of expressions that comprise the body.
-         * @param path The path of the file that was parsed.
          * @param body The body of the syntax tree.
          * @param end The ending token position for the syntax tree (applicable to interpolation).
          */
-        syntax_tree(std::string path, boost::optional<std::vector<expression>> body, lexer::position end = lexer::position());
-
-        /**
-        * Gets the path to the file that was parsed.
-        * @return Returns the path to the file that was pared.
-        */
-        std::string const& path() const;
+        explicit syntax_tree(boost::optional<std::vector<expression>> body, lexer::position end = lexer::position());
 
         /**
          * Gets the expressions that make up the body of the syntax tree.
@@ -49,7 +42,6 @@ namespace puppet { namespace ast {
         lexer::position const& end() const;
 
     private:
-        std::string _path;
         boost::optional<std::vector<expression>> _body;
         lexer::position _end;
     };

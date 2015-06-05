@@ -26,6 +26,9 @@ namespace puppet { namespace runtime { namespace types {
         explicit basic_class(std::string title = {}) :
             _title(rvalue_cast(title))
         {
+            if (boost::starts_with(_title, "::")) {
+                _title = _title.substr(2);
+            }
             boost::to_lower(_title);
         }
 

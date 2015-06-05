@@ -8,16 +8,10 @@ using boost::optional;
 
 namespace puppet { namespace ast {
 
-    syntax_tree::syntax_tree(std::string path, optional<vector<expression>> body, lexer::position end) :
-        _path(rvalue_cast(path)),
+    syntax_tree::syntax_tree(optional<vector<expression>> body, lexer::position end) :
         _body(rvalue_cast(body)),
         _end(rvalue_cast(end))
     {
-    }
-
-    std::string const& syntax_tree::path() const
-    {
-        return _path;
     }
 
     optional<vector<expression>> const& syntax_tree::body() const

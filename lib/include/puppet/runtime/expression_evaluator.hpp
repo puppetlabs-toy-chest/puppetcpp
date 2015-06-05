@@ -5,11 +5,13 @@
 #pragma once
 
 #include "../ast/syntax_tree.hpp"
+#include "../compiler/context.hpp"
 #include "context.hpp"
 #include <cstdint>
 #include <vector>
 #include <exception>
 #include <memory>
+#include <unordered_map>
 
 namespace puppet { namespace runtime {
 
@@ -42,28 +44,78 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs a expression evaluator.
-         * @param context The runtime evaluation context.
-         * @param tree The syntax tree being evaluated.
+         * @param compilation_context The compilation context.
+         * @param evaluation_context The evaluation context.
          */
-        expression_evaluator(runtime::context& context, std::shared_ptr<ast::syntax_tree> tree);
+        expression_evaluator(std::shared_ptr<compiler::context> compilation_context, runtime::context& evaluation_context);
 
         /**
-         * Gets the current evaluation context.
-         * @return Returns the current evaluation context.
+         * Gets the catalog being compiled.
+         * @return Returns the catalog being compiled.
          */
-        runtime::context& context();
+        runtime::catalog& catalog();
 
         /**
-         * Gets the current evaluation context.
-         * @return Returns the current evaluation context.
+         * Gets the current scope.
+         * @return Returns the current scope.
          */
-        runtime::context const& context() const;
+        runtime::scope& scope();
 
         /**
-         * Gets the syntax tree being evaluated.
-         * @return Returns the syntax tree being evaluated.
+         * Looks up a variable.
+         * @param name The name of the variable to look up.
+         * @param position The position where the lookup is taking place or nullptr if not in source.
+         * @return Returns a pointer to the variable if found or nullptr if the variable was not found.
          */
-        std::shared_ptr<ast::syntax_tree> const& tree() const;
+        values::value const* lookup(std::string const& name, lexer::position const* position = nullptr);
+
+        /**
+         * Gets the logger.
+         * @return Returns the logger.
+         */
+        logging::logger& logger();
+
+        /**
+         * Gets the path to the file being evaluated.
+         * @return Returns the path to the file being evaluated.
+         */
+        std::shared_ptr<std::string> const& path() const;
+
+        /**
+         * Determines if a class is defined.
+         * @param klass The class to check.
+         * @return Returns true if the class is defined or false if not.
+         */
+        bool is_class_defined(types::klass const& klass) const;
+
+        /**
+         * Declares a class in the manifest.
+         * @param klass The class to declare.
+         * @param position The position where the class was declared.
+         * @param arguments The class arguments or nullptr for no arguments.
+         * @return Returns the resource that was added for the class or nullptr if the class failed to evaluate.
+         */
+        runtime::resource* declare_class(types::klass const& klass, lexer::position const& position, std::unordered_map<ast::name, values::value>* arguments = nullptr);
+
+        /**
+         * Creates a local scope.
+         * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
+         * @return Returns the local scope.
+         */
+        local_scope create_local_scope(runtime::scope* scope = nullptr);
+
+        /**
+         * Emits a warning with the given position and message.
+         * @param position The position of the warning.
+         * @param message The warning message.
+         */
+        void warn(lexer::position const& position, std::string const& message);
+
+        /**
+         * Evaluates the entire associated syntax tree.
+         * This will scan the tree for classes and defined types and then evaluate all top-level expressions.
+         */
+        void evaluate();
 
         /**
          * Evaluates the given AST expression and returns the resulting runtime value.
@@ -128,8 +180,8 @@ namespace puppet { namespace runtime {
         static uint8_t get_precedence(ast::binary_operator op);
         static bool is_right_associative(ast::binary_operator op);
 
-        runtime::context& _context;
-        std::shared_ptr<ast::syntax_tree> _tree;
+        std::shared_ptr<compiler::context> _compilation_context;
+        runtime::context& _evaluation_context;
     };
 
 }}  // namespace puppet::runtime

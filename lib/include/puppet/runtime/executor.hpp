@@ -49,18 +49,31 @@ namespace puppet { namespace runtime {
 
         /**
          * Executes the expression.
+         * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
-        values::value execute() const;
+        values::value execute(runtime::scope* scope = nullptr) const;
 
         /**
          * Executes the expression with the given positional arguments.
-         * @param arguments The positional arguments to pass to the expression.
+         * @param arguments The positional arguments to set in the scope.
+         * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
-        values::value execute(values::array& arguments) const;
+        values::value execute(values::array& arguments, runtime::scope* scope = nullptr) const;
+
+        /**
+         * Executes the expression with the given keyword arguments.
+         * @param arguments The keyword arguments to set in the scope.
+         * @param scope The scope to execute under or nullptr to use an ephemeral scope.
+         * @return Returns the value that was returned from the body.
+         */
+        values::value execute(values::hash& arguments, runtime::scope* scope = nullptr) const;
 
      private:
+        void validate_parameter(ast::parameter const& parameter, values::value const& value) const;
+        values::value evaluate_body() const;
+
         expression_evaluator& _evaluator;
         lexer::position const& _position;
         boost::optional<std::vector<ast::parameter>> const& _parameters;

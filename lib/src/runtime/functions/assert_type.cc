@@ -12,7 +12,7 @@ namespace puppet { namespace runtime { namespace functions {
         // Check the argument count
         auto& arguments = context.arguments();
         if (arguments.size() != 2) {
-            throw evaluation_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to 'assert_type' function but %1% were given.") % arguments.size()).str());
+            throw evaluation_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to '%1%' function but %2% were given.") % context.name() % arguments.size()).str());
         }
 
         // First argument should be a type (TODO: should accept a string that is a type name too)

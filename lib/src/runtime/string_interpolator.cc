@@ -38,7 +38,6 @@ namespace puppet { namespace runtime {
         lexer_string_iterator const& end,
         function<lexer::position(lexer::position const&)> const& calculate_position)
     {
-        auto& scope = evaluator.context().scope();
         try {
             bool bracket = begin != end && *begin == '{';
             string_static_lexer lexer;
@@ -69,7 +68,7 @@ namespace puppet { namespace runtime {
                 if (!token) {
                     return false;
                 }
-                val = scope.get(string(token->begin(), token->end()));
+                val = evaluator.lookup(string(token->begin(), token->end()));
             } else if (token_begin != token_end && token_begin->id() == static_cast<size_t>(token_id::number)) {
                 auto token = get<number_token>(&token_begin->value());
                 if (!token) {
@@ -78,7 +77,7 @@ namespace puppet { namespace runtime {
                 if (token->base() != numeric_base::decimal || token->value().which() != 0) {
                     throw evaluation_exception(calculate_position(token->position()), (boost::format("'%1%' is not a valid match variable name.") % *token).str());
                 }
-                val = scope.get(get<int64_t>(token->value()));
+                val = evaluator.scope().get(get<int64_t>(token->value()));
             } else {
                 return false;
             }
@@ -241,7 +240,7 @@ namespace puppet { namespace runtime {
                 } else if (next != end) {
                     // Emit a warning for invalid escape sequence (unless single quoted string)
                     if (quote != '\'') {
-                        _evaluator.context().warn(calculate_position(begin.position()), (boost::format("invalid escape sequence '\\%1%'.") % *next).str());
+                        _evaluator.warn(calculate_position(begin.position()), (boost::format("invalid escape sequence '\\%1%'.") % *next).str());
                     }
                 }
             } else if (*begin == '\n') {
@@ -263,11 +262,11 @@ namespace puppet { namespace runtime {
                             // Parse the rest of the string
                             // The parsing will stop at the first unmatched } token
                             auto tree = parser::parser::parse(next, end, true);
-                            if (tree->body()) {
+                            if (tree.body()) {
                                 // Evaluate the body and add the result to the string
                                 value val;
                                 bool first = true;
-                                for (auto& expression : *tree->body()) {
+                                for (auto& expression : *tree.body()) {
                                     // For the first expression, transform certain constructs to their "variable" forms
                                     if (first) {
                                         first = false;
@@ -285,8 +284,8 @@ namespace puppet { namespace runtime {
                             }
 
                             // Move past where parsing stopped (must have been at the closing })
-                            begin = lexer_string_iterator(text.begin() + tree->end().offset());
-                            begin.position(tree->end());
+                            begin = lexer_string_iterator(text.begin() + tree.end().offset());
+                            begin.position(tree.end());
                             ++begin;
                             continue;
                         } catch (compiler::parse_exception const& ex) {
@@ -331,7 +330,7 @@ namespace puppet { namespace runtime {
             }
             // Check for valid hex digit
             if (!isxdigit(*begin)) {
-                _evaluator.context().warn(position, (boost::format("unicode escape sequence contains non-hexadecimal character '%1%'.") % *begin).str());
+                _evaluator.warn(position, (boost::format("unicode escape sequence contains non-hexadecimal character '%1%'.") % *begin).str());
                 return false;
             }
 
@@ -345,11 +344,11 @@ namespace puppet { namespace runtime {
 
         if (variable_length) {
             if (begin == end || *begin != '}') {
-                _evaluator.context().warn(position, "a closing '}' was not found for unicode escape sequence.");
+                _evaluator.warn(position, "a closing '}' was not found for unicode escape sequence.");
                 return false;
             }
             if (characters.empty() || characters.size() > 6) {
-                _evaluator.context().warn(position, "expected at least 1 and at most 6 hexadecimal digits for unicode escape sequence.");
+                _evaluator.warn(position, "expected at least 1 and at most 6 hexadecimal digits for unicode escape sequence.");
                 return false;
             }
         }
@@ -359,7 +358,7 @@ namespace puppet { namespace runtime {
         try {
             from = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(characters));
         } catch (boost::bad_lexical_cast const&) {
-            _evaluator.context().warn(position, "invalid unicode escape sequence.");
+            _evaluator.warn(position, "invalid unicode escape sequence.");
             return false;
         }
 
@@ -373,7 +372,7 @@ namespace puppet { namespace runtime {
 
         // Ensure all characters were converted (there was only one)
         if (next_from != &from + 1) {
-            _evaluator.context().warn(position, "invalid unicode code point.");
+            _evaluator.warn(position, "invalid unicode code point.");
             return false;
         }
 

@@ -19,7 +19,7 @@ namespace puppet { namespace runtime { namespace operators {
         {
             smatch matches;
             bool result = right.empty() || regex_search(left, matches, std::regex(right));
-            _context.evaluator().context().scope().set(matches);
+            _context.evaluator().scope().set(matches);
             return result;
         }
 
@@ -27,7 +27,7 @@ namespace puppet { namespace runtime { namespace operators {
         {
             smatch matches;
             bool result = right.pattern().empty() || regex_search(left, matches, right.value());
-            _context.evaluator().context().scope().set(matches);
+            _context.evaluator().scope().set(matches);
             return result;
         }
 

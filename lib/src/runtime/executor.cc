@@ -38,16 +38,16 @@ namespace puppet { namespace runtime {
         return _parameters->size();
     }
 
-    value executor::execute() const
+    value executor::execute(runtime::scope* scope) const
     {
         values::array arguments;
-        return execute(arguments);
+        return execute(arguments, scope);
     }
 
-    value executor::execute(values::array& arguments) const
+    value executor::execute(values::array& arguments, runtime::scope* scope) const
     {
-        // Create an ephemeral scope
-        ephemeral_scope ephemeral(_evaluator.context());
+        // Create the execution scope
+        auto local_scope = _evaluator.create_local_scope(scope);
 
         bool has_optional_parameters = false;
         if (_parameters) {
@@ -90,23 +90,67 @@ namespace puppet { namespace runtime {
                 }
 
                 // Verify the value matches the parameter type
-                if (parameter.type()) {
-                    auto result = _evaluator.evaluate(*parameter.type());
-                    auto type = as<values::type>(result);
-                    if (!type) {
-                        throw evaluation_exception(parameter.position(), (boost::format("expected %1% for parameter type but found %2%.") % types::type::name() % get_type(type)).str());
-                    }
-                    if (!is_instance(value, *type)) {
-                        throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% has expected type %2% but was given %3%.") % name % *type % get_type(value)).str());
-                    }
-                }
+                validate_parameter(parameter, value);
 
-                if (!_evaluator.context().scope().set(name, rvalue_cast(value), parameter.position().line())) {
+                if (!_evaluator.scope().set(name, rvalue_cast(value), _evaluator.path(), parameter.position().line())) {
                     throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }
         }
 
+        return evaluate_body();
+    }
+
+    values::value executor::execute(values::hash& arguments, runtime::scope* scope) const
+    {
+        // Create the execution scope
+        auto local_scope = _evaluator.create_local_scope(scope);
+
+        if (_parameters) {
+            for (auto const& parameter : *_parameters) {
+                auto const& name = parameter.variable().name();
+
+                // The parameter must either have been given an argument or have a default value
+                values::value value;
+                auto it = arguments.find(name);
+                if (it == arguments.end()) {
+                    if (!parameter.default_value()) {
+                        throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% is required but no value was given.") % name).str());
+                    }
+                    value = _evaluator.evaluate(*parameter.default_value());
+                } else {
+                    value = rvalue_cast(it->second);
+                }
+
+                validate_parameter(parameter, value);
+
+                if (!_evaluator.scope().set(name, rvalue_cast(value), _evaluator.path(), parameter.position().line())) {
+                    throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
+                }
+            }
+        }
+        return evaluate_body();
+    }
+
+    void executor::validate_parameter(ast::parameter const& parameter, values::value const& value) const
+    {
+        if (!parameter.type()) {
+            return;
+        }
+
+        // Verify the value matches the parameter type
+        auto result = _evaluator.evaluate(*parameter.type());
+        auto type = as<values::type>(result);
+        if (!type) {
+            throw evaluation_exception(parameter.position(), (boost::format("expected %1% for parameter type but found %2%.") % types::type::name() % get_type(type)).str());
+        }
+        if (!is_instance(value, *type)) {
+            throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% has expected type %2% but was given %3%.") % parameter.variable().name() % *type % get_type(value)).str());
+        }
+    }
+
+    values::value executor::evaluate_body() const
+    {
         // Evaluate the body
         value result;
         if (_body) {

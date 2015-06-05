@@ -3,6 +3,7 @@
 #include <puppet/runtime/functions/each.hpp>
 #include <puppet/runtime/functions/fail.hpp>
 #include <puppet/runtime/functions/filter.hpp>
+#include <puppet/runtime/functions/include.hpp>
 #include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
@@ -146,6 +147,7 @@ namespace puppet { namespace runtime {
             { "err",            functions::logging_function(logging::level::error) },
             { "fail",           functions::fail() },
             { "filter",         functions::filter() },
+            { "include",        functions::include() },
             { "info",           functions::logging_function(logging::level::info) },
             { "notice",         functions::logging_function(logging::level::notice) },
             { "split",          functions::split() },
@@ -156,7 +158,7 @@ namespace puppet { namespace runtime {
         // Find the function
         auto it = functions.find(_name);
         if (it == functions.end()) {
-            throw evaluation_exception(_position, (boost::format("unknown function \"%1%\".") % _name).str());
+            throw evaluation_exception(_position, (boost::format("unknown function '%1%'.") % _name).str());
         }
         _function = &it->second;
     }

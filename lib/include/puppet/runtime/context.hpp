@@ -5,17 +5,21 @@
 #pragma once
 
 #include "../lexer/position.hpp"
-#include "../ast/syntax_tree.hpp"
-#include "../compiler/node.hpp"
+#include "../compiler/context.hpp"
+#include "../runtime/values/value.hpp"
 #include "../logging/logger.hpp"
 #include "scope.hpp"
 #include "catalog.hpp"
 #include <string>
+#include <memory>
 #include <deque>
 #include <unordered_map>
 #include <functional>
 
 namespace puppet { namespace runtime {
+
+    // Forward declaration of context.
+    struct context;
 
     /**
      * Represents a class definition used in evaluation.
@@ -24,28 +28,23 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs a class definition.
-         * @param tree The syntax tree containing the class definition expression.
+         * @param klass The qualified class name for the class.
+         * @param context The compilation context for the class.
          * @param expression The class definition expression.
          */
-        class_definition(std::shared_ptr<ast::syntax_tree> tree, ast::class_definition_expression const* expression);
+        class_definition(types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const* expression);
 
         /**
-         * Determines if the class has been evaluated.
-         * @return Returns true if the class has been evaluated or false if it has not.
+         * Gets the qualified class type for this class definition.
+         * @return Returns the qualified class type for this class definition.
          */
-        bool evaluated() const;
+        types::klass const& klass() const;
 
         /**
-         * Gets the syntax tree containing the class definition expression.
-         * @return Returns the syntax tree containing the class definition expression or nullptr if the class was evaluated.
+         * Gets the parent class or nullptr if there is no parent class.
+         * @return Returns the parent class or nullptr if there is no parent class.
          */
-        ast::syntax_tree const* tree() const;
-
-        /**
-         * Gets the class definition expression.
-         * @return Returns the class definition expression or nullptr if the class was evaluated.
-         */
-        ast::class_definition_expression const* expression() const;
+        types::klass const* parent() const;
 
         /**
          * Gets the path of the file containing the class definition.
@@ -60,14 +59,27 @@ namespace puppet { namespace runtime {
         size_t line() const;
 
         /**
-         * Releases resources after the definition has been evaluated.
+         * Determines if the class has been evaluated.
+         * @return Returns true if the class has been evaluated or false if it has not.
          */
-        void release();
+        bool evaluated() const;
+
+        /**
+         * Evaluates the class.
+         * @param context The evaluation context.
+         * @param arguments The arguments to the class.
+         * @return Returns true if the evaluation was successful or false if the evaluation failed.
+         */
+        bool evaluate(runtime::context& context, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
 
      private:
-        std::shared_ptr<ast::syntax_tree> _tree;
+        runtime::scope* evaluate_parent(runtime::context& context);
+
+        types::klass _klass;
+        types::klass _parent;
+        std::shared_ptr<compiler::context> _context;
         ast::class_definition_expression const* _expression;
-        std::string _path;
+        std::shared_ptr<std::string> _path;
         size_t _line;
     };
 
@@ -78,36 +90,9 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluation context.
-         * @param logger The logger to use for logging messages.
-         * @param node The node being compiled.
          * @param catalog The catalog being compiled.
-         * @param warning A function to call to output a warning at a given position.
          */
-        context(logging::logger& logger, compiler::node& node, runtime::catalog& catalog, std::function<void(lexer::position const&, std::string const&)> const& warning);
-
-        /**
-         * Gets the logger used for logging messages.
-         * @return Returns the logger used for logging messages.
-         */
-        logging::logger& logger();
-
-        /**
-         * Gets the logger used for logging messages.
-         * @return Returns the logger used for logging messages.
-         */
-        logging::logger const& logger() const;
-
-        /**
-        * Gets the current compilation node.
-        * @return Returns the current compilation node.
-        */
-        compiler::node& node();
-
-        /**
-         * Gets the current compilation node.
-         * @return Returns the current compilation node.
-         */
-        compiler::node const& node() const;
+        explicit context(runtime::catalog& catalog);
 
         /**
          * Gets the catalog being compiled.
@@ -116,22 +101,10 @@ namespace puppet { namespace runtime {
         runtime::catalog& catalog();
 
         /**
-         * Gets the catalog being compiled.
-         * @return Returns the catalog being compiled.
-         */
-        runtime::catalog const& catalog() const;
-
-        /**
          * Gets the current scope.
          * @return Returns the current scope.
          */
         runtime::scope& scope();
-
-        /**
-         * Gets the current scope.
-         * @return Returns the current scope.
-         */
-        runtime::scope const& scope() const;
 
         /**
          * Gets the top scope.
@@ -140,18 +113,13 @@ namespace puppet { namespace runtime {
         runtime::scope& top();
 
         /**
-         * Gets the top scope.
-         * @return Returns the top scope.
-         */
-        runtime::scope const& top() const;
-
-        /**
          * Adds a scope to the evaluation context.
-         * Note: if a scope of the same name already exists, the existing scope is returned unmodified.
-         * @param scope The scope to add.
-         * @return Returns the scope that was added.
+         * @param name The name of the scope to add.
+         * @param display_name The display name of the scope.
+         * @param parent The parent scope.
+         * @return Returns the scope that was added or the scope with the same name that already exists.
          */
-        runtime::scope* add_scope(runtime::scope scope);
+        runtime::scope& add_scope(std::string name, std::string display_name, runtime::scope* parent = nullptr);
 
         /**
          * Finds a scope by name.
@@ -173,67 +141,64 @@ namespace puppet { namespace runtime {
         bool pop_scope();
 
         /**
-         * Looks up a variable.
-         * @param name The name of the variable to look up.
-         * @param position The position where the lookup is taking place or nullptr if not in source.
-         * @return Returns a pointer to the variable if found or nullptr if the variable was not found.
-         */
-        values::value const* lookup(std::string const& name, lexer::position const* position = nullptr);
-
-        /**
-         * Emits a warning with the given position and message.
-         * @param position The position of the warning.
-         * @param message The warning message.
-         */
-        void warn(lexer::position const& position, std::string const& message) const;
-
-        /**
          * Defines a class in the evaluation context.
-         * @param tree The abstract syntax tree containing the class definition.
+         * @param klass The class to define.
+         * @param context The compilation context.
          * @param expression The class definition expression.
-         * @return Returns the new class definition or nullptr if the class already exists in the catalog.
+         * @return Returns nullptr if the class was successfully defined or existing class definition that cannot be merged with the given definition.
          */
-        class_definition* define_class(std::shared_ptr<ast::syntax_tree> tree, ast::class_definition_expression const& expression);
+        class_definition const* define_class(types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const& expression);
 
         /**
-         * Finds a class definition.
-         * @param name The name of the class to find.
-         * @return Returns the class definition or nullptr if the class does not exist.
+         * Declares a class.
+         * If the class is already declared, the existing class will be returned.
+         * @param klass The class to declare.
+         * @param path The path to the file that is declaring the resource.
+         * @param position The position where the resource is declared.
+         * @param arguments The class arguments or nullptr for no arguments.
+         * @return Returns the resource that was added for the class or nullptr if the class failed to evaluate.
          */
-        class_definition* find_class(std::string const& name);
+        runtime::resource* declare_class(types::klass const& klass, std::shared_ptr<std::string> path, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
 
         /**
-         * Finds a class definition.
-         * @param name The name of the class to find.
-         * @return Returns the class definition or nullptr if the class does not exist.
+         * Determines if a class is defined.
+         * @param klass The class to check.
+         * @return Returns true if the class is defined or false if not.
          */
-        class_definition const* find_class(std::string const& name) const;
+        bool is_class_defined(types::klass const& klass) const;
+
+        /**
+         * Determines if a class is declared.
+         * @param klass The class to check.
+         * @return Returns true if the class is declared or false if not.
+         */
+        bool is_class_declared(types::klass const& klass) const;
 
      private:
-        logging::logger& _logger;
-        compiler::node& _node;
+        void validate_parameters(bool klass, std::vector<ast::parameter> const& parameters);
+
         runtime::catalog& _catalog;
         std::unordered_map<std::string, runtime::scope> _scopes;
         std::deque<runtime::scope*> _scope_stack;
-        std::unordered_map<std::string, class_definition> _classes;
-        std::function<void(lexer::position const&, std::string const&)> const& _warn;
+        std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
     };
 
     /**
-     * Helper for creating an ephemeral scope.
+     * Helper for setting a local scope.
      */
-    struct ephemeral_scope
+    struct local_scope
     {
         /**
-         * Constructs an ephemeral scope.
+         * Constructs an local scope.
          * @param context The current evaluation context.
+         * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
          */
-        explicit ephemeral_scope(runtime::context& context);
+        local_scope(runtime::context& context, runtime::scope* scope = nullptr);
 
         /**
-         * Destructs the ephemeral scope.
+         * Destructs the local scope.
          */
-        ~ephemeral_scope();
+        ~local_scope();
 
     private:
         runtime::context& _context;

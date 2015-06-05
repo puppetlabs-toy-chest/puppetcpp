@@ -114,7 +114,7 @@ namespace puppet { namespace runtime { namespace functions {
         // Check the argument count
         auto& arguments = context.arguments();
         if (arguments.size() != 1) {
-            throw evaluation_exception(arguments.size() > 1 ? context.position(1) : context.position(), (boost::format("expected 1 argument to 'each' function but %1% were given.") % arguments.size()).str());
+            throw evaluation_exception(arguments.size() > 1 ? context.position(1) : context.position(), (boost::format("expected 1 argument to '%1%' function but %2% were given.") % context.name() % arguments.size()).str());
         }
 
         // Check the lambda

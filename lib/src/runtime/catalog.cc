@@ -9,14 +9,16 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    resource::resource(runtime::catalog& catalog, string type, string title, string file, size_t line, bool exported) :
+    resource::resource(runtime::catalog& catalog, types::resource type, shared_ptr<string> path, size_t line, bool exported) :
         _catalog(catalog),
         _type(rvalue_cast(type)),
-        _title(rvalue_cast(title)),
-        _file(rvalue_cast(file)),
+        _path(rvalue_cast(path)),
         _line(line),
         _exported(exported)
     {
+        if (!_path) {
+            throw runtime_error("expected path.");
+        }
     }
 
     runtime::catalog const& resource::catalog() const
@@ -24,19 +26,14 @@ namespace puppet { namespace runtime {
         return _catalog;
     }
 
-    string const& resource::type() const
+    types::resource const& resource::type() const
     {
         return _type;
     }
 
-    string const& resource::title() const
+    string const& resource::path() const
     {
-        return _title;
-    }
-
-    string const& resource::file() const
-    {
-        return _file;
+        return *_path;
     }
 
     size_t resource::line() const
@@ -79,17 +76,12 @@ namespace puppet { namespace runtime {
         return _parameters.erase(name) > 0;
     }
 
-    types::resource resource::create_reference() const
-    {
-        return types::resource(_type, _title);
-    }
-
     void resource::store_parameter(string const& name, lexer::position const& name_position, values::value value, bool override)
     {
         auto it = _parameters.find(name);
         if (it != _parameters.end()) {
             if (!override) {
-                throw evaluation_exception(name_position, (boost::format("attribute '%1%' has already been set for resource %2%.") % name % create_reference()).str());
+                throw evaluation_exception(name_position, (boost::format("attribute '%1%' has already been set for resource %2%.") % name % _type).str());
             }
             it->second = rvalue_cast(value);
             return;
@@ -116,7 +108,7 @@ namespace puppet { namespace runtime {
                 throw evaluation_exception(position, "alias name cannot be empty.");
             }
             // Alias this resource
-            if (!_catalog.alias_resource(_type, _title, *alias)) {
+            if (!_catalog.alias_resource(_type, *alias)) {
                 throw evaluation_exception(position, (boost::format("a %1% resource with name or alias '%2%' already exists in the catalog.") % _type % *alias).str());
             }
             return;
@@ -135,88 +127,58 @@ namespace puppet { namespace runtime {
     {
     }
 
-    catalog::resource_map const& catalog::resources() const
+    resource* catalog::find_resource(types::resource const& resource)
     {
-        return _resources;
-    }
-
-    resource const* catalog::find_resource(string const& type, string const& title) const
-    {
-        // Check for an alias first
-        auto aliases = _aliases.find(type);
-        if (aliases != _aliases.end()) {
-            auto alias = aliases->second.find(title);
-            if (alias != aliases->second.end()) {
-                return alias->second;
-            }
-        }
-
-        auto resources = _resources.find(type);
-        if (resources == _resources.end()) {
+        if (resource.type_name().empty() || resource.title().empty()) {
             return nullptr;
         }
-        auto it = resources->second.find(title);
-        if (it == resources->second.end()) {
-            return nullptr;
-        }
-        return &it->second;
-    }
 
-    resource* catalog::find_resource(string const& type, string const& title)
-    {
         // Check for an alias first
-        auto aliases = _aliases.find(type);
+        auto aliases = _aliases.find(resource.type_name());
         if (aliases != _aliases.end()) {
-            auto alias = aliases->second.find(title);
+            auto alias = aliases->second.find(resource.title());
             if (alias != aliases->second.end()) {
                 return alias->second;
             }
         }
 
         // Otherwise find the resource type and title
-        auto resources = _resources.find(type);
+        auto resources = _resources.find(resource.type_name());
         if (resources == _resources.end()) {
             return nullptr;
         }
-        auto it = resources->second.find(title);
+        auto it = resources->second.find(resource.title());
         if (it == resources->second.end()) {
             return nullptr;
         }
         return &it->second;
     }
 
-    bool catalog::alias_resource(string const& type, string const& title, string const& alias)
+    bool catalog::alias_resource(types::resource const& resource, string const& alias)
     {
         // Check if a resource with the alias name already exists
-        if (find_resource(type, alias)) {
+        if (find_resource(types::resource(resource.type_name(), alias))) {
             return false;
         }
 
         // Find the resource being aliased
-        auto resource = find_resource(type, title);
-        if (!resource) {
+        auto existing = find_resource(resource);
+        if (!existing) {
             return false;
         }
 
-        // Add a new map for the type if needed
-        auto aliases = _aliases.find(type);
-        if (aliases == _aliases.end()) {
-            aliases = _aliases.emplace(make_pair(type, resource_alias_map::mapped_type())).first;
-        }
-
-        aliases->second.emplace(make_pair(alias, resource));
+        _aliases[resource.type_name()].emplace(make_pair(alias, existing));
         return true;
     }
 
-    resource* catalog::add_resource(string const& type, string const& title, string const& file, size_t line, bool exported)
+    runtime::resource* catalog::add_resource(types::resource resource, shared_ptr<string> path, size_t line, bool exported)
     {
-        // Add a new map for the type if needed
-        auto resources = _resources.find(type);
-        if (resources == _resources.end()) {
-            resources = _resources.emplace(make_pair(type, resource_map::mapped_type())).first;
+        if (resource.type_name().empty() || resource.title().empty()) {
+            return nullptr;
         }
-        // Add the resource
-        auto result = resources->second.emplace(make_pair(title, resource(*this, type, title, file, line, exported)));
+
+        string title = resource.title();
+        auto result = _resources[resource.type_name()].emplace(make_pair(rvalue_cast(title), runtime::resource(*this, rvalue_cast(resource), rvalue_cast(path), line, exported)));
         if (!result.second) {
             return nullptr;
         }

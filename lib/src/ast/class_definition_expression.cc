@@ -54,18 +54,17 @@ namespace puppet { namespace ast {
 
         os << "class " << expr.name();
         if (expr.parameters()) {
-            os << " (";
+            os << "(";
             pretty_print(os, expr.parameters(), ", ");
             os << ")";
         }
         if (expr.parent()) {
             os << " inherits " << *expr.parent();
         }
-        os << " {";
+        os << " { ";
         pretty_print(os, expr.body(), "; ");
         os << " }";
         return os;
     }
 
 }}  // namespace puppet::ast
-

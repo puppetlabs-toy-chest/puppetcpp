@@ -100,9 +100,8 @@ namespace puppet { namespace ast {
         if (body.title().blank()) {
             return os;
         }
-        os << body.title() << ": { ";
+        os << body.title() << ": ";
         pretty_print(os, body.attributes(), ", ");
-        os << " }";
         return os;
     }
 

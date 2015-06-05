@@ -30,10 +30,9 @@ namespace puppet { namespace compiler {
         /**
          * Constructs a Puppet language grammar for the given lexer.
          * @param lexer The lexer to use for token definitions.
-         * @param path The path to the file being parsed.
          * @param interpolation True if the grammar is being used for string interpolation or false if not.
          */
-        grammar(Lexer const& lexer, std::string const& path, bool interpolation = false) :
+        grammar(Lexer const& lexer, bool interpolation = false) :
             boost::spirit::qi::grammar<iterator_type, puppet::ast::syntax_tree()>(syntax_tree)
         {
             using namespace boost::spirit::qi;
@@ -44,10 +43,10 @@ namespace puppet { namespace compiler {
             // For string interpolation, end at the first '}' token that isn't part of the grammar
             if (interpolation) {
                 syntax_tree =
-                    (raw_token('{') > statements > token_pos('}')) [_val = phx::construct<ast::syntax_tree>(phx::ref(path), _1, _2)];
+                    (raw_token('{') > statements > token_pos('}')) [_val = phx::construct<ast::syntax_tree>(_1, _2)];
             } else {
                 syntax_tree =
-                    statements [ _val = phx::construct<ast::syntax_tree>(phx::ref(path), _1) ];
+                    statements [ _val = phx::construct<ast::syntax_tree>(_1) ];
             }
 
             // Statements

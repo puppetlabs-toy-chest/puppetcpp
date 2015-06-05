@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../expression_evaluator.hpp"
+#include <boost/format.hpp>
 
 namespace puppet { namespace runtime { namespace evaluators {
 
@@ -36,8 +37,30 @@ namespace puppet { namespace runtime { namespace evaluators {
         result_type operator()(ast::node_definition_expression const& expr);
         result_type operator()(ast::collection_expression const& expr);
 
-        void add_resource(std::vector<runtime::resource*>& resources, values::array& types, std::string const& type_name, values::value title, lexer::position const& position);
-        void find_resource(std::vector<runtime::resource*>& resources, values::value const& reference, lexer::position const& position);
+        result_type declare_classes(ast::resource_expression const& expr);
+
+        template <typename T>
+        bool for_each(values::value& parameter, std::function<void(T&)> const& callback)
+        {
+            using namespace puppet::runtime::values;
+
+            if (as<T>(parameter)) {
+                auto casted = mutate_as<T>(parameter);
+                callback(casted);
+                return true;
+            }
+            if (as<values::array>(parameter)) {
+                // For arrays, recurse on each element
+                auto array = mutate_as<values::array>(parameter);
+                for (auto& element : array) {
+                    if (!for_each<T>(element, callback)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
 
         expression_evaluator& _evaluator;
         ast::catalog_expression const& _expression;
