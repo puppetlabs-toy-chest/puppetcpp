@@ -19,6 +19,7 @@
 #include <puppet/runtime/operators/not_match.hpp>
 #include <puppet/runtime/operators/plus.hpp>
 #include <puppet/runtime/operators/right_shift.hpp>
+#include <puppet/runtime/definition_scanner.hpp>
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/cast.hpp>
@@ -41,25 +42,110 @@ namespace puppet { namespace runtime {
         return _position;
     }
 
-    expression_evaluator::expression_evaluator(runtime::context& context, shared_ptr<ast::syntax_tree> tree) :
-        _context(context),
-        _tree(rvalue_cast(tree))
+    expression_evaluator::expression_evaluator(shared_ptr<compiler::context> compilation_context, runtime::context& evaluation_context) :
+        _compilation_context(rvalue_cast(compilation_context)),
+        _evaluation_context(evaluation_context)
     {
+        if (!_compilation_context) {
+            throw runtime_error("expected a compilation context.");
+        }
     }
 
-    runtime::context& expression_evaluator::context()
+    runtime::catalog& expression_evaluator::catalog()
     {
-        return _context;
+        return _evaluation_context.catalog();
     }
 
-    runtime::context const& expression_evaluator::context() const
+    runtime::scope& expression_evaluator::scope()
     {
-        return _context;
+        return _evaluation_context.scope();
     }
 
-    shared_ptr<ast::syntax_tree> const& expression_evaluator::tree() const
+    values::value const* expression_evaluator::lookup(string const& name, lexer::position const* position)
     {
-        return _tree;
+        // Look for the last :: delimiter; if not found, use the current scope
+        auto pos = name.rfind("::");
+        if (pos == string::npos) {
+            auto variable = _evaluation_context.scope().get(name);
+            return variable ? &variable->value() : nullptr;
+        }
+
+        // Split into namespace and variable name
+        // For global names, remove the leading ::
+        bool global = boost::starts_with(name, "::");
+        auto ns = name.substr(global ? 2 : 0, global ? (pos > 2 ? pos - 2 : 0) : pos);
+        auto var = name.substr(pos + 2);
+
+        // An empty namespace is the top scope
+        if (ns.empty()) {
+            auto variable = _evaluation_context.top().get(var);
+            return variable ? &variable->value() : nullptr;
+        }
+
+        // Lookup the namespace
+        auto scope = _evaluation_context.find_scope(ns);
+        if (scope) {
+            auto variable = scope->get(var);
+            return variable ? &variable->value() : nullptr;
+        }
+
+        // Warn if the scope was not found
+        if (position) {
+            types::klass klass(ns);
+            if (!_evaluation_context.is_class_defined(klass)) {
+                warn(*position, (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % name % ns).str());
+            } else if (!_evaluation_context.is_class_declared(klass)) {
+                warn(*position, (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % name % ns).str());
+            }
+        }
+        return nullptr;
+    }
+
+    logging::logger& expression_evaluator::logger()
+    {
+        return _compilation_context->logger();
+    }
+
+    shared_ptr<string> const& expression_evaluator::path() const
+    {
+        return _compilation_context->path();
+    }
+
+    bool expression_evaluator::is_class_defined(types::klass const& klass) const
+    {
+        return _evaluation_context.is_class_defined(klass);
+    }
+
+    runtime::resource* expression_evaluator::declare_class(types::klass const& klass, lexer::position const& position, unordered_map<ast::name, values::value>* arguments)
+    {
+        return _evaluation_context.declare_class(klass, path(), position, arguments);
+    }
+
+    local_scope expression_evaluator::create_local_scope(runtime::scope* scope)
+    {
+        return local_scope{ _evaluation_context, scope };
+    }
+
+    void expression_evaluator::warn(lexer::position const& position, std::string const& message)
+    {
+        _compilation_context->log(logging::level::warning, position, message);
+    }
+
+    void expression_evaluator::evaluate()
+    {
+        auto& tree = _compilation_context->tree();
+        if (!tree.body()) {
+            return;
+        }
+
+        // Scan the tree for definitions
+        definition_scanner scanner { _evaluation_context };
+        scanner.scan(_compilation_context);
+
+        for (auto& expression : *tree.body()) {
+            // Top level expressions must be productive
+            evaluate(expression, true);
+        }
     }
 
     value expression_evaluator::evaluate(ast::expression const& expr, bool productive)
@@ -247,7 +333,7 @@ namespace puppet { namespace runtime {
 
         auto it = binary_operators.find(op);
         if (it == binary_operators.end()) {
-            throw evaluation_exception(left_position, "unexpected binary expression.");
+            throw evaluation_exception(left_position, (boost::format("unspported binary operator '%1%' in binary expression.") % op).str());
         }
 
         operators::binary_context context(*this, left, left_position, right, right_position);

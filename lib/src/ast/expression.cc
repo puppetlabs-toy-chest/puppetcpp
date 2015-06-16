@@ -259,11 +259,10 @@ namespace puppet { namespace ast {
 
     ostream& operator<<(ostream& os, expression const& expr)
     {
-        os << "(" << expr.primary();
+        os << expr.primary();
         for (auto const& binary : expr.binary()) {
             os << binary;
         }
-        os << ")";
         return os;
     }
 

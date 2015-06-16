@@ -1,10 +1,36 @@
 #include <puppet/runtime/scope.hpp>
 #include <puppet/cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
+
+    assigned_variable::assigned_variable(values::value value, shared_ptr<string> path, size_t line) :
+        _value(rvalue_cast(value)),
+        _path(rvalue_cast(path)),
+        _line(line)
+    {
+        if (!_path) {
+            throw runtime_error("expected path");
+        }
+    }
+
+    values::value const& assigned_variable::value() const
+    {
+        return _value;
+    }
+
+    string const& assigned_variable::path() const
+    {
+        return *_path;
+    }
+
+    size_t assigned_variable::line() const
+    {
+        return _line;
+    }
 
     scope::scope(string name, string display_name, scope* parent) :
         _name(rvalue_cast(name)),
@@ -44,6 +70,10 @@ namespace puppet { namespace runtime {
 
     string scope::qualify(string const& name) const
     {
+        if (boost::starts_with(name, "::")) {
+            return name.substr(2);
+        }
+
         auto& scope_name = this->name();
         if (scope_name.empty()) {
             return name;
@@ -51,31 +81,22 @@ namespace puppet { namespace runtime {
         return scope_name + "::" + name;
     }
 
-    value const* scope::set(string name, value val, size_t line)
+    assigned_variable const* scope::set(string name, values::value value, shared_ptr<string> path, size_t line)
     {
         if (_variables.count(name)) {
             return nullptr;
         }
-        auto result = _variables.emplace(make_pair(rvalue_cast(name), make_tuple(rvalue_cast(val), line)));
-        return &std::get<0>(result.first->second);
+        auto result = _variables.emplace(make_pair(rvalue_cast(name), assigned_variable(rvalue_cast(value), rvalue_cast(path), line)));
+        return &result.first->second;
     }
 
-    value const* scope::get(string const& name) const
+    assigned_variable const* scope::get(string const& name) const
     {
         auto it = _variables.find(name);
         if (it != _variables.end()) {
-            return &std::get<0>(it->second);
+            return &it->second;
         }
         return _parent ? _parent->get(name) : nullptr;
-    }
-
-    size_t scope::where(string const& name)
-    {
-        auto it = _variables.find(name);
-        if (it == _variables.end()) {
-            return 0;
-        }
-        return std::get<1>(it->second);
     }
 
     scope const* scope::parent() const

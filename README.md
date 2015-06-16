@@ -61,15 +61,17 @@ Expression evaluator status:
 * [ ] exported resource expressions
 * [ ] resource defaults expressions
 * [ ] resource override expressions (NYI: scope check and `+>`)
-* [ ] class definition expressions (NYI: ability to declare classes)
+* [x] class definition expressions
 * [ ] defined type expressions
-* [ ] node type expressions
+* [ ] node definition expressions
 * [ ] collection expressions
+* [ ] loading files from modules
 * [x] access expressions
 * [x] global scope
-* [ ] local scope
+* [x] local scope
 * [ ] node scope
 * [x] string interpolation
+* [ ] external data lookups (i.e. hiera)
 * [ ] EPP support
 
 Type system implemented:
@@ -124,7 +126,7 @@ Puppet functions implemented:
 * [ ] hiera_array
 * [ ] hiera_hash
 * [ ] hiera_include
-* [ ] include
+* [x] include
 * [x] info
 * [ ] inline_epp
 * [ ] inline_template

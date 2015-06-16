@@ -31,20 +31,19 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
         // Set the value in the current scope
-        auto& scope = context.evaluator().context().scope();
-        auto value = scope.set(var->name(), rvalue_cast(context.right()), context.left_position().line());
-        if (!value) {
-            // Check where the variable was previously assigned
-            auto line = scope.where(var->name());
-            if (line) {
-                throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % context.evaluator().tree()->path() % line).str());
+        auto& evaluator = context.evaluator();
+        auto& scope = evaluator.scope();
+        auto assigned = scope.set(var->name(), rvalue_cast(context.right()), evaluator.path(), context.left_position().line());
+        if (!assigned) {
+            auto previous = scope.get(var->name());
+            if (previous && !previous->path().empty()) {
+                throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % previous->path() % previous->line()).str());
             }
-            // Assume it's a fact if we don't know where it was assigned
-            throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: a fact of the same name already exists.") % var->name()).str());
+            throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned.") % var->name()).str());
         }
 
-        // Update the variable's value and return the variable reference
-        var->update(value);
+        // Update the reference's value
+        var->update(&assigned->value());
         return rvalue_cast(context.left());
     }
 

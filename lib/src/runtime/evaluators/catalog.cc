@@ -1,7 +1,6 @@
 #include <puppet/runtime/evaluators/catalog.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/cast.hpp>
-#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -22,6 +21,11 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_expression const& expr)
     {
+        string const& type_name = expr.type().value();
+
+        if (type_name == "class") {
+            return declare_classes(expr);
+        }
         if (expr.status() == ast::resource_status::virtualized) {
             // TODO: add to a list of virtual resources
             throw evaluation_exception(expr.position(), "virtual resource expressions are not yet implemented.");
@@ -34,9 +38,34 @@ namespace puppet { namespace runtime { namespace evaluators {
         values::array types;
         vector<resource*> resources;
         for (auto const& body : expr.bodies()) {
-            // Add the resource(s) to the catalog
+            // Evaluate the title
+            auto title = _evaluator.evaluate(body.title());
+
+            // Add a resource for each string in the title
             resources.clear();
-            add_resource(resources, types, expr.type().value(), _evaluator.evaluate(body.title()), body.position());
+            if (!for_each<string>(title, [&](string& resource_title) {
+                types::resource type(type_name, resource_title);
+                if (type.title().empty()) {
+                    throw evaluation_exception(body.position(), "resource title cannot be empty.");
+                }
+
+                // Add the resource to the catalog
+                auto& catalog = _evaluator.catalog();
+                auto resource = catalog.add_resource(type, _evaluator.path(), body.position().line());
+                if (!resource) {
+                    resource = catalog.find_resource(type);
+                    if (resource) {
+                        throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % type % resource->path() % resource->line()).str());
+                    }
+                    throw evaluation_exception(body.position(), (boost::format("failed to add resource %1% to catalog.") % type).str());
+                }
+
+                // Add the resource and type to the bookkeeping lists
+                resources.push_back(resource);
+                types.emplace_back(rvalue_cast(type));
+            })) {
+                throw evaluation_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
+            }
             if (!body.attributes()) {
                 continue;
             }
@@ -80,10 +109,26 @@ namespace puppet { namespace runtime { namespace evaluators {
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_override_expression const& expr)
     {
         auto reference = _evaluator.evaluate(expr.reference());
+        auto position = get_position(expr.reference());
 
         // Convert the value into an array of resource pointers
         vector<resource*> resources;
-        find_resource(resources, reference, get_position(expr.reference()));
+        if (!for_each<values::type>(reference, [&](values::type& resource_reference) {
+            // Make sure the type is a qualified Resource type
+            auto resource_type = boost::get<types::resource>(&resource_reference);
+            if (!resource_type || resource_type->type_name().empty() || resource_type->title().empty()) {
+                throw evaluation_exception(position, (boost::format("expected qualified %1% but found %2%.") % types::resource::name() % get_type(resource_reference)).str());
+            }
+
+            // Find the resource
+            auto resource = _evaluator.catalog().find_resource(*resource_type);
+            if (!resource) {
+                throw evaluation_exception(position, (boost::format("resource %1% does not exist in the catalog.") % *resource_type).str());
+            }
+            resources.push_back(resource);
+        })) {
+            throw evaluation_exception(position, (boost::format("expected %1% or %2% for resource reference.") % types::resource::name() % types::array(types::resource())).str());
+        }
 
         if (expr.attributes()) {
             // Set the parameters
@@ -109,7 +154,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     if (attribute.op() == ast::attribute_operator::assignment) {
                         if (is_undef(value)) {
                             if (!override) {
-                                throw evaluation_exception(attribute.name().position(), (boost::format("cannot remove attribute '%1%' from resource %2%.") % attribute.name() % resource.create_reference()).str());
+                                throw evaluation_exception(attribute.name().position(), (boost::format("cannot remove attribute '%1%' from resource %2%.") % attribute.name() % resource.type()).str());
                             }
                             resource.remove_parameter(attribute.name().value());
                             continue;
@@ -128,28 +173,9 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::class_definition_expression const& expr)
     {
-        if (boost::starts_with(expr.name().value(), "::")) {
-            throw evaluation_exception(expr.name().position(), (boost::format("'%1%' is not a valid class name.") % expr.name().value()).str());
-        }
-
-        auto name = _evaluator.context().scope().qualify(expr.name().value());
-
-        // Ensure the base class exists
-        if (expr.parent()) {
-            if (!_evaluator.context().find_class(expr.parent()->value())) {
-                throw evaluation_exception(expr.parent()->position(), (boost::format("parent class '%1%' has not been defined.") % expr.parent()->value()).str());
-            }
-        }
-
-        // Ensure the class being defined does not exist
-        auto definition = _evaluator.context().find_class(name);
-        if (definition) {
-            throw evaluation_exception(expr.name().position(), (boost::format("class '%1%' has already been defined at %2%:%3%.") % name % definition->path() % definition->line()).str());
-        }
-
-        // Define the class
-        _evaluator.context().define_class(_evaluator.tree(), expr);
-        return types::klass(name);
+        // Class definitions are handled by the definition scanner
+        // Just return a reference to the class
+        return types::klass(_evaluator.scope().qualify(expr.name().value()));
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::defined_type_expression const& expr)
@@ -170,68 +196,68 @@ namespace puppet { namespace runtime { namespace evaluators {
         throw evaluation_exception(expr.position(), "collection expressions are not yet implemented.");
     }
 
-    void catalog_expression_evaluator::add_resource(vector<resource*>& resources, values::array& types, string const& type_name, values::value title, lexer::position const& position)
+    catalog_expression_evaluator::result_type catalog_expression_evaluator::declare_classes(ast::resource_expression const& expr)
     {
-        if (as<string>(title)) {
-            // Create a type for this resource
-            types::resource type(type_name, mutate_as<string>(title));
-            if (type.title().empty()) {
-                throw evaluation_exception(position, "resource title cannot be empty.");
+        if (expr.status() == ast::resource_status::virtualized) {
+            throw evaluation_exception(expr.position(), "class resources cannot be virtual.");
+        }
+        if (expr.status() == ast::resource_status::exported) {
+            throw evaluation_exception(expr.position(), "class resources cannot be exported.");
+        }
+
+        values::array types;
+        vector<string> class_names;
+        unordered_map<ast::name, values::value> attributes;
+        values::array parameters;
+        for (auto const& body : expr.bodies()) {
+            // Evaluate the title as class names
+            auto title = _evaluator.evaluate(body.title());
+            class_names.clear();
+            if (!for_each<string>(title, [&](string& resource_title) {
+                class_names.emplace_back(rvalue_cast(resource_title));
+            })) {
+                throw evaluation_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
             }
 
-            // Add the resource to the catalog
-            auto& catalog = _evaluator.context().catalog();
-            auto resource = catalog.add_resource(type.type_name(), type.title(), _evaluator.tree()->path(), position.line());
-            if (!resource) {
-                resource = catalog.find_resource(type.type_name(), type.title());
-                if (resource) {
-                    throw evaluation_exception(position, (boost::format("resource %1% was previously declared at %2%:%3%.") % type % resource->file() % resource->line()).str());
+            // For this body, evaluate all attributes
+            attributes.clear();
+            if (body.attributes()) {
+                for (auto const& attribute : *body.attributes()) {
+                    // Ensure only assignment for resource bodies
+                    if (attribute.op() != ast::attribute_operator::assignment) {
+                        throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
+                    }
+
+                    // Evaluate the attribute value
+                    if (!attributes.emplace(make_pair(attribute.name(), _evaluator.evaluate(attribute.value()))).second) {
+                        throw evaluation_exception(attribute.position(), (boost::format("attribute '%1%' already exists in this resource body.") % attribute.name()).str());
+                    }
                 }
-                throw evaluation_exception(position, (boost::format("resource %1% already exists in the catalog.") % type).str());
             }
 
-            // Add the resource and type to the bookkeeping lists
-            resources.push_back(resource);
-            types.emplace_back(rvalue_cast(type));
-            return;
-        }
-        if (as<values::array>(title)) {
-            // For arrays, recurse on each element
-            auto titles = mutate_as<values::array>(title);
-            for (auto& element : titles) {
-                add_resource(resources, types, type_name, rvalue_cast(element), position);
-            }
-            return;
-        }
-        throw evaluation_exception(position, (boost::format("expected %1% resource title but found %2%.") % types::string::name() % get_type(title)).str());
-    }
+            // Declare the classes
+            for (auto& name : class_names) {
+                types::klass klass(rvalue_cast(name));
+                types::resource resource("class", klass.title());
 
-    void catalog_expression_evaluator::find_resource(vector<resource*>& resources, values::value const& reference, lexer::position const& position)
-    {
-        // Check for type reference
-        if (auto type = as<values::type>(reference)) {
-            // Make sure the type is a qualified Resource type
-            auto resource_type = boost::get<types::resource>(type);
-            if (!resource_type || resource_type->type_name().empty() || resource_type->title().empty()) {
-                throw evaluation_exception(position, (boost::format("expected qualified %1% but found %2%.") % types::resource::name() % get_type(reference)).str());
-            }
+                // Ensure the resource doesn't already exist
+                if (auto existing = _evaluator.catalog().find_resource(resource)) {
+                    throw evaluation_exception(body.position(), (boost::format("class '%1%' was already declared at %2%:%3%.") % klass.title() % existing->path() % existing->line()).str());
+                }
 
-            // Find the resource
-            auto resource = _evaluator.context().catalog().find_resource(resource_type->type_name(), resource_type->title());
-            if (!resource) {
-                throw evaluation_exception(position, (boost::format("resource %1% does not exist in the catalog.") % *resource_type).str());
+                // Ensure the class is defined
+                if (!_evaluator.is_class_defined(klass)) {
+                    throw evaluation_exception(body.position(), (boost::format("cannot declare class '%1%' because the class has not been defined.") % klass.title()).str());
+                }
+
+                // Declare the class
+                if (!_evaluator.declare_class(klass, body.position(), &attributes)) {
+                    throw evaluation_exception(body.position(), (boost::format("failed to declare class '%1%'.") % klass.title()).str());
+                }
+                types.emplace_back(rvalue_cast(resource));
             }
-            resources.push_back(resource);
-            return;
         }
-        if (auto references = as<values::array>(reference)) {
-            // For arrays, recurse on each element
-            for (auto& element : *references) {
-                find_resource(resources, element, position);
-            }
-            return;
-        }
-        throw evaluation_exception(position, (boost::format("expected qualified %1% but found %2%.") % types::resource::name() % get_type(reference)).str());
+        return types;
     }
 
 }}}  // namespace puppet::runtime::evaluators

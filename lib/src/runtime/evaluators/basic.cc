@@ -79,10 +79,10 @@ namespace puppet { namespace runtime { namespace evaluators {
                 throw evaluation_exception(var.position(), (boost::format("variable name $%1% is not a valid match variable name.") % var.name()).str());
             }
             // Look up the match
-            val = _evaluator.context().scope().get(stoi(name));
+            val = _evaluator.scope().get(stoi(name));
             match = true;
         } else {
-            val = _evaluator.context().lookup(name, &var.position());
+            val = _evaluator.lookup(name, &var.position());
         }
         return variable(name, val, match);
     }
