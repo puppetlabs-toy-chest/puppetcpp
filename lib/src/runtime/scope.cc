@@ -41,7 +41,8 @@ namespace puppet { namespace runtime {
         _matches.emplace_front();
     }
 
-    scope::scope(scope* parent)
+    scope::scope(scope* parent) :
+        _parent(parent)
     {
         // Emplace an empty set of matches to start
         _matches.emplace_front();
