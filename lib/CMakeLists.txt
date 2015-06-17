@@ -13,6 +13,7 @@ target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
 
 # Add the command to generate the static lexer
 add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
+add_custom_target(generate_files ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
 
 add_library(puppet SHARED
     src/ast/access_expression.cc
@@ -123,7 +124,7 @@ add_library(puppet SHARED
     src/runtime/scope.cc
     src/runtime/string_interpolator.cc
 )
-add_dependencies(puppet generate_static_lexer)
+add_dependencies(puppet generate_files)
 
 set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LIBPUPPET_VERSION_MINOR}.${LIBPUPPET_VERSION_PATCH}" COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY_UNITY")
 
