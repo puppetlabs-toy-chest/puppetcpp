@@ -33,7 +33,7 @@ namespace puppet { namespace ast {
          * @param option The case proposition lambda.
          * @param body The expressions that make up the body of the proposition.
          */
-        case_proposition(lambda option, boost::optional<std::vector<expression>> body);
+        case_proposition(ast::lambda option, boost::optional<std::vector<expression>> body);
 
         /**
          * Gets the case proposition options.

@@ -57,8 +57,8 @@ namespace puppet { namespace runtime { namespace types {
         template <typename Value>
         bool is_instance(Value const& value) const
         {
-            // Forward declaration of is_instance for recursion
-            bool is_instance(Value const&, Type const&);
+            // Forward declaration of unsafe_is_instance for recursion
+            bool unsafe_is_instance(void const*, void const*);
 
             // Check for hash
             auto ptr = boost::get<values::basic_hash<Value>>(&value);
@@ -73,16 +73,17 @@ namespace puppet { namespace runtime { namespace types {
 
             // Go through each type and ensure it's in the hash
             size_t count = 0;
+            values::undef undef;
             for (auto const& kvp : _types) {
                 auto it = ptr->find(kvp.first);
                 if (it == ptr->end()) {
-                    if (!is_instance(values::undef(), kvp.second)) {
+                    if (!unsafe_is_instance(&undef, &kvp.second)) {
                         return false;
                     }
                     continue;
                 }
 
-                if (!is_instance(it->second, kvp.second)) {
+                if (!unsafe_is_instance(&it->second, &kvp.second)) {
                     return false;
                 }
 

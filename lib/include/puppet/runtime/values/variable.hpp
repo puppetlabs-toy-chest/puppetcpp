@@ -90,9 +90,6 @@ namespace puppet { namespace runtime { namespace values {
     template <typename Value>
     bool operator==(basic_variable<Value> const& left, basic_variable<Value> const& right)
     {
-        // Foward declaration of equals
-        bool equals(Value const&, Value const&);
-
         // Optimization: if both variables point to the same value, they are equal
         if (&left.value() == &right.value()) {
             return true;

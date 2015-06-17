@@ -54,12 +54,12 @@ namespace puppet { namespace runtime { namespace types {
         template <typename Value>
         bool is_instance(Value const& value) const
         {
-            // Forward declaration of is_instance for recursion
-            bool is_instance(Value const&, Type const&);
+            // Forward declaration of unsafe_is_instance for recursion
+            bool unsafe_is_instance(void const*, void const*);
 
             // Go through each type and ensure one matches
             for (auto const& type : _types) {
-                if (is_instance(value, type)) {
+                if (unsafe_is_instance(&value, &type)) {
                     return true;
                 }
             }
@@ -114,13 +114,13 @@ namespace puppet { namespace runtime { namespace types {
         }
         os << '[';
         bool first = true;
-        for (auto const& type : type.types()) {
+        for (auto const& element : type.types()) {
             if (first) {
                 first = false;
             } else {
                 os << ", ";
             }
-            os << type;
+            os << element;
         }
         os << ']';
         return os;

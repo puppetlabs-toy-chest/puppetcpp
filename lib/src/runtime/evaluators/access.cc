@@ -13,19 +13,19 @@ namespace puppet { namespace runtime { namespace evaluators {
         _expression(expression)
     {
         // Evaluate all the expressions for the access
-        for (auto& expression : expression.arguments()) {
-            auto argument = _evaluator.evaluate(expression);
+        for (auto& argument : expression.arguments()) {
+            auto value = _evaluator.evaluate(argument);
 
             // If unfolding, append the array's elements
-            auto unfold_array = _evaluator.unfold(expression, argument);
+            auto unfold_array = _evaluator.unfold(argument, value);
             if (unfold_array) {
-                _positions.insert(_positions.end(), unfold_array->size(), expression.position());
+                _positions.insert(_positions.end(), unfold_array->size(), argument.position());
                 _arguments.reserve(_arguments.size() + unfold_array->size());
                 _arguments.insert(_arguments.end(), std::make_move_iterator(unfold_array->begin()), std::make_move_iterator(unfold_array->end()));
                 continue;
             }
-            _positions.push_back(expression.position());
-            _arguments.emplace_back(rvalue_cast(argument));
+            _positions.push_back(argument.position());
+            _arguments.emplace_back(rvalue_cast(value));
         }
     }
 

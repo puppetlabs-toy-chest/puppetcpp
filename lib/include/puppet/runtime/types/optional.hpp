@@ -55,8 +55,8 @@ namespace puppet { namespace runtime { namespace types {
         template <typename Value>
         bool is_instance(Value const& value) const
         {
-            // Forward declaration of is_instance for recursion
-            bool is_instance(Value const&, Type const&);
+            // Forward declaration of unsafe_is_instance for recursion
+            bool unsafe_is_instance(void const*, void const*);
 
             // Undef always matches
             if (boost::get<values::undef>(&value)) {
@@ -69,7 +69,7 @@ namespace puppet { namespace runtime { namespace types {
             }
 
             // Check that the instance is of the given type
-            return is_instance(value, *_type);
+            return unsafe_is_instance(&value, &*_type);
         }
 
         /**
