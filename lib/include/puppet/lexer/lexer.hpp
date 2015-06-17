@@ -457,7 +457,6 @@ namespace puppet { namespace lexer {
             }
 
             bool remove_break = false;
-            bool has_margin = false;
             int margin = 0;
             auto doc_end = doc_begin;
 
@@ -471,7 +470,6 @@ namespace puppet { namespace lexer {
                     throw_not_found(start, tag);
                 }
                 if (*line_end == '|') {
-                    has_margin = true;
                     for (++line_end; line_end != end && is_space(*line_end); ++line_end);
                 }
                 if (line_end == eoi) {
@@ -555,7 +553,7 @@ namespace puppet { namespace lexer {
             static const regex octal_pattern("0\\d+");
             static const regex valid_octal_pattern("0[0-7]+");
             static const regex decimal_pattern("0|([1-9]\\d*)");
-            static const regex double_pattern("[0-9]\\d*(\\.\\d+)?([eE]-?\\d+)?)");
+            static const regex double_pattern("[0-9]\\d*(\\.\\d+)?([eE]-?\\d+)?");
 
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);

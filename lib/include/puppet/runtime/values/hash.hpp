@@ -28,9 +28,6 @@ namespace puppet { namespace runtime { namespace values {
          */
         std::size_t operator()(Value const& value) const
         {
-            // Forward declaration of dereference
-            Value const& dereference(Value const&);
-
             // Hash any variables as the values they refer to
             return boost::hash_value(dereference(value));
         }
@@ -53,8 +50,6 @@ namespace puppet { namespace runtime { namespace values {
          */
         bool operator()(Value const& left, Value const& right) const
         {
-            // Foward declaration of equals
-            bool equals(Value const&, Value const&);
             return equals(left, right);
         }
     };
@@ -81,9 +76,6 @@ namespace puppet { namespace runtime { namespace values {
     template <typename Value>
     bool operator==(basic_hash<Value> const& left, basic_hash<Value> const& right)
     {
-        // Foward declaration of equals
-        bool equals(Value const&, Value const&);
-
         if (left.size() != right.size()) {
             return false;
         }

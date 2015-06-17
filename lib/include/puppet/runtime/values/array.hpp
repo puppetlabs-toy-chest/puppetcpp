@@ -26,9 +26,6 @@ namespace puppet { namespace runtime { namespace values {
     template <typename Value>
     bool operator==(basic_array<Value> const& left, basic_array<Value> const& right)
     {
-        // Foward declaration of equals
-        bool equals(Value const&, Value const&);
-
         if (left.size() != right.size()) {
             return false;
         }

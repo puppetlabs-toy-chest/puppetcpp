@@ -79,8 +79,8 @@ namespace puppet { namespace runtime { namespace types {
         template <typename Value>
         bool is_instance(Value const& value) const
         {
-            // Forward declaration of is_instance for recursion
-            bool is_instance(Value const&, Type const&);
+            // Forward declaration of unsafe_is_instance for recursion
+            bool unsafe_is_instance(void const*, void const*);
 
             // Check for array
             auto ptr = boost::get<values::basic_array<Value>>(&value);
@@ -105,10 +105,10 @@ namespace puppet { namespace runtime { namespace types {
 
                 // If this element's position is in the tuple, match the type
                 if (i < _types.size()) {
-                    if (!is_instance(element, _types[i])) {
+                    if (!unsafe_is_instance(&element, &_types[i])) {
                         return false;
                     }
-                } else if (!is_instance(element, _types.back())) {
+                } else if (!unsafe_is_instance(&element, &_types.back())) {
                     // Otherwise, it didn't match the last element in the tuple
                     return false;
                 }
@@ -174,13 +174,13 @@ namespace puppet { namespace runtime { namespace types {
         }
         os << '[';
         bool first = true;
-        for (auto const& type : type.types()) {
+        for (auto const& element : type.types()) {
             if (first) {
                 first = false;
             } else {
                 os << ", ";
             }
-            os << type;
+            os << element;
         }
         // If the from, to, and size of the types are equal, only output the types
         int64_t size = static_cast<int64_t>(type.types().size());

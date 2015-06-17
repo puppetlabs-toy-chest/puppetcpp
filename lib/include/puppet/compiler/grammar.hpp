@@ -179,7 +179,7 @@ namespace puppet { namespace compiler {
             resource_body =
                 ((expression >> raw_token(':')) > -(attribute_expression % raw_token(',')) > -raw_token(',')) [ _val = phx::construct<ast::resource_body>(_1, _2) ];
             attribute_expression =
-                (attribute_name >> attribute_operator >> expression) [ _val = phx::construct<ast::attribute_expression>(_1, _2, _3) ];
+                (attribute_name > attribute_operator > expression) [ _val = phx::construct<ast::attribute_expression>(_1, _2, _3) ];
             attribute_operator =
                 raw_token(token_id::fat_arrow)  [ _val = ast::attribute_operator::assignment ] |
                 raw_token(token_id::plus_arrow) [ _val = ast::attribute_operator::append ];

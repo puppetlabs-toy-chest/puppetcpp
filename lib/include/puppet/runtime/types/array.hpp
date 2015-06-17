@@ -80,8 +80,8 @@ namespace puppet { namespace runtime { namespace types {
         template <typename Value>
         bool is_instance(Value const& value) const
         {
-            // Forward declaration of is_instance for recursion
-            bool is_instance(Value const&, Type const&);
+            // Forward declaration of unsafe_is_instance for recursion
+            bool unsafe_is_instance(void const*, void const*);
 
             // Check for array
             auto ptr = boost::get<values::basic_array<Value>>(&value);
@@ -97,7 +97,7 @@ namespace puppet { namespace runtime { namespace types {
 
             // Check that each element is of the type
             for (auto const& element : *ptr) {
-                if (!is_instance(element, _element_type)) {
+                if (!unsafe_is_instance(&element, &_element_type)) {
                     return false;
                 }
             }
