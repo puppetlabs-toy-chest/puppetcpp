@@ -62,7 +62,7 @@ Expression evaluator status:
 * [ ] resource defaults expressions
 * [ ] resource override expressions (NYI: scope check and `+>`)
 * [x] class definition expressions
-* [ ] defined type expressions
+* [x] defined type expressions
 * [ ] node definition expressions
 * [ ] collection expressions
 * [ ] loading files from modules

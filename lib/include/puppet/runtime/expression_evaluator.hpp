@@ -95,7 +95,24 @@ namespace puppet { namespace runtime {
          * @param arguments The class arguments or nullptr for no arguments.
          * @return Returns the resource that was added for the class or nullptr if the class failed to evaluate.
          */
-        runtime::resource* declare_class(types::klass const& klass, lexer::position const& position, std::unordered_map<ast::name, values::value>* arguments = nullptr);
+        runtime::resource* declare_class(types::klass const& klass, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+
+        /**
+         * Determines if the given type name is a defined type.
+         * @param type The type name to check.
+         * @return Returns true if the type is a defined type or false if it is not.
+         */
+        bool is_defined_type(std::string const& type) const;
+
+        /**
+         * Declares a defined type.
+         * @param type The defined type name.
+         * @param title The resource title.
+         * @param position The position where the resource is declared.
+         * @param arguments The defined type's arguments or nullptr for no arguments.
+         * @return Returns the resource that was added to the catalog or nullptr if the defined type failed to evaluate.
+         */
+        runtime::resource* declare_defined_type(std::string const& type, std::string const& title, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
 
         /**
          * Creates a local scope.

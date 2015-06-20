@@ -23,9 +23,11 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         string const& type_name = expr.type().value();
 
+        // Handle class resources specially
         if (type_name == "class") {
             return declare_classes(expr);
         }
+
         if (expr.status() == ast::resource_status::virtualized) {
             // TODO: add to a list of virtual resources
             throw evaluation_exception(expr.position(), "virtual resource expressions are not yet implemented.");
@@ -33,6 +35,11 @@ namespace puppet { namespace runtime { namespace evaluators {
         if (expr.status() == ast::resource_status::exported) {
             // TODO: add to a list of virtual exported resources
             throw evaluation_exception(expr.position(), "exported resource expressions are not yet implemented.");
+        }
+
+        // Handle defined types
+        if (_evaluator.is_defined_type(type_name)) {
+            return declare_defined_types(expr);
         }
 
         values::array types;
@@ -180,8 +187,9 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::defined_type_expression const& expr)
     {
-        // TODO: implement
-        throw evaluation_exception(expr.position(), "defined type expressions are not yet implemented.");
+        // Defined type expressions are handled by the definition scanner
+        // Just return a reference to the type
+        return types::resource(expr.name().value());
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::node_definition_expression const& expr)
@@ -253,6 +261,57 @@ namespace puppet { namespace runtime { namespace evaluators {
                 // Declare the class
                 if (!_evaluator.declare_class(klass, body.position(), &attributes)) {
                     throw evaluation_exception(body.position(), (boost::format("failed to declare class '%1%'.") % klass.title()).str());
+                }
+                types.emplace_back(rvalue_cast(resource));
+            }
+        }
+        return types;
+    }
+
+    catalog_expression_evaluator::result_type catalog_expression_evaluator::declare_defined_types(ast::resource_expression const& expr)
+    {
+        values::array types;
+        vector<string> titles;
+        unordered_map<ast::name, values::value> attributes;
+        values::array parameters;
+        for (auto const& body : expr.bodies()) {
+            // Evaluate the titles
+            auto title = _evaluator.evaluate(body.title());
+            titles.clear();
+            if (!for_each<string>(title, [&](string& resource_title) {
+                titles.emplace_back(rvalue_cast(resource_title));
+            })) {
+                throw evaluation_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
+            }
+
+            // For this body, evaluate all attributes
+            attributes.clear();
+            if (body.attributes()) {
+                for (auto const& attribute : *body.attributes()) {
+                    // Ensure only assignment for resource bodies
+                    if (attribute.op() != ast::attribute_operator::assignment) {
+                        throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
+                    }
+
+                    // Evaluate the attribute value
+                    if (!attributes.emplace(make_pair(attribute.name(), _evaluator.evaluate(attribute.value()))).second) {
+                        throw evaluation_exception(attribute.position(), (boost::format("attribute '%1%' already exists in this resource body.") % attribute.name()).str());
+                    }
+                }
+            }
+
+            // Declare the resources
+            for (auto& title : titles) {
+                types::resource resource(expr.type().value(), title);
+
+                // Ensure the resource doesn't already exist
+                if (auto existing = _evaluator.catalog().find_resource(resource)) {
+                    throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % resource % existing->path() % existing->line()).str());
+                }
+
+                // Declare the defined type
+                if (!_evaluator.declare_defined_type(expr.type().value(), title, body.position(), &attributes)) {
+                    throw evaluation_exception(body.position(), (boost::format("failed to declare defined type %1%.") % resource).str());
                 }
                 types.emplace_back(rvalue_cast(resource));
             }
