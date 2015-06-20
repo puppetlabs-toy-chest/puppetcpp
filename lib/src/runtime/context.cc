@@ -131,6 +131,79 @@ namespace puppet { namespace runtime {
         return context.find_scope(parent->title());
     }
 
+    defined_type::defined_type(string type, shared_ptr<compiler::context> context, ast::defined_type_expression const& expression) :
+        _type(rvalue_cast(type)),
+        _context(rvalue_cast(context)),
+        _expression(expression)
+    {
+        if (!_context) {
+            throw runtime_error("expected compilation context.");
+        }
+    }
+
+    string const& defined_type::type() const
+    {
+        return _type;
+    }
+
+    string const& defined_type::path() const
+    {
+        return *_context->path();
+    }
+
+    size_t defined_type::line() const
+    {
+        return _expression.position().line();
+    }
+
+    bool defined_type::evaluate(runtime::context& context, runtime::resource const& resource, unordered_map<ast::name, values::value> const* arguments)
+    {
+        values::hash keywords;
+        values::value name = resource.type().title();
+
+        // Ensure there is a parameter for each argument
+        if (arguments) {
+            for (auto const& argument : *arguments) {
+                // Check for the name argument
+                if (argument.first.value() == "name") {
+                    name = argument.second;
+                    continue;
+                }
+                bool found = false;
+                for (auto const& parameter : *_expression.parameters()) {
+                    if (parameter.variable().name() == argument.first.value()) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    throw evaluation_exception(argument.first.position(), (boost::format("'%1%' is not a valid parameter for defined type '%2%'.") % argument.first % _type).str());
+                }
+                keywords[argument.first.value()] = argument.second;
+            }
+        }
+
+        // Create a temporary scope
+        ostringstream display_name;
+        display_name << resource.type();
+        runtime::scope scope{ _type, display_name.str(), &context.top() };
+
+        // Set the title and name variables in the scope
+        scope.set("title", resource.type().title(), _context->path(), _expression.position().line());
+        scope.set("name", rvalue_cast(name), _context->path(), _expression.position().line());
+
+        try {
+            expression_evaluator evaluator{ _context, context };
+            runtime::executor executor(evaluator, _expression.position(), _expression.parameters(), _expression.body());
+            executor.execute(keywords, &scope);
+        } catch (evaluation_exception const& ex) {
+            // The compilation context is probably not the current one, so do not let evaluation exception propagate
+            _context->log(logging::level::error, ex.position(), ex.what());
+            return false;
+        }
+        return true;
+    }
+
     context::context(runtime::catalog& catalog) :
         _catalog(catalog)
     {
@@ -155,8 +228,8 @@ namespace puppet { namespace runtime {
 
     runtime::scope& context::add_scope(string name, string display_name, runtime::scope* parent)
     {
-        runtime::scope scope{rvalue_cast(name), rvalue_cast(display_name), parent};
-        return _scopes.emplace(make_pair(scope.name(), rvalue_cast(scope))).first->second;
+        runtime::scope scope{name, rvalue_cast(display_name), parent};
+        return _scopes.emplace(make_pair(rvalue_cast(name), rvalue_cast(scope))).first->second;
     }
 
     runtime::scope* context::find_scope(string const& name)
@@ -262,7 +335,53 @@ namespace puppet { namespace runtime {
         return false;
     }
 
-    void context::validate_parameters(bool klass, std::vector<ast::parameter> const& parameters)
+    defined_type const* context::define_type(string type, shared_ptr<compiler::context> context, ast::defined_type_expression const& expression)
+    {
+        // Validate the defined type's parameters
+        if (expression.parameters()) {
+            validate_parameters(false, *expression.parameters());
+        }
+
+        // Look for the existing type
+        auto it = _defined_types.find(type);
+        if (it != _defined_types.end()) {
+            return &it->second;
+        }
+
+        // Add the defined type
+        defined_type defined(type, rvalue_cast(context), expression);
+        _defined_types.emplace(make_pair(rvalue_cast(type), rvalue_cast(defined)));
+        return nullptr;
+    }
+
+    bool context::is_defined_type(std::string const& type) const
+    {
+        return _defined_types.count(type) > 0;
+    }
+
+    runtime::resource* context::declare_defined_type(string const& type, string const& title, shared_ptr<string> path, lexer::position const& position, unordered_map<ast::name, values::value> const* arguments)
+    {
+        // Lookup the defined type
+        auto it = _defined_types.find(type);
+        if (it == _defined_types.end()) {
+            // TODO: search node for defined type
+            return nullptr;
+        }
+
+        // Add a resource to the catalog
+        auto added = _catalog.add_resource(types::resource(type, title), rvalue_cast(path), position.line(), false);
+        if (!added) {
+            return nullptr;
+        }
+
+        // Evaluate the defined type
+        if (!it->second.evaluate(*this, *added, arguments)) {
+            return nullptr;
+        }
+        return added;
+    }
+
+    void context::validate_parameters(bool klass, vector<ast::parameter> const& parameters)
     {
         for (auto const& parameter : parameters) {
             auto const& name = parameter.variable().name();

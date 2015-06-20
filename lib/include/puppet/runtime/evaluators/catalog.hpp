@@ -38,6 +38,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         result_type operator()(ast::collection_expression const& expr);
 
         result_type declare_classes(ast::resource_expression const& expr);
+        result_type declare_defined_types(ast::resource_expression const& expr);
 
         template <typename T>
         bool for_each(values::value& parameter, std::function<void(T&)> const& callback)

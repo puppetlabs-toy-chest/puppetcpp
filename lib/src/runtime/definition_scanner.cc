@@ -319,7 +319,7 @@ namespace puppet { namespace runtime {
             auto previous = _evaluation_context.define_class(klass, _compilation_context, expr);
             if (previous) {
                 throw evaluation_exception(expr.parent()->position(),
-                    (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%") %
+                    (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%.") %
                      klass.title() %
                      expr.parent()->value() %
                      previous->parent()->title() %
@@ -360,7 +360,16 @@ namespace puppet { namespace runtime {
                 throw evaluation_exception(expr.position(), "defined types can only be defined at top-level scope or inside a class.");
             }
 
-            // TODO: add the defined type
+            // Define the type in the context
+            auto previous = _evaluation_context.define_type(qualify(expr.name().value()), _compilation_context, expr);
+            if (previous) {
+                throw evaluation_exception(expr.name().position(),
+                                           (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
+                                            previous->type() %
+                                            previous->path() %
+                                            previous->line()
+                                           ).str());
+            }
 
             // Defined types have no class scope
             class_scope scope(_scopes, {});

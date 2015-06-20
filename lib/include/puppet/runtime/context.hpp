@@ -84,6 +84,52 @@ namespace puppet { namespace runtime {
     };
 
     /**
+     * Represents a defined type.
+     */
+    struct defined_type
+    {
+        /**
+         * Constructs a defined type.
+         * @param type The resource type for the defined type.
+         * @param context The compilation context for the defined type.
+         * @param expression The defined type expression.
+         */
+        defined_type(std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
+
+        /**
+         * Gets the resource type of the defined type.
+         * @return Returns the resource type of the defined type.
+         */
+        std::string const& type() const;
+
+        /**
+         * Gets the path of the file containing the defined type.
+         * @return Returns the path of the file containing the defined type.
+         */
+        std::string const& path() const;
+
+        /**
+         * Gets the line number of the defined type.
+         * @return Returns the line number of the defined type.
+         */
+        size_t line() const;
+
+        /**
+         * Evaluates the defined type.
+         * @param context The evaluation context.
+         * @param resource The resource for the defined type.
+         * @param arguments The arguments to the defined type.
+         * @return Returns true if the evaluation was successful or false if the evaluation failed.
+         */
+        bool evaluate(runtime::context& context, runtime::resource const& resource, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+
+     private:
+        std::string _type;
+        std::shared_ptr<compiler::context> _context;
+        ast::defined_type_expression const& _expression;
+    };
+
+    /**
      * Represents the evaluation context.
      */
     struct context
@@ -174,6 +220,33 @@ namespace puppet { namespace runtime {
          */
         bool is_class_declared(types::klass const& klass) const;
 
+        /**
+         * Defines a (defined) type in the evaluation context.
+         * @param type The type to define.
+         * @param context The compilation context.
+         * @param expression The defined type expression.
+         * @return Returns nullptr if the type was successfully defined or a pointer to the existing defined type if already defined.
+         */
+        defined_type const* define_type(std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
+
+        /**
+         * Determines if the given type name is a defined type.
+         * @param type The type name to check.
+         * @return Returns true if the type is a defined type or false if it is not.
+         */
+        bool is_defined_type(std::string const& type) const;
+
+        /**
+         * Declares a defined type.
+         * @param type The defined type name.
+         * @param title The resource title.
+         * @param path The path to the file that is declaring the resource.
+         * @param position The position where the resource is declared.
+         * @param arguments The defined type's arguments or nullptr for no arguments.
+         * @return Returns the resource that was added to the catalog or nullptr if the defined type failed to evaluate.
+         */
+        runtime::resource* declare_defined_type(std::string const& type, std::string const& title, std::shared_ptr<std::string> path, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+
      private:
         void validate_parameters(bool klass, std::vector<ast::parameter> const& parameters);
 
@@ -181,6 +254,7 @@ namespace puppet { namespace runtime {
         std::unordered_map<std::string, runtime::scope> _scopes;
         std::deque<runtime::scope*> _scope_stack;
         std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
+        std::unordered_map<std::string, defined_type> _defined_types;
     };
 
     /**

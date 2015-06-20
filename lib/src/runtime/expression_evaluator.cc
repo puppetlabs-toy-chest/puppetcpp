@@ -116,9 +116,19 @@ namespace puppet { namespace runtime {
         return _evaluation_context.is_class_defined(klass);
     }
 
-    runtime::resource* expression_evaluator::declare_class(types::klass const& klass, lexer::position const& position, unordered_map<ast::name, values::value>* arguments)
+    runtime::resource* expression_evaluator::declare_class(types::klass const& klass, lexer::position const& position, unordered_map<ast::name, values::value> const* arguments)
     {
         return _evaluation_context.declare_class(klass, path(), position, arguments);
+    }
+
+    bool expression_evaluator::is_defined_type(std::string const& type) const
+    {
+        return _evaluation_context.is_defined_type(type);
+    }
+
+    runtime::resource* expression_evaluator::declare_defined_type(string const& type, string const& title, lexer::position const& position, unordered_map<ast::name, values::value> const* arguments)
+    {
+        return _evaluation_context.declare_defined_type(type, title, path(), position, arguments);
     }
 
     local_scope expression_evaluator::create_local_scope(runtime::scope* scope)

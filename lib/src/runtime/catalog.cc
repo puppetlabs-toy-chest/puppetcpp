@@ -177,8 +177,9 @@ namespace puppet { namespace runtime {
             return nullptr;
         }
 
+        string type = resource.type_name();
         string title = resource.title();
-        auto result = _resources[resource.type_name()].emplace(make_pair(rvalue_cast(title), runtime::resource(*this, rvalue_cast(resource), rvalue_cast(path), line, exported)));
+        auto result = _resources[rvalue_cast(type)].emplace(make_pair(rvalue_cast(title), runtime::resource(*this, rvalue_cast(resource), rvalue_cast(path), line, exported)));
         if (!result.second) {
             return nullptr;
         }
