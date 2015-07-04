@@ -38,15 +38,28 @@ namespace puppet { namespace compiler {
         return _text;
     }
 
-    node::node(string name, compiler::environment& environment) :
-        _name(rvalue_cast(name)),
+    node::node(string const& name, compiler::environment& environment) :
         _environment(environment)
     {
+        // Copy each subname of the node name
+        // For example, a node name of 'foo.bar.baz' would emplace 'foo', then 'foo.bar', then 'foo.bar.baz'.
+        boost::split_iterator<string::const_iterator> end;
+        for (auto it = boost::make_split_iterator(name, boost::first_finder(".", boost::is_equal())); it != end; ++it) {
+            if (!*it) {
+                continue;
+            }
+            string hostname(name.begin(), it->end());
+            boost::to_lower(hostname);
+            _names.emplace(rvalue_cast(hostname));
+        }
+
+        // TODO: add support for Puppet's node_name (cert vs. facter) setting?
     }
 
     string const& node::name() const
     {
-        return _name;
+        // Return the last name in the set, which is always the most specific
+        return *_names.rbegin();
     }
 
     compiler::environment& node::environment()
@@ -57,7 +70,6 @@ namespace puppet { namespace compiler {
     catalog node::compile(logging::logger& logger, string const& path)
     {
         auto compilation_context = make_shared<compiler::context>(logger, make_shared<string>(path), *this);
-        logger.log(level::debug, "parsed syntax tree:\n%1%", compilation_context->tree());
 
         try {
             runtime::catalog catalog;
@@ -68,10 +80,15 @@ namespace puppet { namespace compiler {
             // TODO: create settings scope in catalog
 
             // Evaluate the syntax tree
+            logger.log(level::debug, "evaluating the syntax tree for parsed file '%1%'.", path);
             expression_evaluator evaluator{compilation_context, evaluation_context};
             evaluator.evaluate();
 
-            // TODO: evaluate node scope
+            // Evaluate the node context
+            logger.log(level::debug, "evaluating context for node '%1%'.", name());
+            if (!evaluation_context.evaluate_node(*this)) {
+                throw compilation_exception((boost::format("failed to evaluate node definition for node '%1%'.") % name()).str(), path);
+            }
 
             // TODO: evaluate node classes
 
@@ -81,6 +98,16 @@ namespace puppet { namespace compiler {
             return catalog;
         } catch (evaluation_exception const& ex) {
             throw compilation_context->create_exception(ex.position(), ex.what());
+        }
+    }
+
+    void node::each_name(function<bool(string const&)> const& callback) const
+    {
+        // Set goes from most specific to least specific in order, so traverse backwards
+        for (auto it = _names.crbegin(); it != _names.crend(); ++it) {
+            if (!callback(*it)) {
+                return;
+            }
         }
     }
 

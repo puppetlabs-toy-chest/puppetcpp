@@ -194,8 +194,9 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::node_definition_expression const& expr)
     {
-        // TODO: implement
-        throw evaluation_exception(expr.position(), "node definition expressions are not yet implemented.");
+        // Node definition expressions are handled by the definition scanner
+        // Just return undef
+        return values::undef();
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::collection_expression const& expr)

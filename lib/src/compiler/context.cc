@@ -23,7 +23,9 @@ namespace puppet { namespace compiler {
 
         // Parse the file into a syntax tree
         try {
+            logger.log(level::debug, "parsing '%1%'.", *_path);
             _tree = parser::parse(*_path, _stream);
+            logger.log(level::debug, "parsed syntax tree:\n%1%", _tree);
         } catch (parse_exception const& ex) {
             throw create_exception(ex.position(), ex.what());
         }

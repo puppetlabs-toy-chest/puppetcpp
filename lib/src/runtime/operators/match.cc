@@ -17,10 +17,14 @@ namespace puppet { namespace runtime { namespace operators {
 
         result_type operator()(string const& left, string const& right)
         {
-            smatch matches;
-            bool result = right.empty() || regex_search(left, matches, std::regex(right));
-            _context.evaluator().scope().set(matches);
-            return result;
+            try {
+                smatch matches;
+                bool result = right.empty() || regex_search(left, matches, std::regex(right));
+                _context.evaluator().scope().set(matches);
+                return result;
+            } catch (regex_error const& ex) {
+                throw evaluation_exception(_context.right_position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
+            }
         }
 
         result_type operator()(string const& left, values::regex const& right)

@@ -130,6 +130,42 @@ namespace puppet { namespace runtime {
     };
 
     /**
+     * Represents a node definition.
+     */
+    struct node_definition
+    {
+        /**
+         * Constructs a node definition.
+         * @param context The compilation context for the node definition.
+         * @param expression The node definition expression.
+         */
+        node_definition(std::shared_ptr<compiler::context> context, ast::node_definition_expression const& expression);
+
+        /**
+         * Gets the path of the file containing the node definition.
+         * @return Returns the path of the file containing the node definition.
+         */
+        std::string const& path() const;
+
+        /**
+         * Gets the line number of the node definition.
+         * @return Returns the line number of the node definition.
+         */
+        size_t line() const;
+
+        /**
+         * Evaluates the node definition.
+         * @param context The evaluation context.
+         * @return Returns true if the evaluation succeeded or false if it did not.
+         */
+        bool evaluate(runtime::context& context);
+
+     private:
+        std::shared_ptr<compiler::context> _context;
+        ast::node_definition_expression const& _expression;
+    };
+
+    /**
      * Represents the evaluation context.
      */
     struct context
@@ -191,9 +227,8 @@ namespace puppet { namespace runtime {
          * @param klass The class to define.
          * @param context The compilation context.
          * @param expression The class definition expression.
-         * @return Returns nullptr if the class was successfully defined or existing class definition that cannot be merged with the given definition.
          */
-        class_definition const* define_class(types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const& expression);
+        void define_class(types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const& expression);
 
         /**
          * Declares a class.
@@ -225,9 +260,8 @@ namespace puppet { namespace runtime {
          * @param type The type to define.
          * @param context The compilation context.
          * @param expression The defined type expression.
-         * @return Returns nullptr if the type was successfully defined or a pointer to the existing defined type if already defined.
          */
-        defined_type const* define_type(std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
+        void define_type(std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
 
         /**
          * Determines if the given type name is a defined type.
@@ -247,6 +281,20 @@ namespace puppet { namespace runtime {
          */
         runtime::resource* declare_defined_type(std::string const& type, std::string const& title, std::shared_ptr<std::string> path, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
 
+        /**
+         * Defines a node.
+         * @param context The compilation context.
+         * @param expression The node definition expression.
+         */
+        void define_node(std::shared_ptr<compiler::context> context, ast::node_definition_expression const& expression);
+
+        /**
+         * Evaluates a node definition for the given node.
+         * @param node The node to evaluate for.
+         * @return Returns true if evaluation was successful or false if it was not.
+         */
+        bool evaluate_node(compiler::node const& node);
+
      private:
         void validate_parameters(bool klass, std::vector<ast::parameter> const& parameters);
 
@@ -255,6 +303,10 @@ namespace puppet { namespace runtime {
         std::deque<runtime::scope*> _scope_stack;
         std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
         std::unordered_map<std::string, defined_type> _defined_types;
+        std::vector<node_definition> _nodes;
+        std::unordered_map<std::string, size_t> _named_nodes;
+        std::vector<std::pair<values::regex, size_t>> _regex_node_definitions;
+        ssize_t _default_node_index;
     };
 
     /**
