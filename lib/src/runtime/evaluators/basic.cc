@@ -60,8 +60,8 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         try {
             return values::regex(regx.value());
-        } catch (std::regex_error const& ex) {
-            throw evaluation_exception(regx.position(), ex.what());
+        } catch (regex_error const& ex) {
+            throw evaluation_exception(regx.position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
         }
     }
 

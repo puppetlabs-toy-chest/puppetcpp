@@ -204,8 +204,39 @@ namespace puppet { namespace runtime {
         return true;
     }
 
+    node_definition::node_definition(shared_ptr<compiler::context> context, ast::node_definition_expression const& expression) :
+        _context(rvalue_cast(context)),
+        _expression(expression)
+    {
+    }
+
+    string const& node_definition::path() const
+    {
+        return *_context->path();
+    }
+
+    size_t node_definition::line() const
+    {
+        return _expression.position().line();
+    }
+
+    bool node_definition::evaluate(runtime::context& context)
+    {
+        try {
+            expression_evaluator evaluator{ _context, context };
+            runtime::executor executor(evaluator, _expression.position(), boost::none, _expression.body());
+            executor.execute();
+        } catch (evaluation_exception const& ex) {
+            // The compilation context is probably not the current one, so do not let evaluation exception propagate
+            _context->log(logging::level::error, ex.position(), ex.what());
+            return false;
+        }
+        return true;
+    }
+
     context::context(runtime::catalog& catalog) :
-        _catalog(catalog)
+        _catalog(catalog),
+        _default_node_index(-1)
     {
         // Add the top scope
         push_scope(add_scope("", "Class[main]"));
@@ -256,7 +287,7 @@ namespace puppet { namespace runtime {
         return true;
     }
 
-    class_definition const* context::define_class(types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const& expression)
+    void context::define_class(types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const& expression)
     {
         // Validate the class parameters
         if (expression.parameters()) {
@@ -276,11 +307,17 @@ namespace puppet { namespace runtime {
                 if (parent == *existing) {
                     continue;
                 }
-                return &definition;
+                throw evaluation_exception(expression.parent()->position(),
+                    (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%.") %
+                     klass.title() %
+                     expression.parent()->value() %
+                     existing->title() %
+                     definition.path() %
+                     definition.line()
+                    ).str());
             }
         }
         definitions.push_back(class_definition(rvalue_cast(klass), context, &expression));
-        return nullptr;
     }
 
     runtime::resource* context::declare_class(types::klass const& klass, shared_ptr<string> path, lexer::position const& position, unordered_map<ast::name, values::value> const* arguments)
@@ -335,7 +372,7 @@ namespace puppet { namespace runtime {
         return false;
     }
 
-    defined_type const* context::define_type(string type, shared_ptr<compiler::context> context, ast::defined_type_expression const& expression)
+    void context::define_type(string type, shared_ptr<compiler::context> context, ast::defined_type_expression const& expression)
     {
         // Validate the defined type's parameters
         if (expression.parameters()) {
@@ -345,13 +382,17 @@ namespace puppet { namespace runtime {
         // Look for the existing type
         auto it = _defined_types.find(type);
         if (it != _defined_types.end()) {
-            return &it->second;
+            throw evaluation_exception(expression.name().position(),
+                (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
+                 it->second.type() %
+                 it->second.path() %
+                 it->second.line()
+                ).str());
         }
 
         // Add the defined type
         defined_type defined(type, rvalue_cast(context), expression);
         _defined_types.emplace(make_pair(rvalue_cast(type), rvalue_cast(defined)));
-        return nullptr;
     }
 
     bool context::is_defined_type(std::string const& type) const
@@ -381,6 +422,97 @@ namespace puppet { namespace runtime {
         return added;
     }
 
+    void context::define_node(shared_ptr<compiler::context> context, ast::node_definition_expression const& expression)
+    {
+        // Emplace the node
+        _nodes.emplace_back(rvalue_cast(context), expression);
+        size_t node_index = _nodes.size() -1;
+
+        for (auto const& name : expression.names()) {
+            // Check for default node
+            if (name.is_default()) {
+                if (_default_node_index < 0) {
+                    _default_node_index = static_cast<ssize_t>(node_index);
+                    continue;
+                }
+                auto const& previous = _nodes[_default_node_index];
+                throw evaluation_exception(name.position(), (boost::format("a default node was previously defined at %1%:%2%.") % previous.path() % previous.line()).str());
+            }
+            // Check for regular expression names
+            if (name.regex()) {
+                auto it = find_if(_regex_node_definitions.begin(), _regex_node_definitions.end(), [&](decltype(_regex_node_definitions.front()) existing) { return existing.first.pattern() == name.value(); });
+                if (it != _regex_node_definitions.end()) {
+                    auto const& previous = _nodes[it->second];
+                    throw evaluation_exception(name.position(), (boost::format("node /%1%/ was previously defined at %2%:%3%.") % name.value() % previous.path() % previous.line()).str());
+                }
+
+                try {
+                    _regex_node_definitions.emplace_back(values::regex(name.value()), node_index);
+                } catch (regex_error const& ex) {
+                    throw evaluation_exception(name.position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
+                }
+                continue;
+            }
+            // Otherwise, this is a qualified node name
+            auto it = _named_nodes.find(name.value());
+            if (it != _named_nodes.end()) {
+                auto const& previous = _nodes[it->second];
+                throw evaluation_exception(name.position(), (boost::format("node '%1%' was previously defined at %2%:%3%.") % name.value() % previous.path() % previous.line()).str());
+            }
+            _named_nodes.emplace(make_pair(boost::to_lower_copy(name.value()), node_index));
+        }
+    }
+
+    bool context::evaluate_node(compiler::node const& node)
+    {
+        // If there are no node definitions, do nothing
+        if (_nodes.empty()) {
+            return true;
+        }
+
+        // Find a node definition
+        node_definition* definition = nullptr;
+        node.each_name([&](string const& name) {
+            // First check by name
+            auto it = _named_nodes.find(name);
+            if (it != _named_nodes.end()) {
+                definition = &_nodes[it->second];
+                return false;
+            }
+            // Next, check by looking at every regex
+            for (auto const& kvp : _regex_node_definitions) {
+                if (regex_search(name, kvp.first.value())) {
+                    definition = &_nodes[kvp.second];
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        if (!definition) {
+            if (_default_node_index < 0) {
+                ostringstream message;
+                message << "could not find a default node or a node with the following names: ";
+                bool first = true;
+                node.each_name([&](string const& name) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        message << ", ";
+                    }
+                    message << name;
+                    return true;
+                });
+                message << ".";
+                throw compiler::compilation_exception(message.str());
+            }
+            definition = &_nodes[_default_node_index];
+        }
+
+        // Evaluate the node definition
+        return definition->evaluate(*this);
+    }
+
     void context::validate_parameters(bool klass, vector<ast::parameter> const& parameters)
     {
         for (auto const& parameter : parameters) {
@@ -391,6 +523,8 @@ namespace puppet { namespace runtime {
             if (parameter.captures()) {
                 throw evaluation_exception(parameter.variable().position(), (boost::format("%1% parameter $%2% cannot \"captures rest\".") % (klass ? "class" : "defined type") % name).str());
             }
+
+            // TODO: warn or error about metaparameters
         }
     }
 

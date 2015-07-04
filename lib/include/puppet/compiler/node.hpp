@@ -8,6 +8,8 @@
 #include "../runtime/catalog.hpp"
 #include "environment.hpp"
 #include <exception>
+#include <functional>
+#include <set>
 
 namespace puppet { namespace compiler {
 
@@ -67,11 +69,11 @@ namespace puppet { namespace compiler {
          * @param name The name of the node.
          * @param environment The environment for the node.
          */
-        node(std::string name, compiler::environment& environment);
+        node(std::string const& name, compiler::environment& environment);
 
         /**
-         * Gets the name of the node.
-         * @return Returns the name of the node.
+         * Gets the display name of the node.
+         * @return Returns the display name of the node.
          */
         std::string const& name() const;
 
@@ -89,8 +91,14 @@ namespace puppet { namespace compiler {
          */
         runtime::catalog compile(logging::logger& logger, std::string const& path);
 
+        /**
+         * Calls the given callback for each name associated with the node.
+         * @param callback The callback to call for each name.
+         */
+        void each_name(std::function<bool(std::string const&)> const& callback) const;
+
      private:
-        std::string _name;
+        std::set<std::string> _names;
         compiler::environment& _environment;
     };
 

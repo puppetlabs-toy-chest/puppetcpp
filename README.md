@@ -63,13 +63,13 @@ Expression evaluator status:
 * [ ] resource override expressions (NYI: scope check and `+>`)
 * [x] class definition expressions
 * [x] defined type expressions
-* [ ] node definition expressions
+* [x] node definition expressions
 * [ ] collection expressions
 * [ ] loading files from modules
 * [x] access expressions
 * [x] global scope
 * [x] local scope
-* [ ] node scope
+* [x] node scope
 * [x] string interpolation
 * [ ] external data lookups (i.e. hiera)
 * [ ] EPP support
