@@ -78,7 +78,7 @@ namespace puppet { namespace runtime {
 
         // An empty namespace is the top scope
         if (ns.empty()) {
-            auto variable = _evaluation_context.top().get(var);
+            auto variable = _evaluation_context.top_scope().get(var);
             return variable ? &variable->value() : nullptr;
         }
 
