@@ -508,14 +508,14 @@ namespace puppet { namespace runtime {
             // First check by name
             auto it = _named_nodes.find(name);
             if (it != _named_nodes.end()) {
-                scope_name = "Node[" + name + "]";
+                scope_name = "Node[" + it->first + "]";
                 definition = &_nodes[it->second];
                 return false;
             }
             // Next, check by looking at every regex
             for (auto const& kvp : _regex_node_definitions) {
                 if (regex_search(name, kvp.first.value())) {
-                    scope_name = "Node[/" + name + "/]";
+                    scope_name = "Node[/" + kvp.first.pattern() + "/]";
                     definition = &_nodes[kvp.second];
                     return false;
                 }
