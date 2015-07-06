@@ -7,6 +7,23 @@ using namespace std;
 
 namespace puppet { namespace runtime {
 
+    struct node_scope_helper
+    {
+        node_scope_helper(runtime::context& context, string scope_name) :
+            _context(context)
+        {
+            _context._node_scope.reset(new runtime::scope("node", rvalue_cast(scope_name), &_context.top_scope()));
+        }
+
+        ~node_scope_helper()
+        {
+            _context._node_scope.reset();
+        }
+
+     private:
+        runtime::context& _context;
+    };
+
     class_definition::class_definition(types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const* expression) :
         _klass(rvalue_cast(klass)),
         _context(rvalue_cast(context)),
@@ -115,10 +132,10 @@ namespace puppet { namespace runtime {
 
     runtime::scope* class_definition::evaluate_parent(runtime::context& context)
     {
-        // If no parent, return the top scope
+        // If no parent, return the node or top scope
         auto parent = this->parent();
         if (!parent) {
-            return &context.top();
+            return &context.node_or_top();
         }
 
         if (!context.is_class_defined(*parent)) {
@@ -186,7 +203,7 @@ namespace puppet { namespace runtime {
         // Create a temporary scope
         ostringstream display_name;
         display_name << resource.type();
-        runtime::scope scope{ _type, display_name.str(), &context.top() };
+        runtime::scope scope{ _type, display_name.str(), &context.node_or_top() };
 
         // Set the title and name variables in the scope
         scope.set("title", resource.type().title(), _context->path(), _expression.position().line());
@@ -225,7 +242,7 @@ namespace puppet { namespace runtime {
         try {
             expression_evaluator evaluator{ _context, context };
             runtime::executor executor(evaluator, _expression.position(), boost::none, _expression.body());
-            executor.execute();
+            executor.execute(context.node_scope());
         } catch (evaluation_exception const& ex) {
             // The compilation context is probably not the current one, so do not let evaluation exception propagate
             _context->log(logging::level::error, ex.position(), ex.what());
@@ -252,9 +269,23 @@ namespace puppet { namespace runtime {
         return *_scope_stack.back();
     }
 
-    runtime::scope& context::top()
+    runtime::scope& context::top_scope()
     {
         return *_scope_stack.front();
+    }
+
+    runtime::scope* context::node_scope()
+    {
+        return _node_scope.get();
+    }
+
+    runtime::scope& context::node_or_top()
+    {
+        auto node = node_scope();
+        if (node) {
+            return *node;
+        }
+        return top_scope();
     }
 
     runtime::scope& context::add_scope(string name, string display_name, runtime::scope* parent)
@@ -471,17 +502,20 @@ namespace puppet { namespace runtime {
         }
 
         // Find a node definition
+        string scope_name;
         node_definition* definition = nullptr;
         node.each_name([&](string const& name) {
             // First check by name
             auto it = _named_nodes.find(name);
             if (it != _named_nodes.end()) {
+                scope_name = "Node[" + name + "]";
                 definition = &_nodes[it->second];
                 return false;
             }
             // Next, check by looking at every regex
             for (auto const& kvp : _regex_node_definitions) {
                 if (regex_search(name, kvp.first.value())) {
+                    scope_name = "Node[/" + name + "/]";
                     definition = &_nodes[kvp.second];
                     return false;
                 }
@@ -506,8 +540,12 @@ namespace puppet { namespace runtime {
                 message << ".";
                 throw compiler::compilation_exception(message.str());
             }
+            scope_name = "Node[default]";
             definition = &_nodes[_default_node_index];
         }
+
+        // Set the node scope for the remainder of the evaluation
+        node_scope_helper helper(*this, rvalue_cast(scope_name));
 
         // Evaluate the node definition
         return definition->evaluate(*this);

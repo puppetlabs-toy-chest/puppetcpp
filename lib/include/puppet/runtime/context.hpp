@@ -192,7 +192,19 @@ namespace puppet { namespace runtime {
          * Gets the top scope.
          * @return Returns the top scope.
          */
-        runtime::scope& top();
+        runtime::scope& top_scope();
+
+        /**
+         * Gets the node scope.
+         * @return Returns the node scope or nullptr if there currently is no node scope.
+         */
+        runtime::scope* node_scope();
+
+        /**
+         * Gets the node scope if there is one or returns the top scope if there isn't.
+         * @return Returns the node scope if there is one or returns the top scope if there isn't.
+         */
+        runtime::scope& node_or_top();
 
         /**
          * Adds a scope to the evaluation context.
@@ -297,10 +309,12 @@ namespace puppet { namespace runtime {
 
      private:
         void validate_parameters(bool klass, std::vector<ast::parameter> const& parameters);
+        friend struct node_scope_helper;
 
         runtime::catalog& _catalog;
         std::unordered_map<std::string, runtime::scope> _scopes;
         std::deque<runtime::scope*> _scope_stack;
+        std::unique_ptr<runtime::scope> _node_scope;
         std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
         std::unordered_map<std::string, defined_type> _defined_types;
         std::vector<node_definition> _nodes;
