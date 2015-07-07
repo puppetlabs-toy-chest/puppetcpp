@@ -555,6 +555,7 @@ namespace puppet { namespace runtime {
     {
         for (auto const& parameter : parameters) {
             auto const& name = parameter.variable().name();
+
             if (name == "title" || name == "name") {
                 throw evaluation_exception(parameter.variable().position(), (boost::format("parameter $%1% is reserved and cannot be used.") % name).str());
             }

@@ -1,7 +1,10 @@
 #include <puppet/ast/parameter.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/ast/utility.hpp>
+#include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
+#include <boost/format.hpp>
+#include <regex>
 
 using namespace std;
 using boost::optional;
@@ -19,6 +22,12 @@ namespace puppet { namespace ast {
         _variable(rvalue_cast(variable)),
         _default_value(rvalue_cast(default_value))
     {
+        static char const* valid_name_pattern = "^[a-z_]\\w*$";
+        static std::regex valid_name_regex(valid_name_pattern);
+
+        if (!regex_match(_variable.name(), valid_name_regex)) {
+            throw puppet::compiler::parse_exception(position(), (boost::format("parameter $%1% has an unacceptable name: the name must conform to /%2%/.") % _variable.name() % valid_name_pattern).str());
+        }
     }
 
     optional<primary_expression> const& parameter::type() const
