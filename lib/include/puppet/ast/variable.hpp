@@ -34,6 +34,8 @@ namespace puppet { namespace ast {
             auto it = token.begin();
             ++it;
             _name.assign(it, token.end());
+
+            validate_name();
         }
 
         /**
@@ -56,6 +58,8 @@ namespace puppet { namespace ast {
         lexer::position const& position() const;
 
      private:
+        void validate_name() const;
+
         lexer::position _position;
         std::string _name;
     };

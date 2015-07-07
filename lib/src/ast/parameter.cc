@@ -22,7 +22,7 @@ namespace puppet { namespace ast {
         _variable(rvalue_cast(variable)),
         _default_value(rvalue_cast(default_value))
     {
-        static char const* valid_name_pattern = "^[a-z_]\\w*$";
+        static char const* valid_name_pattern = "[a-z_]\\w*";
         static std::regex valid_name_regex(valid_name_pattern);
 
         if (!regex_match(_variable.name(), valid_name_regex)) {

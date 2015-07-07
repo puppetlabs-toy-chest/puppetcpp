@@ -67,20 +67,13 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::variable const& var)
     {
-        static const std::regex match_variable_patterh("^\\d+$");
-
         auto& name = var.name();
 
         bool match = false;
         value const* val = nullptr;
-        if (regex_match(name, match_variable_patterh)) {
-            // Check for invalid match name
-            if (name.size() > 1 && name[0] == '0') {
-                throw evaluation_exception(var.position(), (boost::format("variable name $%1% is not a valid match variable name.") % var.name()).str());
-            }
-            // Look up the match
-            val = _evaluator.scope().get(stoi(name));
+        if (!name.empty() && isdigit(name[0])) {
             match = true;
+            val = _evaluator.scope().get(stoi(name));
         } else {
             val = _evaluator.lookup(name, &var.position());
         }
