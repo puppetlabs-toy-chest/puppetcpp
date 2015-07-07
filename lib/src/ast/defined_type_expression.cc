@@ -47,11 +47,11 @@ namespace puppet { namespace ast {
         }
         os << "define " << expr.name();
         if (expr.parameters()) {
-            os << " (";
+            os << "(";
             pretty_print(os, expr.parameters(), ", ");
             os << ")";
         }
-        os << " {";
+        os << " { ";
         pretty_print(os, expr.body(), "; ");
         os << " }";
         return os;
