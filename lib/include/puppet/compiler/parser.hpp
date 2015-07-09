@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "exceptions.hpp"
 #include "grammar.hpp"
 #include "../lexer/static_lexer.hpp"
 #include "../lexer/lexer.hpp"
@@ -12,28 +13,6 @@
 #include <iomanip>
 
 namespace puppet { namespace compiler {
-
-    /**
-     * Exception for parse errors.
-     */
-    struct parse_exception : std::runtime_error
-    {
-        /**
-         * Constructs a parse exception.
-         * @param position The token position where parsing failed.
-         * @param message The exception message.
-         */
-        parse_exception(lexer::position position, std::string const& message);
-
-        /**
-         * Gets the token position where parsing failed.
-         * @return Returns the token position where parsing failed.
-         */
-        lexer::position const& position() const;
-
-     private:
-        lexer::position _position;
-    };
 
     /**
      * Implements the Puppet language parser.

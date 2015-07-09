@@ -345,6 +345,11 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::defined_type_expression const& expr)
         {
+            // Ensure the name is valid
+            if (boost::starts_with(expr.name().value(), "::")) {
+                throw evaluation_exception(expr.name().position(), (boost::format("'%1%' is not a valid defined type name.") % expr.name()).str());
+            }
+
             if (!can_define()) {
                 throw evaluation_exception(expr.position(), "defined types can only be defined at top-level scope or inside a class.");
             }
