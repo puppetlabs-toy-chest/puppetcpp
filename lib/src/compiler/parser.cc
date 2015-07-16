@@ -18,7 +18,7 @@ namespace puppet { namespace compiler {
         return _position;
     }
 
-    ast::syntax_tree parser::parse(string const& path, ifstream& input, bool interpolation)
+    ast::syntax_tree parser::parse(ifstream& input, bool interpolation)
     {
         file_static_lexer lexer;
         auto begin = lex_begin(input);
