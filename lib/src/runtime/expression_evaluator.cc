@@ -166,12 +166,10 @@ namespace puppet { namespace runtime {
 
         // Evaluate the primary expression
         auto result = evaluate(expr.primary());
-        auto position = expr.position();
 
         // Climb the remainder of the expression
-        auto& binary = expr.binary();
-        auto begin = binary.begin();
-        climb_expression(result, position, 0, begin, binary.end());
+        auto begin = expr.binary().begin();
+        climb_expression(result, expr.position(), 0, begin, expr.binary().end());
 
         return result;
     }
@@ -286,7 +284,7 @@ namespace puppet { namespace runtime {
 
     void expression_evaluator::climb_expression(
         value& left,
-        lexer::position& left_position,
+        lexer::position const& left_position,
         uint8_t min_precedence,
         vector<ast::binary_expression>::const_iterator& begin,
         vector<ast::binary_expression>::const_iterator const& end)
@@ -300,12 +298,20 @@ namespace puppet { namespace runtime {
             auto right_position = begin->position();
             ++begin;
 
+            // If the operator is a logical and/or operator, attempt short circuiting
+            if ((op == ast::binary_operator::logical_and && !is_truthy(left)) ||
+                (op == ast::binary_operator::logical_or && is_truthy(left))) {
+                left = op == ast::binary_operator::logical_or;
+                begin = end;
+                return;
+            }
+
             // Evaluate the right side
             value right = evaluate(operand);
 
             // Recurse and climb the expression
-            uint8_t next_precdence = precedence + (is_right_associative(op) ? static_cast<uint8_t>(0) : static_cast<uint8_t>(1));
-            climb_expression(right, right_position, next_precdence, begin, end);
+            uint8_t next_precedence = precedence + (is_right_associative(op) ? static_cast<uint8_t>(0) : static_cast<uint8_t>(1));
+            climb_expression(right, right_position, next_precedence, begin, end);
 
             // Evaluate this part of the expression
             evaluate(left, left_position, op, right, right_position);

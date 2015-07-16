@@ -182,7 +182,7 @@ namespace puppet { namespace runtime {
 
         void climb_expression(
             values::value& left,
-            lexer::position& left_position,
+            lexer::position const& left_position,
             std::uint8_t min_precedence,
             std::vector<ast::binary_expression>::const_iterator& begin,
             std::vector<ast::binary_expression>::const_iterator const& end);
