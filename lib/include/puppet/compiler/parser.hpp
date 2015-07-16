@@ -21,12 +21,11 @@ namespace puppet { namespace compiler {
     {
         /**
          * Parses the given file into a syntax tree.
-         * @param path The path to the file to parse.
          * @param input The input file to parse.
          * @param interpolation True if parsing for string interpolation or false if not.
          * @return Returns the parsed syntax tree.
          */
-        static ast::syntax_tree parse(std::string const& path, std::ifstream& input, bool interpolation = false);
+        static ast::syntax_tree parse(std::ifstream& input, bool interpolation = false);
         /**
          * Parses the given string into a syntax tree.
          * @param input The input string to parse.

@@ -23,6 +23,11 @@ namespace puppet {
             !std::is_const<typename std::remove_reference<T>::type>::value,
             "Cannot rvalue-cast from a const reference as this will not invoke move semantics."
         );
+        static_assert(
+            std::is_move_constructible<typename std::remove_reference<T>::type>::value ||
+            std::is_move_assignable<typename std::remove_reference<T>::type>::value,
+            "Cannot rvalue-cast because the type is not move constructible or assignable."
+        );
         return std::move(t);
     }
 
