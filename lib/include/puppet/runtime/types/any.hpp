@@ -5,6 +5,7 @@
 #pragma once
 
 #include <boost/functional/hash.hpp>
+#include <boost/variant.hpp>
 #include <ostream>
 #include <functional>
 

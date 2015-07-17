@@ -6,6 +6,7 @@
 
 #include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
+#include <boost/variant.hpp>
 #include <boost/algorithm/string.hpp>
 #include <ostream>
 #include <string>

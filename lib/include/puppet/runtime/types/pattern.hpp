@@ -6,6 +6,7 @@
 
 #include "../values/regex.hpp"
 #include <boost/functional/hash.hpp>
+#include <boost/variant.hpp>
 #include <ostream>
 #include <vector>
 
