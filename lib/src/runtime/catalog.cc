@@ -4,12 +4,20 @@
 #include <puppet/runtime/expression_evaluator.hpp>
 #include <puppet/compiler/node.hpp>
 #include <puppet/cast.hpp>
+#include <boost/graph/tiernan_all_cycles.hpp>
 #include <boost/format.hpp>
 #include <unordered_set>
 
 using namespace std;
 using namespace puppet::lexer;
 using namespace puppet::runtime::values;
+
+namespace boost {
+    // Helper needed for dependency cycle detection
+    void renumber_vertex_indices(puppet::runtime::dependency_graph const&)
+    {
+    }
+}
 
 namespace puppet { namespace runtime {
 
@@ -35,7 +43,7 @@ namespace puppet { namespace runtime {
         _values[name] = make_shared<values::value>(rvalue_cast(value));
     }
 
-    bool attributes::append(string const& name, values::value value)
+    bool attributes::append(string const& name, values::value value, bool append_duplicates)
     {
         values::array new_value = to_array(value);
 
@@ -64,6 +72,10 @@ namespace puppet { namespace runtime {
         // Move the elements from the value into the existing array
         existing_value.reserve(existing_value.size() + new_value.size());
         for (auto& element : new_value) {
+            // Check to see if the value already exists, if requested to do so
+            if (append_duplicates && find_if(existing_value.begin(), existing_value.end(), [&](values::value const& v) { return values::equals(v, element); }) != existing_value.end()) {
+                continue;
+            }
             existing_value.emplace_back(rvalue_cast(element));
         }
 
@@ -107,6 +119,9 @@ namespace puppet { namespace runtime {
             _attributes(rvalue_cast(attributes)),
             _exported(exported)
     {
+        if (!_path) {
+            throw runtime_error("a declared resource must have a path.");
+        }
         if (!_attributes) {
             _attributes = make_shared<runtime::attributes>();
         }
@@ -173,6 +188,16 @@ namespace puppet { namespace runtime {
             "tag"
         };
         return metaparameters.count(name) > 0;
+    }
+
+    size_t resource::vertex_id() const
+    {
+        return _vertex_id;
+    }
+
+    void resource::vertex_id(size_t id)
+    {
+        _vertex_id = id;
     }
 
     class_definition::class_definition(runtime::catalog& catalog, types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const* expression) :
@@ -388,6 +413,11 @@ namespace puppet { namespace runtime {
     {
     }
 
+    dependency_graph const& catalog::graph() const
+    {
+        return _graph;
+    }
+
     resource* catalog::find_resource(types::resource const& resource)
     {
         if (!resource.fully_qualified()) {
@@ -421,7 +451,12 @@ namespace puppet { namespace runtime {
         if (!result.second) {
             return nullptr;
         }
-        return &result.first->second;
+
+        // Add a graph vertex for the resource
+        auto resource_ptr = &result.first->second;
+        resource_ptr->vertex_id(boost::add_vertex(resource_ptr, _graph));
+
+        return resource_ptr;
     }
 
     void catalog::define_class(types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const& expression)
@@ -674,6 +709,12 @@ namespace puppet { namespace runtime {
         return definition->evaluate(context);
     }
 
+    void catalog::finalize()
+    {
+        // Populate the dependency graph
+        populate_graph();
+    }
+
     void catalog::validate_parameters(bool klass, shared_ptr<compiler::context> const& context, vector<ast::parameter> const& parameters)
     {
         for (auto const& parameter : parameters) {
@@ -694,6 +735,142 @@ namespace puppet { namespace runtime {
                 throw evaluation_exception(context, parameter.variable().position(), (boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str());
             }
         }
+    }
+
+    void catalog::populate_graph()
+    {
+        string before_parameter = "before";
+        string notify_parameter = "notify";
+        string require_parameter = "require";
+        string subscribe_parameter = "subscribe";
+
+        // Loop through each resource and add relationships
+        for (auto const& types_pair : _resources) {
+            for (auto const& resource_pair : types_pair.second) {
+                auto const& source = resource_pair.second;
+
+                // Proccess the relationship metaparameters for the resource
+                process_relationship_parameter(source, before_parameter, runtime::relationship::before);
+                process_relationship_parameter(source, notify_parameter, runtime::relationship::notify);
+                process_relationship_parameter(source, require_parameter, runtime::relationship::require);
+                process_relationship_parameter(source, subscribe_parameter, runtime::relationship::subscribe);
+
+                // TODO: handle containment
+            }
+        }
+
+        // Finally, detect any cycles
+        detect_cycles();
+    }
+
+    void catalog::process_relationship_parameter(resource const& source, string const& name, runtime::relationship relationship)
+    {
+        auto parameter = source.attributes().get(name);
+        if (!parameter) {
+            return;
+        }
+        each_resource(*parameter, [&](types::resource const& target_resource) {
+            // Locate the target in the catalog
+            auto target = find_resource(target_resource);
+            if (!target) {
+                throw compiler::compilation_exception(
+                    (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the resource does not exist in the catalog.") %
+                     source.type() %
+                     *source.path() %
+                     source.line() %
+                     name %
+                     target_resource).str());
+            }
+
+            if (&source == target) {
+                throw compiler::compilation_exception(
+                    (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the relationship is self-referencing.") %
+                     source.type() %
+                     *source.path() %
+                     source.line() %
+                     name %
+                     target_resource).str());
+            }
+
+            // Add the relationship
+            add_relationship(relationship, source, *target);
+        }, [&](string const& message) {
+            throw compiler::compilation_exception(
+                (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship: %5%") %
+                 source.type() %
+                 *source.path() %
+                 source.line() %
+                 name %
+                 message).str());
+        });
+    }
+
+    void catalog::add_relationship(runtime::relationship relationship, runtime::resource const& source, runtime::resource const& target)
+    {
+        auto source_ptr = &source;
+        auto target_ptr = &target;
+
+        // For "reverse" relationships (require and subscribe), swap the target and source vertices
+        if (relationship == runtime::relationship::require || relationship == runtime::relationship::subscribe) {
+            source_ptr = &target;
+            target_ptr = &source;
+        }
+
+        // Add the edge to the graph if it doesn't already exist
+        if (!boost::edge(source_ptr->vertex_id(), target_ptr->vertex_id(), _graph).second) {
+            boost::add_edge(source_ptr->vertex_id(), target_ptr->vertex_id(), relationship, _graph);
+        }
+    }
+
+    struct cycle_visitor
+    {
+        explicit cycle_visitor(vector<string>& cycles) :
+            _cycles(cycles)
+        {
+        }
+
+        template <typename Path, typename Graph>
+        void cycle(Path const& path, Graph const& graph)
+        {
+            ostringstream cycle;
+            bool first = true;
+            for (auto const& id : path) {
+                if (first) {
+                    first = false;
+                } else {
+                    cycle << " => ";
+                }
+                auto resource = graph[id];
+                cycle << resource->type() << " declared at " << *resource->path() << ":" << resource->line();
+            }
+            // Append on the first vertex again to complete the cycle
+            auto resource = graph[path.front()];
+            cycle << " => " << resource->type();
+            _cycles.push_back(cycle.str());
+        }
+
+        vector<string>& _cycles;
+    };
+
+    void catalog::detect_cycles()
+    {
+        // Check for cycles in the graph
+        vector<string> cycles;
+        boost::tiernan_all_cycles(_graph, cycle_visitor(cycles));
+        if (cycles.empty()) {
+            return;
+        }
+
+        // At least one cycle found, so throw an exception
+        ostringstream message;
+        message << "found " << cycles.size() << " resource dependency cycle" << (cycles.size() == 1 ? ":\n" : "s:\n");
+        for (size_t i = 0; i < cycles.size(); ++i) {
+            if (i > 0) {
+                message << "\n";
+            }
+            message << "  " << i + 1 << ". " << cycles[i];
+        }
+        throw compiler::compilation_exception(message.str());
     }
 
 }}  // namespace puppet::runtime

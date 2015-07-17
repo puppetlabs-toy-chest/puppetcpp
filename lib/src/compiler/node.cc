@@ -80,7 +80,9 @@ namespace puppet { namespace compiler {
 
         // TODO: evaluate generators
 
-        // TODO: finalize catalog
+        // Finalize the catalog
+        catalog.finalize();
+
         return catalog;
     }
 

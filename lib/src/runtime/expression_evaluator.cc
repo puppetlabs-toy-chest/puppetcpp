@@ -18,6 +18,7 @@
 #include <puppet/runtime/operators/not_equals.hpp>
 #include <puppet/runtime/operators/not_match.hpp>
 #include <puppet/runtime/operators/plus.hpp>
+#include <puppet/runtime/operators/relationship.hpp>
 #include <puppet/runtime/operators/right_shift.hpp>
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/ast/expression_def.hpp>
@@ -273,6 +274,8 @@ namespace puppet { namespace runtime {
             { ast::binary_operator::greater_than,       operators::greater() },
             { ast::binary_operator::greater_equals,     operators::greater_equal() },
             { ast::binary_operator::in,                 operators::in() },
+            { ast::binary_operator::in_edge,            operators::in_edge() },
+            { ast::binary_operator::in_edge_subscribe,  operators::in_edge_subscribe() },
             { ast::binary_operator::less_than,          operators::less() },
             { ast::binary_operator::less_equals,        operators::less_equal() },
             { ast::binary_operator::left_shift,         operators::left_shift() },
@@ -284,6 +287,8 @@ namespace puppet { namespace runtime {
             { ast::binary_operator::multiply,           operators::multiply() },
             { ast::binary_operator::not_equals,         operators::not_equals() },
             { ast::binary_operator::not_match,          operators::not_match() },
+            { ast::binary_operator::out_edge,           operators::out_edge() },
+            { ast::binary_operator::out_edge_subscribe, operators::out_edge_subscribe() },
             { ast::binary_operator::plus,               operators::plus() },
             { ast::binary_operator::right_shift,        operators::right_shift() }
         };

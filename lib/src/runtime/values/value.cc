@@ -1,6 +1,8 @@
 #include <puppet/runtime/values/value.hpp>
-#include <boost/algorithm/string.hpp>
+#include <puppet/runtime/expression_evaluator.hpp>
 #include <puppet/cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -308,6 +310,50 @@ namespace puppet { namespace runtime { namespace values {
     bool equals(value const& left, value const& right)
     {
         return boost::apply_visitor(equality_visitor(), left, right);
+    }
+
+    void each_resource(values::value const& value, function<void(types::resource const&)> const& callback, function<void(string const&)> const& error)
+    {
+        // Check for string, type, or array
+        if (auto str = as<string>(value)) {
+            // Parse as resource
+            auto resource = types::resource::parse(*str);
+            if (!resource) {
+                if (error) {
+                    error((boost::format("expected a resource string but found \"%1%\".") % *str).str());
+                }
+                return;
+            }
+            callback(*resource);
+            return;
+        } else if (auto type = as<values::type>(value)) {
+            // Check for a resource or klass type
+            if (auto resource = boost::get<types::resource>(type)) {
+                if (resource->fully_qualified()) {
+                    callback(*resource);
+                    return;
+                }
+            } else if (auto klass = boost::get<types::klass>(type)) {
+                if (!klass->title().empty()) {
+                    callback(types::resource("class", klass->title()));
+                    return;
+                }
+            }
+        } else if (auto array = as<values::array>(value)) {
+            // For arrays, recurse on each element
+            for (auto& element : *array) {
+                each_resource(element, callback, error);
+            }
+            return;
+        }
+
+        if (error) {
+            error((boost::format("expected %1%, %2%, or %3% for relationship operator but found %4%.") %
+                   types::string::name() %
+                   types::resource::name() %
+                   types::array(types::variant({ values::type(types::string()), values::type(types::resource()) })) %
+                   get_type(value)).str());
+        }
     }
 
 }}}  // namespace puppet::runtime::values
