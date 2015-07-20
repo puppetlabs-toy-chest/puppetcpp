@@ -73,7 +73,7 @@ namespace puppet { namespace compiler {
 
         try {
             runtime::catalog catalog;
-            runtime::context evaluation_context{catalog};
+            runtime::context evaluation_context{ &catalog };
 
             // TODO: set parameters and facts in the top scope
 

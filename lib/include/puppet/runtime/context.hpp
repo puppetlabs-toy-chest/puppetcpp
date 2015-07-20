@@ -24,15 +24,15 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluation context.
-         * @param catalog The catalog being compiled.
+         * @param catalog The catalog being compiled or nullptr if catalog expressions are not supported.
          */
-        explicit context(runtime::catalog& catalog);
+        explicit context(runtime::catalog* catalog = nullptr);
 
         /**
          * Gets the catalog being compiled.
-         * @return Returns the catalog being compiled.
+         * @return Returns the catalog being compiled or nullptr if catalog expressions are not supported.
          */
-        runtime::catalog& catalog();
+        runtime::catalog* catalog();
 
         /**
          * Gets the current scope.
@@ -89,7 +89,7 @@ namespace puppet { namespace runtime {
      private:
         friend struct node_scope;
 
-        runtime::catalog& _catalog;
+        runtime::catalog* _catalog;
         std::unordered_map<std::string, runtime::scope> _scopes;
         std::deque<runtime::scope*> _scope_stack;
         std::unique_ptr<runtime::scope> _node_scope;

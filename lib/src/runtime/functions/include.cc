@@ -66,12 +66,12 @@ namespace puppet { namespace runtime { namespace functions {
                 throw evaluation_exception(_context.position(_index), "cannot include a Class with an unspecified title.");
             }
 
-            auto& catalog = evaluator.catalog();
-            if (!catalog.is_class_defined(klass)) {
+            auto catalog = evaluator.catalog();
+            if (!catalog->is_class_defined(klass)) {
                 throw evaluation_exception(_context.position(_index), (boost::format("cannot include class '%1%' because the class has not been defined.") % klass.title()).str());
             }
 
-            if (!catalog.declare_class(evaluator.context(), klass, evaluator.path(), _context.position(_index))) {
+            if (!catalog->declare_class(evaluator.context(), klass, evaluator.path(), _context.position(_index))) {
                 throw evaluation_exception(_context.position(_index), (boost::format("failed to include class '%1%'.") % klass.title()).str());
             }
         }
@@ -85,6 +85,9 @@ namespace puppet { namespace runtime { namespace functions {
         auto& arguments = context.arguments();
         if (arguments.empty()) {
             throw evaluation_exception(context.position(), (boost::format("expected at least one argument to '%1%' function.") % context.name()).str());
+        }
+        if (!context.evaluator().catalog()) {
+            throw evaluation_exception(context.position(), (boost::format("cannot call '%1%' function: catalog functions are not supported.") % context.name()).str());
         }
         for (size_t i = 0; i < arguments.size(); ++i) {
             boost::apply_visitor(include_visitor(context, i), arguments[i]);

@@ -5,14 +5,14 @@ using namespace std;
 
 namespace puppet { namespace runtime {
 
-    context::context(runtime::catalog& catalog) :
+    context::context(runtime::catalog* catalog) :
         _catalog(catalog)
     {
         // Add the top scope
         push_scope(add_scope("", "Class[main]"));
     }
 
-    runtime::catalog& context::catalog()
+    runtime::catalog* context::catalog()
     {
         return _catalog;
     }

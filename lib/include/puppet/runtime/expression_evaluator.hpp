@@ -57,9 +57,9 @@ namespace puppet { namespace runtime {
 
         /**
          * Gets the catalog being compiled.
-         * @return Returns the catalog being compiled.
+         * @return Returns the catalog being compiled or nullptr if catalog expressions are not supported.
          */
-        runtime::catalog& catalog();
+        runtime::catalog* catalog();
 
         /**
          * Gets the current scope.

@@ -56,7 +56,7 @@ namespace puppet { namespace runtime {
         return _evaluation_context;
     }
 
-    runtime::catalog& expression_evaluator::catalog()
+    runtime::catalog* expression_evaluator::catalog()
     {
         return _evaluation_context.catalog();
     }
@@ -98,9 +98,9 @@ namespace puppet { namespace runtime {
         if (position) {
             auto const& catalog = _evaluation_context.catalog();
             types::klass klass(ns);
-            if (!catalog.is_class_defined(klass)) {
+            if (!catalog->is_class_defined(klass)) {
                 warn(*position, (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % name % ns).str());
-            } else if (!catalog.is_class_declared(klass)) {
+            } else if (!catalog->is_class_declared(klass)) {
                 warn(*position, (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % name % ns).str());
             }
         }
@@ -135,8 +135,10 @@ namespace puppet { namespace runtime {
         }
 
         // Scan the tree for definitions
-        definition_scanner scanner { catalog() };
-        scanner.scan(_compilation_context);
+        if (catalog()) {
+            definition_scanner scanner{ *catalog() };
+            scanner.scan(_compilation_context);
+        }
 
         for (auto& expression : *tree.body()) {
             // Top level expressions must be productive
