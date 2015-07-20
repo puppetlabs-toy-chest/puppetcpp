@@ -50,6 +50,12 @@ namespace puppet { namespace runtime {
         expression_evaluator(std::shared_ptr<compiler::context> compilation_context, runtime::context& evaluation_context);
 
         /**
+         * Gets the current evaluation context.
+         * @return Returns the current evaluation context.
+         */
+        runtime::context& context();
+
+        /**
          * Gets the catalog being compiled.
          * @return Returns the catalog being compiled.
          */
@@ -80,39 +86,6 @@ namespace puppet { namespace runtime {
          * @return Returns the path to the file being evaluated.
          */
         std::shared_ptr<std::string> const& path() const;
-
-        /**
-         * Determines if a class is defined.
-         * @param klass The class to check.
-         * @return Returns true if the class is defined or false if not.
-         */
-        bool is_class_defined(types::klass const& klass) const;
-
-        /**
-         * Declares a class in the manifest.
-         * @param klass The class to declare.
-         * @param position The position where the class was declared.
-         * @param arguments The class arguments or nullptr for no arguments.
-         * @return Returns the resource that was added for the class or nullptr if the class failed to evaluate.
-         */
-        runtime::resource* declare_class(types::klass const& klass, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
-
-        /**
-         * Determines if the given type name is a defined type.
-         * @param type The type name to check.
-         * @return Returns true if the type is a defined type or false if it is not.
-         */
-        bool is_defined_type(std::string const& type) const;
-
-        /**
-         * Declares a defined type.
-         * @param type The defined type name.
-         * @param title The resource title.
-         * @param position The position where the resource is declared.
-         * @param arguments The defined type's arguments or nullptr for no arguments.
-         * @return Returns the resource that was added to the catalog or nullptr if the defined type failed to evaluate.
-         */
-        runtime::resource* declare_defined_type(std::string const& type, std::string const& title, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
 
         /**
          * Creates a local scope.

@@ -21,6 +21,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_expression const& expr)
     {
+        auto& catalog = _evaluator.catalog();
         string const& type_name = expr.type().value();
 
         // Handle class resources specially
@@ -38,7 +39,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         }
 
         // Handle defined types
-        if (_evaluator.is_defined_type(type_name)) {
+        if (catalog.is_defined_type(type_name)) {
             return declare_defined_types(expr);
         }
 
@@ -57,7 +58,6 @@ namespace puppet { namespace runtime { namespace evaluators {
                 }
 
                 // Add the resource to the catalog
-                auto& catalog = _evaluator.catalog();
                 auto resource = catalog.add_resource(type, _evaluator.path(), body.position().line());
                 if (!resource) {
                     resource = catalog.find_resource(type);
@@ -115,6 +115,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_override_expression const& expr)
     {
+        auto& catalog = _evaluator.catalog();
         auto reference = _evaluator.evaluate(expr.reference());
         auto position = get_position(expr.reference());
 
@@ -128,7 +129,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
 
             // Find the resource
-            auto resource = _evaluator.catalog().find_resource(*resource_type);
+            auto resource = catalog.find_resource(*resource_type);
             if (!resource) {
                 throw evaluation_exception(position, (boost::format("resource %1% does not exist in the catalog.") % *resource_type).str());
             }
@@ -207,6 +208,8 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::declare_classes(ast::resource_expression const& expr)
     {
+        auto& catalog = _evaluator.catalog();
+
         if (expr.status() == ast::resource_status::virtualized) {
             throw evaluation_exception(expr.position(), "class resources cannot be virtual.");
         }
@@ -250,17 +253,17 @@ namespace puppet { namespace runtime { namespace evaluators {
                 types::resource resource("class", klass.title());
 
                 // Ensure the resource doesn't already exist
-                if (auto existing = _evaluator.catalog().find_resource(resource)) {
+                if (auto existing = catalog.find_resource(resource)) {
                     throw evaluation_exception(body.position(), (boost::format("class '%1%' was already declared at %2%:%3%.") % klass.title() % existing->path() % existing->line()).str());
                 }
 
                 // Ensure the class is defined
-                if (!_evaluator.is_class_defined(klass)) {
+                if (!catalog.is_class_defined(klass)) {
                     throw evaluation_exception(body.position(), (boost::format("cannot declare class '%1%' because the class has not been defined.") % klass.title()).str());
                 }
 
                 // Declare the class
-                if (!_evaluator.declare_class(klass, body.position(), &attributes)) {
+                if (!catalog.declare_class(_evaluator.context(), klass, _evaluator.path(), body.position(), &attributes)) {
                     throw evaluation_exception(body.position(), (boost::format("failed to declare class '%1%'.") % klass.title()).str());
                 }
                 types.emplace_back(rvalue_cast(resource));
@@ -271,6 +274,8 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::declare_defined_types(ast::resource_expression const& expr)
     {
+        auto& catalog = _evaluator.catalog();
+
         values::array types;
         vector<string> titles;
         unordered_map<ast::name, values::value> attributes;
@@ -306,12 +311,12 @@ namespace puppet { namespace runtime { namespace evaluators {
                 types::resource resource(expr.type().value(), title);
 
                 // Ensure the resource doesn't already exist
-                if (auto existing = _evaluator.catalog().find_resource(resource)) {
+                if (auto existing = catalog.find_resource(resource)) {
                     throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % resource % existing->path() % existing->line()).str());
                 }
 
                 // Declare the defined type
-                if (!_evaluator.declare_defined_type(expr.type().value(), title, body.position(), &attributes)) {
+                if (!catalog.declare_defined_type(_evaluator.context(), expr.type().value(), title, _evaluator.path(), body.position(), &attributes)) {
                     throw evaluation_exception(body.position(), (boost::format("failed to declare defined type %1%.") % resource).str());
                 }
                 types.emplace_back(rvalue_cast(resource));

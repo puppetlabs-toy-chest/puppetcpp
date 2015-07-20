@@ -51,6 +51,11 @@ namespace puppet { namespace runtime {
         }
     }
 
+    runtime::context& expression_evaluator::context()
+    {
+        return _evaluation_context;
+    }
+
     runtime::catalog& expression_evaluator::catalog()
     {
         return _evaluation_context.catalog();
@@ -91,10 +96,11 @@ namespace puppet { namespace runtime {
 
         // Warn if the scope was not found
         if (position) {
+            auto const& catalog = _evaluation_context.catalog();
             types::klass klass(ns);
-            if (!_evaluation_context.is_class_defined(klass)) {
+            if (!catalog.is_class_defined(klass)) {
                 warn(*position, (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % name % ns).str());
-            } else if (!_evaluation_context.is_class_declared(klass)) {
+            } else if (!catalog.is_class_declared(klass)) {
                 warn(*position, (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % name % ns).str());
             }
         }
@@ -109,26 +115,6 @@ namespace puppet { namespace runtime {
     shared_ptr<string> const& expression_evaluator::path() const
     {
         return _compilation_context->path();
-    }
-
-    bool expression_evaluator::is_class_defined(types::klass const& klass) const
-    {
-        return _evaluation_context.is_class_defined(klass);
-    }
-
-    runtime::resource* expression_evaluator::declare_class(types::klass const& klass, lexer::position const& position, unordered_map<ast::name, values::value> const* arguments)
-    {
-        return _evaluation_context.declare_class(klass, path(), position, arguments);
-    }
-
-    bool expression_evaluator::is_defined_type(std::string const& type) const
-    {
-        return _evaluation_context.is_defined_type(type);
-    }
-
-    runtime::resource* expression_evaluator::declare_defined_type(string const& type, string const& title, lexer::position const& position, unordered_map<ast::name, values::value> const* arguments)
-    {
-        return _evaluation_context.declare_defined_type(type, title, path(), position, arguments);
     }
 
     local_scope expression_evaluator::create_local_scope(runtime::scope* scope)
@@ -149,7 +135,7 @@ namespace puppet { namespace runtime {
         }
 
         // Scan the tree for definitions
-        definition_scanner scanner { _evaluation_context };
+        definition_scanner scanner { catalog() };
         scanner.scan(_compilation_context);
 
         for (auto& expression : *tree.body()) {

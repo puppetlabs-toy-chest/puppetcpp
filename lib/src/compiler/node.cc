@@ -86,7 +86,7 @@ namespace puppet { namespace compiler {
 
             // Evaluate the node context
             logger.log(level::debug, "evaluating context for node '%1%'.", name());
-            if (!evaluation_context.evaluate_node(*this)) {
+            if (!catalog.evaluate_node(evaluation_context, *this)) {
                 throw compilation_exception((boost::format("failed to evaluate node definition for node '%1%'.") % name()).str(), path);
             }
 

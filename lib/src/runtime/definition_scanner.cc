@@ -15,9 +15,9 @@ namespace puppet { namespace runtime {
      */
     struct scanning_visitor : boost::static_visitor<void>
     {
-        scanning_visitor(shared_ptr<compiler::context> compilation_context, runtime::context& evaluation_context) :
+        scanning_visitor(shared_ptr<compiler::context> compilation_context, runtime::catalog& catalog) :
             _compilation_context(rvalue_cast(compilation_context)),
-            _evaluation_context(evaluation_context)
+            _catalog(catalog)
         {
             // Push a "top level" scope
             _scopes.push_back("::");
@@ -315,7 +315,7 @@ namespace puppet { namespace runtime {
             }
 
             // Define the class in the context
-             _evaluation_context.define_class(types::klass(qualify(expr.name().value())), _compilation_context, expr);
+            _catalog.define_class(types::klass(qualify(expr.name().value())), _compilation_context, expr);
 
             // Scan the parameters
             if (expr.parameters()) {
@@ -355,7 +355,7 @@ namespace puppet { namespace runtime {
             }
 
             // Define the type in the context
-            _evaluation_context.define_type(qualify(expr.name().value()), _compilation_context, expr);
+            _catalog.define_type(qualify(expr.name().value()), _compilation_context, expr);
 
             // Defined types have no class scope
             class_scope scope(_scopes, {});
@@ -387,7 +387,7 @@ namespace puppet { namespace runtime {
             }
 
             // Define the node in the context
-            _evaluation_context.define_node(_compilation_context, expr);
+            _catalog.define_node(_compilation_context, expr);
 
             // Node definitions have no class scope
             class_scope scope(_scopes, {});
@@ -460,12 +460,12 @@ namespace puppet { namespace runtime {
         }
 
         shared_ptr<compiler::context> _compilation_context;
-        runtime::context& _evaluation_context;
+        runtime::catalog& _catalog;
         deque<string> _scopes;
     };
 
-    definition_scanner::definition_scanner(runtime::context& context) :
-        _context(context)
+    definition_scanner::definition_scanner(runtime::catalog& catalog) :
+        _catalog(catalog)
     {
     }
 
@@ -480,7 +480,7 @@ namespace puppet { namespace runtime {
             return;
         }
 
-        scanning_visitor visitor(rvalue_cast(compilation_context), _context);
+        scanning_visitor visitor(rvalue_cast(compilation_context), _catalog);
         for (auto const& expression : *tree.body()) {
             visitor(expression);
         }

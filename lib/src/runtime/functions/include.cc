@@ -61,16 +61,17 @@ namespace puppet { namespace runtime { namespace functions {
      private:
         void declare_class(types::klass const& klass) const
         {
+            auto& evaluator = _context.evaluator();
             if (klass.title().empty()) {
                 throw evaluation_exception(_context.position(_index), "cannot include a Class with an unspecified title.");
             }
 
-            auto& evaluator = _context.evaluator();
-            if (!evaluator.is_class_defined(klass)) {
+            auto& catalog = evaluator.catalog();
+            if (!catalog.is_class_defined(klass)) {
                 throw evaluation_exception(_context.position(_index), (boost::format("cannot include class '%1%' because the class has not been defined.") % klass.title()).str());
             }
 
-            if (!evaluator.declare_class(klass, _context.position(_index))) {
+            if (!catalog.declare_class(evaluator.context(), klass, evaluator.path(), _context.position(_index))) {
                 throw evaluation_exception(_context.position(_index), (boost::format("failed to include class '%1%'.") % klass.title()).str());
             }
         }

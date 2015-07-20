@@ -1,5 +1,6 @@
 #include <puppet/compiler/context.hpp>
 #include <puppet/compiler/parser.hpp>
+#include <puppet/compiler/node.hpp>
 #include <puppet/cast.hpp>
 
 using namespace std;
