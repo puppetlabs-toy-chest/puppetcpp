@@ -85,7 +85,7 @@ namespace puppet { namespace runtime {
         bool evaluate(runtime::context& context, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
 
      private:
-        runtime::scope* evaluate_parent(runtime::context& context);
+        std::shared_ptr<runtime::scope> evaluate_parent(runtime::context& context);
 
         runtime::catalog& _catalog;
         types::klass _klass;

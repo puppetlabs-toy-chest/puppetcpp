@@ -32,10 +32,10 @@ namespace puppet { namespace runtime { namespace operators {
 
         // Set the value in the current scope
         auto& evaluator = context.evaluator();
-        auto& scope = evaluator.scope();
-        auto assigned = scope.set(var->name(), rvalue_cast(context.right()), evaluator.path(), context.left_position().line());
+        auto& scope = evaluator.context().current_scope();
+        auto assigned = scope->set(var->name(), rvalue_cast(context.right()), evaluator.path(), context.left_position().line());
         if (!assigned) {
-            auto previous = scope.get(var->name());
+            auto previous = scope->get(var->name());
             if (previous && !previous->path().empty()) {
                 throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % previous->path() % previous->line()).str());
             }

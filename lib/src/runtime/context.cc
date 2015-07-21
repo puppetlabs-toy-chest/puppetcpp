@@ -1,15 +1,65 @@
 #include <puppet/runtime/context.hpp>
+#include <puppet/runtime/expression_evaluator.hpp>
 #include <puppet/cast.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
+using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
+
+    match_scope::match_scope(runtime::context& context) :
+        _context(context)
+    {
+        _context._match_stack.emplace_back();
+    }
+
+    match_scope::~match_scope()
+    {
+        _context._match_stack.pop_back();
+    }
+
+    local_scope::local_scope(runtime::context& context, shared_ptr<runtime::scope> scope) :
+        match_scope(context),
+        _context(context)
+    {
+        if (!scope) {
+            scope = make_shared<runtime::scope>(_context.current_scope());
+        }
+
+        // Push the named scope onto the stack
+        _context._scope_stack.emplace_back(rvalue_cast(scope));
+    }
+
+    local_scope::~local_scope()
+    {
+        _context._scope_stack.pop_back();
+    }
+
+    node_scope::node_scope(runtime::context& context, string name) :
+        _context(context)
+    {
+        // Create a node scope that inherits from the top scope
+        _context._node_scope = make_shared<runtime::scope>(_context._scope_stack.front(), "node", rvalue_cast(name));
+        _context._scope_stack.push_back(_context._node_scope);
+    }
+
+    node_scope::~node_scope()
+    {
+        _context._scope_stack.pop_back();
+        _context._node_scope.reset();
+    }
 
     context::context(runtime::catalog* catalog) :
         _catalog(catalog)
     {
         // Add the top scope
-        push_scope(add_scope("", "Class[main]"));
+        auto top = make_shared<runtime::scope>(nullptr, "", "Class[main]");
+        add_scope(top);
+        _scope_stack.emplace_back(rvalue_cast(top));
+
+        // Add an empty top match scope
+        _match_stack.emplace_back();
     }
 
     runtime::catalog* context::catalog()
@@ -17,85 +67,134 @@ namespace puppet { namespace runtime {
         return _catalog;
     }
 
-    runtime::scope& context::scope()
+    shared_ptr<runtime::scope> const& context::current_scope()
     {
-        return *_scope_stack.back();
+        return _scope_stack.back();
     }
 
-    runtime::scope& context::top_scope()
+    shared_ptr<runtime::scope> const& context::top_scope()
     {
-        return *_scope_stack.front();
+        return _scope_stack.front();
     }
 
-    runtime::scope* context::node_scope()
+    shared_ptr<runtime::scope> const& context::node_scope()
     {
-        return _node_scope.get();
+        return _node_scope;
     }
 
-    runtime::scope& context::node_or_top()
+    shared_ptr<runtime::scope> const& context::node_or_top()
     {
-        auto node = node_scope();
-        if (node) {
-            return *node;
+        if (_node_scope) {
+            return _node_scope;
         }
         return top_scope();
     }
 
-    runtime::scope& context::add_scope(string name, string display_name, runtime::scope* parent)
+    bool context::add_scope(std::shared_ptr<runtime::scope> scope)
     {
-        runtime::scope scope{name, rvalue_cast(display_name), parent};
-        return _scopes.emplace(make_pair(rvalue_cast(name), rvalue_cast(scope))).first->second;
+        if (!scope) {
+            return false;
+        }
+
+        string name = scope->name();
+        return _scopes.emplace(make_pair(rvalue_cast(name), rvalue_cast(scope))).second;
     }
 
-    runtime::scope* context::find_scope(string const& name)
+    std::shared_ptr<runtime::scope> context::find_scope(string const& name) const
     {
         auto it = _scopes.find(name);
         if (it == _scopes.end()) {
             return nullptr;
         }
-        return &it->second;
+        return it->second;
     }
 
-    void context::push_scope(runtime::scope& current)
+    void context::set(smatch const& matches)
     {
-        _scope_stack.push_back(&current);
-    }
-
-    bool context::pop_scope()
-    {
-        // Don't pop the top scope
-        if (_scope_stack.size() == 1) {
-            return false;
+        if (_match_stack.empty()) {
+            return;
         }
-        _scope_stack.pop_back();
-        return true;
+
+        auto& scope = _match_stack.back();
+
+        // If there is no scope or a closure has captured the matches, reset
+        if (!scope || !scope.unique()) {
+            scope = make_shared<values::array>();
+        }
+
+        scope->resize(matches.size());
+        for (size_t i = 0; i < matches.size(); ++i) {
+            (*scope)[i] = matches[i].str();
+        }
     }
 
-    local_scope::local_scope(runtime::context& context, runtime::scope* scope) :
-        _context(context),
-        _scope(&context.scope())
+    values::value const* context::lookup(string const& name, expression_evaluator* evaluator, lexer::position const* position)
     {
+        // Look for the last :: delimiter; if not found, use the current scope
+        auto pos = name.rfind("::");
+        if (pos == string::npos) {
+            auto variable = current_scope()->get(name);
+            return variable ? &variable->value() : nullptr;
+        }
+
+        // Split into namespace and variable name
+        // For global names, remove the leading ::
+        bool global = boost::starts_with(name, "::");
+        auto ns = name.substr(global ? 2 : 0, global ? (pos > 2 ? pos - 2 : 0) : pos);
+        auto var = name.substr(pos + 2);
+
+        // An empty namespace is the top scope
+        if (ns.empty()) {
+            auto variable = top_scope()->get(var);
+            return variable ? &variable->value() : nullptr;
+        }
+
+        // Lookup the namespace
+        auto scope = find_scope(ns);
         if (scope) {
-            _context.push_scope(*scope);
-        } else {
-            _context.push_scope(_scope);
+            auto variable = scope->get(var);
+            return variable ? &variable->value() : nullptr;
         }
+
+        // Warn if the scope was not found
+        if (_catalog && evaluator && position) {
+            types::klass klass(ns);
+            string message;
+            if (!_catalog->is_class_defined(klass)) {
+                message = (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % name % ns).str();
+            } else if (!_catalog->is_class_declared(klass)) {
+                message = (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % name % ns).str();
+            }
+            if (!message.empty()) {
+                evaluator->warn(*position, message);
+            }
+        }
+        return nullptr;
     }
 
-    local_scope::~local_scope()
+    value const* context::lookup(size_t index) const
     {
-        _context.pop_scope();
+        // Walk the match scope stack for a non-null set of matches
+        for (auto it = _match_stack.rbegin(); it != _match_stack.rend(); ++it) {
+            auto const& matches = *it;
+            if (matches) {
+                if (index >= matches->size()) {
+                    return nullptr;
+                }
+                return &(*matches)[index];
+            }
+        }
+        return nullptr;
     }
 
-    node_scope::node_scope(runtime::context& context, string name) :
-        _context(context)
+    match_scope context::create_match_scope()
     {
-        _context._node_scope.reset(new runtime::scope("node", rvalue_cast(name), &_context.top_scope()));
+        return match_scope { *this };
     }
 
-    node_scope::~node_scope()
+    local_scope context::create_local_scope(shared_ptr<runtime::scope> scope)
     {
-        _context._node_scope.reset();
+        return local_scope { *this, rvalue_cast(scope) };
     }
 
 }}  // namespace puppet::runtime

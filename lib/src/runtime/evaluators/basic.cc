@@ -73,9 +73,9 @@ namespace puppet { namespace runtime { namespace evaluators {
         value const* val = nullptr;
         if (!name.empty() && isdigit(name[0])) {
             match = true;
-            val = _evaluator.scope().get(stoi(name));
+            val = _evaluator.context().lookup(stoi(name));
         } else {
-            val = _evaluator.lookup(name, &var.position());
+            val = _evaluator.context().lookup(name, &_evaluator, &var.position());
         }
         return variable(name, val, match);
     }

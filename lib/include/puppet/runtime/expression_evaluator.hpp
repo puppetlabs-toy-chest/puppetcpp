@@ -62,20 +62,6 @@ namespace puppet { namespace runtime {
         runtime::catalog* catalog();
 
         /**
-         * Gets the current scope.
-         * @return Returns the current scope.
-         */
-        runtime::scope& scope();
-
-        /**
-         * Looks up a variable.
-         * @param name The name of the variable to look up.
-         * @param position The position where the lookup is taking place or nullptr if not in source.
-         * @return Returns a pointer to the variable if found or nullptr if the variable was not found.
-         */
-        values::value const* lookup(std::string const& name, lexer::position const* position = nullptr);
-
-        /**
          * Gets the logger.
          * @return Returns the logger.
          */
@@ -86,13 +72,6 @@ namespace puppet { namespace runtime {
          * @return Returns the path to the file being evaluated.
          */
         std::shared_ptr<std::string> const& path() const;
-
-        /**
-         * Creates a local scope.
-         * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
-         * @return Returns the local scope.
-         */
-        local_scope create_local_scope(runtime::scope* scope = nullptr);
 
         /**
          * Emits a warning with the given position and message.

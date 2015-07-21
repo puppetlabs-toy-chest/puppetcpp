@@ -9,13 +9,79 @@
 #include "catalog.hpp"
 #include <string>
 #include <memory>
-#include <deque>
 #include <unordered_map>
+#include <regex>
 
 namespace puppet { namespace runtime {
 
+    // Forward declaration of expression_evaluator.
+    struct expression_evaluator;
+
     // Forward declaration of context.
     struct context;
+
+    /**
+     * Helper for creating a match scope in an evaluation context.
+     */
+    struct match_scope
+    {
+        /**
+         * Constructs a match scope.
+         * @param context The current evaluation context.
+         */
+        explicit match_scope(runtime::context& context);
+
+        /**
+         * Destructs a match scope.
+         */
+        ~match_scope();
+
+     private:
+        runtime::context& _context;
+    };
+
+    /**
+     * Helper for setting a local scope.
+     */
+    struct local_scope : match_scope
+    {
+        /**
+         * Constructs a local scope.
+         * @param context The current evaluation context.
+         * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
+         */
+        local_scope(runtime::context& context, std::shared_ptr<runtime::scope> scope = nullptr);
+
+        /**
+         * Destructs the local scope.
+         */
+        ~local_scope();
+
+     private:
+        runtime::context& _context;
+        scope _scope;
+    };
+
+    /**
+     * Helper for creating a node scope in an evaluation context.
+     */
+    struct node_scope
+    {
+        /**
+         * Constructs a node scope.
+         * @param context The current evaluation context.
+         * @param name The name of the node scope.
+         */
+        node_scope(runtime::context& context, std::string name);
+
+        /**
+         * Destructs the node scope.
+         */
+        ~node_scope();
+
+     private:
+        runtime::context& _context;
+    };
 
     /**
      * Represents the evaluation context.
@@ -36,106 +102,88 @@ namespace puppet { namespace runtime {
 
         /**
          * Gets the current scope.
-         * @return Returns the current scope.
+         * @return Returns the current scope and will never return nullptr.
          */
-        runtime::scope& scope();
+        std::shared_ptr<runtime::scope> const& current_scope();
 
         /**
          * Gets the top scope.
-         * @return Returns the top scope.
+         * @return Returns the top scope and will never return nullptr.
          */
-        runtime::scope& top_scope();
+        std::shared_ptr<runtime::scope> const& top_scope();
 
         /**
          * Gets the node scope.
          * @return Returns the node scope or nullptr if there currently is no node scope.
          */
-        runtime::scope* node_scope();
+        std::shared_ptr<runtime::scope> const& node_scope();
 
         /**
-         * Gets the node scope if there is one or returns the top scope if there isn't.
-         * @return Returns the node scope if there is one or returns the top scope if there isn't.
+         * Gets the node or top scope.
+         * @return Returns the node scope if there is one, otherwise returns the top scope.
          */
-        runtime::scope& node_or_top();
+        std::shared_ptr<runtime::scope> const& node_or_top();
 
         /**
          * Adds a scope to the evaluation context.
-         * @param name The name of the scope to add.
-         * @param display_name The display name of the scope.
-         * @param parent The parent scope.
-         * @return Returns the scope that was added or the scope with the same name that already exists.
+         * @param scope The scope to add to the evaluation context.
+         * @return Returns true if the scope was added or false if the scope already exists.
          */
-        runtime::scope& add_scope(std::string name, std::string display_name, runtime::scope* parent = nullptr);
+        bool add_scope(std::shared_ptr<runtime::scope> scope);
 
         /**
          * Finds a scope by name.
          * @param name The name of the scope to find.
          * @return Returns a pointer to the scope if found or nullptr if the scope is not found.
          */
-        runtime::scope* find_scope(std::string const& name);
+        std::shared_ptr<runtime::scope> find_scope(std::string const& name) const;
 
         /**
-         * Pushes the given scope.
-         * @param current The new current scope.
+         * Sets the given matches into the context.
+         * Note: This member function has no effect unless a match scope is present.
+         * @param matches The matches to set.
          */
-        void push_scope(runtime::scope& current);
+        void set(std::smatch const& matches);
 
         /**
-         * Pops the current scope.
-         * @return Returns true if the scope was popped or false if not (i.e. already at top scope).
+         * Looks up a variable.
+         * @param name The name of the variable to look up.
+         * @param evaluator The expression evaluator to use to log warnings for scope lookup failures.  Requires a position.
+         * @param position The position where the lookup is taking place or nullptr if not in source.
+         * @return Returns a pointer to the variable if found or nullptr if the variable was not found.
          */
-        bool pop_scope();
+        values::value const* lookup(std::string const& name, expression_evaluator* evaluator = nullptr, lexer::position const* position = nullptr);
+
+        /**
+         * Looks up a match variable by index.
+         * @param index The index of the match variable.
+         * @return Returns the match variable's value or nullptr if the variable wasn't found.
+         */
+        values::value const* lookup(size_t index) const;
+
+        /**
+         * Creates a match scope.
+         * @return Returns the match scope.
+         */
+        match_scope create_match_scope();
+
+        /**
+         * Creates a local scope.
+         * @param scope The parent scope to inherit from; if null, the current scope will be used.
+         * @return Returns the local scope.
+         */
+        local_scope create_local_scope(std::shared_ptr<runtime::scope> scope = nullptr);
 
      private:
+        friend struct match_scope;
+        friend struct local_scope;
         friend struct node_scope;
 
         runtime::catalog* _catalog;
-        std::unordered_map<std::string, runtime::scope> _scopes;
-        std::deque<runtime::scope*> _scope_stack;
-        std::unique_ptr<runtime::scope> _node_scope;
-    };
-
-    /**
-     * Helper for setting a local scope.
-     */
-    struct local_scope
-    {
-        /**
-         * Constructs an local scope.
-         * @param context The current evaluation context.
-         * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
-         */
-        local_scope(runtime::context& context, runtime::scope* scope = nullptr);
-
-        /**
-         * Destructs the local scope.
-         */
-        ~local_scope();
-
-    private:
-        runtime::context& _context;
-        scope _scope;
-    };
-
-    /**
-     * Helper for setting a node scope.
-     */
-    struct node_scope
-    {
-        /**
-         * Constructs a node scope with the given name.
-         * @param context The current evaluation context.
-         * @param name The node scope name.
-         */
-        node_scope(runtime::context& context, std::string name);
-
-        /**
-         * Destructs the node scope.
-         */
-        ~node_scope();
-
-    private:
-        runtime::context& _context;
+        std::unordered_map<std::string, std::shared_ptr<runtime::scope>> _scopes;
+        std::vector<std::shared_ptr<runtime::scope>> _scope_stack;
+        std::shared_ptr<runtime::scope> _node_scope;
+        std::vector<std::shared_ptr<values::array>> _match_stack;
     };
 
 }}  // namespace puppet::runtime

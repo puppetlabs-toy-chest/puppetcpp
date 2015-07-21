@@ -52,7 +52,7 @@ namespace puppet { namespace runtime {
          * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
-        values::value execute(runtime::scope* scope = nullptr) const;
+        values::value execute(std::shared_ptr<runtime::scope> const& scope = nullptr) const;
 
         /**
          * Executes the expression with the given positional arguments.
@@ -60,7 +60,7 @@ namespace puppet { namespace runtime {
          * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
-        values::value execute(values::array& arguments, runtime::scope* scope = nullptr) const;
+        values::value execute(values::array& arguments, std::shared_ptr<runtime::scope> const& scope = nullptr) const;
 
         /**
          * Executes the expression with the given keyword arguments.
@@ -68,7 +68,7 @@ namespace puppet { namespace runtime {
          * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
-        values::value execute(values::hash& arguments, runtime::scope* scope = nullptr) const;
+        values::value execute(values::hash& arguments, std::shared_ptr<runtime::scope> const& scope = nullptr) const;
 
      private:
         void validate_parameter(ast::parameter const& parameter, values::value const& value) const;

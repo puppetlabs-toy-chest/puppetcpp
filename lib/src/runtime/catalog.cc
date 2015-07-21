@@ -102,11 +102,12 @@ namespace puppet { namespace runtime {
         // Create a scope for the class
         ostringstream display_name;
         display_name << _klass;
-        auto& scope = context.add_scope(_klass.title(), display_name.str(), parent_scope);
+        auto scope = make_shared<runtime::scope>(parent_scope, _klass.title(), display_name.str());
+        context.add_scope(scope);
 
         // Set the title and name variables in the scope
-        scope.set("title", _klass.title(), _context->path(), _expression->position().line());
-        scope.set("name", rvalue_cast(name), _context->path(), _expression->position().line());
+        scope->set("title", _klass.title(), _context->path(), _expression->position().line());
+        scope->set("name", rvalue_cast(name), _context->path(), _expression->position().line());
 
         try {
             // Create a new expression evaluator based on the class' compilation context
@@ -114,7 +115,7 @@ namespace puppet { namespace runtime {
 
             // Execute the body of the class
             runtime::executor executor{ evaluator, _expression->position(), _expression->parameters(), _expression->body() };
-            executor.execute(keywords, &scope);
+            executor.execute(keywords, scope);
         } catch (evaluation_exception const& ex) {
             // The compilation context is probably not the current one, so do not let evaluation exception propagate
             _context->log(logging::level::error, ex.position(), ex.what());
@@ -127,12 +128,12 @@ namespace puppet { namespace runtime {
         return true;
     }
 
-    runtime::scope* class_definition::evaluate_parent(runtime::context& context)
+    shared_ptr<runtime::scope> class_definition::evaluate_parent(runtime::context& context)
     {
         // If no parent, return the node or top scope
         auto parent = this->parent();
         if (!parent) {
-            return &context.node_or_top();
+            return context.node_or_top();
         }
 
         // Check that the parent is defined
@@ -209,11 +210,11 @@ namespace puppet { namespace runtime {
         // Create a temporary scope
         ostringstream display_name;
         display_name << resource.type();
-        runtime::scope scope{ _type, display_name.str(), &context.node_or_top() };
+        auto scope = make_shared<runtime::scope>(context.node_or_top(), _type, display_name.str());
 
         // Set the title and name variables in the scope
-        scope.set("title", resource.type().title(), _context->path(), _expression.position().line());
-        scope.set("name", rvalue_cast(name), _context->path(), _expression.position().line());
+        scope->set("title", resource.type().title(), _context->path(), _expression.position().line());
+        scope->set("name", rvalue_cast(name), _context->path(), _expression.position().line());
 
         try {
             // Create a new expression evaluator based on the defined type's compilation context
@@ -221,7 +222,7 @@ namespace puppet { namespace runtime {
 
             // Execute hte body of the defined type
             runtime::executor executor{ evaluator, _expression.position(), _expression.parameters(), _expression.body() };
-            executor.execute(keywords, &scope);
+            executor.execute(keywords, scope);
         } catch (evaluation_exception const& ex) {
             // The compilation context is probably not the current one, so do not let evaluation exception propagate
             _context->log(logging::level::error, ex.position(), ex.what());

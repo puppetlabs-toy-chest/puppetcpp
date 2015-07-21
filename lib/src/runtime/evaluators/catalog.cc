@@ -186,14 +186,14 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // Class definitions are handled by the definition scanner
         // Just return a reference to the class
-        return types::klass(_evaluator.scope().qualify(expr.name().value()));
+        return types::klass(_evaluator.context().current_scope()->qualify(expr.name().value()));
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::defined_type_expression const& expr)
     {
         // Defined type expressions are handled by the definition scanner
         // Just return a reference to the type
-        return types::resource(expr.name().value());
+        return types::resource(_evaluator.context().current_scope()->qualify(expr.name().value()));
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::node_definition_expression const& expr)
