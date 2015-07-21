@@ -32,41 +32,32 @@ namespace puppet { namespace runtime {
         return _line;
     }
 
-    scope::scope(string name, string display_name, scope* parent) :
+    scope::scope(shared_ptr<scope> parent, string name, string display_name) :
+        _parent(rvalue_cast(parent)),
         _name(rvalue_cast(name)),
-        _display_name(rvalue_cast(display_name)),
-        _parent(parent)
+        _display_name(rvalue_cast(display_name))
     {
-        // Emplace an empty set of matches to start
-        _matches.emplace_front();
-    }
-
-    scope::scope(scope* parent) :
-        _parent(parent)
-    {
-        // Emplace an empty set of matches to start
-        _matches.emplace_front();
-    }
-
-    bool scope::ephemeral() const
-    {
-        return _name.empty() && _display_name.empty();
-    }
+     }
 
     string const& scope::name() const
     {
-        if (!_parent || !ephemeral()) {
+        if (!_name.empty()) {
             return _name;
         }
-        return _parent->name();
+        return _parent ? _parent->name() : _name;
     }
 
     string const& scope::display_name() const
     {
-        if (!_parent || !ephemeral()) {
+        if (!_display_name.empty()) {
             return _display_name;
         }
-        return _parent->display_name();
+        return _parent ? _parent->display_name() : _display_name;
+    }
+
+    shared_ptr<scope> const& scope::parent() const
+    {
+        return _parent;
     }
 
     string scope::qualify(string const& name) const
@@ -100,68 +91,10 @@ namespace puppet { namespace runtime {
         return _parent ? _parent->get(name) : nullptr;
     }
 
-    scope const* scope::parent() const
-    {
-        return _parent;
-    }
-
-    void scope::set(smatch const& matches)
-    {
-        auto& current = _matches.front();
-        current.clear();
-
-        // Set the match variables
-        for (size_t i = 0; i < matches.size(); ++i) {
-            current.emplace_back(matches.str(i));
-        }
-    }
-
-    value const* scope::get(size_t index) const
-    {
-        // Look for a non-empty set of matches
-        // The first non-empty set wins
-        for (auto const& matches : _matches) {
-            if (matches.empty()) {
-                continue;
-            }
-            if (index >= matches.size()) {
-                return nullptr;
-            }
-            return &matches[index];
-        }
-
-        // Check the parent scope
-        return _parent ? _parent->get(index) : nullptr;
-    }
-
-    void scope::push_matches()
-    {
-        _matches.emplace_front();
-    }
-
-    void scope::pop_matches()
-    {
-        // Pop all but the "top" set
-        if (_matches.size() > 1) {
-            _matches.pop_front();
-        }
-    }
-
     ostream& operator<<(ostream& os, scope const& s)
     {
         os << "Scope(" << s.display_name() << ")";
         return os;
-    }
-
-    match_variable_scope::match_variable_scope(scope& current) :
-        _current(current)
-    {
-        _current.push_matches();
-    }
-
-    match_variable_scope::~match_variable_scope()
-    {
-        _current.pop_matches();
     }
 
 }}  // namespace puppet::runtime

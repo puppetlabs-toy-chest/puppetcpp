@@ -9,6 +9,7 @@
 #include "boolean.hpp"
 #include "regexp.hpp"
 #include <boost/functional/hash.hpp>
+#include <boost/variant.hpp>
 #include <ostream>
 
 namespace puppet { namespace runtime { namespace types {

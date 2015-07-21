@@ -5,164 +5,82 @@
 #pragma once
 
 #include "../lexer/position.hpp"
-#include "../compiler/context.hpp"
-#include "../runtime/values/value.hpp"
-#include "../logging/logger.hpp"
 #include "scope.hpp"
 #include "catalog.hpp"
 #include <string>
 #include <memory>
-#include <deque>
 #include <unordered_map>
-#include <functional>
+#include <regex>
 
 namespace puppet { namespace runtime {
+
+    // Forward declaration of expression_evaluator.
+    struct expression_evaluator;
 
     // Forward declaration of context.
     struct context;
 
     /**
-     * Represents a class definition used in evaluation.
+     * Helper for creating a match scope in an evaluation context.
      */
-    struct class_definition
+    struct match_scope
     {
         /**
-         * Constructs a class definition.
-         * @param klass The qualified class name for the class.
-         * @param context The compilation context for the class.
-         * @param expression The class definition expression.
+         * Constructs a match scope.
+         * @param context The current evaluation context.
          */
-        class_definition(types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const* expression);
+        explicit match_scope(runtime::context& context);
 
         /**
-         * Gets the qualified class type for this class definition.
-         * @return Returns the qualified class type for this class definition.
+         * Destructs a match scope.
          */
-        types::klass const& klass() const;
-
-        /**
-         * Gets the parent class or nullptr if there is no parent class.
-         * @return Returns the parent class or nullptr if there is no parent class.
-         */
-        types::klass const* parent() const;
-
-        /**
-         * Gets the path of the file containing the class definition.
-         * @return Returns the path of the file containing the class definition.
-         */
-        std::string const& path() const;
-
-        /**
-         * Gets the line number of the class definition.
-         * @return Returns the line number of the class definition.
-         */
-        size_t line() const;
-
-        /**
-         * Determines if the class has been evaluated.
-         * @return Returns true if the class has been evaluated or false if it has not.
-         */
-        bool evaluated() const;
-
-        /**
-         * Evaluates the class.
-         * @param context The evaluation context.
-         * @param arguments The arguments to the class.
-         * @return Returns true if the evaluation was successful or false if the evaluation failed.
-         */
-        bool evaluate(runtime::context& context, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+        ~match_scope();
 
      private:
-        runtime::scope* evaluate_parent(runtime::context& context);
-
-        types::klass _klass;
-        types::klass _parent;
-        std::shared_ptr<compiler::context> _context;
-        ast::class_definition_expression const* _expression;
-        std::shared_ptr<std::string> _path;
-        size_t _line;
+        runtime::context& _context;
     };
 
     /**
-     * Represents a defined type.
+     * Helper for setting a local scope.
      */
-    struct defined_type
+    struct local_scope : match_scope
     {
         /**
-         * Constructs a defined type.
-         * @param type The resource type for the defined type.
-         * @param context The compilation context for the defined type.
-         * @param expression The defined type expression.
+         * Constructs a local scope.
+         * @param context The current evaluation context.
+         * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
          */
-        defined_type(std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
+        local_scope(runtime::context& context, std::shared_ptr<runtime::scope> scope = nullptr);
 
         /**
-         * Gets the resource type of the defined type.
-         * @return Returns the resource type of the defined type.
+         * Destructs the local scope.
          */
-        std::string const& type() const;
-
-        /**
-         * Gets the path of the file containing the defined type.
-         * @return Returns the path of the file containing the defined type.
-         */
-        std::string const& path() const;
-
-        /**
-         * Gets the line number of the defined type.
-         * @return Returns the line number of the defined type.
-         */
-        size_t line() const;
-
-        /**
-         * Evaluates the defined type.
-         * @param context The evaluation context.
-         * @param resource The resource for the defined type.
-         * @param arguments The arguments to the defined type.
-         * @return Returns true if the evaluation was successful or false if the evaluation failed.
-         */
-        bool evaluate(runtime::context& context, runtime::resource const& resource, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+        ~local_scope();
 
      private:
-        std::string _type;
-        std::shared_ptr<compiler::context> _context;
-        ast::defined_type_expression const& _expression;
+        runtime::context& _context;
+        scope _scope;
     };
 
     /**
-     * Represents a node definition.
+     * Helper for creating a node scope in an evaluation context.
      */
-    struct node_definition
+    struct node_scope
     {
         /**
-         * Constructs a node definition.
-         * @param context The compilation context for the node definition.
-         * @param expression The node definition expression.
+         * Constructs a node scope.
+         * @param context The current evaluation context.
+         * @param name The name of the node scope.
          */
-        node_definition(std::shared_ptr<compiler::context> context, ast::node_definition_expression const& expression);
+        node_scope(runtime::context& context, std::string name);
 
         /**
-         * Gets the path of the file containing the node definition.
-         * @return Returns the path of the file containing the node definition.
+         * Destructs the node scope.
          */
-        std::string const& path() const;
-
-        /**
-         * Gets the line number of the node definition.
-         * @return Returns the line number of the node definition.
-         */
-        size_t line() const;
-
-        /**
-         * Evaluates the node definition.
-         * @param context The evaluation context.
-         * @return Returns true if the evaluation succeeded or false if it did not.
-         */
-        bool evaluate(runtime::context& context);
+        ~node_scope();
 
      private:
-        std::shared_ptr<compiler::context> _context;
-        ast::node_definition_expression const& _expression;
+        runtime::context& _context;
     };
 
     /**
@@ -172,177 +90,100 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluation context.
-         * @param catalog The catalog being compiled.
+         * @param catalog The catalog being compiled or nullptr if catalog expressions are not supported.
          */
-        explicit context(runtime::catalog& catalog);
+        explicit context(runtime::catalog* catalog = nullptr);
 
         /**
          * Gets the catalog being compiled.
-         * @return Returns the catalog being compiled.
+         * @return Returns the catalog being compiled or nullptr if catalog expressions are not supported.
          */
-        runtime::catalog& catalog();
+        runtime::catalog* catalog();
 
         /**
          * Gets the current scope.
-         * @return Returns the current scope.
+         * @return Returns the current scope and will never return nullptr.
          */
-        runtime::scope& scope();
+        std::shared_ptr<runtime::scope> const& current_scope();
 
         /**
          * Gets the top scope.
-         * @return Returns the top scope.
+         * @return Returns the top scope and will never return nullptr.
          */
-        runtime::scope& top_scope();
+        std::shared_ptr<runtime::scope> const& top_scope();
 
         /**
          * Gets the node scope.
          * @return Returns the node scope or nullptr if there currently is no node scope.
          */
-        runtime::scope* node_scope();
+        std::shared_ptr<runtime::scope> const& node_scope();
 
         /**
-         * Gets the node scope if there is one or returns the top scope if there isn't.
-         * @return Returns the node scope if there is one or returns the top scope if there isn't.
+         * Gets the node or top scope.
+         * @return Returns the node scope if there is one, otherwise returns the top scope.
          */
-        runtime::scope& node_or_top();
+        std::shared_ptr<runtime::scope> const& node_or_top();
 
         /**
          * Adds a scope to the evaluation context.
-         * @param name The name of the scope to add.
-         * @param display_name The display name of the scope.
-         * @param parent The parent scope.
-         * @return Returns the scope that was added or the scope with the same name that already exists.
+         * @param scope The scope to add to the evaluation context.
+         * @return Returns true if the scope was added or false if the scope already exists.
          */
-        runtime::scope& add_scope(std::string name, std::string display_name, runtime::scope* parent = nullptr);
+        bool add_scope(std::shared_ptr<runtime::scope> scope);
 
         /**
          * Finds a scope by name.
          * @param name The name of the scope to find.
          * @return Returns a pointer to the scope if found or nullptr if the scope is not found.
          */
-        runtime::scope* find_scope(std::string const& name);
+        std::shared_ptr<runtime::scope> find_scope(std::string const& name) const;
 
         /**
-         * Pushes the given scope.
-         * @param current The new current scope.
+         * Sets the given matches into the context.
+         * Note: This member function has no effect unless a match scope is present.
+         * @param matches The matches to set.
          */
-        void push_scope(runtime::scope& current);
+        void set(std::smatch const& matches);
 
         /**
-         * Pops the current scope.
-         * @return Returns true if the scope was popped or false if not (i.e. already at top scope).
+         * Looks up a variable.
+         * @param name The name of the variable to look up.
+         * @param evaluator The expression evaluator to use to log warnings for scope lookup failures.  Requires a position.
+         * @param position The position where the lookup is taking place or nullptr if not in source.
+         * @return Returns a pointer to the variable if found or nullptr if the variable was not found.
          */
-        bool pop_scope();
+        values::value const* lookup(std::string const& name, expression_evaluator* evaluator = nullptr, lexer::position const* position = nullptr);
 
         /**
-         * Defines a class in the evaluation context.
-         * @param klass The class to define.
-         * @param context The compilation context.
-         * @param expression The class definition expression.
+         * Looks up a match variable by index.
+         * @param index The index of the match variable.
+         * @return Returns the match variable's value or nullptr if the variable wasn't found.
          */
-        void define_class(types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const& expression);
+        values::value const* lookup(size_t index) const;
 
         /**
-         * Declares a class.
-         * If the class is already declared, the existing class will be returned.
-         * @param klass The class to declare.
-         * @param path The path to the file that is declaring the resource.
-         * @param position The position where the resource is declared.
-         * @param arguments The class arguments or nullptr for no arguments.
-         * @return Returns the resource that was added for the class or nullptr if the class failed to evaluate.
+         * Creates a match scope.
+         * @return Returns the match scope.
          */
-        runtime::resource* declare_class(types::klass const& klass, std::shared_ptr<std::string> path, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+        match_scope create_match_scope();
 
         /**
-         * Determines if a class is defined.
-         * @param klass The class to check.
-         * @return Returns true if the class is defined or false if not.
+         * Creates a local scope.
+         * @param scope The parent scope to inherit from; if null, the current scope will be used.
+         * @return Returns the local scope.
          */
-        bool is_class_defined(types::klass const& klass) const;
-
-        /**
-         * Determines if a class is declared.
-         * @param klass The class to check.
-         * @return Returns true if the class is declared or false if not.
-         */
-        bool is_class_declared(types::klass const& klass) const;
-
-        /**
-         * Defines a (defined) type in the evaluation context.
-         * @param type The type to define.
-         * @param context The compilation context.
-         * @param expression The defined type expression.
-         */
-        void define_type(std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
-
-        /**
-         * Determines if the given type name is a defined type.
-         * @param type The type name to check.
-         * @return Returns true if the type is a defined type or false if it is not.
-         */
-        bool is_defined_type(std::string const& type) const;
-
-        /**
-         * Declares a defined type.
-         * @param type The defined type name.
-         * @param title The resource title.
-         * @param path The path to the file that is declaring the resource.
-         * @param position The position where the resource is declared.
-         * @param arguments The defined type's arguments or nullptr for no arguments.
-         * @return Returns the resource that was added to the catalog or nullptr if the defined type failed to evaluate.
-         */
-        runtime::resource* declare_defined_type(std::string const& type, std::string const& title, std::shared_ptr<std::string> path, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
-
-        /**
-         * Defines a node.
-         * @param context The compilation context.
-         * @param expression The node definition expression.
-         */
-        void define_node(std::shared_ptr<compiler::context> context, ast::node_definition_expression const& expression);
-
-        /**
-         * Evaluates a node definition for the given node.
-         * @param node The node to evaluate for.
-         * @return Returns true if evaluation was successful or false if it was not.
-         */
-        bool evaluate_node(compiler::node const& node);
+        local_scope create_local_scope(std::shared_ptr<runtime::scope> scope = nullptr);
 
      private:
-        void validate_parameters(bool klass, std::vector<ast::parameter> const& parameters);
-        friend struct node_scope_helper;
+        friend struct match_scope;
+        friend struct local_scope;
+        friend struct node_scope;
 
-        runtime::catalog& _catalog;
-        std::unordered_map<std::string, runtime::scope> _scopes;
-        std::deque<runtime::scope*> _scope_stack;
-        std::unique_ptr<runtime::scope> _node_scope;
-        std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
-        std::unordered_map<std::string, defined_type> _defined_types;
-        std::vector<node_definition> _nodes;
-        std::unordered_map<std::string, size_t> _named_nodes;
-        std::vector<std::pair<values::regex, size_t>> _regex_node_definitions;
-        ssize_t _default_node_index;
-    };
-
-    /**
-     * Helper for setting a local scope.
-     */
-    struct local_scope
-    {
-        /**
-         * Constructs an local scope.
-         * @param context The current evaluation context.
-         * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
-         */
-        local_scope(runtime::context& context, runtime::scope* scope = nullptr);
-
-        /**
-         * Destructs the local scope.
-         */
-        ~local_scope();
-
-    private:
-        runtime::context& _context;
-        scope _scope;
+        runtime::catalog* _catalog;
+        std::unordered_map<std::string, std::shared_ptr<runtime::scope>> _scopes;
+        std::vector<std::shared_ptr<runtime::scope>> _scope_stack;
+        std::shared_ptr<runtime::scope> _node_scope;
+        std::vector<std::shared_ptr<values::array>> _match_stack;
     };
 
 }}  // namespace puppet::runtime

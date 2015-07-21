@@ -97,20 +97,28 @@ namespace puppet { namespace logging {
 
         // Output the offending line's text
         if (!text.empty() && column > 0) {
-            stream << "    " << text << '\n';
-            stream << setfill(' ') << setw(column + 5) << "^\n";
+            stream << "    ";
+
+            // Ignore leading whitespace in the line
+            size_t offset = 0;
+            for (; offset < text.size() && isspace(text[offset]); ++offset);
+            stream.write(text.c_str() + offset, text.size() - offset);
+
+            stream << '\n' << setfill(' ') << setw(column + 5 - offset) << "^\n";
         }
 
         // Reset the colorization
         reset(lvl);
     }
 
-    void stream_logger::colorize(level lvl) const
+    void stream_logger::colorize(level) const
     {
+        // Stream loggers do not colorize
     }
 
-    void stream_logger::reset(level lvl) const
+    void stream_logger::reset(level) const
     {
+        // Stream loggers do not colorize
     }
 
     ostream& console_logger::get_stream(level lvl) const
@@ -119,8 +127,8 @@ namespace puppet { namespace logging {
     }
 
     console_logger::console_logger() :
-        _colorize_stdout(isatty(fileno(stdout))),
-        _colorize_stderr(isatty(fileno(stderr)))
+        _colorize_stdout(static_cast<bool>(isatty(fileno(stdout)))),
+        _colorize_stderr(static_cast<bool>(isatty(fileno(stderr))))
     {
     }
 

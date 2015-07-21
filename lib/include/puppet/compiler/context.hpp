@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "node.hpp"
+#include "exceptions.hpp"
 #include "../logging/logger.hpp"
 #include "../lexer/position.hpp"
 #include "../ast/syntax_tree.hpp"
@@ -13,6 +13,9 @@
 #include <memory>
 
 namespace puppet { namespace compiler {
+
+    // Forward declaration of node
+    struct node;
 
     /**
      * Represents a compilation context.

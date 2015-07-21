@@ -34,10 +34,13 @@ namespace puppet { namespace runtime {
     static bool tokenize_interpolation(
         string& result,
         expression_evaluator& evaluator,
+        lexer::position const& position,
         lexer_string_iterator& begin,
         lexer_string_iterator const& end,
         function<lexer::position(lexer::position const&)> const& calculate_position)
     {
+        auto& context = evaluator.context();
+
         try {
             bool bracket = begin != end && *begin == '{';
             string_static_lexer lexer;
@@ -68,16 +71,16 @@ namespace puppet { namespace runtime {
                 if (!token) {
                     return false;
                 }
-                val = evaluator.lookup(string(token->begin(), token->end()));
+                val = context.lookup(string(token->begin(), token->end()), &evaluator, &position);
             } else if (token_begin != token_end && token_begin->id() == static_cast<size_t>(token_id::number)) {
                 auto token = get<number_token>(&token_begin->value());
                 if (!token) {
                     return false;
                 }
                 if (token->base() != numeric_base::decimal || token->value().which() != 0) {
-                    throw evaluation_exception(calculate_position(token->position()), (boost::format("'%1%' is not a valid match variable name.") % *token).str());
+                    throw evaluation_exception(position, (boost::format("'%1%' is not a valid match variable name.") % *token).str());
                 }
-                val = evaluator.scope().get(get<int64_t>(token->value()));
+                val = context.lookup(get<int64_t>(token->value()));
             } else {
                 return false;
             }
@@ -252,7 +255,8 @@ namespace puppet { namespace runtime {
 
                 if (next != end && !isspace(*next)) {
                     // First attempt to interpolate using the lexer
-                    if (tokenize_interpolation(result, _evaluator, next, end, calculate_position)) {
+                    auto begin_position = calculate_position(begin.position());
+                    if (tokenize_interpolation(result, _evaluator, begin_position, next, end, calculate_position)) {
                         begin = next;
                         continue;
                     }

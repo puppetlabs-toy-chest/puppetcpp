@@ -38,16 +38,17 @@ namespace puppet { namespace runtime {
         return _parameters->size();
     }
 
-    value executor::execute(runtime::scope* scope) const
+    value executor::execute(shared_ptr<runtime::scope> const& scope) const
     {
         values::array arguments;
         return execute(arguments, scope);
     }
 
-    value executor::execute(values::array& arguments, runtime::scope* scope) const
+    value executor::execute(values::array& arguments, shared_ptr<runtime::scope> const& scope) const
     {
         // Create the execution scope
-        auto local_scope = _evaluator.create_local_scope(scope);
+        auto local_scope = _evaluator.context().create_local_scope(scope);
+        auto& current_scope = _evaluator.context().current_scope();
 
         bool has_optional_parameters = false;
         if (_parameters) {
@@ -92,7 +93,7 @@ namespace puppet { namespace runtime {
                 // Verify the value matches the parameter type
                 validate_parameter(parameter, value);
 
-                if (!_evaluator.scope().set(name, rvalue_cast(value), _evaluator.path(), parameter.position().line())) {
+                if (!current_scope->set(name, rvalue_cast(value), _evaluator.path(), parameter.position().line())) {
                     throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }
@@ -101,10 +102,11 @@ namespace puppet { namespace runtime {
         return evaluate_body();
     }
 
-    values::value executor::execute(values::hash& arguments, runtime::scope* scope) const
+    values::value executor::execute(values::hash& arguments, shared_ptr<runtime::scope> const& scope) const
     {
         // Create the execution scope
-        auto local_scope = _evaluator.create_local_scope(scope);
+        auto local_scope = _evaluator.context().create_local_scope(scope);
+        auto& current_scope = _evaluator.context().current_scope();
 
         if (_parameters) {
             for (auto const& parameter : *_parameters) {
@@ -124,7 +126,7 @@ namespace puppet { namespace runtime {
 
                 validate_parameter(parameter, value);
 
-                if (!_evaluator.scope().set(name, rvalue_cast(value), _evaluator.path(), parameter.position().line())) {
+                if (!current_scope->set(name, rvalue_cast(value), _evaluator.path(), parameter.position().line())) {
                     throw evaluation_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }

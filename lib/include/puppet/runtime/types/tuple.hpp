@@ -7,6 +7,7 @@
 #include "../../cast.hpp"
 #include "../values/array.hpp"
 #include <boost/functional/hash.hpp>
+#include <boost/variant.hpp>
 #include <ostream>
 #include <vector>
 #include <cstdint>

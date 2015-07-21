@@ -9,6 +9,7 @@
 #include "../values/array.hpp"
 #include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
+#include <boost/variant.hpp>
 #include <limits>
 #include <ostream>
 #include <functional>

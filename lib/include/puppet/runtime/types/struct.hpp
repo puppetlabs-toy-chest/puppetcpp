@@ -8,6 +8,7 @@
 #include "../values/undef.hpp"
 #include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
+#include <boost/variant.hpp>
 #include <ostream>
 #include <unordered_map>
 #include <string>

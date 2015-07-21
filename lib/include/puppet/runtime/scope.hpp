@@ -9,8 +9,6 @@
 #include <string>
 #include <memory>
 #include <cstdint>
-#include <regex>
-#include <deque>
 
 namespace puppet { namespace runtime {
 
@@ -58,37 +56,29 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs a scope.
+         * @param parent The parent scope.
          * @param name The name of the scope (e.g. foo).
          * @param display_name The display name of the scope (e.g. Class[foo]).
-         * @param parent The parent scope.
          */
-        explicit scope(std::string name, std::string display_name, scope* parent = nullptr);
-
-        /**
-         * Constructs an ephemeral scope.
-         * @param parent The parent scope.
-         */
-        explicit scope(scope* parent);
-
-        /**
-         * Determines if the scope is ephemeral.
-         * @return Returns true if the scope is ephemeral or false if not.
-         */
-        bool ephemeral() const;
+        explicit scope(std::shared_ptr<scope> parent = nullptr, std::string name = std::string(), std::string display_name = std::string());
 
         /**
          * Gets the name of the scope.
-         * Note: for ephemeral scopes, this returns the name of the parent scope.
          * @return Returns the name of scope.
          */
         std::string const& name() const;
 
         /**
          * Gets the display name of the scope.
-         * Note: for ephemeral scopes, this returns the display name of the parent scope.
          * @return Returns the display name of scope.
          */
         std::string const& display_name() const;
+
+        /**
+         * Gets the parent scope.
+         * @return Returns the parent scope or nullptr if at top scope.
+         */
+        std::shared_ptr<scope> const& parent() const;
 
         /**
          * Qualifies the given name using the scope's name.
@@ -114,42 +104,11 @@ namespace puppet { namespace runtime {
          */
         assigned_variable const* get(std::string const& name) const;
 
-        /**
-         * Gets the parent scope.
-         * @return Returns the parent scope or nullptr if at top scope.
-         */
-        scope const* parent() const;
-
-        /**
-         * Sets the given matches into the scope.
-         * This will set the $0 - $n variables.
-         * @param matches The matches to set.
-         */
-        void set(std::smatch const& matches);
-
-        /**
-         * Gets a match variable by index.
-         * @param index The index of the match variable.
-         * @return Returns the match variable's value or nullptr if the index is not in range.
-         */
-        values::value const* get(size_t index) const;
-
-        /**
-         * Pushes the current match variables.
-         */
-        void push_matches();
-
-        /**
-         * Pops the current match variables.
-         */
-        void pop_matches();
-
      private:
+        std::shared_ptr<scope> _parent;
         std::string _name;
         std::string _display_name;
-        scope* _parent;
         std::unordered_map<std::string, assigned_variable> _variables;
-        std::deque<std::vector<values::value>> _matches;
     };
 
     /**
@@ -159,25 +118,5 @@ namespace puppet { namespace runtime {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, scope const& s);
-
-    /**
-     * Represents a match variable scope.
-     */
-    struct match_variable_scope
-    {
-        /**
-         * Constructs a match variable scope.
-         * @param current The current scope.
-         */
-        explicit match_variable_scope(scope& current);
-
-        /**
-         * Destructs a match variable scope.
-         */
-        ~match_variable_scope();
-
-     private:
-        scope& _current;
-    };
 
 }}  // puppet::runtime

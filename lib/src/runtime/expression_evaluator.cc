@@ -51,54 +51,14 @@ namespace puppet { namespace runtime {
         }
     }
 
-    runtime::catalog& expression_evaluator::catalog()
+    runtime::context& expression_evaluator::context()
+    {
+        return _evaluation_context;
+    }
+
+    runtime::catalog* expression_evaluator::catalog()
     {
         return _evaluation_context.catalog();
-    }
-
-    runtime::scope& expression_evaluator::scope()
-    {
-        return _evaluation_context.scope();
-    }
-
-    values::value const* expression_evaluator::lookup(string const& name, lexer::position const* position)
-    {
-        // Look for the last :: delimiter; if not found, use the current scope
-        auto pos = name.rfind("::");
-        if (pos == string::npos) {
-            auto variable = _evaluation_context.scope().get(name);
-            return variable ? &variable->value() : nullptr;
-        }
-
-        // Split into namespace and variable name
-        // For global names, remove the leading ::
-        bool global = boost::starts_with(name, "::");
-        auto ns = name.substr(global ? 2 : 0, global ? (pos > 2 ? pos - 2 : 0) : pos);
-        auto var = name.substr(pos + 2);
-
-        // An empty namespace is the top scope
-        if (ns.empty()) {
-            auto variable = _evaluation_context.top_scope().get(var);
-            return variable ? &variable->value() : nullptr;
-        }
-
-        // Lookup the namespace
-        auto scope = _evaluation_context.find_scope(ns);
-        if (scope) {
-            auto variable = scope->get(var);
-            return variable ? &variable->value() : nullptr;
-        }
-
-        // Warn if the scope was not found
-        if (position) {
-            types::klass klass(ns);
-            if (!_evaluation_context.is_class_defined(klass)) {
-                warn(*position, (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % name % ns).str());
-            } else if (!_evaluation_context.is_class_declared(klass)) {
-                warn(*position, (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % name % ns).str());
-            }
-        }
-        return nullptr;
     }
 
     logging::logger& expression_evaluator::logger()
@@ -111,32 +71,7 @@ namespace puppet { namespace runtime {
         return _compilation_context->path();
     }
 
-    bool expression_evaluator::is_class_defined(types::klass const& klass) const
-    {
-        return _evaluation_context.is_class_defined(klass);
-    }
-
-    runtime::resource* expression_evaluator::declare_class(types::klass const& klass, lexer::position const& position, unordered_map<ast::name, values::value> const* arguments)
-    {
-        return _evaluation_context.declare_class(klass, path(), position, arguments);
-    }
-
-    bool expression_evaluator::is_defined_type(std::string const& type) const
-    {
-        return _evaluation_context.is_defined_type(type);
-    }
-
-    runtime::resource* expression_evaluator::declare_defined_type(string const& type, string const& title, lexer::position const& position, unordered_map<ast::name, values::value> const* arguments)
-    {
-        return _evaluation_context.declare_defined_type(type, title, path(), position, arguments);
-    }
-
-    local_scope expression_evaluator::create_local_scope(runtime::scope* scope)
-    {
-        return local_scope{ _evaluation_context, scope };
-    }
-
-    void expression_evaluator::warn(lexer::position const& position, std::string const& message)
+    void expression_evaluator::warn(lexer::position const& position, string const& message)
     {
         _compilation_context->log(logging::level::warning, position, message);
     }
@@ -149,8 +84,10 @@ namespace puppet { namespace runtime {
         }
 
         // Scan the tree for definitions
-        definition_scanner scanner { _evaluation_context };
-        scanner.scan(_compilation_context);
+        if (catalog()) {
+            definition_scanner scanner{ *catalog() };
+            scanner.scan(_compilation_context);
+        }
 
         for (auto& expression : *tree.body()) {
             // Top level expressions must be productive
@@ -325,7 +262,7 @@ namespace puppet { namespace runtime {
         value& right,
         lexer::position& right_position)
     {
-        static const unordered_map<ast::binary_operator, std::function<values::value(operators::binary_context&)>> binary_operators = {
+        static const unordered_map<ast::binary_operator, function<values::value(operators::binary_context&)>> binary_operators = {
             { ast::binary_operator::assignment,         operators::assignment() },
             { ast::binary_operator::divide,             operators::divide() },
             { ast::binary_operator::equals,             operators::equals() },
