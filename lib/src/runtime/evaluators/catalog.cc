@@ -25,7 +25,25 @@ namespace puppet { namespace runtime { namespace evaluators {
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_expression const& expr)
     {
         auto catalog = _evaluator.catalog();
-        string const& type_name = expr.type().value();
+
+        // Evaluate the type name
+        string type_name;
+        auto type_value = _evaluator.evaluate(expr.type());
+
+        // Resource expressions support either strings or Resource[Type] for the type name
+        if (as<std::string>(type_value)) {
+            type_name = mutate_as<string>(type_value);
+        } else if (auto type = as<values::type>(type_value)) {
+            if (auto resource_type = boost::get<types::resource>(type)) {
+                if (resource_type->title().empty()) {
+                    type_name = resource_type->type_name();
+                }
+            }
+        }
+
+        if (type_name.empty()) {
+            throw evaluation_exception(expr.position(), (boost::format("expected %1% or qualified %2% for resource type but found %3%.") % types::string::name() % types::resource::name() % get_type(type_value)).str());
+        }
 
         // Handle class resources specially
         if (type_name == "class") {
@@ -43,7 +61,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
         // Handle defined types
         if (catalog->is_defined_type(type_name)) {
-            return declare_defined_types(expr);
+            return declare_defined_types(expr, type_name);
         }
 
         values::array types;
@@ -275,7 +293,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         return types;
     }
 
-    catalog_expression_evaluator::result_type catalog_expression_evaluator::declare_defined_types(ast::resource_expression const& expr)
+    catalog_expression_evaluator::result_type catalog_expression_evaluator::declare_defined_types(ast::resource_expression const& expr, string const& type_name)
     {
         auto catalog = _evaluator.catalog();
 
@@ -311,7 +329,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
             // Declare the resources
             for (auto& title : titles) {
-                types::resource resource(expr.type().value(), title);
+                types::resource resource(type_name, title);
 
                 // Ensure the resource doesn't already exist
                 if (auto existing = catalog->find_resource(resource)) {
@@ -319,7 +337,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                 }
 
                 // Declare the defined type
-                if (!catalog->declare_defined_type(_evaluator.context(), expr.type().value(), title, _evaluator.path(), body.position(), &attributes)) {
+                if (!catalog->declare_defined_type(_evaluator.context(), type_name, title, _evaluator.path(), body.position(), &attributes)) {
                     throw evaluation_exception(body.position(), (boost::format("failed to declare defined type %1%.") % resource).str());
                 }
                 types.emplace_back(rvalue_cast(resource));

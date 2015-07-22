@@ -146,7 +146,7 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(type const& t) const
         {
-            return t;
+            return types::type(t);
         }
 
         result_type operator()(variable const& var) const
