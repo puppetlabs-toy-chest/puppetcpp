@@ -217,7 +217,7 @@ namespace puppet { namespace runtime { namespace values {
     array to_array(value const& val)
     {
         // If already an array, return a copy
-        auto array_ptr = as<values::array>(&val);
+        auto array_ptr = as<values::array>(val);
         if (array_ptr) {
             return *array_ptr;
         }
@@ -225,7 +225,7 @@ namespace puppet { namespace runtime { namespace values {
         array result;
 
         // Check for hash
-        auto hash_ptr = as<values::hash>(&val);
+        auto hash_ptr = as<values::hash>(val);
         if (hash_ptr) {
             // Turn the hash into an array of [K,V]
             for (auto& kvp : *hash_ptr) {

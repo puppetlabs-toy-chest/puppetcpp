@@ -68,7 +68,7 @@ namespace puppet { namespace runtime { namespace operators {
         {
             // Remove any [K,V] elements in left that are key and value in right
             left.erase(remove_if(left.begin(), left.end(), [&](value const& v) {
-                auto ptr = as<values::array>(&v);
+                auto ptr = as<values::array>(v);
                 if (!ptr || ptr->size() != 2) {
                     return false;
                 }

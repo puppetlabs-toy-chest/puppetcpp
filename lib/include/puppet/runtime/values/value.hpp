@@ -90,6 +90,15 @@ namespace puppet { namespace runtime { namespace values {
     }
 
     /**
+     * This exists to prevent unintentional invocations of the "as<T>" function.
+     * Because a value can be a bool and pointers are implicitly convertable to bool,
+     * calling as<T>(&val) results in constructing a temporary value that is set to "true".
+     * This function is declared without a definition to induce build errors if invoked.
+     */
+    template <typename T>
+    T const* as(value const*);
+
+    /**
      * Prepares the value for mutation as the given type.
      * Note: throws boost::bad_get if the value is not of the given type.
      * @tparam T The resulting type.
