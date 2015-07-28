@@ -146,7 +146,6 @@ namespace puppet { namespace compiler {
             case_expression =
                 (token_pos(token_id::keyword_case) > expression > raw_token('{') > +case_proposition > raw_token('}')) [ _val = phx::construct<ast::case_expression>(_1, _2, _3) ];
             case_proposition =
-                (lambda > raw_token(':') > raw_token('{') > statements > raw_token('}'))      [ _val = phx::construct<ast::case_proposition>(_1, _2) ] |
                 (expressions > raw_token(':') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::case_proposition>(_1, _2) ];
             if_expression =
                 (token_pos(token_id::keyword_if) > expression > raw_token('{') > statements > raw_token('}') > *elsif_expression > -else_expression) [ _val = phx::construct<ast::if_expression>(_1, _2, _3, _4, _5) ];
