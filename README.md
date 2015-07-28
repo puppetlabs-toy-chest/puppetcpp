@@ -46,21 +46,11 @@ Expression evaluator status:
 * [x] function call expressions
 * [x] lambdas
 * [x] resource expressions
-* [x] `alias` metaparameter
-* [x] `audit` metaparameter (explicitly not supported)
-* [ ] `before` metaparameter
-* [ ] `loglevel` metaparameter
-* [ ] `noop` metaparameter
-* [ ] `notify` metaparameter
-* [ ] `require` metaparameter
-* [ ] `schedule` metaparameter
-* [ ] `stage` metaparameter
-* [ ] `subscribe` metaparameter
-* [ ] `tag` metaparameter
+* [x] resource metaparameters
 * [ ] virtual resource expressions
 * [ ] exported resource expressions
 * [ ] resource defaults expressions
-* [ ] resource override expressions (NYI: scope check and `+>`)
+* [ ] resource override expressions (NYI: scope checking)
 * [x] class definition expressions
 * [x] defined type expressions
 * [x] node definition expressions

@@ -7,13 +7,12 @@
 #include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <ostream>
+#include <memory>
 
 namespace puppet { namespace runtime { namespace values {
 
     /**
      * Represents a reference to a variable.
-     * Having this as a runtime value prevents unnecessary copying of a variable's value.
-     * Thus, '$a = $b' simply points $a's value at what $b was set to.
      * @tparam Value The runtime value type.
      */
     template <typename Value>
@@ -27,13 +26,11 @@ namespace puppet { namespace runtime { namespace values {
         /**
          * Constructs a variable reference.
          * @param name The name of the variable.
-         * @param val The current value of the variable.
-         * @param match The variable is a match variable.
+         * @param value The variable's value.
          */
-        basic_variable(std::string name, value_type const* val, bool match) :
+        basic_variable(std::string name, std::shared_ptr<value_type const> value) :
             _name(rvalue_cast(name)),
-            _value(val),
-            _match(match)
+            _value(rvalue_cast(value))
         {
         }
 
@@ -56,28 +53,23 @@ namespace puppet { namespace runtime { namespace values {
             return _value ? *_value : undefined;
         }
 
-        /**
-         * Determines if the variable is a match variable.
-         * @return Returns true if the variable is a match variable or false if not.
-         */
-        bool match() const
+        std::shared_ptr<value_type const> const& value_ptr() const
         {
-            return _match;
+            return _value;
         }
 
         /**
-         * Updates the value of the variable.
-         * @param ptr The pointer to the variable's value.
+         * Assigns the given value to the variable.
+         * @param value The new value of the variable.
          */
-        void update(value_type const* ptr)
+        void assign(std::shared_ptr<value_type const> const& value)
         {
-            _value = ptr;
+            _value = value;
         }
 
     private:
         std::string _name;
-        value_type const* _value;
-        bool _match;
+        std::shared_ptr<value_type const> _value;
     };
 
     /**

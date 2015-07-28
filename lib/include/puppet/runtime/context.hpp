@@ -146,20 +146,20 @@ namespace puppet { namespace runtime {
         void set(std::smatch const& matches);
 
         /**
-         * Looks up a variable.
+         * Looks up a variable's value.
          * @param name The name of the variable to look up.
          * @param evaluator The expression evaluator to use to log warnings for scope lookup failures.  Requires a position.
          * @param position The position where the lookup is taking place or nullptr if not in source.
-         * @return Returns a pointer to the variable if found or nullptr if the variable was not found.
+         * @return Returns the variable's value or nullptr if the variable was not found.
          */
-        values::value const* lookup(std::string const& name, expression_evaluator* evaluator = nullptr, lexer::position const* position = nullptr);
+        std::shared_ptr<values::value const> lookup(std::string const& name, expression_evaluator* evaluator = nullptr, lexer::position const* position = nullptr);
 
         /**
-         * Looks up a match variable by index.
+         * Looks up a match variable value by index.
          * @param index The index of the match variable.
          * @return Returns the match variable's value or nullptr if the variable wasn't found.
          */
-        values::value const* lookup(size_t index) const;
+        std::shared_ptr<values::value const> lookup(size_t index) const;
 
         /**
          * Creates a match scope.
@@ -183,7 +183,7 @@ namespace puppet { namespace runtime {
         std::unordered_map<std::string, std::shared_ptr<runtime::scope>> _scopes;
         std::vector<std::shared_ptr<runtime::scope>> _scope_stack;
         std::shared_ptr<runtime::scope> _node_scope;
-        std::vector<std::shared_ptr<values::array>> _match_stack;
+        std::vector<std::shared_ptr<std::vector<std::shared_ptr<values::value const>>>> _match_stack;
     };
 
 }}  // namespace puppet::runtime

@@ -8,10 +8,7 @@ namespace puppet { namespace runtime { namespace operators {
 
     value splat::operator()(unary_context& context) const
     {
-        if (as<values::array>(context.operand())) {
-            return mutate(context.operand());
-        }
-        return to_array(dereference(context.operand()));
+        return values::to_array(context.operand());
     }
 
 }}}  // namespace puppet::runtime::operators

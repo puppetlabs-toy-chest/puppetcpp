@@ -43,6 +43,15 @@ namespace puppet { namespace runtime { namespace types {
         }
 
         /**
+         * Determines if the class type is fully qualified.
+         * @return Returns true if the class type is fully qualified or false if not.
+         */
+        bool fully_qualified() const
+        {
+            return !_title.empty();
+        }
+
+        /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Class).
          */

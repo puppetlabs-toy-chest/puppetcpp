@@ -188,7 +188,7 @@ namespace puppet { namespace ast {
          * Gets the resource bodies that are being defined.
          * @return Returns the resource bodies that are being defined.
          */
-        std::vector<resource_body> bodies() const;
+        std::vector<resource_body> const& bodies() const;
 
         /**
          * Gets the status of the resource.

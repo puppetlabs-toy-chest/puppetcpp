@@ -16,7 +16,7 @@ namespace puppet { namespace runtime { namespace operators {
             throw evaluation_exception(context.left_position(), (boost::format("cannot assign to %1%: assignment can only be performed on variables.") % get_type(context.left())).str());
         }
         // Ensure the variable isn't a match variable
-        if (var->match()) {
+        if (isdigit(var->name()[0])) {
             throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable name is reserved for match variables.") % var->name()).str());
         }
         // Ensure the variable is local to the current scope
@@ -24,26 +24,30 @@ namespace puppet { namespace runtime { namespace operators {
             throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: assignment can only be performed on variables local to the current scope.") % var->name()).str());
         }
 
-        // If the right-hand side is a match variable, copy the value because it is inherently ephemeral
-        auto var_right = boost::get<variable>(&context.right());
-        if (var_right && var_right->match()) {
-            context.right() = var_right->value();
-        }
-
-        // Set the value in the current scope
         auto& evaluator = context.evaluator();
         auto& scope = evaluator.context().current_scope();
-        auto assigned = scope->set(var->name(), rvalue_cast(context.right()), evaluator.path(), context.left_position().line());
+
+        // If the right side is a variable, assign to the existing variable
+        shared_ptr<values::value const> value;
+        assigned_variable const* assigned = nullptr;
+        if (auto existing = as<variable>(context.right())) {
+            value = existing->value_ptr();
+        } else {
+            value = make_shared<values::value const>(rvalue_cast(context.right()));
+        }
+
+        // Assign the existing value
+        assigned = scope->set(var->name(), rvalue_cast(value), evaluator.path(), context.left_position().line());
         if (!assigned) {
             auto previous = scope->get(var->name());
-            if (previous && !previous->path().empty()) {
-                throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % previous->path() % previous->line()).str());
+            if (previous && previous->path() && !previous->path()->empty()) {
+                throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % *previous->path() % previous->line()).str());
             }
             throw evaluation_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned.") % var->name()).str());
         }
 
         // Update the reference's value
-        var->update(&assigned->value());
+        var->assign(assigned->value());
         return rvalue_cast(context.left());
     }
 

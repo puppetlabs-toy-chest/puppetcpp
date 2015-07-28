@@ -9,7 +9,6 @@
 #include "values/value.hpp"
 #include <string>
 #include <functional>
-#include <unordered_set>
 #include <unordered_map>
 
 namespace puppet { namespace runtime {
@@ -23,8 +22,136 @@ namespace puppet { namespace runtime {
     // Forward declaration of scope.
     struct scope;
 
-    // Forward declaration of resource.
-    struct resource;
+    /**
+     * Represents a collection of resource attributes.
+     */
+    struct attributes
+    {
+        /**
+         * Constructs an attribute collection.
+         * @param parent The parent attributes to inherit values from.
+         */
+        explicit attributes(std::shared_ptr<attributes const> parent = nullptr);
+
+        /**
+         * Gets an attribute.
+         * @param name The name of the attribute to get.
+         * @param check_parent True if the parent should be checked for the attribute or false if not.
+         * @return Returns the value if the attribute exists or nullptr if the attribute does not exist.
+         */
+        std::shared_ptr<values::value const> get(std::string const& name, bool check_parent = true) const;
+
+        /**
+         * Sets an attribute.
+         * @param name The name of the attribute to set.
+         * @param value The value to set.
+         */
+        void set(std::string const& name, values::value value);
+
+        /**
+         * Appends a value to an existing attribute.
+         * If the attribute does not exist, the attribute is set to the value as an array.
+         * @param name The name of the attribute to append to.
+         * @param value The value to append.
+         * @return Returns true if the value was appended or false if the attribute already exists and is not an array.
+         */
+        bool append(std::string const& name, values::value value);
+
+        /**
+         * Enumerates each stored attribute.
+         * @param callback The callback to call for each stored attribute.
+         */
+        void each(std::function<bool(std::string const& name, std::shared_ptr<values::value const> const& value)> const& callback) const;
+
+     private:
+        std::shared_ptr<attributes const> _parent;
+        std::unordered_map<std::string, std::shared_ptr<values::value>> _values;
+    };
+
+    /**
+     * Represents a declared resource in a catalog.
+     */
+    struct resource
+    {
+        /**
+         * Creates a resource with the given type and title.
+         * @param catalog The catalog that contains the resource.
+         * @param type The resource type (e.g. File['/tmp/foo']).
+         * @param path The path of the file defining the resource.
+         * @param line The line defining the resource.
+         * @param attributes The resource's attributes.
+         * @param exported True if the resource is exported or false if not.
+         */
+        resource(
+            runtime::catalog& catalog,
+            types::resource type,
+            std::shared_ptr<std::string> path = nullptr,
+            size_t line = 0,
+            std::shared_ptr<attributes> attributes = nullptr,
+            bool exported = false);
+
+        /**
+         * Gets the catalog that contains the resource.
+         * @return Returns the catalog that contains the resource.
+         */
+        runtime::catalog const& catalog() const;
+
+        /**
+         * Gets the resource type of the resource.
+         * @return Returns the resource type of the resource.
+         */
+        types::resource const& type() const;
+
+        /**
+         * Gets the path of the file where the resource was declared.
+         * @return Returns the path of the file where the resource was declared or nullptr if not declared in a source file.
+         */
+        std::string const* path() const;
+
+        /**
+         * Gets the line where the resource was declared.
+         * @return Returns the line where the resource was declared or 0 if not declared in a source file.
+         */
+        size_t line() const;
+
+        /**
+         * Gets whether or not the resource is exported.
+         * @return Returns true if the resource is exported or false if it is not.
+         */
+        bool exported() const;
+
+        /**
+         * Gets the resource's attributes.
+         * @return Returns the resource's attribute.
+         */
+        runtime::attributes& attributes();
+
+        /**
+         * Gets the resource's attributes.
+         * @return Returns the resource's attribute.
+         */
+        runtime::attributes const& attributes() const;
+
+        /**
+         * Makes the resource's attributes unique.
+         */
+        void make_attributes_unique();
+
+        /**
+         * Determines if the given name is a metaparameter name.
+         * @param name The name to check.
+         * @return Returns true if name is the name of a metaparameter or false if not.
+         */
+        static bool is_metaparameter(std::string const& name);
+
+     private:
+        runtime::catalog& _catalog;
+        types::resource _type;
+        std::shared_ptr<std::string> _path;
+        size_t _line;
+        std::shared_ptr<runtime::attributes> _attributes;
+        bool _exported;
+    };
 
     /**
      * Represents a class definition in a catalog.
@@ -79,10 +206,16 @@ namespace puppet { namespace runtime {
         /**
          * Evaluates the class.
          * @param context The evaluation context.
-         * @param arguments The arguments to the class.
+         * @param resource The resource representing the class.
+         * @param attribute_name_position The callback to use to get the location of an attribute's name.
+         * @param attribute_value_position The callback to use to get the location of an attribute's value.
          * @return Returns true if the evaluation was successful or false if the evaluation failed.
          */
-        bool evaluate(runtime::context& context, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+        bool evaluate(
+            runtime::context& context,
+            runtime::resource const& resource,
+            std::function<lexer::position(std::string const&)> const& attribute_name_position,
+            std::function<lexer::position(std::string const&)> const& attribute_value_position);
 
      private:
         std::shared_ptr<runtime::scope> evaluate_parent(runtime::context& context);
@@ -138,12 +271,17 @@ namespace puppet { namespace runtime {
          * Evaluates the defined type.
          * @param context The evaluation context.
          * @param resource The resource for the defined type.
-         * @param arguments The arguments to the defined type.
+         * @param attribute_name_position The callback to use to get the location of an attribute's name.
+         * @param attribute_value_position The callback to use to get the location of an attribute's value.
          * @return Returns true if the evaluation was successful or false if the evaluation failed.
          */
-        bool evaluate(runtime::context& context, runtime::resource const& resource, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+        bool evaluate(
+            runtime::context& context,
+            runtime::resource const& resource,
+            std::function<lexer::position(std::string const&)> const& attribute_name_position,
+            std::function<lexer::position(std::string const&)> const& attribute_value_position);
 
-     private:
+    private:
         runtime::catalog& _catalog;
         std::string _type;
         std::shared_ptr<compiler::context> _context;
@@ -195,100 +333,6 @@ namespace puppet { namespace runtime {
     };
 
     /**
-     * Represents a declared resource in a catalog.
-     */
-    struct resource
-    {
-        /**
-         * Creates a resource with the given type and title.
-         * @param catalog The catalog that contains the resource.
-         * @param type The resource type (e.g. File['/tmp/foo']).
-         * @param path The path of the file defining the resource.
-         * @param line The line defining the resource.
-         * @param exported True if the resource is exported or false if not.
-         */
-        resource(runtime::catalog& catalog, types::resource type, std::shared_ptr<std::string> path, size_t line, bool exported = false);
-
-        /**
-         * Gets the catalog that contains the resource.
-         * @return Returns the catalog that contains the resource.
-         */
-        runtime::catalog const& catalog() const;
-
-        /**
-         * Gets the resource type of the resource.
-         * @return Returns the resource type of the resource.
-         */
-        types::resource const& type() const;
-
-        /**
-         * Gets the path of the file where the resource was defined.
-         * @return Returns the path of the file where the resource was defined.
-         */
-        std::string const& path() const;
-
-        /**
-         * Gets the line where the resource was defined.
-         * @return Returns the line where the resource was defined.
-         */
-        size_t line() const;
-
-        /**
-         * Gets the tags of the resource.
-         * @return Returns the tags of the resource.
-         */
-        std::unordered_set<std::string> const& tags() const;
-
-        /**
-         * Gets the parameters of the resource.
-         * @return Returns the parameters of the resource.
-         */
-        std::unordered_map<std::string, values::value> const& parameters() const;
-
-        /**
-         * Gets whether or not the resource is exported.
-         * @return Returns true if the resource is exported or false if it is not.
-         */
-        bool exported() const;
-
-        /**
-         * Adds a tag to the resource.
-         * @param tag The tag to add to the resource.
-         */
-        void add_tag(std::string tag);
-
-        /**
-         * Sets a parameter's value.
-         * @param name The parameter name.
-         * @param name_position The position of the parameter's name in the input.
-         * @param value The parameter's value.
-         * @param value_position The position of the parameter's value in the input.
-         * @param override True if the parameter's value should be overridden or false if not.
-         */
-        void set_parameter(std::string const& name, lexer::position const& name_position, values::value value, lexer::position const& value_position, bool override = false);
-
-        /**
-         * Removes a parameter from the resource.
-         * @param name The name of the parameter to remove.
-         * @return Returns true if the parameter was removed or false if it did not exist.
-         */
-        bool remove_parameter(std::string const& name);
-
-     private:
-        void store_parameter(std::string const& name, lexer::position const& name_position, values::value value, bool override);
-        bool handle_metaparameter(std::string const& name, lexer::position const& name_position, values::value& value, lexer::position const& value_position);
-        void create_alias(values::value const& value, lexer::position const& position);
-
-        runtime::catalog& _catalog;
-        types::resource _type;
-        std::shared_ptr<std::string> _path;
-        size_t _line;
-        std::unordered_set<std::string> _tags;
-        std::unordered_map<std::string, values::value> _parameters;
-        bool _exported;
-    };
-
-    /**
      * Represents the Puppet catalog.
      */
     struct catalog
@@ -315,13 +359,19 @@ namespace puppet { namespace runtime {
 
         /**
          * Adds a resource to the catalog.
-         * @param resource The qualified resource to add.
+         * @param type The qualified resource type to add.
          * @param path The path of the file defining the resource.
          * @param line The line defining the resource.
+         * @param attributes The resource's initial attributes.
          * @param exported True if the resource is exported or false if it is not.
          * @return Returns the new resource in the catalog or nullptr if the resource already exists in the catalog.
          */
-        runtime::resource* add_resource(types::resource resource, std::shared_ptr<std::string> path, size_t line, bool exported = false);
+        runtime::resource* add_resource(
+            types::resource type,
+            std::shared_ptr<std::string> path,
+            size_t line,
+            std::shared_ptr<attributes> attributes = nullptr,
+            bool exported = false);
 
         /**
          * Defines a class in the evaluation context.
@@ -336,12 +386,21 @@ namespace puppet { namespace runtime {
          * If the class is already declared, the existing class will be returned.
          * @param context The evaluation context to use.
          * @param klass The class to declare.
-         * @param path The path to the file that is declaring the resource.
-         * @param position The position where the resource is declared.
-         * @param arguments The class arguments or nullptr for no arguments.
+         * @param path The path to the file that is declaring the resource or nullptr if not declared in a source file.
+         * @param line The line in the file where the class is being declared or 0 if not declared in a source file.
+         * @param attributes The class resource's attributes or nullptr for an empty set.
+         * @param attribute_name_position The callback to use to get the location of an attribute's name.
+         * @param attribute_value_position The callback to use to get the location of an attribute's value.
          * @return Returns the resource that was added for the class or nullptr if the class failed to evaluate.
          */
-        runtime::resource* declare_class(runtime::context& context, types::klass const& klass, std::shared_ptr<std::string> path, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+        runtime::resource* declare_class(
+            runtime::context& context,
+            types::klass const& klass,
+            std::shared_ptr<std::string> path = nullptr,
+            size_t line = 0,
+            std::shared_ptr<runtime::attributes> attributes = nullptr,
+            std::function<lexer::position(std::string const&)> const& attribute_name_position = nullptr,
+            std::function<lexer::position(std::string const&)> const& attribute_value_position = nullptr);
 
         /**
          * Determines if a class is defined.
@@ -377,12 +436,22 @@ namespace puppet { namespace runtime {
          * @param context The evaluation context to use.
          * @param type The defined type name.
          * @param title The resource title.
-         * @param path The path to the file that is declaring the resource.
-         * @param position The position where the resource is declared.
-         * @param arguments The defined type's arguments or nullptr for no arguments.
+         * @param path The path to the file that is declaring the defined type or nullptr if not declared in a source file.
+         * @param line The line in the file where the defined type is being declared or 0 if not declared in a source file.
+         * @param attributes The defined type resource's attributes or nullptr for an empty set.
+         * @param attribute_name_position The callback to use to get the location of an attribute's name.
+         * @param attribute_value_position The callback to use to get the location of an attribute's value.
          * @return Returns the resource that was added to the catalog or nullptr if the defined type failed to evaluate.
          */
-        runtime::resource* declare_defined_type(runtime::context& context, std::string const& type, std::string const& title, std::shared_ptr<std::string> path, lexer::position const& position, std::unordered_map<ast::name, values::value> const* arguments = nullptr);
+        runtime::resource* declare_defined_type(
+            runtime::context& context,
+            std::string const& type,
+            std::string const& title,
+            std::shared_ptr<std::string> path = nullptr,
+            size_t line = 0,
+            std::shared_ptr<runtime::attributes> attributes = nullptr,
+            std::function<lexer::position(std::string const&)> const& attribute_name_position = nullptr,
+            std::function<lexer::position(std::string const&)> const& attribute_value_position = nullptr);
 
         /**
          * Defines a node.

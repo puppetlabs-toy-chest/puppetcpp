@@ -173,11 +173,12 @@ namespace puppet { namespace runtime { namespace values {
     bool is_specialization(type const& first, type const& second);
 
     /**
-     * Converts a value to an array (creates a copy of the value if already an array).
-     * @param val The value to convert.
+     * Converts the given value to an array; the value is returned as an array if already an array.
+     * @param val The value to convert to an array.
+     * @param convert_hash True if hashes should be converted to an array of name-value arrays or false if not.
      * @return Returns the converted array.
      */
-    array to_array(value const& val);
+    array to_array(value& val, bool convert_hash = true);
 
     /**
      * Joins the array by converting each element to a string.

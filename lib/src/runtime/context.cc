@@ -119,22 +119,24 @@ namespace puppet { namespace runtime {
 
         // If there is no scope or a closure has captured the matches, reset
         if (!scope || !scope.unique()) {
-            scope = make_shared<values::array>();
+            scope = make_shared<vector<shared_ptr<value const>>>();
         }
 
-        scope->resize(matches.size());
-        for (size_t i = 0; i < matches.size(); ++i) {
-            (*scope)[i] = matches[i].str();
+        scope->clear();
+        scope->reserve(matches.size());
+
+        for (auto const& match : matches) {
+            scope->emplace_back(make_shared<value const>(match.str()));
         }
     }
 
-    values::value const* context::lookup(string const& name, expression_evaluator* evaluator, lexer::position const* position)
+    shared_ptr<value const> context::lookup(string const& name, expression_evaluator* evaluator, lexer::position const* position)
     {
         // Look for the last :: delimiter; if not found, use the current scope
         auto pos = name.rfind("::");
         if (pos == string::npos) {
             auto variable = current_scope()->get(name);
-            return variable ? &variable->value() : nullptr;
+            return variable ? variable->value() : nullptr;
         }
 
         // Split into namespace and variable name
@@ -146,14 +148,14 @@ namespace puppet { namespace runtime {
         // An empty namespace is the top scope
         if (ns.empty()) {
             auto variable = top_scope()->get(var);
-            return variable ? &variable->value() : nullptr;
+            return variable ? variable->value() : nullptr;
         }
 
         // Lookup the namespace
         auto scope = find_scope(ns);
         if (scope) {
             auto variable = scope->get(var);
-            return variable ? &variable->value() : nullptr;
+            return variable ? variable->value() : nullptr;
         }
 
         // Warn if the scope was not found
@@ -172,7 +174,7 @@ namespace puppet { namespace runtime {
         return nullptr;
     }
 
-    value const* context::lookup(size_t index) const
+    shared_ptr<value const> context::lookup(size_t index) const
     {
         // Walk the match scope stack for a non-null set of matches
         for (auto it = _match_stack.rbegin(); it != _match_stack.rend(); ++it) {
@@ -181,7 +183,7 @@ namespace puppet { namespace runtime {
                 if (index >= matches->size()) {
                     return nullptr;
                 }
-                return &(*matches)[index];
+                return (*matches)[index];
             }
         }
         return nullptr;

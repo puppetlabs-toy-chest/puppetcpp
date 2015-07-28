@@ -122,7 +122,7 @@ namespace puppet { namespace ast {
         return _type;
     }
 
-    vector<resource_body> resource_expression::bodies() const
+    vector<resource_body> const& resource_expression::bodies() const
     {
         return _bodies;
     }
