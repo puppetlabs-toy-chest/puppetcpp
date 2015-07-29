@@ -396,16 +396,7 @@ namespace puppet { namespace runtime {
             return nullptr;
         }
 
-        // Check for an alias first
-        auto aliases = _aliases.find(resource.type_name());
-        if (aliases != _aliases.end()) {
-            auto alias = aliases->second.find(resource.title());
-            if (alias != aliases->second.end()) {
-                return alias->second;
-            }
-        }
-
-        // Otherwise find the resource type and title
+        // Find the resource type and title
         auto resources = _resources.find(resource.type_name());
         if (resources == _resources.end()) {
             return nullptr;
@@ -415,23 +406,6 @@ namespace puppet { namespace runtime {
             return nullptr;
         }
         return &it->second;
-    }
-
-    bool catalog::alias_resource(types::resource const& resource, string const& alias)
-    {
-        // Check if a resource with the alias name already exists
-        if (find_resource(types::resource(resource.type_name(), alias))) {
-            return false;
-        }
-
-        // Find the resource being aliased
-        auto existing = find_resource(resource);
-        if (!existing) {
-            return false;
-        }
-
-        _aliases[resource.type_name()].emplace(make_pair(alias, existing));
-        return true;
     }
 
     runtime::resource* catalog::add_resource(types::resource type, shared_ptr<string> path, size_t line, shared_ptr<runtime::attributes> attributes, bool exported)

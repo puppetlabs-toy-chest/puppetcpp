@@ -350,14 +350,6 @@ namespace puppet { namespace runtime {
         runtime::resource* find_resource(types::resource const& resource);
 
         /**
-         * Aliases a resource.
-         * @param resource The reource to alias.
-         * @param alias The new alias name.
-         * @return Returns true if the resource was aliased or false if a resource with that name or alias already exists.
-         */
-        bool alias_resource(types::resource const& resource, std::string const& alias);
-
-        /**
          * Adds a resource to the catalog.
          * @param type The qualified resource type to add.
          * @param path The path of the file defining the resource.
@@ -472,7 +464,6 @@ namespace puppet { namespace runtime {
         void validate_parameters(bool klass, std::vector<ast::parameter> const& parameters);
 
         std::unordered_map<std::string, std::unordered_map<std::string, resource>> _resources;
-        std::unordered_map<std::string, std::unordered_map<std::string, resource*>> _aliases;
         std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
         std::unordered_map<std::string, defined_type> _defined_types;
         std::vector<node_definition> _nodes;
