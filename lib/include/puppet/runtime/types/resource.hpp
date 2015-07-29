@@ -62,6 +62,24 @@ namespace puppet { namespace runtime { namespace types {
         }
 
         /**
+         * Determines if the resource type is fully qualified.
+         * @return Returns true if the resource type is fully qualified or false if not.
+         */
+        bool fully_qualified() const
+        {
+            return !_type_name.empty() && !_title.empty();
+        }
+
+        /**
+         * Determines if the resource is a class.
+         * @return Returns true if the resource is a class or false if not.
+         */
+        bool is_class() const
+        {
+            return _type_name == "Class";
+        }
+
+        /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Resource).
          */

@@ -9,7 +9,9 @@ namespace puppet { namespace runtime { namespace functions {
 
     value with::operator()(call_context& context) const
     {
-        return context.lambda().execute(context.arguments());
+        return context.lambda().execute(context.arguments(), [&](size_t index) {
+            return context.position(index);
+        });
     }
 
 }}}  // namespace puppet::runtime::functions

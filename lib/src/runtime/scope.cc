@@ -7,7 +7,7 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    assigned_variable::assigned_variable(values::value value, shared_ptr<string> path, size_t line) :
+    assigned_variable::assigned_variable(shared_ptr<values::value const> value, shared_ptr<string> path, size_t line) :
         _value(rvalue_cast(value)),
         _path(rvalue_cast(path)),
         _line(line)
@@ -17,14 +17,14 @@ namespace puppet { namespace runtime {
         }
     }
 
-    values::value const& assigned_variable::value() const
+    shared_ptr<value const> const& assigned_variable::value() const
     {
         return _value;
     }
 
-    string const& assigned_variable::path() const
+    string const* assigned_variable::path() const
     {
-        return *_path;
+        return _path.get();
     }
 
     size_t assigned_variable::line() const
@@ -73,7 +73,7 @@ namespace puppet { namespace runtime {
         return scope_name + "::" + name;
     }
 
-    assigned_variable const* scope::set(string name, values::value value, shared_ptr<string> path, size_t line)
+    assigned_variable const* scope::set(string name, shared_ptr<values::value const> value, shared_ptr<string> path, size_t line)
     {
         if (_variables.count(name)) {
             return nullptr;

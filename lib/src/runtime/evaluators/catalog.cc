@@ -5,6 +5,7 @@
 using namespace std;
 using namespace puppet::lexer;
 using namespace puppet::runtime::values;
+using boost::optional;
 
 namespace puppet { namespace runtime { namespace evaluators {
 
@@ -24,12 +25,27 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_expression const& expr)
     {
-        auto catalog = _evaluator.catalog();
-        string const& type_name = expr.type().value();
+        // Evaluate the type name
+        string type_name;
+        auto type_value = _evaluator.evaluate(expr.type());
 
-        // Handle class resources specially
-        if (type_name == "class") {
-            return declare_classes(expr);
+        // Resource expressions support either strings or Resource[Type] for the type name
+        bool is_class = false;
+        if (as<std::string>(type_value)) {
+            type_name = mutate_as<string>(type_value);
+            is_class = type_name == "class";
+        } else if (auto type = as<values::type>(type_value)) {
+            if (auto resource_type = boost::get<types::resource>(type)) {
+                if (resource_type->title().empty()) {
+                    type_name = resource_type->type_name();
+                    is_class = resource_type->is_class();
+                }
+            }
+        }
+
+        // Ensure there was a valid type name
+        if (type_name.empty()) {
+            throw evaluation_exception(expr.position(), (boost::format("expected %1% or qualified %2% for resource type but found %3%.") % types::string::name() % types::resource::name() % get_type(type_value)).str());
         }
 
         if (expr.status() == ast::resource_status::virtualized) {
@@ -41,70 +57,71 @@ namespace puppet { namespace runtime { namespace evaluators {
             throw evaluation_exception(expr.position(), "exported resource expressions are not yet implemented.");
         }
 
-        // Handle defined types
-        if (catalog->is_defined_type(type_name)) {
-            return declare_defined_types(expr);
-        }
+        auto catalog = _evaluator.catalog();
+        bool is_defined_type = !is_class && catalog->is_defined_type(type_name);
 
+        // Evaluate the default attributes
+        auto default_body = find_default_body(expr);
+        auto defaults = evaluate_attributes(default_body);
+
+        // Evaluate each body
         values::array types;
-        vector<resource*> resources;
         for (auto const& body : expr.bodies()) {
             // Evaluate the title
             auto title = _evaluator.evaluate(body.title());
 
-            // Add a resource for each string in the title
-            resources.clear();
-            if (!for_each<string>(title, [&](string& resource_title) {
-                types::resource type(type_name, resource_title);
-                if (type.title().empty()) {
-                    throw evaluation_exception(body.position(), "resource title cannot be empty.");
-                }
+            // Helpers for getting the attribute name/value position
+            auto attribute_name_position = [&](string const& name) {
+                return find_attribute_position(true, name, body, default_body);
+            };
+            auto attribute_value_position = [&](string const& name) {
+                return find_attribute_position(false, name, body, default_body);
+            };
 
-                // Add the resource to the catalog
-                auto resource = catalog->add_resource(type, _evaluator.path(), body.position().line());
-                if (!resource) {
-                    resource = catalog->find_resource(type);
-                    if (resource) {
-                        throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % type % resource->path() % resource->line()).str());
-                    }
-                    throw evaluation_exception(body.position(), (boost::format("failed to add resource %1% to catalog.") % type).str());
-                }
-
-                // Add the resource and type to the bookkeeping lists
-                resources.push_back(resource);
-                types.emplace_back(rvalue_cast(type));
-            })) {
-                throw evaluation_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
-            }
-            if (!body.attributes()) {
+            // Check for the default resource body and skip
+            if (is_default(title)) {
                 continue;
             }
 
-            // Set the parameters
-            for (auto const& attribute : *body.attributes()) {
-                // Ensure only assignment for resource bodies
-                if (attribute.op() != ast::attribute_operator::assignment) {
-                    throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
+            // Evaluate the attributes
+            auto attributes = evaluate_attributes(&body, defaults);
+
+            // Add each resource to the catalog
+            if (!for_each<string>(title, [&](string& resource_title) {
+                if (resource_title.empty()) {
+                    throw evaluation_exception(body.position(), "resource title cannot be empty.");
                 }
 
-                // Evaluate the attribute value
-                auto attribute_value = _evaluator.evaluate(attribute.value());
-
-                // Loop through each resource in this body
-                for (size_t i = 0; i < resources.size(); ++i) {
-                    auto& resource = *resources[i];
-
-                    // For the last resource, move the value; otherwise copy
-                    values::value value;
-                    if (i == resources.size() - 1) {
-                        value = rvalue_cast(attribute_value);
-                    } else {
-                        value = attribute_value;
+                types::resource type(type_name, rvalue_cast(resource_title));
+                runtime::resource* resource = nullptr;
+                if (is_class) {
+                    // Declare the class
+                    resource = catalog->declare_class(_evaluator.context(), types::klass(type.title()), _evaluator.path(), body.position().line(), attributes, attribute_name_position, attribute_value_position);
+                    if (!resource) {
+                        throw evaluation_exception(body.position(), (boost::format("failed to declare class '%1%'.") % type.title()).str());
                     }
-
-                    // Set the parameter in the resource
-                    resource.set_parameter(attribute.name().value(), attribute.name().position(), rvalue_cast(value), attribute.value().position());
+                } else if (is_defined_type) {
+                    // Declare the defined type
+                    resource = catalog->declare_defined_type(_evaluator.context(), type_name, type.title(), _evaluator.path(), body.position().line(), attributes, attribute_name_position, attribute_value_position);
+                    if (!resource) {
+                        throw evaluation_exception(body.position(), (boost::format("failed to declare defined type %1%.") % type).str());
+                    }
+                } else {
+                    // Add the resource to the catalog
+                    resource = catalog->add_resource(type, _evaluator.path(), body.position().line(), attributes);
+                    if (!resource) {
+                        resource = catalog->find_resource(type);
+                        if (resource) {
+                            throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % type % resource->path() % resource->line()).str());
+                        }
+                        throw evaluation_exception(body.position(), (boost::format("failed to add resource %1% to catalog.") % type).str());
+                    }
                 }
+
+                // Add the type to the return value
+                types.emplace_back(rvalue_cast(type));
+            })) {
+                throw evaluation_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
             }
         }
         return types;
@@ -127,8 +144,13 @@ namespace puppet { namespace runtime { namespace evaluators {
         if (!for_each<values::type>(reference, [&](values::type& resource_reference) {
             // Make sure the type is a qualified Resource type
             auto resource_type = boost::get<types::resource>(&resource_reference);
-            if (!resource_type || resource_type->type_name().empty() || resource_type->title().empty()) {
+            if (!resource_type || !resource_type->fully_qualified()) {
                 throw evaluation_exception(position, (boost::format("expected qualified %1% but found %2%.") % types::resource::name() % get_type(resource_reference)).str());
+            }
+
+            // Classes cannot be overridden
+            if (resource_type->is_class()) {
+                throw evaluation_exception(position, "cannot override attributes of a class resource.");
             }
 
             // Find the resource
@@ -144,8 +166,11 @@ namespace puppet { namespace runtime { namespace evaluators {
         if (expr.attributes()) {
             // Set the parameters
             for (auto const& attribute : *expr.attributes()) {
+
+                auto const& name = attribute.name();
+
                 // Evaluate the attribute value
-                auto attribute_value = _evaluator.evaluate(attribute.value());
+                auto attribute_value = evaluate_attribute(attribute);
 
                 // Loop through each resource
                 for (size_t i = 0; i < resources.size(); ++i) {
@@ -162,18 +187,28 @@ namespace puppet { namespace runtime { namespace evaluators {
                         value = attribute_value;
                     }
 
+                    // Make the resource attribute's unique as they're about to change
+                    resource.make_attributes_unique();
+                    auto& attributes = resource.attributes();
+
                     if (attribute.op() == ast::attribute_operator::assignment) {
-                        if (is_undef(value)) {
-                            if (!override) {
-                                throw evaluation_exception(attribute.name().position(), (boost::format("cannot remove attribute '%1%' from resource %2%.") % attribute.name() % resource.type()).str());
+                        if (!override && attributes.get(name.value())) {
+                            if (is_undef(value)) {
+                                throw evaluation_exception(name.position(), (boost::format("cannot remove attribute '%1%' from resource %2%.") % name % resource.type()).str());
                             }
-                            resource.remove_parameter(attribute.name().value());
-                            continue;
+                            throw evaluation_exception(name.position(), (boost::format("attribute '%1%' has already been set for resource %2%.") % name % resource.type()).str());
                         }
                         // Set the parameter in the resource
-                        resource.set_parameter(attribute.name().value(), attribute.name().position(), rvalue_cast(value), attribute.value().position());
+                        attributes.set(name.value(), rvalue_cast(value));
                     } else if (attribute.op() == ast::attribute_operator::append) {
-                        // TODO: append parameter
+                        if (!override && attributes.get(name.value())) {
+                            throw evaluation_exception(name.position(), (boost::format("attribute '%1%' has already been set for resource %2% and cannot be appended to.") % name % resource.type()).str());
+                        }
+                        if (!attributes.append(name.value(), rvalue_cast(value))) {
+                            throw evaluation_exception(name.position(), (boost::format("attribute '%1%' is not an array.") % name).str());
+                        }
+                    } else {
+                        throw runtime_error("invalid attribute operator");
                     }
                 }
             }
@@ -209,123 +244,128 @@ namespace puppet { namespace runtime { namespace evaluators {
         throw evaluation_exception(expr.position(), "collection expressions are not yet implemented.");
     }
 
-    catalog_expression_evaluator::result_type catalog_expression_evaluator::declare_classes(ast::resource_expression const& expr)
+    bool catalog_expression_evaluator::is_default_expression(ast::primary_expression const& expr)
     {
-        auto catalog = _evaluator.catalog();
-
-        if (expr.status() == ast::resource_status::virtualized) {
-            throw evaluation_exception(expr.position(), "class resources cannot be virtual.");
+        if (auto ptr = boost::get<ast::expression>(&expr)) {
+            return ptr->binary().empty() && is_default_expression(ptr->primary());
         }
-        if (expr.status() == ast::resource_status::exported) {
-            throw evaluation_exception(expr.position(), "class resources cannot be exported.");
+        if (auto ptr = boost::get<ast::basic_expression>(&expr)) {
+            return boost::get<ast::defaulted>(ptr);
         }
-
-        values::array types;
-        vector<string> class_names;
-        unordered_map<ast::name, values::value> attributes;
-        values::array parameters;
-        for (auto const& body : expr.bodies()) {
-            // Evaluate the title as class names
-            auto title = _evaluator.evaluate(body.title());
-            class_names.clear();
-            if (!for_each<string>(title, [&](string& resource_title) {
-                class_names.emplace_back(rvalue_cast(resource_title));
-            })) {
-                throw evaluation_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
-            }
-
-            // For this body, evaluate all attributes
-            attributes.clear();
-            if (body.attributes()) {
-                for (auto const& attribute : *body.attributes()) {
-                    // Ensure only assignment for resource bodies
-                    if (attribute.op() != ast::attribute_operator::assignment) {
-                        throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
-                    }
-
-                    // Evaluate the attribute value
-                    if (!attributes.emplace(make_pair(attribute.name(), _evaluator.evaluate(attribute.value()))).second) {
-                        throw evaluation_exception(attribute.position(), (boost::format("attribute '%1%' already exists in this resource body.") % attribute.name()).str());
-                    }
-                }
-            }
-
-            // Declare the classes
-            for (auto& name : class_names) {
-                types::klass klass(rvalue_cast(name));
-                types::resource resource("class", klass.title());
-
-                // Ensure the resource doesn't already exist
-                if (auto existing = catalog->find_resource(resource)) {
-                    throw evaluation_exception(body.position(), (boost::format("class '%1%' was already declared at %2%:%3%.") % klass.title() % existing->path() % existing->line()).str());
-                }
-
-                // Ensure the class is defined
-                if (!catalog->is_class_defined(klass)) {
-                    throw evaluation_exception(body.position(), (boost::format("cannot declare class '%1%' because the class has not been defined.") % klass.title()).str());
-                }
-
-                // Declare the class
-                if (!catalog->declare_class(_evaluator.context(), klass, _evaluator.path(), body.position(), &attributes)) {
-                    throw evaluation_exception(body.position(), (boost::format("failed to declare class '%1%'.") % klass.title()).str());
-                }
-                types.emplace_back(rvalue_cast(resource));
-            }
-        }
-        return types;
+        return false;
     }
 
-    catalog_expression_evaluator::result_type catalog_expression_evaluator::declare_defined_types(ast::resource_expression const& expr)
+    ast::resource_body const* catalog_expression_evaluator::find_default_body(ast::resource_expression const& expr)
     {
-        auto catalog = _evaluator.catalog();
-
-        values::array types;
-        vector<string> titles;
-        unordered_map<ast::name, values::value> attributes;
-        values::array parameters;
+        ast::resource_body const* default_body = nullptr;
         for (auto const& body : expr.bodies()) {
-            // Evaluate the titles
-            auto title = _evaluator.evaluate(body.title());
-            titles.clear();
-            if (!for_each<string>(title, [&](string& resource_title) {
-                titles.emplace_back(rvalue_cast(resource_title));
-            })) {
-                throw evaluation_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
+            if (!is_default_expression(body.title())) {
+                continue;
             }
-
-            // For this body, evaluate all attributes
-            attributes.clear();
-            if (body.attributes()) {
-                for (auto const& attribute : *body.attributes()) {
-                    // Ensure only assignment for resource bodies
-                    if (attribute.op() != ast::attribute_operator::assignment) {
-                        throw evaluation_exception(attribute.position(), (boost::format("illegal attribute opereration '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
-                    }
-
-                    // Evaluate the attribute value
-                    if (!attributes.emplace(make_pair(attribute.name(), _evaluator.evaluate(attribute.value()))).second) {
-                        throw evaluation_exception(attribute.position(), (boost::format("attribute '%1%' already exists in this resource body.") % attribute.name()).str());
-                    }
-                }
+            if (default_body) {
+                throw evaluation_exception(body.position(), "only one default body is supported in a resource expression.");
             }
+            default_body = &body;
+        }
+        return default_body;
+    }
 
-            // Declare the resources
-            for (auto& title : titles) {
-                types::resource resource(expr.type().value(), title);
-
-                // Ensure the resource doesn't already exist
-                if (auto existing = catalog->find_resource(resource)) {
-                    throw evaluation_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % resource % existing->path() % existing->line()).str());
+    shared_ptr<runtime::attributes> catalog_expression_evaluator::evaluate_attributes(ast::resource_body const* body, shared_ptr<runtime::attributes const> parent)
+    {
+        shared_ptr<runtime::attributes> attributes;
+        if (body && body->attributes() && !body->attributes()->empty()) {
+            attributes = make_shared<runtime::attributes>(rvalue_cast(parent));
+            for (auto const& attribute : *body->attributes()) {
+                // Ensure only assignment for resource bodies
+                if (attribute.op() != ast::attribute_operator::assignment) {
+                    throw evaluation_exception(attribute.position(), (boost::format("illegal attribute operation '%1%': only '%2%' is supported in a resource expression.") % attribute.op() % ast::attribute_operator::assignment).str());
                 }
 
-                // Declare the defined type
-                if (!catalog->declare_defined_type(_evaluator.context(), expr.type().value(), title, _evaluator.path(), body.position(), &attributes)) {
-                    throw evaluation_exception(body.position(), (boost::format("failed to declare defined type %1%.") % resource).str());
+                // Ensure the value doesn't exist locally on the attributes collection
+                if (attributes->get(attribute.name().value(), false)) {
+                    throw evaluation_exception(attribute.position(), (boost::format("attribute '%1%' already exists in this resource body.") % attribute.name()).str());
                 }
-                types.emplace_back(rvalue_cast(resource));
+
+                // Set the attribute
+                attributes->set(attribute.name().value(), evaluate_attribute(attribute));
             }
         }
-        return types;
+        return attributes;
     }
+
+    values::value catalog_expression_evaluator::evaluate_attribute(ast::attribute_expression const& attribute)
+    {
+        // Type information for metaparameters
+        static const values::type string_array_type = types::array(types::string());
+        static const values::type relationship_type = types::array(types::variant({ types::string(), types::catalog_entry() }));
+        static const values::type string_type = types::string();
+        static const values::type boolean_type = types::boolean();
+        static const values::type loglevel_type = types::enumeration(vector<string>({ "debug", "info", "notice", "warning", "err", "alert", "emerg", "crit", "verbose" }));
+        static const values::type audit_type = types::variant({ types::string(), string_array_type });
+
+        // Evaluate the value expression
+        auto value = _evaluator.evaluate(attribute.value());
+        bool converted = false;
+
+        auto const& name = attribute.name().value();
+
+        // Perform metaparameter checks
+        values::type const* type = nullptr;
+        if (name == "alias") {
+            type = &string_array_type;
+            converted = !as<values::array>(value);
+            value = to_array(value, false);
+        } else if (name == "audit") {
+            type = &audit_type;
+        } else if (name == "before" || name == "notify" || name == "require" || name == "subscribe") {
+            type = &relationship_type;
+            converted = !as<values::array>(value);
+            value = to_array(value, false);
+        } else if (name == "loglevel") {
+            type = &loglevel_type;
+        } else if (name == "noop") {
+            type = &boolean_type;
+        } else if (name == "schedule") {
+            type = &string_type;
+        } else if (name == "stage") {
+            type = &string_type;
+        } else if (name == "tag") {
+            type = &string_array_type;
+            converted = !as<values::array>(value);
+            value = to_array(value, false);
+        }
+
+        if (!type) {
+            // Not a metaparameter
+            // TODO: get the attribute type from the type's definition and validate
+            return value;
+        }
+
+        // Validate the type of the parameter
+        if (!is_instance(value, *type)) {
+            throw evaluation_exception(attribute.value().position(), (boost::format("expected %1% for attribute '%2%' but found %3%.") % *type % name % get_type(converted ? as<values::array>(value)->at(0) : value)).str());
+        }
+        return value;
+    }
+
+    lexer::position catalog_expression_evaluator::find_attribute_position(bool name_position, string const& name, ast::resource_body const& current, ast::resource_body const* default_body)
+    {
+        if (current.attributes()) {
+            for (auto const& attribute : *current.attributes()) {
+                if (attribute.name().value() == name) {
+                    return name_position ? attribute.name().position() : attribute.value().position();
+                }
+            }
+        }
+        if (default_body && default_body->attributes()) {
+            for (auto const& attribute : *default_body->attributes()) {
+                if (attribute.name().value() == name) {
+                    return name_position ? attribute.name().position() : attribute.value().position();
+                }
+            }
+        }
+        throw runtime_error("unexpected attribute name for position.");
+    }
+
 
 }}}  // namespace puppet::runtime::evaluators

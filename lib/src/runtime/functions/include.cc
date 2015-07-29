@@ -40,7 +40,7 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(types::resource const& argument) const
         {
-            if (argument.type_name() != "Class") {
+            if (!argument.is_class()) {
                 throw evaluation_exception(_context.position(_index), (boost::format("expected Class %1% for argument but found %2%.") % types::resource::name() % argument).str());
             }
             declare_class(types::klass(argument.title()));
@@ -71,7 +71,7 @@ namespace puppet { namespace runtime { namespace functions {
                 throw evaluation_exception(_context.position(_index), (boost::format("cannot include class '%1%' because the class has not been defined.") % klass.title()).str());
             }
 
-            if (!catalog->declare_class(evaluator.context(), klass, evaluator.path(), _context.position(_index))) {
+            if (!catalog->declare_class(evaluator.context(), klass, evaluator.path(), _context.position(_index).line())) {
                 throw evaluation_exception(_context.position(_index), (boost::format("failed to include class '%1%'.") % klass.title()).str());
             }
         }

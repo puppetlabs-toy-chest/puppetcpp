@@ -72,9 +72,6 @@ namespace puppet { namespace runtime {
             operator()(expr.expression());
 
             for (auto const& proposition : expr.propositions()) {
-                if (proposition.lambda()) {
-                    operator()(*proposition.lambda());
-                }
                 for (auto const& option : proposition.options()) {
                     operator()(option);
                 }

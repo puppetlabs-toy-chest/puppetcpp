@@ -146,7 +146,7 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(type const& t) const
         {
-            return t;
+            return types::type(t);
         }
 
         result_type operator()(variable const& var) const
@@ -214,19 +214,18 @@ namespace puppet { namespace runtime { namespace values {
         return boost::apply_visitor(is_specialization_visitor(second), first);
     }
 
-    array to_array(value const& val)
+    array to_array(value& val, bool convert_hash)
     {
         // If already an array, return a copy
-        auto array_ptr = as<values::array>(&val);
-        if (array_ptr) {
-            return *array_ptr;
+        if (as<values::array>(val)) {
+            return mutate_as<values::array>(val);
         }
 
         array result;
 
         // Check for hash
-        auto hash_ptr = as<values::hash>(&val);
-        if (hash_ptr) {
+        auto hash_ptr = as<values::hash>(val);
+        if (convert_hash && hash_ptr) {
             // Turn the hash into an array of [K,V]
             for (auto& kvp : *hash_ptr) {
                 array element;
@@ -234,7 +233,7 @@ namespace puppet { namespace runtime { namespace values {
                 element.emplace_back(kvp.second);
                 result.emplace_back(rvalue_cast(element));
             }
-        } else {
+        } else if (!is_undef(val)) {
             // Otherwise, add the value as the only element
             result.emplace_back(val);
         }

@@ -45,9 +45,6 @@ namespace puppet { namespace runtime {
             bool bracket = begin != end && *begin == '{';
             string_static_lexer lexer;
 
-            // Check for keyword or name
-            value const* val = nullptr;
-
             auto current = begin;
             auto token_begin = lexer.begin(current, end);
             auto token_end = lexer.end();
@@ -61,6 +58,7 @@ namespace puppet { namespace runtime {
                 ++token_begin;
             }
 
+            shared_ptr<values::value const> value;
             if (token_begin != token_end &&
                 (
                     is_keyword(static_cast<token_id>(token_begin->id())) ||
@@ -71,7 +69,7 @@ namespace puppet { namespace runtime {
                 if (!token) {
                     return false;
                 }
-                val = context.lookup(string(token->begin(), token->end()), &evaluator, &position);
+                value = context.lookup(string(token->begin(), token->end()), &evaluator, &position);
             } else if (token_begin != token_end && token_begin->id() == static_cast<size_t>(token_id::number)) {
                 auto token = get<number_token>(&token_begin->value());
                 if (!token) {
@@ -80,7 +78,7 @@ namespace puppet { namespace runtime {
                 if (token->base() != numeric_base::decimal || token->value().which() != 0) {
                     throw evaluation_exception(position, (boost::format("'%1%' is not a valid match variable name.") % *token).str());
                 }
-                val = context.lookup(get<int64_t>(token->value()));
+                value = context.lookup(get<int64_t>(token->value()));
             } else {
                 return false;
             }
@@ -96,9 +94,9 @@ namespace puppet { namespace runtime {
             }
 
             // Output the variable
-            if (val) {
+            if (value) {
                 ostringstream ss;
-                ss << *val;
+                ss << *value;
                 result += ss.str();
             }
 

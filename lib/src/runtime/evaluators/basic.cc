@@ -69,15 +69,17 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         auto& name = var.name();
 
-        bool match = false;
-        value const* val = nullptr;
-        if (!name.empty() && isdigit(name[0])) {
-            match = true;
-            val = _evaluator.context().lookup(stoi(name));
-        } else {
-            val = _evaluator.context().lookup(name, &_evaluator, &var.position());
+        if (name.empty()) {
+            throw evaluation_exception(var.position(), "variable name cannot be empty.");
         }
-        return variable(name, val, match);
+
+        shared_ptr<values::value const> value;
+        if (isdigit(name[0])) {
+            value = _evaluator.context().lookup(stoi(name));
+        } else {
+            value = _evaluator.context().lookup(name, &_evaluator, &var.position());
+        }
+        return values::variable(name, rvalue_cast(value));
     }
 
     basic_expression_evaluator::result_type basic_expression_evaluator::operator()(ast::name const& name)

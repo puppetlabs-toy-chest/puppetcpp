@@ -32,25 +32,6 @@ namespace puppet { namespace runtime { namespace evaluators {
         for (size_t i = 0; i < propositions.size(); ++i) {
             auto& proposition = propositions[i];
 
-            // Check for a lambda proposition
-            if (proposition.lambda()) {
-                // Automatically splat an array
-                values::array arguments;
-                if (auto ptr = as<values::array>(result)) {
-                    arguments = *ptr;
-                } else {
-                    arguments.push_back(result);
-                }
-
-                // Execute the lambda and execute the block if truthy
-                auto const& lambda = *proposition.lambda();
-                runtime::executor executor(_evaluator, proposition.position(), lambda.parameters(), lambda.body());
-                if (is_truthy(executor.execute(arguments))) {
-                    return execute_block(proposition.body());
-                }
-                continue;
-            }
-
             // Look for a match in the options
             for (auto& option : proposition.options()) {
                 // Evaluate the option

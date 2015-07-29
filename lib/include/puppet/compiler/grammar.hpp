@@ -146,7 +146,6 @@ namespace puppet { namespace compiler {
             case_expression =
                 (token_pos(token_id::keyword_case) > expression > raw_token('{') > +case_proposition > raw_token('}')) [ _val = phx::construct<ast::case_expression>(_1, _2, _3) ];
             case_proposition =
-                (lambda > raw_token(':') > raw_token('{') > statements > raw_token('}'))      [ _val = phx::construct<ast::case_proposition>(_1, _2) ] |
                 (expressions > raw_token(':') > raw_token('{') > statements > raw_token('}')) [ _val = phx::construct<ast::case_proposition>(_1, _2) ];
             if_expression =
                 (token_pos(token_id::keyword_if) > expression > raw_token('{') > statements > raw_token('}') > *elsif_expression > -else_expression) [ _val = phx::construct<ast::if_expression>(_1, _2, _3, _4, _5) ];
@@ -174,8 +173,9 @@ namespace puppet { namespace compiler {
                 (raw_token(token_id::atat) > resource_type > raw_token('{') > (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}')) [ _val = phx::construct<ast::resource_expression>(_1, _2, ast::resource_status::exported) ] |
                 ((resource_type >> raw_token('{')) >> (resource_body % raw_token(';')) > -raw_token(';') > raw_token('}'))                         [ _val = phx::construct<ast::resource_expression>(_1, _2) ];
             resource_type =
-                name                           [ _val = _1 ] |
-                token(token_id::keyword_class) [ _val = phx::construct<ast::name>(_1) ];
+                name                           [ _val = phx::construct<ast::basic_expression>(_1) ] |
+                token(token_id::keyword_class) [ _val = phx::construct<ast::basic_expression>(phx::construct<ast::name>(_1)) ] |
+                type_expression                [ _val = _1 ];
             resource_body =
                 ((expression >> raw_token(':')) > -(attribute_expression % raw_token(',')) > -raw_token(',')) [ _val = phx::construct<ast::resource_body>(_1, _2) ];
             attribute_expression =
@@ -519,7 +519,7 @@ namespace puppet { namespace compiler {
         // Catalog expressions
         boost::spirit::qi::rule<iterator_type, puppet::ast::catalog_expression()> catalog_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::resource_expression()> resource_expression;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::name()> resource_type;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_expression()> resource_type;
         boost::spirit::qi::rule<iterator_type, puppet::ast::resource_body()> resource_body;
         boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_expression()> attribute_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_operator()> attribute_operator;

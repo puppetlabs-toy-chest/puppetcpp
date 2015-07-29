@@ -90,6 +90,15 @@ namespace puppet { namespace runtime { namespace values {
     }
 
     /**
+     * This exists to prevent unintentional invocations of the "as<T>" function.
+     * Because a value can be a bool and pointers are implicitly convertable to bool,
+     * calling as<T>(&val) results in constructing a temporary value that is set to "true".
+     * This function is declared without a definition to induce build errors if invoked.
+     */
+    template <typename T>
+    T const* as(value const*);
+
+    /**
      * Prepares the value for mutation as the given type.
      * Note: throws boost::bad_get if the value is not of the given type.
      * @tparam T The resulting type.
@@ -164,11 +173,12 @@ namespace puppet { namespace runtime { namespace values {
     bool is_specialization(type const& first, type const& second);
 
     /**
-     * Converts a value to an array (creates a copy of the value if already an array).
-     * @param val The value to convert.
+     * Converts the given value to an array; the value is returned as an array if already an array.
+     * @param val The value to convert to an array.
+     * @param convert_hash True if hashes should be converted to an array of name-value arrays or false if not.
      * @return Returns the converted array.
      */
-    array to_array(value const& val);
+    array to_array(value& val, bool convert_hash = true);
 
     /**
      * Joins the array by converting each element to a string.

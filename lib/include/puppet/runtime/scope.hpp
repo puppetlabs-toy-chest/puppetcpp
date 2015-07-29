@@ -23,19 +23,19 @@ namespace puppet { namespace runtime {
          * @param path The path of the file where the variable was assigned.
          * @param line The line where the variable was assigned.
          */
-        assigned_variable(values::value value, std::shared_ptr<std::string> path, size_t line);
+        assigned_variable(std::shared_ptr<values::value const> value, std::shared_ptr<std::string> path, size_t line);
 
         /**
          * Gets the value of the variable.
          * @return Returns the value of the variable.
          */
-        values::value const& value() const;
+        std::shared_ptr<values::value const> const& value() const;
 
         /**
          * Gets the path of the file where the variable was assigned.
          * @return Returns the path of the file where the variable was assigned.
          */
-        std::string const& path() const;
+        std::string const* path() const;
 
         /**
          * Gets the line where the variable was assigned.
@@ -44,7 +44,7 @@ namespace puppet { namespace runtime {
         size_t line() const;
 
      private:
-        values::value _value;
+        std::shared_ptr<values::value const> _value;
         std::shared_ptr<std::string> _path;
         size_t _line;
     };
@@ -95,7 +95,7 @@ namespace puppet { namespace runtime {
          * @param line The line number where the variable is being assigned or 0 if unknown.
          * @return Returns a pointer to the assigned variable or nullptr if the variable already exists in the scope.
          */
-        assigned_variable const* set(std::string name, values::value value, std::shared_ptr<std::string> path = nullptr, size_t line = 0);
+        assigned_variable const* set(std::string name, std::shared_ptr<values::value const> value, std::shared_ptr<std::string> path = nullptr, size_t line = 0);
 
         /**
          * Gets a variable in the scope.

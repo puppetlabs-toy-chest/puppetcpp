@@ -110,19 +110,19 @@ namespace puppet { namespace ast {
     {
     }
 
-    resource_expression::resource_expression(ast::name type, vector<resource_body> bodies, resource_status status) :
+    resource_expression::resource_expression(ast::primary_expression type, vector<resource_body> bodies, resource_status status) :
         _type(rvalue_cast(type)),
         _bodies(rvalue_cast(bodies)),
         _status(status)
     {
     }
 
-    ast::name const& resource_expression::type() const
+    ast::primary_expression const& resource_expression::type() const
     {
         return _type;
     }
 
-    vector<resource_body> resource_expression::bodies() const
+    vector<resource_body> const& resource_expression::bodies() const
     {
         return _bodies;
     }
@@ -134,12 +134,12 @@ namespace puppet { namespace ast {
 
     lexer::position const& resource_expression::position() const
     {
-        return _type.position();
+        return get_position(_type);
     }
 
     ostream& operator<<(ostream& os, resource_expression const& expression)
     {
-        if (expression.type().value().empty()) {
+        if (is_blank(expression.type())) {
             return os;
         }
         if (expression.status() == resource_status::virtualized) {
