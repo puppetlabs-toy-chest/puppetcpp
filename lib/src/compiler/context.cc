@@ -19,14 +19,14 @@ namespace puppet { namespace compiler {
         }
         _stream.open(*_path);
         if (!_stream) {
-            throw compilation_exception("file does not exist or cannot be read.", *_path);
+            throw compilation_exception((boost::format("manifest '%1%' does not exist or cannot be read.") % *_path).str());
         }
 
         // Parse the file into a syntax tree
         try {
-            logger.log(level::debug, "parsing '%1%'.", *_path);
+            LOG(debug, "parsing '%1%'.", *_path);
             _tree = parser::parse(_stream);
-            logger.log(level::debug, "parsed syntax tree:\n%1%", _tree);
+            LOG(debug, "parsed syntax tree:\n%1%", _tree);
         } catch (parse_exception const& ex) {
             throw create_exception(ex.position(), ex.what());
         }
@@ -57,7 +57,10 @@ namespace puppet { namespace compiler {
         string text;
         size_t column;
         tie(text, column) = get_text_and_column(_stream, position.offset());
-        _logger.log(level, position.line(), column, text, *_path, "node '%1%': %2%", _node.name(), message);
+
+        if (_logger.would_log(level)) {
+            _logger.log(level, position.line(), column, text, *_path, "node '%1%': %2%", _node.name(), message);
+        }
     }
 
     compilation_exception context::create_exception(lexer::position const& position, string const& message)

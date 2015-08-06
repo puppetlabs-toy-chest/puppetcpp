@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../lexer/position.hpp"
+#include "../facts/provider.hpp"
 #include "scope.hpp"
 #include "catalog.hpp"
 #include <string>
@@ -59,7 +60,6 @@ namespace puppet { namespace runtime {
 
      private:
         runtime::context& _context;
-        scope _scope;
     };
 
     /**
@@ -90,9 +90,10 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluation context.
+         * @param facts The facts provider to use for fact lookup.
          * @param catalog The catalog being compiled or nullptr if catalog expressions are not supported.
          */
-        explicit context(runtime::catalog* catalog = nullptr);
+        explicit context(std::shared_ptr<facts::provider> facts = nullptr, runtime::catalog* catalog = nullptr);
 
         /**
          * Gets the catalog being compiled.

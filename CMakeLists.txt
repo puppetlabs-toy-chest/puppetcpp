@@ -23,7 +23,14 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
-find_package(Boost 1.57.0 REQUIRED)
+find_package(Boost 1.57.0 REQUIRED COMPONENTS program_options filesystem system)
+find_package(Facter REQUIRED)
+find_package(YAMLCPP REQUIRED)
+
+# Display a summary of the features
+include(FeatureSummary)
+feature_summary(WHAT ALL)
+
 set(CATCH_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/catch/include")
 
 # Need to bump up the limit for MPL lists a little bit (default is 20)

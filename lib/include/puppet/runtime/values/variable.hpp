@@ -53,6 +53,10 @@ namespace puppet { namespace runtime { namespace values {
             return _value ? *_value : undefined;
         }
 
+        /**
+         * Gets the shared pointer to the variable's value.
+         * @return Returns the shared pointer to the variable's value.
+         */
         std::shared_ptr<value_type const> const& value_ptr() const
         {
             return _value;

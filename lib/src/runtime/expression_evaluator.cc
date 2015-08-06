@@ -19,7 +19,6 @@
 #include <puppet/runtime/operators/not_match.hpp>
 #include <puppet/runtime/operators/plus.hpp>
 #include <puppet/runtime/operators/right_shift.hpp>
-#include <puppet/runtime/definition_scanner.hpp>
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/cast.hpp>
@@ -31,10 +30,16 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    evaluation_exception::evaluation_exception(lexer::position position, string const& message) :
+    evaluation_exception::evaluation_exception(shared_ptr<compiler::context> context, lexer::position position, string const& message) :
         runtime_error(message),
+        _context(rvalue_cast(context)),
         _position(rvalue_cast(position))
     {
+    }
+
+    shared_ptr<compiler::context> const& evaluation_exception::context() const
+    {
+        return _context;
     }
 
     lexer::position const& evaluation_exception::position() const
@@ -71,6 +76,11 @@ namespace puppet { namespace runtime {
         return _compilation_context->path();
     }
 
+    evaluation_exception expression_evaluator::create_exception(lexer::position const& position, string message) const
+    {
+        return evaluation_exception(_compilation_context, position, rvalue_cast(message));
+    }
+
     void expression_evaluator::warn(lexer::position const& position, string const& message)
     {
         _compilation_context->log(logging::level::warning, position, message);
@@ -83,12 +93,6 @@ namespace puppet { namespace runtime {
             return;
         }
 
-        // Scan the tree for definitions
-        if (catalog()) {
-            definition_scanner scanner{ *catalog() };
-            scanner.scan(_compilation_context);
-        }
-
         for (auto& expression : *tree.body()) {
             // Top level expressions must be productive
             evaluate(expression, true);
@@ -98,7 +102,7 @@ namespace puppet { namespace runtime {
     value expression_evaluator::evaluate(ast::expression const& expr, bool productive)
     {
         if (productive && !is_productive(expr)) {
-            throw evaluation_exception(expr.position(), "unproductive expressions may only appear last in a block.");
+            throw create_exception(expr.position(), "unproductive expressions may only appear last in a block.");
         }
 
         // Evaluate the primary expression
@@ -286,7 +290,7 @@ namespace puppet { namespace runtime {
 
         auto it = binary_operators.find(op);
         if (it == binary_operators.end()) {
-            throw evaluation_exception(left_position, (boost::format("unspported binary operator '%1%' in binary expression.") % op).str());
+            throw create_exception(left_position, (boost::format("unspported binary operator '%1%' in binary expression.") % op).str());
         }
 
         operators::binary_context context(*this, left, left_position, right, right_position);

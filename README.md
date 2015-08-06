@@ -145,10 +145,10 @@ Puppet functions implemented:
 
 Catalog compiling status:
 
-* [ ] Node definition (fact gathering)
+* [x] Facts from files and Facter
 * [ ] JSON catalog compilation from evaluation context
 
-The output of `puppetcpp` is currently the representation of the AST and its evaluation.
+The output of `puppetcpp` is currently just the evaluation of the given manifest files.
 Eventually it will output a JSON representation of a compiled catalog.
 
 Build Requirements
@@ -158,6 +158,8 @@ Build Requirements
 * GCC >= 5.0 or Clang >= 3.4 (with libc++)
 * CMake >= 3.0
 * Boost Libraries >= 1.57
+* [Facter](https://github.com/puppetlabs/facter) >= 3.0 
+* yaml-cpp >= 0.5.1 
 
 Pre-Build
 ---------
@@ -199,6 +201,8 @@ You can run puppetcpp from its output directory:
 For a debug build:
 
 `$ debug/bin/puppetcpp <manifest>`
+
+Use the `--help` option for more options
 
 Test
 ----

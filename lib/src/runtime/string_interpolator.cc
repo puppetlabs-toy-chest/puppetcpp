@@ -76,7 +76,7 @@ namespace puppet { namespace runtime {
                     return false;
                 }
                 if (token->base() != numeric_base::decimal || token->value().which() != 0) {
-                    throw evaluation_exception(position, (boost::format("'%1%' is not a valid match variable name.") % *token).str());
+                    throw evaluator.create_exception(position, (boost::format("'%1%' is not a valid match variable name.") % *token).str());
                 }
                 value = context.lookup(get<int64_t>(token->value()));
             } else {
@@ -104,7 +104,7 @@ namespace puppet { namespace runtime {
             begin = current;
             return true;
         } catch (lexer_exception<lexer_string_iterator> const& ex) {
-            throw evaluation_exception(calculate_position(ex.location().position()), ex.what());
+            throw evaluator.create_exception(calculate_position(ex.location().position()), ex.what());
         }
     }
 
@@ -291,9 +291,9 @@ namespace puppet { namespace runtime {
                             ++begin;
                             continue;
                         } catch (compiler::parse_exception const& ex) {
-                            throw evaluation_exception(calculate_position(ex.position()), ex.what());
+                            throw _evaluator.create_exception(calculate_position(ex.position()), ex.what());
                         } catch (evaluation_exception const& ex) {
-                            throw evaluation_exception(calculate_position(ex.position()), ex.what());
+                            throw _evaluator.create_exception(calculate_position(ex.position()), ex.what());
                         }
                     }
                 }

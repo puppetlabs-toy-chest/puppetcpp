@@ -9,7 +9,7 @@ namespace puppet { namespace runtime { namespace functions {
 
     struct split_visitor : boost::static_visitor<value>
     {
-        explicit split_visitor(call_context const& context) :
+        explicit split_visitor(call_context& context) :
             _context(context)
         {
         }
@@ -46,7 +46,7 @@ namespace puppet { namespace runtime { namespace functions {
         {
             auto regexp = boost::get<types::regexp>(&second);
             if (!regexp) {
-                throw evaluation_exception(_context.position(1), (boost::format("expected %1% or %2% for second argument but found %3%.") % types::string::name() % types::regexp::name() % get_type(second)).str());
+                throw _context.evaluator().create_exception(_context.position(1), (boost::format("expected %1% or %2% for second argument but found %3%.") % types::string::name() % types::regexp::name() % get_type(second)).str());
             }
             if (regexp->pattern().empty()) {
                 return split_empty(first);
@@ -67,13 +67,13 @@ namespace puppet { namespace runtime { namespace functions {
         >
         result_type operator()(string const&, Second const& second) const
         {
-            throw evaluation_exception(_context.position(1), (boost::format("expected %1% or %2% for second argument but found %3%.") % types::string::name() % types::regexp::name() % get_type(second)).str());
+            throw _context.evaluator().create_exception(_context.position(1), (boost::format("expected %1% or %2% for second argument but found %3%.") % types::string::name() % types::regexp::name() % get_type(second)).str());
         }
 
         template <typename First, typename Second>
         result_type operator()(First const& first, Second const&) const
         {
-            throw evaluation_exception(_context.position(0), (boost::format("expected %1% for first argument but found %2%.") % types::string::name() % get_type(first)).str());
+            throw _context.evaluator().create_exception(_context.position(0), (boost::format("expected %1% for first argument but found %2%.") % types::string::name() % get_type(first)).str());
         }
 
      private:
@@ -87,14 +87,14 @@ namespace puppet { namespace runtime { namespace functions {
             return result;
         }
 
-        call_context const& _context;
+        call_context& _context;
     };
 
     value split::operator()(call_context& context) const
     {
         auto& arguments = context.arguments();
         if (arguments.size() != 2) {
-            throw evaluation_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to '%1%' function but %2% were given.") % context.name() % arguments.size()).str());
+            throw context.evaluator().create_exception(arguments.size() > 2 ? context.position(2) : context.position(), (boost::format("expected 2 arguments to '%1%' function but %2% were given.") % context.name() % arguments.size()).str());
         }
         return boost::apply_visitor(split_visitor(context), dereference(arguments[0]), dereference(arguments[1]));
     }

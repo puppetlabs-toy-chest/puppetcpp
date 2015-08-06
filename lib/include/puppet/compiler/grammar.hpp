@@ -382,7 +382,7 @@ namespace puppet { namespace compiler {
             variable_type_expression.name("variable or type expression");
             type_access_expression.name("type access expression");
 
-#ifndef NDEBUG
+#ifdef DEBUG_GRAMMAR
             // Syntax tree
             debug(syntax_tree);
 

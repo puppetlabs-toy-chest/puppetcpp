@@ -22,14 +22,14 @@ namespace puppet { namespace runtime {
 
         /**
          * Constructs a dispatcher for a function.
+         * @param evaluator The current expression evaluator.
          * @param name The function name to dispatch.
          * @param position The position of the function call.
          */
-        dispatcher(std::string const& name, lexer::position const& position);
+        dispatcher(expression_evaluator& evaluator, std::string const& name, lexer::position const& position);
 
         /**
          * Dispatches the function call.
-         * @param evaluator The expression evaluator to use.
          * @param arguments The arguments to the function.
          * @param lambda The lambda to call for the function.
          * @param first_value The first evaluated value (for method calls; nullptr otherwise).
@@ -38,7 +38,6 @@ namespace puppet { namespace runtime {
          * @return Returns the value returned from the function.
          */
         values::value dispatch(
-            expression_evaluator& evaluator,
             boost::optional<std::vector<ast::expression>> const& arguments,
             boost::optional<ast::lambda> const& lambda,
             values::value* first_value = nullptr,
@@ -58,6 +57,7 @@ namespace puppet { namespace runtime {
         lexer::position const& position() const;
 
      private:
+        expression_evaluator& _evaluator;
         std::string const& _name;
         lexer::position const& _position;
         function_type const* _function;

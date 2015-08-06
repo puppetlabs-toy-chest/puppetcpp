@@ -78,4 +78,16 @@ namespace puppet { namespace compiler {
         std::string _text;
     };
 
+    /**
+     * Exception for compilation settings.
+     */
+    struct settings_exception : std::runtime_error
+    {
+        /**
+         * Creates a settings exception.
+         * @param message The exception message.
+         */
+        explicit settings_exception(std::string const& message);
+    };
+
 }}  // puppet::compiler

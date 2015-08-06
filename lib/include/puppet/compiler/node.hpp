@@ -5,12 +5,14 @@
 #pragma once
 
 #include "exceptions.hpp"
-#include "../logging/logger.hpp"
+#include "settings.hpp"
 #include "../runtime/catalog.hpp"
+#include "../logging/logger.hpp"
 #include "environment.hpp"
 #include <exception>
 #include <functional>
 #include <set>
+#include <vector>
 
 namespace puppet { namespace compiler {
 
@@ -39,12 +41,12 @@ namespace puppet { namespace compiler {
         compiler::environment& environment();
 
         /**
-         * Compiles a manifest into a catalog for this node.
+         * Compiles manifests into a catalog for this node.
          * @param logger The logger to use.
-         * @param path The path of the manifest file being compiled.
+         * @param settings The compiler settings.
          * @return Returns the compiled catalog for the node.
          */
-        runtime::catalog compile(logging::logger& logger, std::string const& path);
+        runtime::catalog compile(logging::logger& logger, compiler::settings const& settings);
 
         /**
          * Calls the given callback for each name associated with the node.

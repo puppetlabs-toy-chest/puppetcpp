@@ -104,8 +104,8 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     control_flow_expression_evaluator::result_type control_flow_expression_evaluator::operator()(ast::function_call_expression const& expr)
     {
-        runtime::dispatcher dispatcher(expr.function().value(), expr.position());
-        return dispatcher.dispatch(_evaluator, expr.arguments(), expr.lambda());
+        runtime::dispatcher dispatcher(_evaluator, expr.function().value(), expr.position());
+        return dispatcher.dispatch(expr.arguments(), expr.lambda());
     }
 
     control_flow_expression_evaluator::result_type control_flow_expression_evaluator::execute_block(boost::optional<vector<ast::expression>> const& expressions)

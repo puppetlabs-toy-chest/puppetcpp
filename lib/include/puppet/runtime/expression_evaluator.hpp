@@ -22,10 +22,17 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluator exception.
+         * @param context The compilation context where the evaluation failed.
          * @param position The position where evaluation failed.
          * @param message The exception message.
          */
-        evaluation_exception(lexer::position position, std::string const& message);
+        evaluation_exception(std::shared_ptr<compiler::context> context, lexer::position position, std::string const& message);
+
+        /**
+         * Gets the compilation context where evaluation failed.
+         * @return Returns the compilation context where evaluation failed.
+         */
+        std::shared_ptr<compiler::context> const& context() const;
 
         /**
          * Gets the position where evaluation failed.
@@ -34,6 +41,7 @@ namespace puppet { namespace runtime {
         lexer::position const& position() const;
 
      private:
+        std::shared_ptr<compiler::context> _context;
         lexer::position _position;
     };
 
@@ -72,6 +80,14 @@ namespace puppet { namespace runtime {
          * @return Returns the path to the file being evaluated.
          */
         std::shared_ptr<std::string> const& path() const;
+
+        /**
+         * Creates an evaluation exception with the given position and message.
+         * @param position The position where the error occurred.
+         * @param message The error message.
+         * @return Returns the evaluation exception.
+         */
+        evaluation_exception create_exception(lexer::position const& position, std::string message) const;
 
         /**
          * Emits a warning with the given position and message.

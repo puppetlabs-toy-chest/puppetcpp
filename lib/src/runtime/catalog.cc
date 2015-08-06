@@ -122,9 +122,9 @@ namespace puppet { namespace runtime {
         return _type;
     }
 
-    string const* resource::path() const
+    shared_ptr<string> const& resource::path() const
     {
-        return _path.get();
+        return _path;
     }
 
     size_t resource::line() const
@@ -228,8 +228,7 @@ namespace puppet { namespace runtime {
     bool class_definition::evaluate(
         runtime::context& context,
         runtime::resource const& resource,
-        function<lexer::position(string const&)> const& attribute_name_position,
-        function<lexer::position(string const&)> const& attribute_value_position)
+        function<evaluation_exception(bool, string const&, string)> const& create_exception)
     {
         if (evaluated()) {
             return true;
@@ -255,10 +254,10 @@ namespace puppet { namespace runtime {
 
             // Execute the body of the class
             runtime::executor executor{ evaluator, _expression->position(), _expression->parameters(), _expression->body() };
-            executor.execute(resource, attribute_name_position, attribute_value_position, scope);
+            executor.execute(resource, create_exception, scope);
         } catch (evaluation_exception const& ex) {
-            // The compilation context is probably not the current one, so do not let evaluation exception propagate
-            _context->log(logging::level::error, ex.position(), ex.what());
+            // Log any evaluation exception encountered
+            ex.context()->log(logging::level::error, ex.position(), ex.what());
             return false;
         }
 
@@ -323,8 +322,7 @@ namespace puppet { namespace runtime {
     bool defined_type::evaluate(
         runtime::context& context,
         runtime::resource const& resource,
-        function<lexer::position(string const&)> const& attribute_name_position,
-        function<lexer::position(string const&)> const& attribute_value_position)
+        function<evaluation_exception(bool, string const&, string)> const& create_exception)
     {
         // Create a temporary scope for evaluating the defined type
         ostringstream display_name;
@@ -337,10 +335,10 @@ namespace puppet { namespace runtime {
 
             // Execute hte body of the defined type
             runtime::executor executor{ evaluator, _expression.position(), _expression.parameters(), _expression.body() };
-            executor.execute(resource, attribute_name_position, attribute_value_position, scope);
+            executor.execute(resource, create_exception, scope);
         } catch (evaluation_exception const& ex) {
-            // The compilation context is probably not the current one, so do not let evaluation exception propagate
-            _context->log(logging::level::error, ex.position(), ex.what());
+            // Log any evaluation exception encountered
+            ex.context()->log(logging::level::error, ex.position(), ex.what());
             return false;
         }
         return true;
@@ -378,8 +376,8 @@ namespace puppet { namespace runtime {
             runtime::executor executor(evaluator, _expression.position(), boost::none, _expression.body());
             executor.execute(context.node_scope());
         } catch (evaluation_exception const& ex) {
-            // The compilation context is probably not the current one, so do not let evaluation exception propagate
-            _context->log(logging::level::error, ex.position(), ex.what());
+            // Log any evaluation exception encountered
+            ex.context()->log(logging::level::error, ex.position(), ex.what());
             return false;
         }
         return true;
@@ -430,7 +428,7 @@ namespace puppet { namespace runtime {
     {
         // Validate the class parameters
         if (expression.parameters()) {
-            validate_parameters(true, *expression.parameters());
+            validate_parameters(true, context, *expression.parameters());
         }
 
         auto& definitions = _classes[klass];
@@ -446,7 +444,7 @@ namespace puppet { namespace runtime {
                 if (parent == *existing) {
                     continue;
                 }
-                throw evaluation_exception(expression.parent()->position(),
+                throw evaluation_exception(context, expression.parent()->position(),
                    (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%.") %
                     klass.title() %
                     expression.parent()->value() %
@@ -465,8 +463,7 @@ namespace puppet { namespace runtime {
         shared_ptr<string> path,
         size_t line,
         shared_ptr<runtime::attributes> attributes,
-        function<lexer::position(string const&)> const& attribute_name_position,
-        function<lexer::position(string const&)> const& attribute_value_position)
+        function<evaluation_exception(bool, string const&, string)> const& create_exception)
     {
         if (!klass.fully_qualified()) {
             return nullptr;
@@ -494,7 +491,7 @@ namespace puppet { namespace runtime {
 
         // Evaluate all definitions of the class
         for (auto& definition : it->second) {
-            if (!definition.evaluate(context, *resource, attribute_name_position, attribute_value_position)) {
+            if (!definition.evaluate(context, *resource, create_exception)) {
                 return nullptr;
             }
         }
@@ -526,13 +523,13 @@ namespace puppet { namespace runtime {
     {
         // Validate the defined type's parameters
         if (expression.parameters()) {
-            validate_parameters(false, *expression.parameters());
+            validate_parameters(false, context, *expression.parameters());
         }
 
         // Look for the existing type
         auto it = _defined_types.find(type);
         if (it != _defined_types.end()) {
-            throw evaluation_exception(expression.name().position(),
+            throw evaluation_exception(context, expression.name().position(),
                (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
                 it->second.type() %
                 it->second.path() %
@@ -557,8 +554,7 @@ namespace puppet { namespace runtime {
         shared_ptr<string> path,
         size_t line,
         shared_ptr<runtime::attributes> attributes,
-        function<lexer::position(string const&)> const& attribute_name_position,
-        function<lexer::position(string const&)> const& attribute_value_position)
+        function<evaluation_exception(bool, string const&, string)> const& create_exception)
     {
         // Lookup the defined type
         auto it = _defined_types.find(type);
@@ -574,7 +570,7 @@ namespace puppet { namespace runtime {
         }
 
         // Evaluate the defined type
-        if (!it->second.evaluate(context, *added, attribute_name_position, attribute_value_position)) {
+        if (!it->second.evaluate(context, *added, create_exception)) {
             return nullptr;
         }
         return added;
@@ -594,20 +590,20 @@ namespace puppet { namespace runtime {
                     continue;
                 }
                 auto const& previous = _nodes[_default_node_index];
-                throw evaluation_exception(name.position(), (boost::format("a default node was previously defined at %1%:%2%.") % previous.path() % previous.line()).str());
+                throw evaluation_exception(context, name.position(), (boost::format("a default node was previously defined at %1%:%2%.") % previous.path() % previous.line()).str());
             }
             // Check for regular expression names
             if (name.regex()) {
                 auto it = find_if(_regex_node_definitions.begin(), _regex_node_definitions.end(), [&](decltype(_regex_node_definitions.front()) existing) { return existing.first.pattern() == name.value(); });
                 if (it != _regex_node_definitions.end()) {
                     auto const& previous = _nodes[it->second];
-                    throw evaluation_exception(name.position(), (boost::format("node /%1%/ was previously defined at %2%:%3%.") % name.value() % previous.path() % previous.line()).str());
+                    throw evaluation_exception(context, name.position(), (boost::format("node /%1%/ was previously defined at %2%:%3%.") % name.value() % previous.path() % previous.line()).str());
                 }
 
                 try {
                     _regex_node_definitions.emplace_back(values::regex(name.value()), node_index);
                 } catch (regex_error const& ex) {
-                    throw evaluation_exception(name.position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
+                    throw evaluation_exception(context, name.position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
                 }
                 continue;
             }
@@ -615,7 +611,7 @@ namespace puppet { namespace runtime {
             auto it = _named_nodes.find(name.value());
             if (it != _named_nodes.end()) {
                 auto const& previous = _nodes[it->second];
-                throw evaluation_exception(name.position(), (boost::format("node '%1%' was previously defined at %2%:%3%.") % name.value() % previous.path() % previous.line()).str());
+                throw evaluation_exception(context, name.position(), (boost::format("node '%1%' was previously defined at %2%:%3%.") % name.value() % previous.path() % previous.line()).str());
             }
             _named_nodes.emplace(make_pair(boost::to_lower_copy(name.value()), node_index));
         }
@@ -678,24 +674,24 @@ namespace puppet { namespace runtime {
         return definition->evaluate(context);
     }
 
-    void catalog::validate_parameters(bool klass, vector<ast::parameter> const& parameters)
+    void catalog::validate_parameters(bool klass, shared_ptr<compiler::context> const& context, vector<ast::parameter> const& parameters)
     {
         for (auto const& parameter : parameters) {
             auto const& name = parameter.variable().name();
 
             // Check for reserved names
             if (name == "title" || name == "name") {
-                throw evaluation_exception(parameter.variable().position(), (boost::format("parameter $%1% is reserved and cannot be used.") % name).str());
+                throw evaluation_exception(context, parameter.variable().position(), (boost::format("parameter $%1% is reserved and cannot be used.") % name).str());
             }
 
             // Check for capture parameters
             if (parameter.captures()) {
-                throw evaluation_exception(parameter.variable().position(), (boost::format("%1% parameter $%2% cannot \"captures rest\".") % (klass ? "class" : "defined type") % name).str());
+                throw evaluation_exception(context, parameter.variable().position(), (boost::format("%1% parameter $%2% cannot \"captures rest\".") % (klass ? "class" : "defined type") % name).str());
             }
 
             // Check for metaparameter names
             if (resource::is_metaparameter(name)) {
-                throw evaluation_exception(parameter.variable().position(), (boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str());
+                throw evaluation_exception(context, parameter.variable().position(), (boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str());
             }
         }
     }

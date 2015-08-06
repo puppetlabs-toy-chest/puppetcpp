@@ -22,6 +22,9 @@ namespace puppet { namespace runtime {
     // Forward declaration of scope.
     struct scope;
 
+    // Forward declaration of evaluation_exception.
+    struct evaluation_exception;
+
     /**
      * Represents a collection of resource attributes.
      */
@@ -106,7 +109,7 @@ namespace puppet { namespace runtime {
          * Gets the path of the file where the resource was declared.
          * @return Returns the path of the file where the resource was declared or nullptr if not declared in a source file.
          */
-        std::string const* path() const;
+        std::shared_ptr<std::string> const& path() const;
 
         /**
          * Gets the line where the resource was declared.
@@ -207,15 +210,13 @@ namespace puppet { namespace runtime {
          * Evaluates the class.
          * @param context The evaluation context.
          * @param resource The resource representing the class.
-         * @param attribute_name_position The callback to use to get the location of an attribute's name.
-         * @param attribute_value_position The callback to use to get the location of an attribute's value.
+         * @param create_exception The callback to use to create an exception for the given argument name and message.
          * @return Returns true if the evaluation was successful or false if the evaluation failed.
          */
         bool evaluate(
             runtime::context& context,
             runtime::resource const& resource,
-            std::function<lexer::position(std::string const&)> const& attribute_name_position,
-            std::function<lexer::position(std::string const&)> const& attribute_value_position);
+            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception);
 
      private:
         std::shared_ptr<runtime::scope> evaluate_parent(runtime::context& context);
@@ -271,15 +272,13 @@ namespace puppet { namespace runtime {
          * Evaluates the defined type.
          * @param context The evaluation context.
          * @param resource The resource for the defined type.
-         * @param attribute_name_position The callback to use to get the location of an attribute's name.
-         * @param attribute_value_position The callback to use to get the location of an attribute's value.
+         * @param create_exception The callback to use to create an exception for the given argument name and message.
          * @return Returns true if the evaluation was successful or false if the evaluation failed.
          */
         bool evaluate(
             runtime::context& context,
             runtime::resource const& resource,
-            std::function<lexer::position(std::string const&)> const& attribute_name_position,
-            std::function<lexer::position(std::string const&)> const& attribute_value_position);
+            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception);
 
     private:
         runtime::catalog& _catalog;
@@ -381,8 +380,7 @@ namespace puppet { namespace runtime {
          * @param path The path to the file that is declaring the resource or nullptr if not declared in a source file.
          * @param line The line in the file where the class is being declared or 0 if not declared in a source file.
          * @param attributes The class resource's attributes or nullptr for an empty set.
-         * @param attribute_name_position The callback to use to get the location of an attribute's name.
-         * @param attribute_value_position The callback to use to get the location of an attribute's value.
+         * @param create_exception The callback to use to create an exception for the given argument name and message.
          * @return Returns the resource that was added for the class or nullptr if the class failed to evaluate.
          */
         runtime::resource* declare_class(
@@ -391,8 +389,7 @@ namespace puppet { namespace runtime {
             std::shared_ptr<std::string> path = nullptr,
             size_t line = 0,
             std::shared_ptr<runtime::attributes> attributes = nullptr,
-            std::function<lexer::position(std::string const&)> const& attribute_name_position = nullptr,
-            std::function<lexer::position(std::string const&)> const& attribute_value_position = nullptr);
+            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception = nullptr);
 
         /**
          * Determines if a class is defined.
@@ -431,8 +428,7 @@ namespace puppet { namespace runtime {
          * @param path The path to the file that is declaring the defined type or nullptr if not declared in a source file.
          * @param line The line in the file where the defined type is being declared or 0 if not declared in a source file.
          * @param attributes The defined type resource's attributes or nullptr for an empty set.
-         * @param attribute_name_position The callback to use to get the location of an attribute's name.
-         * @param attribute_value_position The callback to use to get the location of an attribute's value.
+         * @param create_exception The callback to use to create an exception for the given argument name and message.
          * @return Returns the resource that was added to the catalog or nullptr if the defined type failed to evaluate.
          */
         runtime::resource* declare_defined_type(
@@ -442,8 +438,7 @@ namespace puppet { namespace runtime {
             std::shared_ptr<std::string> path = nullptr,
             size_t line = 0,
             std::shared_ptr<runtime::attributes> attributes = nullptr,
-            std::function<lexer::position(std::string const&)> const& attribute_name_position = nullptr,
-            std::function<lexer::position(std::string const&)> const& attribute_value_position = nullptr);
+            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception = nullptr);
 
         /**
          * Defines a node.
@@ -461,7 +456,7 @@ namespace puppet { namespace runtime {
         bool evaluate_node(runtime::context& context, compiler::node const& node);
 
      private:
-        void validate_parameters(bool klass, std::vector<ast::parameter> const& parameters);
+        void validate_parameters(bool klass, std::shared_ptr<compiler::context> const& context, std::vector<ast::parameter> const& parameters);
 
         std::unordered_map<std::string, std::unordered_map<std::string, resource>> _resources;
         std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;

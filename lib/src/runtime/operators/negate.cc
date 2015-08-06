@@ -11,15 +11,15 @@ namespace puppet { namespace runtime { namespace operators {
 
     struct negate_visitor : boost::static_visitor<value>
     {
-        negate_visitor(lexer::position const& position) :
-            _position(position)
+        negate_visitor(unary_context& context) :
+            _context(context)
         {
         }
 
         result_type operator()(int64_t operand) const
         {
             if (operand == numeric_limits<int64_t>::min()) {
-                throw evaluation_exception(_position, (boost::format("negation of %1% results in an arithmetic overflow.") % operand).str());
+                throw _context.evaluator().create_exception(_context.position(), (boost::format("negation of %1% results in an arithmetic overflow.") % operand).str());
             }
             return -operand;
         }
@@ -32,16 +32,17 @@ namespace puppet { namespace runtime { namespace operators {
         template <typename T>
         result_type operator()(T const& operand) const
         {
-            throw evaluation_exception(_position, (boost::format("expected %1% for unary negation operator but found %2%.") % types::numeric::name() % get_type(operand)).str());
+            throw _context.evaluator().create_exception(_context.position(), (boost::format("expected %1% for unary negation operator but found %2%.") % types::numeric::name() % get_type(operand)).str());
         }
 
      private:
-        lexer::position const& _position;
+        unary_context& _context;
     };
 
     value negate::operator()(unary_context& context) const
     {
-        return boost::apply_visitor(negate_visitor(context.position()), dereference(context.operand()));
+        negate_visitor visitor(context);
+        return boost::apply_visitor(visitor, dereference(context.operand()));
     }
 
 }}}  // namespace puppet::runtime::operators

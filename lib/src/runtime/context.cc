@@ -50,11 +50,11 @@ namespace puppet { namespace runtime {
         _context._node_scope.reset();
     }
 
-    context::context(runtime::catalog* catalog) :
+    context::context(shared_ptr<facts::provider> facts, runtime::catalog* catalog) :
         _catalog(catalog)
     {
         // Add the top scope
-        auto top = make_shared<runtime::scope>(nullptr, "", "Class[main]");
+        auto top = make_shared<runtime::scope>(rvalue_cast(facts));
         add_scope(top);
         _scope_stack.emplace_back(rvalue_cast(top));
 

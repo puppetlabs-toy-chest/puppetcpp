@@ -61,7 +61,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         try {
             return values::regex(regx.value());
         } catch (regex_error const& ex) {
-            throw evaluation_exception(regx.position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
+            throw _evaluator.create_exception(regx.position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
         }
     }
 
@@ -70,7 +70,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         auto& name = var.name();
 
         if (name.empty()) {
-            throw evaluation_exception(var.position(), "variable name cannot be empty.");
+            throw _evaluator.create_exception(var.position(), "variable name cannot be empty.");
         }
 
         shared_ptr<values::value const> value;
