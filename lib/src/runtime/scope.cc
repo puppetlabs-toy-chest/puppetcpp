@@ -12,9 +12,6 @@ namespace puppet { namespace runtime {
         _path(rvalue_cast(path)),
         _line(line)
     {
-        if (!_path) {
-            throw runtime_error("expected path");
-        }
     }
 
     shared_ptr<value const> const& assigned_variable::value() const
@@ -37,7 +34,17 @@ namespace puppet { namespace runtime {
         _name(rvalue_cast(name)),
         _display_name(rvalue_cast(display_name))
     {
-     }
+        if (!_parent) {
+            throw runtime_error("expected a parent scope.");
+        }
+    }
+
+    scope::scope(shared_ptr<facts::provider> facts) :
+        _facts(rvalue_cast(facts)),
+        _name(""),
+        _display_name("Class[main]")
+    {
+    }
 
     string const& scope::name() const
     {
@@ -75,20 +82,46 @@ namespace puppet { namespace runtime {
 
     assigned_variable const* scope::set(string name, shared_ptr<values::value const> value, shared_ptr<string> path, size_t line)
     {
-        if (_variables.count(name)) {
-            return nullptr;
+        // Check to see if the variable already exists
+        auto it = _variables.find(name);
+        if (it != _variables.end()) {
+            return &it->second;
         }
-        auto result = _variables.emplace(make_pair(rvalue_cast(name), assigned_variable(rvalue_cast(value), rvalue_cast(path), line)));
-        return &result.first->second;
+
+        // If there's a fact provider, try get a fact of the given name before setting
+        if (_facts) {
+            auto previous = get(name);
+            if (previous) {
+                return previous;
+            }
+        }
+        _variables.emplace(make_pair(rvalue_cast(name), assigned_variable(rvalue_cast(value), rvalue_cast(path), line)));
+        return nullptr;
     }
 
-    assigned_variable const* scope::get(string const& name) const
+    assigned_variable const* scope::get(string const& name)
     {
         auto it = _variables.find(name);
         if (it != _variables.end()) {
             return &it->second;
         }
-        return _parent ? _parent->get(name) : nullptr;
+
+        // Go up the parent if there is one
+        if (_parent) {
+            return _parent->get(name);
+        }
+
+        // Lookup the fact if there's a fact provider
+        if (!_facts) {
+            return nullptr;
+        }
+        auto value = _facts->lookup(name);
+        if (!value) {
+            return nullptr;
+        }
+
+        // Add the fact as an assigned variable
+        return &_variables.emplace(make_pair(name, assigned_variable(rvalue_cast(value)))).first->second;
     }
 
     ostream& operator<<(ostream& os, scope const& s)

@@ -17,13 +17,14 @@ namespace puppet { namespace runtime { namespace operators {
 
         result_type operator()(string const& left, string const& right)
         {
+            auto& evaluator = _context.evaluator();
             try {
                 smatch matches;
                 bool result = right.empty() || regex_search(left, matches, std::regex(right));
-                _context.evaluator().context().set(matches);
+                evaluator.context().set(matches);
                 return result;
             } catch (regex_error const& ex) {
-                throw evaluation_exception(_context.right_position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
+                throw evaluator.create_exception(_context.right_position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
             }
         }
 
@@ -48,7 +49,7 @@ namespace puppet { namespace runtime { namespace operators {
         >
         result_type operator()(string const&, Right const& right)
         {
-            throw evaluation_exception(_context.right_position(), (boost::format("expected %1% or %2% for match but found %3%.") % types::string::name() % types::regexp::name() % get_type(right)).str());
+            throw _context.evaluator().create_exception(_context.right_position(), (boost::format("expected %1% or %2% for match but found %3%.") % types::string::name() % types::regexp::name() % get_type(right)).str());
         }
 
         template <
@@ -58,7 +59,7 @@ namespace puppet { namespace runtime { namespace operators {
         >
         result_type operator()(Left const& left, Right const&)
         {
-            throw evaluation_exception(_context.left_position(), (boost::format("expected %1% for match but found %2%.") % types::string::name() % get_type(left)).str());
+            throw _context.evaluator().create_exception(_context.left_position(), (boost::format("expected %1% for match but found %2%.") % types::string::name() % get_type(left)).str());
         }
 
     private:

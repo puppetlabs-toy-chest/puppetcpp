@@ -1,5 +1,6 @@
 #include <puppet/compiler/node.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/runtime/definition_scanner.hpp>
 #include <puppet/cast.hpp>
 
 using namespace std;
@@ -8,35 +9,6 @@ using namespace puppet::runtime;
 using namespace puppet::logging;
 
 namespace puppet { namespace compiler {
-
-    compilation_exception::compilation_exception(string const& message, string path, size_t line, size_t column, string text) :
-        runtime_error(message),
-        _path(rvalue_cast(path)),
-        _line(line),
-        _column(column),
-        _text(rvalue_cast(text))
-    {
-    }
-
-    string const& compilation_exception::path() const
-    {
-        return _path;
-    }
-
-    size_t compilation_exception::line() const
-    {
-        return _line;
-    }
-
-    size_t compilation_exception::column() const
-    {
-        return _column;
-    }
-
-    string const& compilation_exception::text() const
-    {
-        return _text;
-    }
 
     node::node(string const& name, compiler::environment& environment) :
         _environment(environment)
@@ -52,8 +24,6 @@ namespace puppet { namespace compiler {
             boost::to_lower(hostname);
             _names.emplace(rvalue_cast(hostname));
         }
-
-        // TODO: add support for Puppet's node_name (cert vs. facter) setting?
     }
 
     string const& node::name() const
@@ -67,38 +37,51 @@ namespace puppet { namespace compiler {
         return _environment;
     }
 
-    catalog node::compile(logging::logger& logger, string const& path)
+    catalog node::compile(logging::logger& logger, compiler::settings const& settings)
     {
-        auto compilation_context = make_shared<compiler::context>(logger, make_shared<string>(path), *this);
+        runtime::catalog catalog;
+        runtime::context evaluation_context{ settings.facts(), &catalog };
 
-        try {
-            runtime::catalog catalog;
-            runtime::context evaluation_context{ &catalog };
+        // TODO: set parameters and facts in the top scope
 
-            // TODO: set parameters and facts in the top scope
+        // TODO: create settings scope in catalog
 
-            // TODO: create settings scope in catalog
+        // First parse all the files so they can be scanned
+        vector<shared_ptr<compiler::context>> contexts;
+        contexts.reserve(settings.manifests().size() + 1);
 
-            // Evaluate the syntax tree
-            logger.log(level::debug, "evaluating the syntax tree for parsed file '%1%'.", path);
-            expression_evaluator evaluator{compilation_context, evaluation_context};
-            evaluator.evaluate();
+        for (auto const& manifest : settings.manifests()) {
+            contexts.push_back(make_shared<compiler::context>(logger, make_shared<string>(manifest), *this));
 
-            // Evaluate the node context
-            logger.log(level::debug, "evaluating context for node '%1%'.", name());
-            if (!catalog.evaluate_node(evaluation_context, *this)) {
-                throw compilation_exception((boost::format("failed to evaluate node definition for node '%1%'.") % name()).str(), path);
-            }
-
-            // TODO: evaluate node classes
-
-            // TODO: evaluate generators
-
-            // TODO: finalize catalog
-            return catalog;
-        } catch (evaluation_exception const& ex) {
-            throw compilation_context->create_exception(ex.position(), ex.what());
+            // Scan this context for definitions
+            definition_scanner scanner{ catalog };
+            scanner.scan(contexts.back());
         }
+
+        // Now evaluate the manifests in the specified order
+        for (auto const& context : contexts) {
+            try {
+                // Evaluate the syntax tree
+                LOG(debug, "evaluating the syntax tree for '%1%'.", *context->path());
+                expression_evaluator evaluator{context, evaluation_context};
+                evaluator.evaluate();
+            } catch (evaluation_exception const& ex) {
+                throw ex.context()->create_exception(ex.position(), ex.what());
+            }
+        }
+
+        // Evaluate the node definition
+        LOG(debug, "evaluating node definition for node '%1%'.", name());
+        if (!catalog.evaluate_node(evaluation_context, *this)) {
+            throw compilation_exception((boost::format("failed to evaluate node definition for node '%1%'.") % name()).str());
+        }
+
+        // TODO: evaluate node classes
+
+        // TODO: evaluate generators
+
+        // TODO: finalize catalog
+        return catalog;
     }
 
     void node::each_name(function<bool(string const&)> const& callback) const

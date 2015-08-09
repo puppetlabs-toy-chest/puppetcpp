@@ -5,6 +5,7 @@
 #pragma once
 
 #include "values/value.hpp"
+#include "../facts/provider.hpp"
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -23,7 +24,7 @@ namespace puppet { namespace runtime {
          * @param path The path of the file where the variable was assigned.
          * @param line The line where the variable was assigned.
          */
-        assigned_variable(std::shared_ptr<values::value const> value, std::shared_ptr<std::string> path, size_t line);
+        assigned_variable(std::shared_ptr<values::value const> value, std::shared_ptr<std::string> path = nullptr, size_t line = 0);
 
         /**
          * Gets the value of the variable.
@@ -60,7 +61,13 @@ namespace puppet { namespace runtime {
          * @param name The name of the scope (e.g. foo).
          * @param display_name The display name of the scope (e.g. Class[foo]).
          */
-        explicit scope(std::shared_ptr<scope> parent = nullptr, std::string name = std::string(), std::string display_name = std::string());
+        explicit scope(std::shared_ptr<scope> parent, std::string name = std::string(), std::string display_name = std::string());
+
+        /**
+         * Constructs the top scope.
+         * @param facts The facts provider to use for the top scope.
+         */
+        explicit scope(std::shared_ptr<facts::provider> facts);
 
         /**
          * Gets the name of the scope.
@@ -93,7 +100,7 @@ namespace puppet { namespace runtime {
          * @param value The value of the variable.
          * @param path The path of the file where the variable is being assigned or nullptr if unknown.
          * @param line The line number where the variable is being assigned or 0 if unknown.
-         * @return Returns a pointer to the assigned variable or nullptr if the variable already exists in the scope.
+         * @return Returns nullptr if the set was successful or a pointer to the previously assigned variable if there is already a variable of the same name.
          */
         assigned_variable const* set(std::string name, std::shared_ptr<values::value const> value, std::shared_ptr<std::string> path = nullptr, size_t line = 0);
 
@@ -102,9 +109,10 @@ namespace puppet { namespace runtime {
          * @param name The name of the variable to get.
          * @return Returns the assigned variable or nullptr if the variable does not exist in the scope.
          */
-        assigned_variable const* get(std::string const& name) const;
+        assigned_variable const* get(std::string const& name);
 
      private:
+        std::shared_ptr<facts::provider> _facts;
         std::shared_ptr<scope> _parent;
         std::string _name;
         std::string _display_name;

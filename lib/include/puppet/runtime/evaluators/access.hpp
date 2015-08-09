@@ -59,7 +59,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         template <typename T>
         result_type operator()(T const& target)
         {
-            throw evaluation_exception(_expression.position(), (boost::format("access expression is not supported for %1%.") % values::get_type(target)).str());
+            throw _evaluator.create_exception(_expression.position(), (boost::format("access expression is not supported for %1%.") % values::get_type(target)).str());
         }
 
         template <typename Value, typename Type>
@@ -92,7 +92,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     } else {
                         auto value_ptr = as<Value>(argument);
                         if (!value_ptr) {
-                            throw evaluation_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type(argument)).str());
+                            throw _evaluator.create_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type(argument)).str());
                         }
                         from = *value_ptr;
                     }
@@ -111,7 +111,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     } else {
                         auto value_ptr = as<Value>(argument);
                         if (!value_ptr) {
-                            throw evaluation_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type(argument)).str());
+                            throw _evaluator.create_exception(_positions[start_index], (boost::format("expected parameter to be %1% but found %2%.") % Type::name() % get_type(argument)).str());
                         }
                         to = *value_ptr;
                     }

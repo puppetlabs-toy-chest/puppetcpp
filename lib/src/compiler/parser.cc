@@ -7,17 +7,6 @@ using namespace boost::spirit;
 
 namespace puppet { namespace compiler {
 
-    parse_exception::parse_exception(lexer::position position, string const& message) :
-        runtime_error(message),
-        _position(rvalue_cast(position))
-    {
-    }
-
-    lexer::position const& parse_exception::position() const
-    {
-        return _position;
-    }
-
     ast::syntax_tree parser::parse(ifstream& input, bool interpolation)
     {
         file_static_lexer lexer;

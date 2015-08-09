@@ -14,7 +14,7 @@ namespace puppet { namespace runtime { namespace functions {
             ss << ": ";
             join(ss, context.arguments(), " ");
         }
-        throw evaluation_exception(context.position(), ss.str());
+        throw context.evaluator().create_exception(context.position(), ss.str());
     }
 
 }}}  // namespace puppet::runtime::functions

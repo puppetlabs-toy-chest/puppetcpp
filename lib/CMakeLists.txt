@@ -5,17 +5,11 @@ set(LIBPUPPET_VERSION_PATCH 0)
 include_directories(
     include/
     ${Boost_INCLUDE_DIRS}
+    ${Facter_INCLUDE_DIRS}
 )
 
-# Add the executable for generating the static lexer
-add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc src/lexer/number_token.cc include/puppet/lexer/token_id.hpp src/lexer/token_id.cc src/lexer/position.cc)
-target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
-
-# Add the command to generate the static lexer
-add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
-add_custom_target(generate_files ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
-
-add_library(puppet SHARED
+# Set common sources
+set(PUPPET_COMMON_SOURCES
     src/ast/access_expression.cc
     src/ast/array.cc
     src/ast/bare_word.cc
@@ -54,8 +48,12 @@ add_library(puppet SHARED
     src/logging/logger.cc
     src/compiler/context.cc
     src/compiler/environment.cc
+    src/compiler/exceptions.cc
     src/compiler/node.cc
     src/compiler/parser.cc
+    src/compiler/settings.cc
+    src/facts/facter.cc
+    src/facts/yaml.cc
     src/runtime/evaluators/access.cc
     src/runtime/evaluators/basic.cc
     src/runtime/evaluators/catalog.cc
@@ -124,12 +122,34 @@ add_library(puppet SHARED
     src/runtime/scope.cc
     src/runtime/string_interpolator.cc
 )
+
+# Set platform-specific sources
+if (UNIX)
+    set(PUPPET_PLATFORM_SOURCES
+        src/compiler/posix/settings.cc
+    )
+elseif(WIN32)
+    set(PUPPET_PLATFORM_SOURCES
+    )
+endif()
+
+# Add the executable for generating the static lexer
+add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc src/lexer/number_token.cc include/puppet/lexer/token_id.hpp src/lexer/token_id.cc src/lexer/position.cc)
+target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
+
+# Add the command to generate the static lexer
+add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
+add_custom_target(generate_files ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
+
+add_library(puppet SHARED ${PUPPET_COMMON_SOURCES} ${PUPPET_PLATFORM_SOURCES})
 add_dependencies(puppet generate_files)
 
 set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LIBPUPPET_VERSION_MINOR}.${LIBPUPPET_VERSION_PATCH}" COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY_UNITY")
 
 target_link_libraries(puppet
     ${Boost_LIBRARIES}
+    ${Facter_LIBRARY}
+    ${YAMLCPP_LIBRARIES}
 )
 
 install(TARGETS puppet DESTINATION lib)

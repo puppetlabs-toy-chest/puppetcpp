@@ -77,7 +77,7 @@ namespace puppet { namespace runtime { namespace functions {
         result_type operator()(types::integer const& argument) const
         {
             if (!argument.enumerable()) {
-                throw evaluation_exception(_context.position(0), (boost::format("%1% is not enumerable.") % argument).str());
+                throw _context.evaluator().create_exception(_context.position(0), (boost::format("%1% is not enumerable.") % argument).str());
             }
             enumerate(argument);
         }
@@ -85,7 +85,7 @@ namespace puppet { namespace runtime { namespace functions {
         template <typename T>
         result_type operator()(T const& argument) const
         {
-            throw evaluation_exception(_context.position(0), (boost::format("expected enumerable type for first argument but found %1%.") % get_type(argument)).str());
+            throw _context.evaluator().create_exception(_context.position(0), (boost::format("expected enumerable type for first argument but found %1%.") % get_type(argument)).str());
         }
 
      private:
@@ -111,19 +111,21 @@ namespace puppet { namespace runtime { namespace functions {
 
     value each::operator()(call_context& context) const
     {
+        auto& evaluator = context.evaluator();
+
         // Check the argument count
         auto& arguments = context.arguments();
         if (arguments.size() != 1) {
-            throw evaluation_exception(arguments.size() > 1 ? context.position(1) : context.position(), (boost::format("expected 1 argument to '%1%' function but %2% were given.") % context.name() % arguments.size()).str());
+            throw evaluator.create_exception(arguments.size() > 1 ? context.position(1) : context.position(), (boost::format("expected 1 argument to '%1%' function but %2% were given.") % context.name() % arguments.size()).str());
         }
 
         // Check the lambda
         if (!context.lambda_given()) {
-            throw evaluation_exception(context.position(), "expected a lambda to 'each' function but one was not given.");
+            throw evaluator.create_exception(context.position(), "expected a lambda to 'each' function but one was not given.");
         }
         auto count = context.lambda().parameter_count();
         if (count == 0 || count > 2) {
-            throw evaluation_exception(context.lambda().position(), (boost::format("expected 1 or 2 lambda parameters but %1% were given.") % count).str());
+            throw evaluator.create_exception(context.lambda().position(), (boost::format("expected 1 or 2 lambda parameters but %1% were given.") % count).str());
         }
 
         // Visit the argument and return it

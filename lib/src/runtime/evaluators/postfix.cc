@@ -69,7 +69,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
         // Handle no matching case
         if (!default_index) {
-            throw evaluation_exception(expr.position(), (boost::format("no matching selector case for value '%1%'.") % _result).str());
+            throw _evaluator.create_exception(expr.position(), (boost::format("no matching selector case for value '%1%'.") % _result).str());
         }
 
         // Evaluate the default case
@@ -86,10 +86,10 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     postfix_expression_evaluator::result_type postfix_expression_evaluator::operator()(ast::method_call_expression const& expr)
     {
-        runtime::dispatcher dispatcher(expr.method().value(), expr.method().position());
+        runtime::dispatcher dispatcher(_evaluator, expr.method().value(), expr.method().position());
 
         // Evaluate the result for the next call
-        value result = dispatcher.dispatch(_evaluator, expr.arguments(), expr.lambda(), &_result, _first_expression, &_position);
+        value result = dispatcher.dispatch(expr.arguments(), expr.lambda(), &_result, _first_expression, &_position);
         _position = expr.position();
         return result;
     }

@@ -1,4 +1,5 @@
 #include <puppet/logging/logger.hpp>
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 #include <iomanip>
 // TODO: fix istty support for windows
@@ -9,25 +10,94 @@ using boost::format;
 
 namespace puppet { namespace logging {
 
+    istream& operator>>(istream& in, logging::level& level)
+    {
+        string value;
+        if (in >> value) {
+            boost::algorithm::to_lower(value);
+            if (value == "debug") {
+                level = logging::level::debug;
+                return in;
+            }
+            if (value == "info") {
+                level = logging::level::info;
+                return in;
+            }
+            if (value == "notice") {
+                level = logging::level::notice;
+                return in;
+            }
+            if (value == "warning") {
+                level = logging::level::warning;
+                return in;
+            }
+            if (value == "err" || value == "error") {
+                level = logging::level::error;
+                return in;
+            }
+            if (value == "alert") {
+                level = logging::level::alert;
+                return in;
+            }
+            if (value == "emerg" || value == "emergency") {
+                level = logging::level::emergency;
+                return in;
+            }
+            if (value == "crit" || value == "critical") {
+                level = logging::level::critical;
+                return in;
+            }
+        }
+        throw runtime_error((boost::format("invalid log level '%1%': expected debug, info, notice, warning, error, alert, emergency, or critical.") % value).str());
+    }
+
+    ostream& operator<<(ostream& out, logging::level level)
+    {
+        // Keep this in sync with the definition of logging::level
+        static const vector<string> strings = {
+            "Debug",
+            "Info",
+            "Notice",
+            "Warning",
+            "Error",
+            "Alert",
+            "Emergency",
+            "Critical"
+        };
+
+        size_t index = static_cast<size_t>(level);
+        if (index < strings.size()) {
+            out << strings[index];
+        }
+        return out;
+    }
+
     logger::logger() :
         _warnings(0),
-        _errors(0)
+        _errors(0),
+        _level(logging::level::notice)
     {
     }
 
-    void logger::log(level lvl, string const& message)
+    void logger::log(logging::level level, string const& message)
     {
-        log(lvl, 0, 0, {}, {}, message);
+        if (!would_log(level)) {
+           return;
+        }
+        log(level, 0, 0, {}, {}, message);
     }
 
-    void logger::log(level lvl, size_t line, size_t column, string const& text, string const& path, string const& message)
+    void logger::log(logging::level level, size_t line, size_t column, string const& text, string const& path, string const& message)
     {
-        if (lvl == level::warning) {
+        if (!would_log(level)) {
+            return;
+        }
+        if (level == logging::level::warning) {
             ++_warnings;
-        } else if (lvl >= level::error) {
+        } else if (level >= logging::level::error) {
             ++_errors;
         }
-        log_message(lvl, line, column, text, path, message);
+        log_message(level, line, column, text, path, message);
     }
 
     size_t logger::warnings() const
@@ -40,41 +110,40 @@ namespace puppet { namespace logging {
         return _errors;
     }
 
+    logging::level logger::level() const
+    {
+        return _level;
+    }
+
+    void logger::level(logging::level level)
+    {
+        _level = level;
+    }
+
     void logger::reset()
     {
         _warnings = _errors = 0;
     }
 
-    void logger::log(level lvl, size_t line, size_t column, string const& text, string const& path, boost::format& message)
+    bool logger::would_log(logging::level level)
     {
-        log(lvl, line, column, text, path, message.str());
+        return static_cast<size_t>(level) >= static_cast<size_t>(_level);
     }
 
-    void stream_logger::log_message(level lvl, size_t line, size_t column, string const& text, string const& path, string const& message)
+    void logger::log(logging::level level, size_t line, size_t column, string const& text, string const& path, boost::format& message)
     {
-        ostream& stream = get_stream(lvl);
+        log(level, line, column, text, path, message.str());
+    }
+
+    void stream_logger::log_message(logging::level level, size_t line, size_t column, string const& text, string const& path, string const& message)
+    {
+        ostream& stream = get_stream(level);
 
         // Colorize the output
-        colorize(lvl);
+        colorize(level);
 
         // Output the level
-        if (lvl == level::debug) {
-            stream << "Debug: ";
-        } else if (lvl == level::info) {
-            stream << "Info: ";
-        } else if (lvl == level::notice) {
-            stream << "Notice: ";
-        } else if (lvl == level::warning) {
-            stream << "Warning: ";
-        } else if (lvl == level::error) {
-            stream << "Error: ";
-        } else if (lvl == level::alert) {
-            stream << "Alert: ";
-        } else if (lvl == level::emergency) {
-            stream << "Emergency: ";
-        } else if (lvl == level::critical) {
-            stream << "Critical: ";
-        }
+        stream << level << ": ";
 
         // If a location was given, write it out
         if (!path.empty()) {
@@ -108,22 +177,22 @@ namespace puppet { namespace logging {
         }
 
         // Reset the colorization
-        reset(lvl);
+        reset(level);
     }
 
-    void stream_logger::colorize(level) const
+    void stream_logger::colorize(logging::level) const
     {
         // Stream loggers do not colorize
     }
 
-    void stream_logger::reset(level) const
+    void stream_logger::reset(logging::level) const
     {
         // Stream loggers do not colorize
     }
 
-    ostream& console_logger::get_stream(level lvl) const
+    ostream& console_logger::get_stream(logging::level level) const
     {
-        return lvl >= level::warning ? cerr : cout;
+        return level >= logging::level::warning ? cerr : cout;
     }
 
     console_logger::console_logger() :
@@ -132,48 +201,48 @@ namespace puppet { namespace logging {
     {
     }
 
-    void console_logger::colorize(level lvl) const
+    void console_logger::colorize(logging::level level) const
     {
         static const string cyan = "\33[0;36m";
         static const string green = "\33[0;32m";
         static const string hyellow = "\33[1;33m";
         static const string hred = "\33[1;31m";
 
-        if (!should_colorize(lvl)) {
+        if (!should_colorize(level)) {
             return;
         }
 
-        auto& stream = get_stream(lvl);
+        auto& stream = get_stream(level);
 
-        if (lvl == level::debug) {
+        if (level == logging::level::debug) {
             stream << cyan;
-        } else if (lvl == level::info) {
+        } else if (level == logging::level::info) {
             stream << green;
-        } else if (lvl == level::warning) {
+        } else if (level == logging::level::warning) {
             stream << hyellow;
-        } else if (lvl >= level::error) {
+        } else if (level >= logging::level::error) {
             stream << hred;
         }
     }
 
-    void console_logger::reset(level lvl) const
+    void console_logger::reset(logging::level level) const
     {
         static const string reset = "\33[0m";
 
-        if (!should_colorize(lvl)) {
+        if (!should_colorize(level)) {
             return;
         }
 
-        auto& stream = get_stream(lvl);
+        auto& stream = get_stream(level);
 
-        if (lvl != level::notice) {
+        if (level != logging::level::notice) {
             stream << reset;
         }
     }
 
-    bool console_logger::should_colorize(level lvl) const
+    bool console_logger::should_colorize(logging::level level) const
     {
-        return lvl >= level::warning ? _colorize_stderr : _colorize_stdout;
+        return level >= logging::level::warning ? _colorize_stderr : _colorize_stdout;
     }
 
 }}  // namespace puppet::logging

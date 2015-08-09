@@ -12,31 +12,31 @@ namespace puppet { namespace runtime { namespace operators {
 
     struct multiply_visitor : boost::static_visitor<value>
     {
-        multiply_visitor(lexer::position const& left_position, lexer::position const& right_position) :
-            _left_position(left_position),
-            _right_position(right_position)
+        explicit multiply_visitor(binary_context& context) :
+            _context(context)
         {
         }
 
         result_type operator()(int64_t left, int64_t right) const
         {
+            auto& evaluator = _context.evaluator();
             if (right > 0) {
                 if (left > (numeric_limits<int64_t>::max() / right)) {
-                    throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+                    throw evaluator.create_exception(_context.left_position(), (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
                 }
                 if (left < (numeric_limits<int64_t>::min() / right)) {
-                    throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+                    throw evaluator.create_exception(_context.left_position(), (boost::format("multiplication of %1% and %2% results in an arithmetic underflow.") % left % right).str());
                 }
             } else if (right < -1) {
                 if (left > (numeric_limits<int64_t>::min() / right)) {
-                    throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+                    throw evaluator.create_exception(_context.left_position(), (boost::format("multiplication of %1% and %2% results in an arithmetic underflow.") % left % right).str());
                 }
                 if (left < (numeric_limits<int64_t>::max() / right)) {
-                    throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+                    throw evaluator.create_exception(_context.left_position(), (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
                 }
             } else if (right == -1) {
                 if (left == numeric_limits<int64_t>::min()) {
-                    throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+                    throw evaluator.create_exception(_context.left_position(), (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
                 }
             }
             return left * right;
@@ -54,12 +54,13 @@ namespace puppet { namespace runtime { namespace operators {
 
         result_type operator()(long double left, long double right) const
         {
+            auto& evaluator = _context.evaluator();
             feclearexcept(FE_OVERFLOW | FE_UNDERFLOW);
             long double result = left * right;
             if (fetestexcept(FE_OVERFLOW)) {
-                throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
+                throw evaluator.create_exception(_context.left_position(), (boost::format("multiplication of %1% and %2% results in an arithmetic overflow.") % left % right).str());
             } else if (fetestexcept(FE_UNDERFLOW)) {
-                throw evaluation_exception(_left_position, (boost::format("multiplication of %1% and %2% results in an arithmetic underflow.") % left % right).str());
+                throw evaluator.create_exception(_context.left_position(), (boost::format("multiplication of %1% and %2% results in an arithmetic underflow.") % left % right).str());
             }
             return result;
         }
@@ -71,7 +72,7 @@ namespace puppet { namespace runtime { namespace operators {
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(right)).str());
+            throw _context.evaluator().create_exception(_context.right_position(), (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <
@@ -81,23 +82,23 @@ namespace puppet { namespace runtime { namespace operators {
         >
         result_type operator()(long double const&, Right const& right) const
         {
-            throw evaluation_exception(_right_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(right)).str());
+            throw _context.evaluator().create_exception(_context.right_position(), (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(right)).str());
         }
 
         template <typename Left, typename Right>
         result_type operator()(Left const& left, Right const&) const
         {
-            throw evaluation_exception(_left_position, (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(left)).str());
+            throw _context.evaluator().create_exception(_context.left_position(), (boost::format("expected %1% for arithmetic multiplication but found %2%.") % types::numeric::name() % get_type(left)).str());
         }
 
-    private:
-        lexer::position const& _left_position;
-        lexer::position const& _right_position;
+     private:
+        binary_context& _context;
     };
 
     value multiply::operator()(binary_context& context) const
     {
-        return boost::apply_visitor(multiply_visitor(context.left_position(), context.right_position()), dereference(context.left()), dereference(context.right()));
+        multiply_visitor visitor(context);
+        return boost::apply_visitor(visitor, dereference(context.left()), dereference(context.right()));
     }
 
 }}}  // namespace puppet::runtime::operators

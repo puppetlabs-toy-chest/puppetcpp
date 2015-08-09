@@ -37,13 +37,13 @@ namespace puppet { namespace runtime { namespace evaluators {
     access_expression_evaluator::result_type access_expression_evaluator::operator()(string const& target)
     {
         if (_arguments.size() > 2) {
-            throw evaluation_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::string::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::string::name() % _arguments.size()).str());
         }
 
         // Get the index
         auto ptr = as<int64_t>(_arguments[0]);
         if (!ptr) {
-            throw evaluation_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type(_arguments[0])).str());
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type(_arguments[0])).str());
         }
 
         // If the index is negative, it's from the end of the string
@@ -57,7 +57,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         if (_arguments.size() == 2) {
             ptr = as<int64_t>(_arguments[1]);
             if (!ptr) {
-                throw evaluation_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type(_arguments[1])).str());
+                throw _evaluator.create_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type(_arguments[1])).str());
             }
             count = *ptr;
 
@@ -81,13 +81,13 @@ namespace puppet { namespace runtime { namespace evaluators {
     access_expression_evaluator::result_type access_expression_evaluator::operator()(values::array const& target)
     {
         if (_arguments.size() > 2) {
-            throw evaluation_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::array::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::array::name() % _arguments.size()).str());
         }
 
         // Get the index
         auto ptr = as<int64_t>(_arguments[0]);
         if (!ptr) {
-            throw evaluation_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type(_arguments[0])).str());
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected %1% for start index but found %2%.") % types::integer::name() % get_type(_arguments[0])).str());
         }
 
         // If the index is negative, it's from the end of the array
@@ -101,7 +101,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         if (_arguments.size() == 2) {
             ptr = as<int64_t>(_arguments[1]);
             if (!ptr) {
-                throw evaluation_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type(_arguments[1])).str());
+                throw _evaluator.create_exception(_positions[1], (boost::format("expected %1% for count but found %2%.") % types::integer::name() % get_type(_arguments[1])).str());
             }
             count = *ptr;
 
@@ -168,7 +168,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // At most 2 arguments to Integer
         if (_arguments.size() > 2) {
-            throw evaluation_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::integer::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::integer::name() % _arguments.size()).str());
         }
 
         int64_t from, to;
@@ -180,7 +180,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // At most 2 arguments to Float
         if (_arguments.size() > 2) {
-            throw evaluation_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::floating::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::floating::name() % _arguments.size()).str());
         }
 
         long double from, to;
@@ -192,7 +192,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // At most 2 arguments to String
         if (_arguments.size() > 2) {
-            throw evaluation_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::string::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::string::name() % _arguments.size()).str());
         }
 
         int64_t from, to;
@@ -204,7 +204,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // At most 1 arguments to Regexp
         if (_arguments.size() > 1) {
-            throw evaluation_exception(_positions[1], (boost::format("expected at most 1 arguments for %1% but %2% were given.") % types::regexp::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[1], (boost::format("expected at most 1 arguments for %1% but %2% were given.") % types::regexp::name() % _arguments.size()).str());
         }
 
         // Get the pattern argument; check for regex argument first
@@ -214,7 +214,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             pattern = regex->pattern();
         } else {
             if (!as<string>(_arguments[0])) {
-                throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% or %2% but found %3%.") % types::string::name() % types::regexp::name() % get_type(_arguments[0])).str());
+                throw _evaluator.create_exception(_positions[0], (boost::format("expected parameter to be %1% or %2% but found %3%.") % types::string::name() % types::regexp::name() % get_type(_arguments[0])).str());
             }
             pattern = mutate_as<string>(_arguments[0]);
         }
@@ -229,7 +229,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
         for (size_t i = 0; i < _arguments.size(); ++i) {
             if (!as<string>(_arguments[i])) {
-                throw evaluation_exception(_positions[i], (boost::format("expected %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
+                throw _evaluator.create_exception(_positions[i], (boost::format("expected %1% but found %2%.") % types::string::name() % get_type(_arguments[i])).str());
             }
             strings.emplace_back(mutate_as<string>(_arguments[i]));
         }
@@ -271,7 +271,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
 
             // Not any of the above types
-            throw evaluation_exception(_positions[i], (boost::format("expected %1%, %2%, or %3% but found %4%.") %
+            throw _evaluator.create_exception(_positions[i], (boost::format("expected %1%, %2%, or %3% but found %4%.") %
                     types::string::name() %
                     types::regexp::name() %
                     types::pattern::name() %
@@ -284,12 +284,12 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // At most 3 arguments to Array
         if (_arguments.size() > 3) {
-            throw evaluation_exception(_positions[3], (boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::array::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[3], (boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::array::name() % _arguments.size()).str());
         }
 
         // First argument should be a type
         if (!as<values::type>(_arguments[0])) {
-            throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
         }
 
         // Get the optional range
@@ -302,20 +302,20 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // At least 2 and at most 4 arguments to Hash
         if (_arguments.size() < 2) {
-            throw evaluation_exception(_expression.position(), (boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_expression.position(), (boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
         }
         if (_arguments.size() > 4) {
-            throw evaluation_exception(_positions[4], (boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[4], (boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str());
         }
 
         // First argument should be a type
         if (!as<values::type>(_arguments[0])) {
-            throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
         }
 
         // Second argument should be a type
         if (!as<values::type>(_arguments[1])) {
-            throw evaluation_exception(_positions[1], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[1])).str());
+            throw _evaluator.create_exception(_positions[1], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[1])).str());
         }
 
         // Get the optional range
@@ -336,7 +336,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             if (!as<values::type>(_arguments[i])) {
                 // There must be at most 2 more parameters (the range)
                 if ((i + 2) < _arguments.size()) {
-                    throw evaluation_exception(_positions[i + 2], (boost::format("expected at most %1% arguments for %2% but %3% were given.") % (i + 2) % types::tuple::name() % _arguments.size()).str());
+                    throw _evaluator.create_exception(_positions[i + 2], (boost::format("expected at most %1% arguments for %2% but %3% were given.") % (i + 2) % types::tuple::name() % _arguments.size()).str());
                 }
                 // Get the optional range
                 tie(from, to) = get_range<int64_t, types::integer>(true, i);
@@ -351,12 +351,12 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // Only 1 argument to Optional
         if (_arguments.size() > 1) {
-            throw evaluation_exception(_positions[2], (boost::format("expected 1 argument for %1% but %2% were given.") % types::optional::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected 1 argument for %1% but %2% were given.") % types::optional::name() % _arguments.size()).str());
         }
 
         // First argument should be a type
         if (!as<values::type>(_arguments[0])) {
-            throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
         }
 
         return types::optional(mutate_as<values::type>(_arguments[0]));
@@ -366,12 +366,12 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // Only 1 argument to Type
         if (_arguments.size() > 1) {
-            throw evaluation_exception(_positions[2], (boost::format("expected 1 argument for %1% but %2% were given.") % types::type::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected 1 argument for %1% but %2% were given.") % types::type::name() % _arguments.size()).str());
         }
 
         // First argument should be a type
         if (!as<values::type>(_arguments[0])) {
-            throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[0])).str());
         }
 
         return types::type(mutate_as<values::type>(_arguments[0]));
@@ -381,12 +381,12 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // Only 1 argument to Struct
         if (_arguments.size() > 1) {
-            throw evaluation_exception(_positions[2], (boost::format("expected 1 argument for %1% but %2% were given.") % types::structure::name() % _arguments.size()).str());
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected 1 argument for %1% but %2% were given.") % types::structure::name() % _arguments.size()).str());
         }
 
         // First argument should be a hash
         if (!as<values::hash>(_arguments[0])) {
-            throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::hash::name() % get_type(_arguments[0])).str());
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::hash::name() % get_type(_arguments[0])).str());
         }
 
         auto hash = mutate_as<values::hash>(_arguments[0]);
@@ -397,11 +397,11 @@ namespace puppet { namespace runtime { namespace evaluators {
             // Ensure the key is a string
             auto key = as<string>(kvp.first);
             if (!key) {
-                throw evaluation_exception(_positions[0], (boost::format("expected hash keys to be %1% but found %2%.") % types::string::name() % get_type(kvp.first)).str());
+                throw _evaluator.create_exception(_positions[0], (boost::format("expected hash keys to be %1% but found %2%.") % types::string::name() % get_type(kvp.first)).str());
             }
             // Ensure the value is a type
             if (!as<values::type>(kvp.second)) {
-                throw evaluation_exception(_positions[0], (boost::format("expected hash values to be %1% but found %2%.") % types::type::name() % get_type(kvp.second)).str());
+                throw _evaluator.create_exception(_positions[0], (boost::format("expected hash values to be %1% but found %2%.") % types::type::name() % get_type(kvp.second)).str());
             }
             types.insert(make_pair(*key, mutate_as<values::type>(kvp.second)));
         }
@@ -415,7 +415,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
         for (size_t i = 0; i < _arguments.size(); ++i) {
             if (!as<values::type>(_arguments[i])) {
-                throw evaluation_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[i])).str());
+                throw _evaluator.create_exception(_positions[i], (boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % get_type(_arguments[i])).str());
             }
             types.emplace_back(mutate_as<values::type>(_arguments[i]));
         }
@@ -442,7 +442,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             offset = 1;
         }
         if (type_name.empty()) {
-            throw evaluation_exception(_positions[0], (boost::format("expected parameter to be %1% or typed %2% but found %3%.") % types::string::name() % types::resource::name() % get_type(_arguments[0])).str());
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected parameter to be %1% or typed %2% but found %3%.") % types::string::name() % types::resource::name() % get_type(_arguments[0])).str());
         }
 
         // Check for Resource['typename']
@@ -488,7 +488,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                 add_resource_reference(result, type_name, element, position);
             }
         } else {
-            throw evaluation_exception(position, (boost::format("expected %1% for resource title but found %2%.") % types::string::name() % get_type(argument)).str());
+            throw _evaluator.create_exception(position, (boost::format("expected %1% for resource title but found %2%.") % types::string::name() % get_type(argument)).str());
         }
     }
 
@@ -502,7 +502,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                 add_class_reference(result, element, position);
             }
         } else {
-            throw evaluation_exception(position, (boost::format("expected %1% for class title but found %2%.") % types::string::name() % get_type(argument)).str());
+            throw _evaluator.create_exception(position, (boost::format("expected %1% for class title but found %2%.") % types::string::name() % get_type(argument)).str());
         }
     }
 

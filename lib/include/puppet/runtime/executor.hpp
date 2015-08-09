@@ -57,31 +57,29 @@ namespace puppet { namespace runtime {
         /**
          * Executes the expression with the given positional arguments.
          * @param arguments The positional arguments to set in the scope.
-         * @param argument_position The callback to use to get the position of an argument. If nullptr, the parameter position is used.
+         * @param create_exception The callback to use to create an exception for the given argument position and message.
          * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
         values::value execute(
             values::array& arguments,
-            std::function<boost::optional<lexer::position>(size_t)> const& argument_position = nullptr,
+            std::function<evaluation_exception(size_t, std::string)> const& create_exception = nullptr,
             std::shared_ptr<runtime::scope> const& scope = nullptr) const;
 
         /**
          * Executes the expression with the given resource's attributes.
          * @param resource The resource attributes to set in the scope.
-         * @param attribute_name_position The callback to use to get the location of an attribute's name.
-         * @param attribute_value_position The callback to use to get the location of an attribute's value.
+         * @param create_exception The callback to use to create an exception for the given argument name and message.
          * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
         values::value execute(
             runtime::resource const& resource,
-            std::function<lexer::position(std::string const&)> const& attribute_name_position,
-            std::function<lexer::position(std::string const&)> const& attribute_value_position,
+            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception = nullptr,
             std::shared_ptr<runtime::scope> const& scope = nullptr) const;
 
      private:
-        void validate_parameter(ast::parameter const& parameter, values::value const& value, boost::optional<lexer::position> const& value_position) const;
+        void validate_type(ast::parameter const& parameter, values::value const& value, std::function<void(std::string)> const& type_error) const;
         values::value evaluate_body() const;
 
         expression_evaluator& _evaluator;

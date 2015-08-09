@@ -58,7 +58,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
         auto it = unary_operators.find(expr.op());
         if (it == unary_operators.end()) {
-            throw evaluation_exception(expr.position(), "unexpected unary expression.");
+            throw _evaluator.create_exception(expr.position(), "unexpected unary expression.");
         }
 
         auto operand = boost::apply_visitor(*this, expr.operand());

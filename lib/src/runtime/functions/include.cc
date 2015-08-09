@@ -41,7 +41,7 @@ namespace puppet { namespace runtime { namespace functions {
         result_type operator()(types::resource const& argument) const
         {
             if (!argument.is_class()) {
-                throw evaluation_exception(_context.position(_index), (boost::format("expected Class %1% for argument but found %2%.") % types::resource::name() % argument).str());
+                throw _context.evaluator().create_exception(_context.position(_index), (boost::format("expected Class %1% for argument but found %2%.") % types::resource::name() % argument).str());
             }
             declare_class(types::klass(argument.title()));
         }
@@ -49,7 +49,7 @@ namespace puppet { namespace runtime { namespace functions {
         template <typename T>
         result_type operator()(T const& argument) const
         {
-            throw evaluation_exception(_context.position(_index),
+            throw _context.evaluator().create_exception(_context.position(_index),
                 (boost::format("expected %1%, %2%, %3%, or Class %4% for argument but found %5%.") %
                    types::string::name() %
                    types::array::name() %
@@ -63,16 +63,16 @@ namespace puppet { namespace runtime { namespace functions {
         {
             auto& evaluator = _context.evaluator();
             if (klass.title().empty()) {
-                throw evaluation_exception(_context.position(_index), "cannot include a Class with an unspecified title.");
+                throw evaluator.create_exception(_context.position(_index), "cannot include a Class with an unspecified title.");
             }
 
             auto catalog = evaluator.catalog();
             if (!catalog->is_class_defined(klass)) {
-                throw evaluation_exception(_context.position(_index), (boost::format("cannot include class '%1%' because the class has not been defined.") % klass.title()).str());
+                throw evaluator.create_exception(_context.position(_index), (boost::format("cannot include class '%1%' because the class has not been defined.") % klass.title()).str());
             }
 
             if (!catalog->declare_class(evaluator.context(), klass, evaluator.path(), _context.position(_index).line())) {
-                throw evaluation_exception(_context.position(_index), (boost::format("failed to include class '%1%'.") % klass.title()).str());
+                throw evaluator.create_exception(_context.position(_index), (boost::format("failed to include class '%1%'.") % klass.title()).str());
             }
         }
 
@@ -82,12 +82,13 @@ namespace puppet { namespace runtime { namespace functions {
 
     value include::operator()(call_context& context) const
     {
+        auto& evaluator = context.evaluator();
         auto& arguments = context.arguments();
         if (arguments.empty()) {
-            throw evaluation_exception(context.position(), (boost::format("expected at least one argument to '%1%' function.") % context.name()).str());
+            throw evaluator.create_exception(context.position(), (boost::format("expected at least one argument to '%1%' function.") % context.name()).str());
         }
         if (!context.evaluator().catalog()) {
-            throw evaluation_exception(context.position(), (boost::format("cannot call '%1%' function: catalog functions are not supported.") % context.name()).str());
+            throw evaluator.create_exception(context.position(), (boost::format("cannot call '%1%' function: catalog functions are not supported.") % context.name()).str());
         }
         for (size_t i = 0; i < arguments.size(); ++i) {
             boost::apply_visitor(include_visitor(context, i), arguments[i]);

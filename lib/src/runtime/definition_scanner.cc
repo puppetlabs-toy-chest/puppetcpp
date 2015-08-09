@@ -304,11 +304,11 @@ namespace puppet { namespace runtime {
         {
             // Ensure the name is valid
             if (boost::starts_with(expr.name().value(), "::")) {
-                throw evaluation_exception(expr.name().position(), (boost::format("'%1%' is not a valid class name.") % expr.name()).str());
+                throw evaluation_exception(_compilation_context, expr.name().position(), (boost::format("'%1%' is not a valid class name.") % expr.name()).str());
             }
 
             if (!can_define()) {
-                throw evaluation_exception(expr.position(), "classes can only be defined at top-level scope or inside another class.");
+                throw evaluation_exception(_compilation_context, expr.position(), "classes can only be defined at top-level scope or inside another class.");
             }
 
             // Define the class in the context
@@ -344,11 +344,11 @@ namespace puppet { namespace runtime {
         {
             // Ensure the name is valid
             if (boost::starts_with(expr.name().value(), "::")) {
-                throw evaluation_exception(expr.name().position(), (boost::format("'%1%' is not a valid defined type name.") % expr.name()).str());
+                throw evaluation_exception(_compilation_context, expr.name().position(), (boost::format("'%1%' is not a valid defined type name.") % expr.name()).str());
             }
 
             if (!can_define()) {
-                throw evaluation_exception(expr.position(), "defined types can only be defined at top-level scope or inside a class.");
+                throw evaluation_exception(_compilation_context, expr.position(), "defined types can only be defined at top-level scope or inside a class.");
             }
 
             // Define the type in the context
@@ -380,7 +380,7 @@ namespace puppet { namespace runtime {
         result_type operator()(ast::node_definition_expression const& expr)
         {
             if (!can_define()) {
-                throw evaluation_exception(expr.position(), "node definitions can only be defined at top-level scope or inside a class.");
+                throw evaluation_exception(_compilation_context, expr.position(), "node definitions can only be defined at top-level scope or inside a class.");
             }
 
             // Define the node in the context

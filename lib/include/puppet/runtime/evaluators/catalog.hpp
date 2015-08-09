@@ -41,10 +41,10 @@ namespace puppet { namespace runtime { namespace evaluators {
         result_type operator()(ast::collection_expression const& expr);
 
         static bool is_default_expression(ast::primary_expression const& expr);
-        static ast::resource_body const* find_default_body(ast::resource_expression const& expr);
+        ast::resource_body const* find_default_body(ast::resource_expression const& expr);
         std::shared_ptr<runtime::attributes> evaluate_attributes(ast::resource_body const* body, std::shared_ptr<runtime::attributes const> parent = nullptr);
         values::value evaluate_attribute(ast::attribute_expression const& attribute);
-        static lexer::position find_attribute_position(bool name_position, std::string const& name, ast::resource_body const& current, ast::resource_body const* default_body = nullptr);
+        static lexer::position find_attribute_position(bool for_value, std::string const& name, ast::resource_body const& current, ast::resource_body const* default_body = nullptr);
 
         template <typename T>
         bool for_each(values::value& parameter, std::function<void(T&)> const& callback)

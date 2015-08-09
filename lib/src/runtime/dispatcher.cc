@@ -132,7 +132,8 @@ namespace puppet { namespace runtime {
         return _lambda_given;
     }
 
-    dispatcher::dispatcher(string const& name, lexer::position const& position) :
+    dispatcher::dispatcher(expression_evaluator& evaluator, string const& name, lexer::position const& position) :
+        _evaluator(evaluator),
         _name(name),
         _position(position)
     {
@@ -158,13 +159,12 @@ namespace puppet { namespace runtime {
         // Find the function
         auto it = functions.find(_name);
         if (it == functions.end()) {
-            throw evaluation_exception(_position, (boost::format("unknown function '%1%'.") % _name).str());
+            throw _evaluator.create_exception(_position, (boost::format("unknown function '%1%'.") % _name).str());
         }
         _function = &it->second;
     }
 
     value dispatcher::dispatch(
-        expression_evaluator& evaluator,
         optional<vector<ast::expression>> const& arguments,
         optional<ast::lambda> const& lambda,
         value* first_value,
@@ -172,7 +172,7 @@ namespace puppet { namespace runtime {
         lexer::position const* first_position) const
     {
         // Dispatch the call
-        call_context context(evaluator, _name, _position, arguments, lambda, first_value, first_expression, first_position);
+        call_context context(_evaluator, _name, _position, arguments, lambda, first_value, first_expression, first_position);
         return (*_function)(context);
     }
 
