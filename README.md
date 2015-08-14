@@ -33,10 +33,10 @@ Expression evaluator status:
 * [x] <= operator
 * [x] > operator
 * [x] >= operator
-* [ ] -> operator
-* [ ] ~> operator
-* [ ] <- operator
-* [ ] <~ operator
+* [x] -> operator
+* [x] ~> operator
+* [x] <- operator
+* [x] <~ operator
 * [x] `in` operator
 * [x] if expressions
 * [x] unless expressions

@@ -7,7 +7,9 @@
 #include "../lexer/position.hpp"
 #include "../compiler/context.hpp"
 #include "values/value.hpp"
+#include <boost/graph/adjacency_list.hpp>
 #include <string>
+#include <vector>
 #include <functional>
 #include <unordered_map>
 
@@ -56,9 +58,10 @@ namespace puppet { namespace runtime {
          * If the attribute does not exist, the attribute is set to the value as an array.
          * @param name The name of the attribute to append to.
          * @param value The value to append.
+         * @param append_duplicates True if duplicate values in the resulting array are appended or false if they are not.
          * @return Returns true if the value was appended or false if the attribute already exists and is not an array.
          */
-        bool append(std::string const& name, values::value value);
+        bool append(std::string const& name, values::value value, bool append_duplicates = true);
 
         /**
          * Enumerates each stored attribute.
@@ -69,6 +72,33 @@ namespace puppet { namespace runtime {
      private:
         std::shared_ptr<attributes const> _parent;
         std::unordered_map<std::string, std::shared_ptr<values::value>> _values;
+    };
+
+    /**
+     * Represents the possible resource relationship types.
+     */
+    enum class relationship
+    {
+        /**
+         * Class or defined type containment.
+         */
+        contains,
+        /**
+         * The "before" metaparam on source or -> operator.
+         */
+        before,
+        /**
+         * The "require" metaparam on target or <- operator.
+         */
+        require,
+        /**
+         * The "notify" metaparam on source or ~> operator.
+         */
+        notify,
+        /**
+         * The "subscribe" metaparam on target or <~ operator.
+         */
+        subscribe
     };
 
     /**
@@ -107,7 +137,7 @@ namespace puppet { namespace runtime {
 
         /**
          * Gets the path of the file where the resource was declared.
-         * @return Returns the path of the file where the resource was declared or nullptr if not declared in a source file.
+         * @return Returns the path of the file where the resource was declared.
          */
         std::shared_ptr<std::string> const& path() const;
 
@@ -148,11 +178,17 @@ namespace puppet { namespace runtime {
         static bool is_metaparameter(std::string const& name);
 
      private:
+        friend struct catalog;
+
+        size_t vertex_id() const;
+        void vertex_id(size_t id);
+
         runtime::catalog& _catalog;
         types::resource _type;
         std::shared_ptr<std::string> _path;
         size_t _line;
         std::shared_ptr<runtime::attributes> _attributes;
+        size_t _vertex_id;
         bool _exported;
     };
 
@@ -331,6 +367,12 @@ namespace puppet { namespace runtime {
         ast::node_definition_expression const& _expression;
     };
 
+
+    /**
+     * Represnce a resource dependency graph.
+     */
+    using dependency_graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, resource*, relationship>;
+
     /**
      * Represents the Puppet catalog.
      */
@@ -340,6 +382,13 @@ namespace puppet { namespace runtime {
          * Constructs a catalog.
          */
         catalog();
+
+        /**
+         * Gets the catalog's dependency graph.
+         * The dependency graph is only populated after a call to catalog::finalize().
+         * @return Returns the catalog's dependency graph.
+         */
+        dependency_graph const& graph() const;
 
         /**
          * Finds a resource in the catalog.
@@ -455,8 +504,18 @@ namespace puppet { namespace runtime {
          */
         bool evaluate_node(runtime::context& context, compiler::node const& node);
 
+        /**
+         * Finalizes the catalog.
+         * Populates the dependency graph and any needed default resources.
+         */
+        void finalize();
+
      private:
         void validate_parameters(bool klass, std::shared_ptr<compiler::context> const& context, std::vector<ast::parameter> const& parameters);
+        void populate_graph();
+        void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
+        void add_relationship(runtime::relationship relationship, runtime::resource const& source, runtime::resource const& target);
+        void detect_cycles();
 
         std::unordered_map<std::string, std::unordered_map<std::string, resource>> _resources;
         std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
@@ -465,6 +524,7 @@ namespace puppet { namespace runtime {
         std::unordered_map<std::string, size_t> _named_nodes;
         std::vector<std::pair<values::regex, size_t>> _regex_node_definitions;
         ssize_t _default_node_index;
+        dependency_graph _graph;
     };
 
 }}  // puppet::runtime

@@ -74,13 +74,13 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/operators/equals.cc
     src/runtime/operators/greater.cc
     src/runtime/operators/greater_equal.cc
+    src/runtime/operators/in.cc
     src/runtime/operators/left_shift.cc
     src/runtime/operators/less.cc
     src/runtime/operators/less_equal.cc
     src/runtime/operators/logical_and.cc
     src/runtime/operators/logical_not.cc
     src/runtime/operators/logical_or.cc
-    src/runtime/operators/in.cc
     src/runtime/operators/match.cc
     src/runtime/operators/minus.cc
     src/runtime/operators/modulo.cc
@@ -89,6 +89,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/operators/not_equals.cc
     src/runtime/operators/not_match.cc
     src/runtime/operators/plus.cc
+    src/runtime/operators/relationship.cc
     src/runtime/operators/right_shift.cc
     src/runtime/operators/splat.cc
     src/runtime/operators/unary_context.cc

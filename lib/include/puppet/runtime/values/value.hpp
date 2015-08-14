@@ -12,10 +12,12 @@
 #include "undef.hpp"
 #include "variable.hpp"
 #include "../../cast.hpp"
+#include "../../lexer/position.hpp"
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
 #include <string>
 #include <cstddef>
+#include <functional>
 
 namespace puppet { namespace runtime { namespace values {
 
@@ -319,5 +321,14 @@ namespace puppet { namespace runtime { namespace values {
     {
         return boost::apply_visitor(std::bind(equality_visitor(), std::placeholders::_1, std::ref(right)), left);
     }
+
+    /**
+     * Enumerates each "resource" type in the given value.
+     * This expects the value to be an Variant[String, Resource, Array[Variant[String, Resource]].
+     * @param value The value to enumerate the resources for.
+     * @param callback The callback to invoke for each resource.
+     * @param error The callback to invoke upon error.
+     */
+    void each_resource(value const& value, std::function<void(types::resource const&)> const& callback, std::function<void(std::string const&)> const& error);
 
 }}}  // namespace puppet::runtime::values

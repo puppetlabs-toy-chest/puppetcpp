@@ -8,8 +8,10 @@
 #include <boost/functional/hash.hpp>
 #include <boost/variant.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/optional.hpp>
 #include <ostream>
 #include <string>
+#include <regex>
 
 namespace puppet { namespace runtime { namespace types {
 
@@ -141,6 +143,34 @@ namespace puppet { namespace runtime { namespace types {
             }
             // Otherwise, the other one is a specialization if this does not have a title but the other one does
             return _title.empty() && !resource->title().empty();
+        }
+
+        /**
+         * Parses a resource type name as a string.
+         * @param str The string to parse.
+         * @return Returns the resource type if parsing succeeds or boost::none if not.
+         */
+        static boost::optional<basic_resource> parse(std::string const& str)
+        {
+            using namespace std;
+
+            static regex resource_regex("^((?:(?:::)?[A-Z]\\w*)+)\\[([^\\]]+)\\]$");
+
+            smatch matches;
+            if (!regex_match(str, matches, resource_regex) || matches.size() != 3) {
+                return boost::none;
+            }
+
+            string title = matches[2].str();
+            boost::trim(title);
+            // Strip quotes if present in the title
+            if (!title.empty()) {
+                if ((title.front() == '"' && title.back() == '"') ||
+                    (title.front() == '\'' && title.back() == '\'')) {
+                    title = title.substr(1, title.size() - 2);
+                }
+            }
+            return basic_resource(matches[1].str(), rvalue_cast(title));
         }
 
      private:
