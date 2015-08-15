@@ -92,12 +92,24 @@ namespace puppet { namespace runtime { namespace evaluators {
                 types::resource type(type_name, rvalue_cast(resource_title));
                 runtime::resource* resource = nullptr;
                 if (is_class) {
+                    // Ensure the class hasn't already been declared
+                    resource = catalog->find_resource(type);
+                    if (resource) {
+                        throw _evaluator.create_exception(body.position(), (boost::format("class '%1%' was previously declared at %2%:%3%.") % type.title() % *resource->path() % resource->line()).str());
+                    }
+
                     // Declare the class
                     resource = catalog->declare_class(_evaluator.context(), types::klass(type.title()), _evaluator.path(), body.position().line(), attributes, create_exception);
                     if (!resource) {
                         throw _evaluator.create_exception(body.position(), (boost::format("failed to declare class '%1%'.") % type.title()).str());
                     }
                 } else if (is_defined_type) {
+                    // Ensure the defined type hasn't already been declared
+                    resource = catalog->find_resource(type);
+                    if (resource) {
+                        throw _evaluator.create_exception(body.position(), (boost::format("defined type '%1%' was previously declared at %2%:%3%.") % type.title() % *resource->path() % resource->line()).str());
+                    }
+
                     // Declare the defined type
                     resource = catalog->declare_defined_type(_evaluator.context(), type_name, type.title(), _evaluator.path(), body.position().line(), attributes, create_exception);
                     if (!resource) {
@@ -109,7 +121,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     if (!resource) {
                         resource = catalog->find_resource(type);
                         if (resource) {
-                            throw _evaluator.create_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % type % resource->path() % resource->line()).str());
+                            throw _evaluator.create_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % type % *resource->path() % resource->line()).str());
                         }
                         throw _evaluator.create_exception(body.position(), (boost::format("failed to add resource %1% to catalog.") % type).str());
                     }
