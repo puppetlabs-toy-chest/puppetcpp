@@ -26,7 +26,7 @@ namespace puppet { namespace runtime {
         return lambda->parameters();
     }
 
-    static optional<vector<ast::expression>> const& lamda_body(optional<ast::lambda> const& lambda)
+    static optional<vector<ast::expression>> const& lambda_body(optional<ast::lambda> const& lambda)
     {
         static optional<vector<ast::expression>> none;
         if (!lambda) {
@@ -47,7 +47,7 @@ namespace puppet { namespace runtime {
             _evaluator(evaluator),
             _name(name),
             _position(position),
-            _executor(evaluator, _position, lambda_parameters(lambda), lamda_body(lambda)),
+            _lambda(evaluator, _position, lambda_parameters(lambda), lambda_body(lambda)),
             _lambda_given(lambda)
     {
         _arguments.reserve((arguments ? arguments->size() : 0) + (first_value ? 1 : 0));
@@ -104,10 +104,10 @@ namespace puppet { namespace runtime {
         return _position;
     }
 
-        lexer::position const& call_context::position(size_t index) const
+    lexer::position const& call_context::position(size_t index) const
     {
         if (index >= _positions.size()) {
-            throw runtime_error("argument index out of range.");
+            return _position;
         }
         return _positions[index];
     }
@@ -122,14 +122,43 @@ namespace puppet { namespace runtime {
         return _arguments;
     }
 
-    runtime::executor const& call_context::lambda() const
-    {
-        return _executor;
-    }
-
     bool call_context::lambda_given() const
     {
         return _lambda_given;
+    }
+
+    size_t call_context::lambda_parameter_count() const
+    {
+        return _lambda.parameter_count();
+    }
+
+    lexer::position const& call_context::lambda_position() const
+    {
+        return _lambda.position();
+    }
+
+    values::value call_context::yield(values::array& arguments) const
+    {
+        if (!_lambda_given) {
+            return undef();
+        }
+
+        // Execute the lambda
+        try {
+            return _lambda.execute(arguments);
+        } catch (argument_exception const& ex) {
+            throw _evaluator.create_exception(_lambda.position(ex.index()), ex.what());
+        }
+    }
+
+    values::value call_context::yield_without_catch(values::array& arguments) const
+    {
+        if (!_lambda_given) {
+            return undef();
+        }
+
+        // Execute the lambda
+        return _lambda.execute(arguments);
     }
 
     dispatcher::dispatcher(expression_evaluator& evaluator, string const& name, lexer::position const& position) :
@@ -171,8 +200,9 @@ namespace puppet { namespace runtime {
         ast::primary_expression const* first_expression,
         lexer::position const* first_position) const
     {
-        // Dispatch the call
         call_context context(_evaluator, _name, _position, arguments, lambda, first_value, first_expression, first_position);
+
+        // Dispatch the call
         return (*_function)(context);
     }
 

@@ -10,7 +10,7 @@ namespace puppet { namespace runtime { namespace operators {
     static value add_relationship(binary_context& context, string const& attribute_name)
     {
         auto& evaluator = context.evaluator();
-        auto catalog = evaluator.context().catalog();
+        auto catalog = evaluator.evaluation_context().catalog();
         if (!catalog) {
             throw evaluator.create_exception(context.left_position(), "relationship expressions are not supported.");
         }

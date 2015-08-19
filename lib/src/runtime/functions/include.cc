@@ -1,6 +1,5 @@
 #include <puppet/runtime/functions/include.hpp>
-#include <puppet/runtime/executor.hpp>
-#include <puppet/cast.hpp>
+#include <puppet/runtime/definition_scanner.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -61,19 +60,22 @@ namespace puppet { namespace runtime { namespace functions {
      private:
         void declare_class(types::klass const& klass) const
         {
+            types::resource type("class", klass.title());
+
             auto& evaluator = _context.evaluator();
-            if (klass.title().empty()) {
-                throw evaluator.create_exception(_context.position(_index), "cannot include a Class with an unspecified title.");
+            if (!type.fully_qualified()) {
+                throw evaluator.create_exception(_context.position(_index), "cannot include a class with an unspecified title.");
             }
 
-            auto catalog = evaluator.catalog();
-            if (!catalog->is_class_defined(klass)) {
-                throw evaluator.create_exception(_context.position(_index), (boost::format("cannot include class '%1%' because the class has not been defined.") % klass.title()).str());
+            // Check to see if the class already exists in the catalog; if so, do nothing
+            auto& context = evaluator.evaluation_context();
+            auto catalog = context.catalog();
+            if (catalog->find_resource(type)) {
+                return;
             }
 
-            if (!catalog->declare_class(evaluator.context(), klass, evaluator.path(), _context.position(_index).line())) {
-                throw evaluator.create_exception(_context.position(_index), (boost::format("failed to include class '%1%'.") % klass.title()).str());
-            }
+            // Declare the class
+            catalog->declare_class(context, type, evaluator.compilation_context(), _context.position(_index));
         }
 
         call_context& _context;
@@ -87,7 +89,7 @@ namespace puppet { namespace runtime { namespace functions {
         if (arguments.empty()) {
             throw evaluator.create_exception(context.position(), (boost::format("expected at least one argument to '%1%' function.") % context.name()).str());
         }
-        if (!context.evaluator().catalog()) {
+        if (!evaluator.evaluation_context().catalog()) {
             throw evaluator.create_exception(context.position(), (boost::format("cannot call '%1%' function: catalog functions are not supported.") % context.name()).str());
         }
         for (size_t i = 0; i < arguments.size(); ++i) {

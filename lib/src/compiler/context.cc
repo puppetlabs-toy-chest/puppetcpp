@@ -54,13 +54,14 @@ namespace puppet { namespace compiler {
 
     void context::log(logging::level level, lexer::position const& position, std::string const& message)
     {
+        if (!_logger.would_log(level)) {
+            return;
+        }
+
         string text;
         size_t column;
         tie(text, column) = get_text_and_column(_stream, position.offset());
-
-        if (_logger.would_log(level)) {
-            _logger.log(level, position.line(), column, text, *_path, "node '%1%': %2%", _node.name(), message);
-        }
+        _logger.log(level, position.line(), column, text, *_path, "node '%1%': %2%", _node.name(), message);
     }
 
     compilation_exception context::create_exception(lexer::position const& position, string const& message)

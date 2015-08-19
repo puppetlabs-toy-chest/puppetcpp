@@ -5,13 +5,25 @@
 #pragma once
 
 #include "../lexer/position.hpp"
-#include "../compiler/context.hpp"
+#include "../ast/syntax_tree.hpp"
 #include "values/value.hpp"
+#include <boost/optional.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <string>
 #include <vector>
 #include <functional>
 #include <unordered_map>
+#include <exception>
+
+namespace puppet { namespace compiler {
+
+    // Forward declaration of compiler context.
+    struct context;
+
+    // Forward declaration of node.
+    struct node;
+
+}}  // namespace puppet::compiler
 
 namespace puppet { namespace runtime {
 
@@ -23,9 +35,6 @@ namespace puppet { namespace runtime {
 
     // Forward declaration of scope.
     struct scope;
-
-    // Forward declaration of evaluation_exception.
-    struct evaluation_exception;
 
     /**
      * Represents a collection of resource attributes.
@@ -193,24 +202,17 @@ namespace puppet { namespace runtime {
     };
 
     /**
-     * Represents a class definition in a catalog.
+     * Represents a class definition.
      */
     struct class_definition
     {
         /**
          * Constructs a class definition.
-         * @param catalog The catalog containing this class definition.
          * @param klass The qualified class name for the class.
          * @param context The compilation context for the class.
          * @param expression The class definition expression.
          */
-        class_definition(runtime::catalog& catalog, types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const* expression);
-
-        /**
-         * Gets the catalog containing this class definition.
-         * @return Returns the catalog containing this class definition.
-         */
-        runtime::catalog const& catalog() const;
+        class_definition(types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const& expression);
 
         /**
          * Gets the qualified class type for this class definition.
@@ -219,16 +221,16 @@ namespace puppet { namespace runtime {
         types::klass const& klass() const;
 
         /**
-         * Gets the parent class or nullptr if there is no parent class.
-         * @return Returns the parent class or nullptr if there is no parent class.
+         * Gets the optional parent class.
+         * @return Returns the optional parent class.
          */
-        types::klass const* parent() const;
+        boost::optional<types::klass> const& parent() const;
 
         /**
          * Gets the path of the file containing the class definition.
-         * @return Returns the path of the file containing the class definition.
+         * @return Returns the path of the file containing the class definition or nullptr if not defined in a file.
          */
-        std::string const& path() const;
+        std::shared_ptr<std::string> const& path() const;
 
         /**
          * Gets the line number of the class definition.
@@ -236,30 +238,14 @@ namespace puppet { namespace runtime {
          */
         size_t line() const;
 
-        /**
-         * Determines if the class has been evaluated.
-         * @return Returns true if the class has been evaluated or false if it has not.
-         */
-        bool evaluated() const;
-
-        /**
-         * Evaluates the class.
-         * @param context The evaluation context.
-         * @param resource The resource representing the class.
-         * @param create_exception The callback to use to create an exception for the given argument name and message.
-         * @return Returns true if the evaluation was successful or false if the evaluation failed.
-         */
-        bool evaluate(
-            runtime::context& context,
-            runtime::resource const& resource,
-            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception);
-
      private:
+        friend struct catalog;
+        void evaluate(runtime::context& context, runtime::resource& resource);
+
         std::shared_ptr<runtime::scope> evaluate_parent(runtime::context& context);
 
-        runtime::catalog& _catalog;
         types::klass _klass;
-        types::klass _parent;
+        boost::optional<types::klass> _parent;
         std::shared_ptr<compiler::context> _context;
         ast::class_definition_expression const* _expression;
         std::shared_ptr<std::string> _path;
@@ -267,24 +253,17 @@ namespace puppet { namespace runtime {
     };
 
     /**
-     * Represents a defined type in a catalog.
+     * Represents a defined type.
      */
     struct defined_type
     {
         /**
          * Constructs a defined type.
-         * @param catalog The catalog containing the defined type.
          * @param type The resource type for the defined type.
          * @param context The compilation context for the defined type.
          * @param expression The defined type expression.
          */
-        defined_type(runtime::catalog& catalog, std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
-
-        /**
-         * Gets the catalog containing this defined type.
-         * @return Returns the catalog containing this defined type.
-         */
-        runtime::catalog const& catalog() const;
+        defined_type(std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
 
         /**
          * Gets the resource type of the defined type.
@@ -296,7 +275,7 @@ namespace puppet { namespace runtime {
          * Gets the path of the file containing the defined type.
          * @return Returns the path of the file containing the defined type.
          */
-        std::string const& path() const;
+        std::shared_ptr<std::string> const& path() const;
 
         /**
          * Gets the line number of the defined type.
@@ -304,69 +283,46 @@ namespace puppet { namespace runtime {
          */
         size_t line() const;
 
-        /**
-         * Evaluates the defined type.
-         * @param context The evaluation context.
-         * @param resource The resource for the defined type.
-         * @param create_exception The callback to use to create an exception for the given argument name and message.
-         * @return Returns true if the evaluation was successful or false if the evaluation failed.
-         */
-        bool evaluate(
-            runtime::context& context,
-            runtime::resource const& resource,
-            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception);
+     private:
+        friend struct catalog;
+        void evaluate(runtime::context& context, runtime::resource& resource);
 
-    private:
-        runtime::catalog& _catalog;
         std::string _type;
         std::shared_ptr<compiler::context> _context;
         ast::defined_type_expression const& _expression;
     };
 
     /**
-     * Represents a node definition in a catalog.
+     * Represents a node definition.
      */
     struct node_definition
     {
         /**
          * Constructs a node definition.
-         * @param catalog The catalog containing the node definition.
          * @param context The compilation context for the node definition.
          * @param expression The node definition expression.
          */
-        node_definition(runtime::catalog& catalog, std::shared_ptr<compiler::context> context, ast::node_definition_expression const& expression);
+        node_definition(std::shared_ptr<compiler::context> context, ast::node_definition_expression const& expression);
 
         /**
-         * Gets the catalog containing this node definition.
-         * @return Returns the catalog containing this node definition.
+         * Gets the compilation context for the node definition.
+         * @return Returns the compilation context for the node definition.
          */
-        runtime::catalog const& catalog() const;
+        std::shared_ptr<compiler::context> const& context() const;
 
         /**
-         * Gets the path of the file containing the node definition.
-         * @return Returns the path of the file containing the node definition.
+         * Gets the position of the node definition.
+         * @return Returns the position of the node definition.
          */
-        std::string const& path() const;
-
-        /**
-         * Gets the line number of the node definition.
-         * @return Returns the line number of the node definition.
-         */
-        size_t line() const;
-
-        /**
-         * Evaluates the node definition.
-         * @param context The evaluation context.
-         * @return Returns true if the evaluation succeeded or false if it did not.
-         */
-        bool evaluate(runtime::context& context);
+        lexer::position const& position() const;
 
      private:
-        runtime::catalog& _catalog;
+        friend struct catalog;
+        void evaluate(runtime::context& context);
+
         std::shared_ptr<compiler::context> _context;
         ast::node_definition_expression const& _expression;
     };
-
 
     /**
      * Represnce a resource dependency graph.
@@ -378,11 +334,6 @@ namespace puppet { namespace runtime {
      */
     struct catalog
     {
-        /**
-         * Constructs a catalog.
-         */
-        catalog();
-
         /**
          * Gets the catalog's dependency graph.
          * The dependency graph is only populated after a call to catalog::finalize().
@@ -400,13 +351,13 @@ namespace puppet { namespace runtime {
         /**
          * Adds a resource to the catalog.
          * @param type The qualified resource type to add.
-         * @param path The path of the file defining the resource.
-         * @param line The line defining the resource.
+         * @param path The path of the file declaring the resource.
+         * @param line The line declaring the resource.
          * @param attributes The resource's initial attributes.
          * @param exported True if the resource is exported or false if it is not.
-         * @return Returns the new resource in the catalog or nullptr if the resource already exists in the catalog.
+         * @return Returns the resource that was added.
          */
-        runtime::resource* add_resource(
+        runtime::resource& add_resource(
             types::resource type,
             std::shared_ptr<std::string> path,
             size_t line,
@@ -414,104 +365,99 @@ namespace puppet { namespace runtime {
             bool exported = false);
 
         /**
-         * Defines a class in the evaluation context.
+         * Finds the definitions of a class.
+         * @param klass The class to find.
+         * @return Returns the class definitions if defined or nullptr if not defined.
+         */
+        std::vector<class_definition> const* find_class(types::klass const& klass);
+
+        /**
+         * Defines a class.
+         * Multiple class definitions may exist for the same class.
          * @param klass The class to define.
-         * @param context The compilation context.
+         * @param context The compilation context where the class is defined.
          * @param expression The class definition expression.
          */
-        void define_class(types::klass klass, std::shared_ptr<compiler::context> context, ast::class_definition_expression const& expression);
+        void define_class(
+            types::klass klass,
+            std::shared_ptr<compiler::context> const& context,
+            ast::class_definition_expression const& expression);
 
         /**
          * Declares a class.
-         * If the class is already declared, the existing class will be returned.
-         * @param context The evaluation context to use.
-         * @param klass The class to declare.
-         * @param path The path to the file that is declaring the resource or nullptr if not declared in a source file.
-         * @param line The line in the file where the class is being declared or 0 if not declared in a source file.
+         * If the class is already declared, the existing class resource will be returned.
+         * @param evaluation_context The current evaluation context.
+         * @param type The resource type for the class.
+         * @param compilation_context The compilation context where the class is being declared.
+         * @param position The position where the class is being declared.
          * @param attributes The class resource's attributes or nullptr for an empty set.
-         * @param create_exception The callback to use to create an exception for the given argument name and message.
-         * @return Returns the resource that was added for the class or nullptr if the class failed to evaluate.
+         * @return Returns the class resource that was added to the catalog.
          */
-        runtime::resource* declare_class(
-            runtime::context& context,
-            types::klass const& klass,
-            std::shared_ptr<std::string> path = nullptr,
-            size_t line = 0,
-            std::shared_ptr<runtime::attributes> attributes = nullptr,
-            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception = nullptr);
+        runtime::resource& declare_class(
+            runtime::context& evaluation_context,
+            types::resource type,
+            std::shared_ptr<compiler::context> const& compilation_context,
+            lexer::position const& position,
+            std::shared_ptr<runtime::attributes> attributes = nullptr);
 
         /**
-         * Determines if a class is defined.
-         * @param klass The class to check.
-         * @return Returns true if the class is defined or false if not.
+         * Finds a defined type's definition.
+         * @param type The type name of the defined type.
+         * @return Returns the defined type's definition if defined or nullptr if not defined.
          */
-        bool is_class_defined(types::klass const& klass) const;
+        defined_type const* find_defined_type(std::string const& type);
 
         /**
-         * Determines if a class is declared.
-         * @param klass The class to check.
-         * @return Returns true if the class is declared or false if not.
-         */
-        bool is_class_declared(types::klass const& klass) const;
-
-        /**
-         * Defines a (defined) type in the evaluation context.
-         * @param type The type to define.
-         * @param context The compilation context.
+         * Defines a defined type.
+         * Only one definition of a defined type may exist.
+         * @param type The name of the defined type.
+         * @param context The compilation context where the defined type is defined.
          * @param expression The defined type expression.
          */
-        void define_type(std::string type, std::shared_ptr<compiler::context> context, ast::defined_type_expression const& expression);
-
-        /**
-         * Determines if the given type name is a defined type.
-         * @param type The type name to check.
-         * @return Returns true if the type is a defined type or false if it is not.
-         */
-        bool is_defined_type(std::string const& type) const;
+        void define_type(
+            std::string type,
+            std::shared_ptr<compiler::context> const& context,
+            ast::defined_type_expression const& expression);
 
         /**
          * Declares a defined type.
-         * @param context The evaluation context to use.
-         * @param type The defined type name.
-         * @param title The resource title.
-         * @param path The path to the file that is declaring the defined type or nullptr if not declared in a source file.
-         * @param line The line in the file where the defined type is being declared or 0 if not declared in a source file.
+         * A defined type cannot be declared more than once.
+         * @param evaluation_context The current evaluation context.
+         * @param type The resource type for the defined type.
+         * @param compilation_context The compilation context where the class is being declared.
+         * @param position The position where the class is being declared.
          * @param attributes The defined type resource's attributes or nullptr for an empty set.
-         * @param create_exception The callback to use to create an exception for the given argument name and message.
-         * @return Returns the resource that was added to the catalog or nullptr if the defined type failed to evaluate.
+         * @return Returns the defined type resource that was added to the catalog.
          */
-        runtime::resource* declare_defined_type(
-            runtime::context& context,
-            std::string const& type,
-            std::string const& title,
-            std::shared_ptr<std::string> path = nullptr,
-            size_t line = 0,
-            std::shared_ptr<runtime::attributes> attributes = nullptr,
-            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception = nullptr);
+        runtime::resource& declare_defined_type(
+            runtime::context& evaluation_context,
+            types::resource type,
+            std::shared_ptr<compiler::context> const& compilation_context,
+            lexer::position const& position,
+            std::shared_ptr<runtime::attributes> attributes = nullptr);
 
         /**
          * Defines a node.
-         * @param context The compilation context.
+         * @param context The compilation context where the node is defined.
          * @param expression The node definition expression.
          */
-        void define_node(std::shared_ptr<compiler::context> context, ast::node_definition_expression const& expression);
+        void define_node(std::shared_ptr<compiler::context> const& context, ast::node_definition_expression const& expression);
 
         /**
-         * Evaluates a node definition for the given node.
-         * @param context The evaluation context to use.
-         * @param node The node to evaluate for.
-         * @return Returns true if evaluation was successful or false if it was not.
+         * Declares a node.
+         * @param evaluation_context The current evaluation context.
+         * @param node The node to declare.
+         * @return Returns the node resource that was added to the catalog or nullptr if there are no node definitions.
          */
-        bool evaluate_node(runtime::context& context, compiler::node const& node);
+        runtime::resource* declare_node(runtime::context& evaluation_context, compiler::node const& node);
 
         /**
          * Finalizes the catalog.
-         * Populates the dependency graph and any needed default resources.
+         * Populates the dependency graph and adds any needed resources.
          */
         void finalize();
 
      private:
-        void validate_parameters(bool klass, std::shared_ptr<compiler::context> const& context, std::vector<ast::parameter> const& parameters);
         void populate_graph();
         void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
         void add_relationship(runtime::relationship relationship, runtime::resource const& source, runtime::resource const& target);
@@ -522,8 +468,8 @@ namespace puppet { namespace runtime {
         std::unordered_map<std::string, defined_type> _defined_types;
         std::vector<node_definition> _nodes;
         std::unordered_map<std::string, size_t> _named_nodes;
-        std::vector<std::pair<values::regex, size_t>> _regex_node_definitions;
-        ssize_t _default_node_index;
+        std::vector<std::pair<values::regex, size_t>> _regex_nodes;
+        boost::optional<size_t> _default_node_index;
         dependency_graph _graph;
     };
 

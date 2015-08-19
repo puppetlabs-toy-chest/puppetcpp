@@ -1,4 +1,5 @@
 #include <puppet/runtime/scope.hpp>
+#include <puppet/runtime/catalog.hpp>
 #include <puppet/cast.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -29,42 +30,29 @@ namespace puppet { namespace runtime {
         return _line;
     }
 
-    scope::scope(shared_ptr<scope> parent, string name, string display_name) :
+    scope::scope(shared_ptr<scope> parent, runtime::resource* resource) :
         _parent(rvalue_cast(parent)),
-        _name(rvalue_cast(name)),
-        _display_name(rvalue_cast(display_name))
+        _resource(resource)
     {
         if (!_parent) {
             throw runtime_error("expected a parent scope.");
         }
     }
 
-    scope::scope(shared_ptr<facts::provider> facts) :
+    scope::scope(shared_ptr<facts::provider> facts, runtime::resource* resource) :
         _facts(rvalue_cast(facts)),
-        _name(""),
-        _display_name("Class[main]")
+        _resource(resource)
     {
-    }
-
-    string const& scope::name() const
-    {
-        if (!_name.empty()) {
-            return _name;
-        }
-        return _parent ? _parent->name() : _name;
-    }
-
-    string const& scope::display_name() const
-    {
-        if (!_display_name.empty()) {
-            return _display_name;
-        }
-        return _parent ? _parent->display_name() : _display_name;
     }
 
     shared_ptr<scope> const& scope::parent() const
     {
         return _parent;
+    }
+
+    runtime::resource* scope::resource() const
+    {
+        return _resource;
     }
 
     string scope::qualify(string const& name) const
@@ -73,11 +61,11 @@ namespace puppet { namespace runtime {
             return name.substr(2);
         }
 
-        auto& scope_name = this->name();
-        if (scope_name.empty()) {
+        if (!_resource) {
             return name;
         }
-        return scope_name + "::" + name;
+
+        return _resource->type().title() + "::" + name;
     }
 
     assigned_variable const* scope::set(string name, shared_ptr<values::value const> value, shared_ptr<string> path, size_t line)
@@ -126,7 +114,10 @@ namespace puppet { namespace runtime {
 
     ostream& operator<<(ostream& os, scope const& s)
     {
-        os << "Scope(" << s.display_name() << ")";
+        if (!s.resource()) {
+            return os;
+        }
+        os << "Scope(" << s.resource()->type() << ")";
         return os;
     }
 

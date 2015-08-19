@@ -1,4 +1,6 @@
 #include <puppet/runtime/evaluators/catalog.hpp>
+#include <puppet/runtime/definition_scanner.hpp>
+#include <puppet/runtime/executor.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/cast.hpp>
 
@@ -13,8 +15,8 @@ namespace puppet { namespace runtime { namespace evaluators {
         _evaluator(evaluator),
         _expression(expression)
     {
-        if (!_evaluator.catalog()) {
-            throw evaluator.create_exception(get_position(_expression), "catalog expressions are not supported.");
+        if (!_evaluator.evaluation_context().catalog()) {
+            throw _evaluator.create_exception(get_position(_expression), "catalog expressions are not supported.");
         }
     }
 
@@ -57,8 +59,13 @@ namespace puppet { namespace runtime { namespace evaluators {
             throw _evaluator.create_exception(expr.position(), "exported resource expressions are not yet implemented.");
         }
 
-        auto catalog = _evaluator.catalog();
-        bool is_defined_type = !is_class && catalog->is_defined_type(type_name);
+        // TODO: check for known type
+        // TODO: if not a known type and not a "class" resource, load the defined type
+        // TODO: if type still unknown, raise an error
+        auto& evaluation_context = _evaluator.evaluation_context();
+        auto& compilation_context = _evaluator.compilation_context();
+        auto catalog = evaluation_context.catalog();
+        bool is_defined_type = !is_class && catalog->find_defined_type(type_name);
 
         // Evaluate the default attributes
         auto default_body = find_default_body(expr);
@@ -70,11 +77,6 @@ namespace puppet { namespace runtime { namespace evaluators {
             // Evaluate the title
             auto title = _evaluator.evaluate(body.title());
 
-            // Helpers for getting the attribute name/value position
-            auto create_exception = [&](bool for_value, string const& name, string message) {
-                return _evaluator.create_exception(find_attribute_position(for_value, name, body, default_body), rvalue_cast(message));
-            };
-
             // Check for the default resource body and skip
             if (is_default(title)) {
                 continue;
@@ -83,54 +85,34 @@ namespace puppet { namespace runtime { namespace evaluators {
             // Evaluate the attributes
             auto attributes = evaluate_attributes(&body, defaults);
 
-            // Add each resource to the catalog
-            if (!for_each<string>(title, [&](string& resource_title) {
-                if (resource_title.empty()) {
-                    throw _evaluator.create_exception(body.position(), "resource title cannot be empty.");
+            try {
+                // Add each resource to the catalog
+                if (!for_each<string>(title, [&](string& resource_title) {
+                    if (resource_title.empty()) {
+                        throw _evaluator.create_exception(body.position(), "resource title cannot be empty.");
+                    }
+
+                    types::resource type(type_name, rvalue_cast(resource_title));
+                    if (is_class) {
+                        // Declare the class
+                        catalog->declare_class(evaluation_context, type, compilation_context, body.position(), attributes);
+                    } else if (is_defined_type) {
+                        // Declare the defined type
+                        catalog->declare_defined_type(evaluation_context, type, compilation_context, body.position(), attributes);
+                    } else {
+                        // Add the resource to the catalog
+                        catalog->add_resource(type, compilation_context->path(), body.position().line(), attributes);
+                    }
+
+                    // Add the type to the return value
+                    types.emplace_back(rvalue_cast(type));
+                })) {
+                    throw _evaluator.create_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
                 }
-
-                types::resource type(type_name, rvalue_cast(resource_title));
-                runtime::resource* resource = nullptr;
-                if (is_class) {
-                    // Ensure the class hasn't already been declared
-                    resource = catalog->find_resource(type);
-                    if (resource) {
-                        throw _evaluator.create_exception(body.position(), (boost::format("class '%1%' was previously declared at %2%:%3%.") % type.title() % *resource->path() % resource->line()).str());
-                    }
-
-                    // Declare the class
-                    resource = catalog->declare_class(_evaluator.context(), types::klass(type.title()), _evaluator.path(), body.position().line(), attributes, create_exception);
-                    if (!resource) {
-                        throw _evaluator.create_exception(body.position(), (boost::format("failed to declare class '%1%'.") % type.title()).str());
-                    }
-                } else if (is_defined_type) {
-                    // Ensure the defined type hasn't already been declared
-                    resource = catalog->find_resource(type);
-                    if (resource) {
-                        throw _evaluator.create_exception(body.position(), (boost::format("defined type '%1%' was previously declared at %2%:%3%.") % type.title() % *resource->path() % resource->line()).str());
-                    }
-
-                    // Declare the defined type
-                    resource = catalog->declare_defined_type(_evaluator.context(), type_name, type.title(), _evaluator.path(), body.position().line(), attributes, create_exception);
-                    if (!resource) {
-                        throw _evaluator.create_exception(body.position(), (boost::format("failed to declare defined type %1%.") % type).str());
-                    }
-                } else {
-                    // Add the resource to the catalog
-                    resource = catalog->add_resource(type, _evaluator.path(), body.position().line(), attributes);
-                    if (!resource) {
-                        resource = catalog->find_resource(type);
-                        if (resource) {
-                            throw _evaluator.create_exception(body.position(), (boost::format("resource %1% was previously declared at %2%:%3%.") % type % *resource->path() % resource->line()).str());
-                        }
-                        throw _evaluator.create_exception(body.position(), (boost::format("failed to add resource %1% to catalog.") % type).str());
-                    }
-                }
-
-                // Add the type to the return value
-                types.emplace_back(rvalue_cast(type));
-            })) {
-                throw _evaluator.create_exception(body.position(), (boost::format("expected %1% or %2% for resource title.") % types::string::name() % types::array(types::string())).str());
+            } catch (attribute_name_exception const& ex) {
+                throw _evaluator.create_exception(find_attribute_position(false, ex.name(), body, default_body), ex.what());
+            } catch (attribute_value_exception const& ex) {
+                throw _evaluator.create_exception(find_attribute_position(true, ex.name(), body, default_body), ex.what());
             }
         }
         return types;
@@ -144,7 +126,7 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_override_expression const& expr)
     {
-        auto catalog = _evaluator.catalog();
+        auto catalog = _evaluator.evaluation_context().catalog();
         auto reference = _evaluator.evaluate(expr.reference());
         auto position = get_position(expr.reference());
 
@@ -230,14 +212,14 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // Class definitions are handled by the definition scanner
         // Just return a reference to the class
-        return types::klass(_evaluator.context().current_scope()->qualify(expr.name().value()));
+        return types::klass(_evaluator.evaluation_context().current_scope()->qualify(expr.name().value()));
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::defined_type_expression const& expr)
     {
         // Defined type expressions are handled by the definition scanner
         // Just return a reference to the type
-        return types::resource(_evaluator.context().current_scope()->qualify(expr.name().value()));
+        return types::resource(_evaluator.evaluation_context().current_scope()->qualify(expr.name().value()));
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::node_definition_expression const& expr)
