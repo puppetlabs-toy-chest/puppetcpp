@@ -39,50 +39,54 @@ namespace puppet { namespace compiler {
 
     catalog node::compile(logging::logger& logger, compiler::settings const& settings)
     {
+        // Create a catalog with the "main" resources
         runtime::catalog catalog;
+        create_main(catalog);
+
+        // Create an evaluation context and a settings scope
         runtime::context evaluation_context{ settings.facts(), &catalog };
+        create_settings_scope(evaluation_context, settings);
 
-        // TODO: set parameters and facts in the top scope
-
-        // TODO: create settings scope in catalog
+        // TODO: set node parameters in the top scope
 
         // First parse all the files so they can be scanned
         vector<shared_ptr<compiler::context>> contexts;
         contexts.reserve(settings.manifests().size() + 1);
 
-        for (auto const& manifest : settings.manifests()) {
-            contexts.push_back(make_shared<compiler::context>(logger, make_shared<string>(manifest), *this));
-
-            // Scan this context for definitions
+        try {
             definition_scanner scanner{ catalog };
-            scanner.scan(contexts.back());
-        }
+            for (auto const& manifest : settings.manifests()) {
+                // Create a compilation context for each manifest (parses the file)
+                contexts.push_back(make_shared<compiler::context>(logger, make_shared<string>(manifest), *this));
 
-        // Now evaluate the manifests in the specified order
-        for (auto const& context : contexts) {
-            try {
+                // Scan this context for definitions
+                scanner.scan(contexts.back());
+            }
+
+            // Now evaluate the manifests in the specified order
+            for (auto const& context : contexts) {
                 // Evaluate the syntax tree
                 LOG(debug, "evaluating the syntax tree for '%1%'.", *context->path());
                 expression_evaluator evaluator{context, evaluation_context};
                 evaluator.evaluate();
-            } catch (evaluation_exception const& ex) {
-                throw ex.context()->create_exception(ex.position(), ex.what());
             }
+
+            // Evaluate the node definition
+            LOG(debug, "evaluating node definition for node '%1%'.", name());
+            catalog.declare_node(evaluation_context, *this);
+
+            // TODO: evaluate node classes
+
+            // TODO: evaluate generators
+
+            // Finalize the catalog
+            catalog.finalize();
+        } catch (evaluation_exception const& ex) {
+            if (!ex.context()) {
+                throw compilation_exception(ex.what());
+            }
+            throw ex.context()->create_exception(ex.position(), ex.what());
         }
-
-        // Evaluate the node definition
-        LOG(debug, "evaluating node definition for node '%1%'.", name());
-        if (!catalog.evaluate_node(evaluation_context, *this)) {
-            throw compilation_exception((boost::format("failed to evaluate node definition for node '%1%'.") % name()).str());
-        }
-
-        // TODO: evaluate node classes
-
-        // TODO: evaluate generators
-
-        // Finalize the catalog
-        catalog.finalize();
-
         return catalog;
     }
 
@@ -94,6 +98,42 @@ namespace puppet { namespace compiler {
                 return;
             }
         }
+    }
+
+    void node::create_main(runtime::catalog& catalog)
+    {
+        auto path = make_shared<string>("<generated>");
+
+        // Create Stage[main]
+        catalog.add_resource(types::resource("stage", "main"), path, 1);
+
+        // Create Class[main]
+        catalog.add_resource(types::resource("class", "main"), path, 1);
+
+        // TODO: add containment edge from Class[main] to Stage[main]
+    }
+
+    void node::create_settings_scope(runtime::context& context, compiler::settings const& settings)
+    {
+        auto catalog = context.catalog();
+        if (!catalog) {
+            return;
+        }
+
+        // Find Stage[main]
+        auto main = catalog->find_resource(types::resource("stage", "main"));
+        if (!main) {
+            return;
+        }
+
+        // Create Class[Settings]
+        auto& settings_resource = catalog->add_resource(types::resource("class", "settings"), main->path(), 1);
+        auto settings_scope = make_shared<runtime::scope>(context.top_scope(), &settings_resource);
+        context.add_scope(settings_scope);
+
+        // TODO: set settings in the scope
+
+        // TODO: add containment edge from Class[settings] -> Stage[main]
     }
 
 }}  // namespace puppet::compiler

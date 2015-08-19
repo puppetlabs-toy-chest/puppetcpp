@@ -34,7 +34,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     postfix_expression_evaluator::result_type postfix_expression_evaluator::operator()(ast::selector_expression const& expr)
     {
         // Selector expressions create a new match scope
-        auto match_scope = _evaluator.context().create_match_scope();
+        auto match_scope = _evaluator.evaluation_context().create_match_scope();
 
         boost::optional<size_t> default_index;
 

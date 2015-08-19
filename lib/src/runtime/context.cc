@@ -36,11 +36,11 @@ namespace puppet { namespace runtime {
         _context._scope_stack.pop_back();
     }
 
-    node_scope::node_scope(runtime::context& context, string name) :
+    node_scope::node_scope(runtime::context& context, runtime::resource* resource) :
         _context(context)
     {
         // Create a node scope that inherits from the top scope
-        _context._node_scope = make_shared<runtime::scope>(_context._scope_stack.front(), "node", rvalue_cast(name));
+        _context._node_scope = make_shared<runtime::scope>(_context._scope_stack.front(), resource);
         _context._scope_stack.push_back(_context._node_scope);
     }
 
@@ -53,9 +53,12 @@ namespace puppet { namespace runtime {
     context::context(shared_ptr<facts::provider> facts, runtime::catalog* catalog) :
         _catalog(catalog)
     {
+        // Get the "main" resource if given a catalog
+        runtime::resource* main = _catalog ? _catalog->find_resource(types::resource("class", "main")) : nullptr;
+
         // Add the top scope
-        auto top = make_shared<runtime::scope>(rvalue_cast(facts));
-        add_scope(top);
+        auto top = make_shared<runtime::scope>(rvalue_cast(facts), main);
+        _scopes.emplace(make_pair("", top));
         _scope_stack.emplace_back(rvalue_cast(top));
 
         // Add an empty top match scope
@@ -93,11 +96,12 @@ namespace puppet { namespace runtime {
     bool context::add_scope(std::shared_ptr<runtime::scope> scope)
     {
         if (!scope) {
-            return false;
+            throw runtime_error("expected a non-null scope.");
         }
-
-        string name = scope->name();
-        return _scopes.emplace(make_pair(rvalue_cast(name), rvalue_cast(scope))).second;
+        if (!scope->resource()) {
+            throw runtime_error("expected a scope with an associated resource.");
+        }
+        return _scopes.emplace(make_pair(scope->resource()->type().title(), rvalue_cast(scope))).second;
     }
 
     std::shared_ptr<runtime::scope> context::find_scope(string const& name) const
@@ -160,11 +164,12 @@ namespace puppet { namespace runtime {
 
         // Warn if the scope was not found
         if (_catalog && evaluator && position) {
-            types::klass klass(ns);
+            // TODO: find the class on the node
+
             string message;
-            if (!_catalog->is_class_defined(klass)) {
+            if (!_catalog->find_class(types::klass(ns))) {
                 message = (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % name % ns).str();
-            } else if (!_catalog->is_class_declared(klass)) {
+            } else if (!_catalog->find_resource(types::resource("class", ns))) {
                 message = (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % name % ns).str();
             }
             if (!message.empty()) {

@@ -39,7 +39,7 @@ namespace puppet { namespace runtime {
         lexer_string_iterator const& end,
         function<lexer::position(lexer::position const&)> const& calculate_position)
     {
-        auto& context = evaluator.context();
+        auto& context = evaluator.evaluation_context();
 
         try {
             bool bracket = begin != end && *begin == '{';

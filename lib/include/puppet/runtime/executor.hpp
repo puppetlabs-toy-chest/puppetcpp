@@ -8,11 +8,77 @@
 #include "expression_evaluator.hpp"
 #include <boost/optional.hpp>
 #include <vector>
-#include <functional>
 #include <unordered_map>
 #include <string>
+#include <exception>
 
 namespace puppet { namespace runtime {
+
+    /**
+     * Exception for arguments passed by index.
+     */
+    struct argument_exception : std::runtime_error
+    {
+        /**
+         * Constructs a new argument exception.
+         * @param message The exception message.
+         * @param index The index of the argument.
+         */
+        argument_exception(std::string const& message, size_t index);
+
+        /**
+         * Gets the index of the argument that caused the exception.
+         * @return Returns the index of the argument that caused the exception.
+         */
+        size_t index() const;
+
+     private:
+        size_t _index;
+    };
+
+    /**
+     * Exception for attribute names.
+     */
+    struct attribute_name_exception : std::runtime_error
+    {
+        /**
+         * Constructs a new attribute name exception.
+         * @param message The exception message.
+         * @param name The name of the attribute.
+         */
+        attribute_name_exception(std::string const& message, std::string name);
+
+        /**
+         * Gets the name of the attribute that caused the exception.
+         * @return Returns the name of the attribute that caused the exception.
+         */
+        std::string const& name() const;
+
+     private:
+        std::string _name;
+    };
+
+    /**
+     * Exception for attribute values.
+     */
+    struct attribute_value_exception : std::runtime_error
+    {
+        /**
+         * Constructs a new attribute value exception.
+         * @param message The exception message.
+         * @param name The name of the attribute.
+         */
+        attribute_value_exception(std::string const& message, std::string name);
+
+        /**
+         * Gets the name of the attribute that caused the exception.
+         * @return Returns the name of the attribute that caused the exception.
+         */
+        std::string const& name() const;
+
+     private:
+        std::string _name;
+    };
 
     /**
      * Represents the runtime executor.
@@ -57,26 +123,18 @@ namespace puppet { namespace runtime {
         /**
          * Executes the expression with the given positional arguments.
          * @param arguments The positional arguments to set in the scope.
-         * @param create_exception The callback to use to create an exception for the given argument position and message.
          * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
-        values::value execute(
-            values::array& arguments,
-            std::function<evaluation_exception(size_t, std::string)> const& create_exception = nullptr,
-            std::shared_ptr<runtime::scope> const& scope = nullptr) const;
+        values::value execute(values::array& arguments, std::shared_ptr<runtime::scope> const& scope = nullptr) const;
 
         /**
          * Executes the expression with the given resource's attributes.
          * @param resource The resource attributes to set in the scope.
-         * @param create_exception The callback to use to create an exception for the given argument name and message.
          * @param scope The scope to execute under or nullptr to use an ephemeral scope.
          * @return Returns the value that was returned from the body.
          */
-        values::value execute(
-            runtime::resource const& resource,
-            std::function<evaluation_exception(bool, std::string const&, std::string)> const& create_exception = nullptr,
-            std::shared_ptr<runtime::scope> const& scope = nullptr) const;
+        values::value execute(runtime::resource const& resource, std::shared_ptr<runtime::scope> const& scope = nullptr) const;
 
      private:
         void validate_type(ast::parameter const& parameter, values::value const& value, std::function<void(std::string)> const& type_error) const;

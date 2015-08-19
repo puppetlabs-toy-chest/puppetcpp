@@ -35,7 +35,7 @@ namespace puppet { namespace runtime { namespace operators {
         }
 
         // Assign the existing value
-        auto previous = evaluator.context().current_scope()->set(var->name(), rvalue_cast(value), evaluator.path(), context.left_position().line());
+        auto previous = evaluator.evaluation_context().current_scope()->set(var->name(), rvalue_cast(value), evaluator.compilation_context()->path(), context.left_position().line());
         if (previous) {
             if (previous->path() && !previous->path()->empty()) {
                 throw evaluator.create_exception(context.left_position(), (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % *previous->path() % previous->line()).str());

@@ -7,6 +7,7 @@
 #include "../ast/syntax_tree.hpp"
 #include "../compiler/context.hpp"
 #include "context.hpp"
+#include <boost/optional.hpp>
 #include <cstdint>
 #include <vector>
 #include <exception>
@@ -21,12 +22,18 @@ namespace puppet { namespace runtime {
     struct evaluation_exception : std::runtime_error
     {
         /**
-         * Constructs an evaluator exception.
-         * @param context The compilation context where the evaluation failed.
-         * @param position The position where evaluation failed.
+         * Constructs an evaluation exception.
          * @param message The exception message.
          */
-        evaluation_exception(std::shared_ptr<compiler::context> context, lexer::position position, std::string const& message);
+        explicit evaluation_exception(std::string const& message);
+
+        /**
+         * Constructs an evaluation exception.
+         * @param message The exception message.
+         * @param context The compilation context where the evaluation failed.
+         * @param position The position where evaluation failed.
+         */
+        evaluation_exception(std::string const& message, std::shared_ptr<compiler::context> context, lexer::position position);
 
         /**
          * Gets the compilation context where evaluation failed.
@@ -58,28 +65,16 @@ namespace puppet { namespace runtime {
         expression_evaluator(std::shared_ptr<compiler::context> compilation_context, runtime::context& evaluation_context);
 
         /**
+         * Gets the current compilation context.
+         * @return Returns the current compilation context.
+         */
+        std::shared_ptr<compiler::context> const& compilation_context();
+
+        /**
          * Gets the current evaluation context.
          * @return Returns the current evaluation context.
          */
-        runtime::context& context();
-
-        /**
-         * Gets the catalog being compiled.
-         * @return Returns the catalog being compiled or nullptr if catalog expressions are not supported.
-         */
-        runtime::catalog* catalog();
-
-        /**
-         * Gets the logger.
-         * @return Returns the logger.
-         */
-        logging::logger& logger();
-
-        /**
-         * Gets the path to the file being evaluated.
-         * @return Returns the path to the file being evaluated.
-         */
-        std::shared_ptr<std::string> const& path() const;
+        runtime::context& evaluation_context();
 
         /**
          * Creates an evaluation exception with the given position and message.

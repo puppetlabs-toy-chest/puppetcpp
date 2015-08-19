@@ -22,7 +22,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     control_flow_expression_evaluator::result_type control_flow_expression_evaluator::operator()(ast::case_expression const& expr)
     {
         // Case expressions create a new match scope
-        auto match_scope = _evaluator.context().create_match_scope();
+        auto match_scope = _evaluator.evaluation_context().create_match_scope();
 
         // Evaluate the case's expression
         value result = _evaluator.evaluate(expr.expression());
@@ -70,7 +70,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     control_flow_expression_evaluator::result_type control_flow_expression_evaluator::operator()(ast::if_expression const& expr)
     {
         // If expressions create a new match scope
-        auto match_scope = _evaluator.context().create_match_scope();
+        auto match_scope = _evaluator.evaluation_context().create_match_scope();
 
         if (is_truthy(_evaluator.evaluate(expr.conditional()))) {
             return execute_block(expr.body());
@@ -91,7 +91,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     control_flow_expression_evaluator::result_type control_flow_expression_evaluator::operator()(ast::unless_expression const& expr)
     {
         // Unless expressions create a new match scope
-        auto match_scope = _evaluator.context().create_match_scope();
+        auto match_scope = _evaluator.evaluation_context().create_match_scope();
 
         if (!is_truthy(_evaluator.evaluate(expr.conditional()))) {
             return execute_block(expr.body());

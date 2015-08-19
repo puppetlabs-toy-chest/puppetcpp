@@ -25,13 +25,13 @@ namespace puppet { namespace runtime { namespace functions {
                 arguments.clear();
 
                 string value(1, argument[i]);
-                if (_context.lambda().parameter_count() == 1) {
+                if (_context.lambda_parameter_count() == 1) {
                     arguments.push_back(value);
                 } else {
                     arguments.push_back(static_cast<int64_t>(i));
                     arguments.push_back(value);
                 }
-                if (is_true(_context.lambda().execute(arguments))) {
+                if (is_true(_context.yield(arguments))) {
                     result.emplace_back(rvalue_cast(value));
                 }
             }
@@ -54,13 +54,13 @@ namespace puppet { namespace runtime { namespace functions {
             arguments.reserve(2);
             for (size_t i = 0; i < argument.size(); ++i) {
                 arguments.clear();
-                if (_context.lambda().parameter_count() == 1) {
+                if (_context.lambda_parameter_count() == 1) {
                     arguments.push_back(argument[i]);
                 } else {
                     arguments.push_back(static_cast<int64_t>(i));
                     arguments.push_back(argument[i]);
                 }
-                if (is_true(_context.lambda().execute(arguments))) {
+                if (is_true(_context.yield(arguments))) {
                     result.emplace_back(rvalue_cast(argument[i]));
                 }
             }
@@ -75,13 +75,13 @@ namespace puppet { namespace runtime { namespace functions {
             arguments.reserve(2);
             for (auto& kvp : argument) {
                 arguments.clear();
-                if (_context.lambda().parameter_count() == 1) {
+                if (_context.lambda_parameter_count() == 1) {
                     arguments.emplace_back(values::array { kvp.first, kvp.second });
                 } else {
                     arguments.push_back(kvp.first);
                     arguments.push_back(kvp.second);
                 }
-                if (is_true(_context.lambda().execute(arguments))) {
+                if (is_true(_context.yield(arguments))) {
                     result.emplace(make_pair(kvp.first, rvalue_cast(kvp.second)));
                 }
             }
@@ -117,13 +117,13 @@ namespace puppet { namespace runtime { namespace functions {
 
             range.each([&](int64_t index, int64_t value) {
                 arguments.clear();
-                if (_context.lambda().parameter_count() == 1) {
+                if (_context.lambda_parameter_count() == 1) {
                     arguments.push_back(value);
                 } else {
                     arguments.push_back(index);
                     arguments.push_back(value);
                 }
-                if (is_true(_context.lambda().execute(arguments))) {
+                if (is_true(_context.yield(arguments))) {
                     result.emplace_back(value);
                 }
                 return true;
@@ -148,9 +148,9 @@ namespace puppet { namespace runtime { namespace functions {
         if (!context.lambda_given()) {
             throw evaluator.create_exception(context.position(), "expected a lambda to 'filter' function but one was not given.");
         }
-        auto count = context.lambda().parameter_count();
+        auto count = context.lambda_parameter_count();
         if (count == 0 || count > 2) {
-            throw evaluator.create_exception(context.lambda().position(), (boost::format("expected 1 or 2 lambda parameters but %1% were given.") % count).str());
+            throw evaluator.create_exception(context.lambda_position(), (boost::format("expected 1 or 2 lambda parameters but %1% were given.") % count).str());
         }
 
         value argument = mutate(arguments[0]);

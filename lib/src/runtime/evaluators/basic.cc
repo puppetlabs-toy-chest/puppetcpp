@@ -73,11 +73,13 @@ namespace puppet { namespace runtime { namespace evaluators {
             throw _evaluator.create_exception(var.position(), "variable name cannot be empty.");
         }
 
+        auto& context = _evaluator.evaluation_context();
+
         shared_ptr<values::value const> value;
         if (isdigit(name[0])) {
-            value = _evaluator.context().lookup(stoi(name));
+            value = context.lookup(stoi(name));
         } else {
-            value = _evaluator.context().lookup(name, &_evaluator, &var.position());
+            value = context.lookup(name, &_evaluator, &var.position());
         }
         return values::variable(name, rvalue_cast(value));
     }

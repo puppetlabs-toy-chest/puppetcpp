@@ -31,11 +31,19 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime {
 
-    evaluation_exception::evaluation_exception(shared_ptr<compiler::context> context, lexer::position position, string const& message) :
+    evaluation_exception::evaluation_exception(string const& message) :
+        runtime_error(message)
+    {
+    }
+
+    evaluation_exception::evaluation_exception(string const& message, shared_ptr<compiler::context> context, lexer::position position) :
         runtime_error(message),
         _context(rvalue_cast(context)),
         _position(rvalue_cast(position))
     {
+        if (!_context) {
+            throw runtime_error("expected a compilation context.");
+        }
     }
 
     shared_ptr<compiler::context> const& evaluation_exception::context() const
@@ -57,29 +65,19 @@ namespace puppet { namespace runtime {
         }
     }
 
-    runtime::context& expression_evaluator::context()
+    runtime::context& expression_evaluator::evaluation_context()
     {
         return _evaluation_context;
     }
 
-    runtime::catalog* expression_evaluator::catalog()
+    shared_ptr<compiler::context> const& expression_evaluator::compilation_context()
     {
-        return _evaluation_context.catalog();
-    }
-
-    logging::logger& expression_evaluator::logger()
-    {
-        return _compilation_context->logger();
-    }
-
-    shared_ptr<string> const& expression_evaluator::path() const
-    {
-        return _compilation_context->path();
+        return _compilation_context;
     }
 
     evaluation_exception expression_evaluator::create_exception(lexer::position const& position, string message) const
     {
-        return evaluation_exception(_compilation_context, position, rvalue_cast(message));
+        return evaluation_exception(rvalue_cast(message), _compilation_context, position);
     }
 
     void expression_evaluator::warn(lexer::position const& position, string const& message)
