@@ -9,6 +9,39 @@ using boost::optional;
 
 namespace puppet { namespace runtime {
 
+    argument_exception::argument_exception(string const& message, size_t index) :
+        runtime_error(message),
+        _index(index)
+    {
+    }
+
+    size_t argument_exception::index() const
+    {
+        return _index;
+    }
+
+    attribute_name_exception::attribute_name_exception(string const& message, string name) :
+        runtime_error(message),
+        _name(rvalue_cast(name))
+    {
+    }
+
+    string const& attribute_name_exception::name() const
+    {
+        return _name;
+    }
+
+    attribute_value_exception::attribute_value_exception(string const& message, string name) :
+        runtime_error(message),
+        _name(rvalue_cast(name))
+    {
+    }
+
+    string const& attribute_value_exception::name() const
+    {
+        return _name;
+    }
+
     executor::executor(expression_evaluator& evaluator, lexer::position const& position, optional<vector<ast::parameter>> const& parameters, optional<vector<ast::expression>> const& body) :
         _evaluator(evaluator),
         _position(position),
@@ -41,14 +74,14 @@ namespace puppet { namespace runtime {
     value executor::execute(shared_ptr<runtime::scope> const& scope) const
     {
         values::array arguments;
-        return execute(arguments, nullptr, scope);
+        return execute(arguments, scope);
     }
 
-    value executor::execute(values::array& arguments, function<evaluation_exception(size_t, string)> const& create_exception, shared_ptr<runtime::scope> const& scope) const
+    value executor::execute(values::array& arguments, shared_ptr<runtime::scope> const& scope) const
     {
         // Create the execution scope
-        auto local_scope = _evaluator.context().create_local_scope(scope);
-        auto& current_scope = _evaluator.context().current_scope();
+        auto local_scope = _evaluator.evaluation_context().create_local_scope(scope);
+        auto& current_scope = _evaluator.evaluation_context().current_scope();
 
         bool has_optional_parameters = false;
         if (_parameters) {
@@ -95,13 +128,10 @@ namespace puppet { namespace runtime {
 
                 // Verify the value matches the parameter type
                 validate_type(parameter, value, [&](string message) {
-                    if (!create_exception) {
-                        throw _evaluator.create_exception(position, rvalue_cast(message));
-                    }
-                    throw create_exception(i, rvalue_cast(message));
+                    throw argument_exception(rvalue_cast(message), i);
                 });
 
-                if (current_scope->set(name, make_shared<values::value>(rvalue_cast(value)), _evaluator.path(), parameter.position().line())) {
+                if (current_scope->set(name, make_shared<values::value>(rvalue_cast(value)), _evaluator.compilation_context()->path(), parameter.position().line())) {
                     throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }
@@ -110,14 +140,12 @@ namespace puppet { namespace runtime {
         return evaluate_body();
     }
 
-    values::value executor::execute(
-        runtime::resource const& resource,
-        function<evaluation_exception(bool, string const&, string)> const& create_exception,
-        shared_ptr<runtime::scope> const& scope) const
+    values::value executor::execute(runtime::resource const& resource, shared_ptr<runtime::scope> const& scope) const
     {
         // Create the execution scope
-        auto local_scope = _evaluator.context().create_local_scope(scope);
-        auto& current_scope = _evaluator.context().current_scope();
+        auto const& path = _evaluator.compilation_context()->path();
+        auto local_scope = _evaluator.evaluation_context().create_local_scope(scope);
+        auto& current_scope = _evaluator.evaluation_context().current_scope();
         auto const& attributes = resource.attributes();
 
         // Set any default parameters without attributes
@@ -142,7 +170,7 @@ namespace puppet { namespace runtime {
                 });
 
                 // Set the default value into the scope
-                if (current_scope->set(name, make_shared<values::value>(rvalue_cast(value)), _evaluator.path(), parameter.position().line())) {
+                if (current_scope->set(name, make_shared<values::value>(rvalue_cast(value)), path, parameter.position().line())) {
                     throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }
@@ -174,33 +202,26 @@ namespace puppet { namespace runtime {
             if (parameter) {
                 // Verify the value matches the parameter type
                 validate_type(*parameter, *attribute_value, [&](string message) {
-                    if (!create_exception) {
-                        throw _evaluator.create_exception(parameter->position(), rvalue_cast(message));
-                    }
-                    throw create_exception(true, attribute_name, rvalue_cast(message));
+                    throw attribute_value_exception(rvalue_cast(message), attribute_name);
                 });
             } else if (!resource::is_metaparameter(attribute_name)) {
                 // Not a parameter or metaparameter for the class or defined type
                 if (resource.type().is_class()) {
-                    string message = (boost::format("'%1%' is not a valid parameter for class '%2%'.") % attribute_name % resource.type().title()).str();
-                    if (!create_exception) {
-                        throw _evaluator.create_exception(_position, rvalue_cast(message));
-                    }
-                    throw create_exception(false, attribute_name, rvalue_cast(message));
+                    throw attribute_name_exception(
+                        (boost::format("'%1%' is not a valid parameter for class '%2%'.") % attribute_name % resource.type().title()).str(),
+                        attribute_name);
                 }
-                string message = (boost::format("'%1%' is not a valid parameter for defined type '%2%'.") % attribute_name % resource.type().type_name()).str();
-                if (!create_exception) {
-                    throw _evaluator.create_exception(_position, rvalue_cast(message));
-                }
-                throw create_exception(false, attribute_name, rvalue_cast(message));
+                throw attribute_name_exception(
+                    (boost::format("'%1%' is not a valid parameter for defined type '%2%'.") % attribute_name % resource.type().type_name()).str(),
+                    attribute_name);
             }
 
             current_scope->set(attribute_name, attribute_value, resource.path(), resource.line());
             return true;
         });
 
-        scope->set("title", rvalue_cast(title), _evaluator.path(), resource.line());
-        scope->set("name", rvalue_cast(name), _evaluator.path(), resource.line());
+        scope->set("title", rvalue_cast(title), path, resource.line());
+        scope->set("name", rvalue_cast(name), path, resource.line());
 
         return evaluate_body();
     }

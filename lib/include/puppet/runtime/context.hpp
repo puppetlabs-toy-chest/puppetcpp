@@ -70,9 +70,9 @@ namespace puppet { namespace runtime {
         /**
          * Constructs a node scope.
          * @param context The current evaluation context.
-         * @param name The name of the node scope.
+         * @param resource The node resource.
          */
-        node_scope(runtime::context& context, std::string name);
+        node_scope(runtime::context& context, runtime::resource* resource);
 
         /**
          * Destructs the node scope.
@@ -126,7 +126,7 @@ namespace puppet { namespace runtime {
         std::shared_ptr<runtime::scope> const& node_or_top();
 
         /**
-         * Adds a scope to the evaluation context.
+         * Adds a named scope to the evaluation context.
          * @param scope The scope to add to the evaluation context.
          * @return Returns true if the scope was added or false if the scope already exists.
          */

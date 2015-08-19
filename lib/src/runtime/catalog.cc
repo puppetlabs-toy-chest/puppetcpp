@@ -1,12 +1,10 @@
 #include <puppet/runtime/catalog.hpp>
-#include <puppet/runtime/context.hpp>
-#include <puppet/runtime/executor.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/runtime/executor.hpp>
 #include <puppet/compiler/node.hpp>
-#include <puppet/cast.hpp>
+#include <puppet/ast/expression_def.hpp>
 #include <boost/graph/tiernan_all_cycles.hpp>
 #include <boost/format.hpp>
-#include <unordered_set>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -120,7 +118,7 @@ namespace puppet { namespace runtime {
             _exported(exported)
     {
         if (!_path) {
-            throw runtime_error("a declared resource must have a path.");
+            throw evaluation_exception("a declared resource must have a path.");
         }
         if (!_attributes) {
             _attributes = make_shared<runtime::attributes>();
@@ -200,14 +198,13 @@ namespace puppet { namespace runtime {
         _vertex_id = id;
     }
 
-    class_definition::class_definition(runtime::catalog& catalog, types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const* expression) :
-        _catalog(catalog),
+    class_definition::class_definition(types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const& expression) :
         _klass(rvalue_cast(klass)),
         _context(rvalue_cast(context)),
-        _expression(expression)
+        _expression(&expression)
     {
         if (!_context) {
-            throw runtime_error("expected compilation context.");
+            throw evaluation_exception("a class definition must have a compilation context.");
         }
 
         _path = _context->path();
@@ -220,24 +217,19 @@ namespace puppet { namespace runtime {
         }
     }
 
-    runtime::catalog const& class_definition::catalog() const
-    {
-        return _catalog;
-    }
-
     types::klass const& class_definition::klass() const
     {
         return _klass;
     }
 
-    types::klass const* class_definition::parent() const
+    boost::optional<types::klass> const& class_definition::parent() const
     {
-        return _parent.title().empty() ? nullptr : &_parent;
+        return _parent;
     }
 
-    string const& class_definition::path() const
+    shared_ptr<string> const& class_definition::path() const
     {
-        return *_path;
+        return _path;
     }
 
     size_t class_definition::line() const
@@ -245,88 +237,56 @@ namespace puppet { namespace runtime {
         return _line;
     }
 
-    bool class_definition::evaluated() const
+    void class_definition::evaluate(runtime::context& context, runtime::resource& resource)
     {
-        return !_context || !_expression;
-    }
-
-    bool class_definition::evaluate(
-        runtime::context& context,
-        runtime::resource const& resource,
-        function<evaluation_exception(bool, string const&, string)> const& create_exception)
-    {
-        if (evaluated()) {
-            return true;
-        }
-
-        // Evaluate the parent
-        auto parent_scope = evaluate_parent(context);
-        if (!parent_scope) {
-            return false;
+        if (!_context || !_expression) {
+            return;
         }
 
         // Create a scope for the class
-        ostringstream display_name;
-        display_name << _klass;
-        auto scope = make_shared<runtime::scope>(parent_scope, _klass.title(), display_name.str());
+        auto scope = make_shared<runtime::scope>(evaluate_parent(context), &resource);
 
         // Add the class' scope
         context.add_scope(scope);
 
-        try {
-            // Create a new expression evaluator based on the class' compilation context
-            expression_evaluator evaluator{ _context, context };
+        // Create a new expression evaluator based on the class' compilation context
+        expression_evaluator evaluator{ _context, context };
 
-            // Execute the body of the class
-            runtime::executor executor{ evaluator, _expression->position(), _expression->parameters(), _expression->body() };
-            executor.execute(resource, create_exception, scope);
-        } catch (evaluation_exception const& ex) {
-            // Log any evaluation exception encountered
-            ex.context()->log(logging::level::error, ex.position(), ex.what());
-            return false;
-        }
+        // Execute the body of the class
+        runtime::executor executor{ evaluator, _expression->position(), _expression->parameters(), _expression->body() };
+        executor.execute(resource, scope);
 
         // Reset the context; classes cannot be evaluated more than once
         _context.reset();
         _expression = nullptr;
-        return true;
     }
 
     shared_ptr<runtime::scope> class_definition::evaluate_parent(runtime::context& context)
     {
         // If no parent, return the node or top scope
-        auto parent = this->parent();
+        auto const& parent = this->parent();
         if (!parent) {
             return context.node_or_top();
         }
 
-        // Check that the parent is defined
-        if (!_catalog.is_class_defined(*parent)) {
-            _context->log(logging::level::error, _expression->parent()->position(), (boost::format("base class '%2%' has not been defined.") % parent->title()).str());
-            return nullptr;
-        }
-
-        // Declare the parent class
-        if (!_catalog.declare_class(context, *parent, _context->path(), _expression->parent()->position().line())) {
-            return nullptr;
+        // If the parent isn't declared, declare it now
+        auto catalog = context.catalog();
+        types::resource type("class", parent->title());
+        if (!catalog->find_resource(type)) {
+            // Declare the parent class
+            catalog->declare_class(context, rvalue_cast(type), _context, _expression->parent()->position());
         }
         return context.find_scope(parent->title());
     }
 
-    defined_type::defined_type(runtime::catalog& catalog, string type, shared_ptr<compiler::context> context, ast::defined_type_expression const& expression) :
-        _catalog(catalog),
+    defined_type::defined_type(string type, shared_ptr<compiler::context> context, ast::defined_type_expression const& expression) :
         _type(rvalue_cast(type)),
         _context(rvalue_cast(context)),
         _expression(expression)
     {
         if (!_context) {
-            throw runtime_error("expected compilation context.");
+            throw evaluation_exception("a defined type definition must have a compilation context.");
         }
-    }
-
-    runtime::catalog const& defined_type::catalog() const
-    {
-        return _catalog;
     }
 
     string const& defined_type::type() const
@@ -334,9 +294,9 @@ namespace puppet { namespace runtime {
         return _type;
     }
 
-    string const& defined_type::path() const
+    shared_ptr<string> const& defined_type::path() const
     {
-        return *_context->path();
+        return _context->path();
     }
 
     size_t defined_type::line() const
@@ -344,73 +304,46 @@ namespace puppet { namespace runtime {
         return _expression.position().line();
     }
 
-    bool defined_type::evaluate(
-        runtime::context& context,
-        runtime::resource const& resource,
-        function<evaluation_exception(bool, string const&, string)> const& create_exception)
+    void defined_type::evaluate(runtime::context& context, runtime::resource& resource)
     {
         // Create a temporary scope for evaluating the defined type
-        ostringstream display_name;
-        display_name << resource.type();
-        auto scope = make_shared<runtime::scope>(context.node_or_top(), _type, display_name.str());
+        auto scope = make_shared<runtime::scope>(context.node_or_top(), &resource);
 
-        try {
-            // Create a new expression evaluator based on the defined type's compilation context
-            expression_evaluator evaluator{ _context, context };
+        // Create a new expression evaluator based on the defined type's compilation context
+        expression_evaluator evaluator{ _context, context };
 
-            // Execute hte body of the defined type
-            runtime::executor executor{ evaluator, _expression.position(), _expression.parameters(), _expression.body() };
-            executor.execute(resource, create_exception, scope);
-        } catch (evaluation_exception const& ex) {
-            // Log any evaluation exception encountered
-            ex.context()->log(logging::level::error, ex.position(), ex.what());
-            return false;
-        }
-        return true;
+        // Execute hte body of the defined type
+        runtime::executor executor{ evaluator, _expression.position(), _expression.parameters(), _expression.body() };
+        executor.execute(resource, scope);
     }
 
-    node_definition::node_definition(runtime::catalog& catalog, shared_ptr<compiler::context> context, ast::node_definition_expression const& expression) :
-        _catalog(catalog),
+    node_definition::node_definition(shared_ptr<compiler::context> context, ast::node_definition_expression const& expression) :
         _context(rvalue_cast(context)),
         _expression(expression)
     {
-    }
-
-    runtime::catalog const& node_definition::catalog() const
-    {
-        return _catalog;
-    }
-
-    string const& node_definition::path() const
-    {
-        return *_context->path();
-    }
-
-    size_t node_definition::line() const
-    {
-        return _expression.position().line();
-    }
-
-    bool node_definition::evaluate(runtime::context& context)
-    {
-        try {
-            // Create a new expression evaluator based on the node's compilation context
-            expression_evaluator evaluator{ _context, context };
-
-            // Execute the node's body
-            runtime::executor executor(evaluator, _expression.position(), boost::none, _expression.body());
-            executor.execute(context.node_scope());
-        } catch (evaluation_exception const& ex) {
-            // Log any evaluation exception encountered
-            ex.context()->log(logging::level::error, ex.position(), ex.what());
-            return false;
+        if (!_context) {
+            throw evaluation_exception("a node definition must have a compilation context.");
         }
-        return true;
     }
 
-    catalog::catalog() :
-        _default_node_index(-1)
+    shared_ptr<compiler::context> const& node_definition::context() const
     {
+        return _context;
+    }
+
+    lexer::position const& node_definition::position() const
+    {
+        return _expression.position();
+    }
+
+    void node_definition::evaluate(runtime::context& context)
+    {
+        // Create a new expression evaluator based on the node's compilation context
+        expression_evaluator evaluator{ _context, context };
+
+        // Execute the node's body
+        runtime::executor executor(evaluator, _expression.position(), boost::none, _expression.body());
+        executor.execute(context.node_scope());
     }
 
     dependency_graph const& catalog::graph() const
@@ -436,10 +369,10 @@ namespace puppet { namespace runtime {
         return &it->second;
     }
 
-    runtime::resource* catalog::add_resource(types::resource type, shared_ptr<string> path, size_t line, shared_ptr<runtime::attributes> attributes, bool exported)
+    runtime::resource& catalog::add_resource(types::resource type, shared_ptr<string> path, size_t line, shared_ptr<runtime::attributes> attributes, bool exported)
     {
         if (!type.fully_qualified()) {
-            return nullptr;
+            throw evaluation_exception("resource name is not fully qualified.");
         }
 
         string resource_type = type.type_name();
@@ -448,197 +381,183 @@ namespace puppet { namespace runtime {
         auto& resources = _resources[rvalue_cast(resource_type)];
 
         auto result = resources.emplace(make_pair(rvalue_cast(title), runtime::resource(*this, rvalue_cast(type), rvalue_cast(path), line, rvalue_cast(attributes), exported)));
+        auto& resource = result.first->second;
         if (!result.second) {
-            return nullptr;
+            throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % type % *resource.path() % resource.line()).str());
         }
 
         // Add a graph vertex for the resource
-        auto resource_ptr = &result.first->second;
-        resource_ptr->vertex_id(boost::add_vertex(resource_ptr, _graph));
-
-        return resource_ptr;
+        resource.vertex_id(boost::add_vertex(&resource, _graph));
+        return resource;
     }
 
-    void catalog::define_class(types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const& expression)
+    vector<class_definition> const* catalog::find_class(types::klass const& klass)
     {
-        // Validate the class parameters
-        if (expression.parameters()) {
-            validate_parameters(true, context, *expression.parameters());
-        }
-
-        auto& definitions = _classes[klass];
-
-        // Check to make sure all existing definitions of the class have the same base or do not inherit
-        if (expression.parent()) {
-            types::klass parent(expression.parent()->value());
-            for (auto const& definition : definitions) {
-                auto existing = definition.parent();
-                if (!existing) {
-                    continue;
-                }
-                if (parent == *existing) {
-                    continue;
-                }
-                throw evaluation_exception(context, expression.parent()->position(),
-                   (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%.") %
-                    klass.title() %
-                    expression.parent()->value() %
-                    existing->title() %
-                    definition.path() %
-                    definition.line()
-                   ).str());
-            }
-        }
-        definitions.push_back(class_definition(*this, rvalue_cast(klass), context, &expression));
-    }
-
-    runtime::resource* catalog::declare_class(
-        runtime::context& context,
-        types::klass const& klass,
-        shared_ptr<string> path,
-        size_t line,
-        shared_ptr<runtime::attributes> attributes,
-        function<evaluation_exception(bool, string const&, string)> const& create_exception)
-    {
-        if (!klass.fully_qualified()) {
+        auto it = _classes.find(klass);
+        if (it == _classes.end() || it->second.empty()) {
             return nullptr;
+        }
+        return &it->second;
+    }
+
+    void catalog::define_class(
+        types::klass klass,
+        shared_ptr<compiler::context> const& context,
+        ast::class_definition_expression const& expression)
+    {
+        auto& definitions = _classes[klass];
+        definitions.push_back(class_definition(rvalue_cast(klass), context, expression));
+    }
+
+    runtime::resource& catalog::declare_class(
+        runtime::context& evaluation_context,
+        types::resource type,
+        shared_ptr<compiler::context> const& compilation_context,
+        lexer::position const& position,
+        shared_ptr<runtime::attributes> attributes)
+    {
+        if (!compilation_context) {
+            throw evaluation_exception("expected a compilation context.");
+        }
+        if (!type.is_class()) {
+            throw evaluation_exception("expected a class resource.", compilation_context, position);
+        }
+        if (!type.fully_qualified()) {
+            throw evaluation_exception("class name is not fully qualified.", compilation_context, position);
         }
 
         // Attempt to find the existing resource
-        types::resource resource_type("class", klass.title());
-        runtime::resource* resource = find_resource(resource_type);
-        if (resource) {
-            return resource;
+        if (auto existing = find_resource(type)) {
+            throw evaluation_exception((boost::format("class '%1%' was previously declared at %2%:%3%.") % type.title() % *existing->path() % existing->line()).str(), compilation_context, position);
         }
 
         // Lookup the class
-        auto it = _classes.find(klass);
+        auto it = _classes.find(types::klass(type.title()));
         if (it == _classes.end() || it->second.empty()) {
             // TODO: search node for class
-            return nullptr;
+            throw evaluation_exception((boost::format("cannot declare class '%1%' because it has not been defined.") % type.title()).str(), compilation_context, position);
         }
 
-        // Declare the class in the catalog
-        resource = add_resource(rvalue_cast(resource_type), rvalue_cast(path), line, attributes);
-        if (!resource) {
-            return nullptr;
-        }
+        // Add the resource
+        auto& resource = add_resource(rvalue_cast(type), compilation_context->path(), position.line(), attributes);
 
-        // Evaluate all definitions of the class
-        for (auto& definition : it->second) {
-            if (!definition.evaluate(context, *resource, create_exception)) {
-                return nullptr;
+        try {
+            // Evaluate all definitions of the class
+            for (auto &definition : it->second) {
+                definition.evaluate(evaluation_context, resource);
             }
+        } catch (evaluation_exception const& ex) {
+            // If the original exception has context, log an error with full context
+            if (ex.context()) {
+                ex.context()->log(logging::level::error, ex.position(), ex.what());
+                throw evaluation_exception((boost::format("failed to evaluate class '%1%'.") % resource.type().title()).str(), compilation_context, position);
+            }
+            throw evaluation_exception((boost::format("failed to evaluate class '%1%': %2%") % resource.type().title() % ex.what()).str(), compilation_context, position);
         }
         return resource;
     }
 
-    bool catalog::is_class_defined(types::klass const& klass) const
+    defined_type const* catalog::find_defined_type(string const& type)
     {
-        auto it = _classes.find(klass);
-        return it != _classes.end() && !it->second.empty();
-    }
-
-    bool catalog::is_class_declared(types::klass const& klass) const
-    {
-        auto it = _classes.find(klass);
-        if (it == _classes.end()) {
-            return false;
-        }
-
-        for (auto& definition : it->second) {
-            if (definition.evaluated()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void catalog::define_type(string type, shared_ptr<compiler::context> context, ast::defined_type_expression const& expression)
-    {
-        // Validate the defined type's parameters
-        if (expression.parameters()) {
-            validate_parameters(false, context, *expression.parameters());
-        }
-
-        // Look for the existing type
-        auto it = _defined_types.find(type);
-        if (it != _defined_types.end()) {
-            throw evaluation_exception(context, expression.name().position(),
-               (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
-                it->second.type() %
-                it->second.path() %
-                it->second.line()
-               ).str());
-        }
-
-        // Add the defined type
-        defined_type defined(*this, type, rvalue_cast(context), expression);
-        _defined_types.emplace(make_pair(rvalue_cast(type), rvalue_cast(defined)));
-    }
-
-    bool catalog::is_defined_type(std::string const& type) const
-    {
-        return _defined_types.count(type) > 0;
-    }
-
-    runtime::resource* catalog::declare_defined_type(
-        runtime::context& context,
-        string const& type,
-        string const& title,
-        shared_ptr<string> path,
-        size_t line,
-        shared_ptr<runtime::attributes> attributes,
-        function<evaluation_exception(bool, string const&, string)> const& create_exception)
-    {
-        // Lookup the defined type
         auto it = _defined_types.find(type);
         if (it == _defined_types.end()) {
-            // TODO: search node for defined type
             return nullptr;
         }
-
-        // Add a resource to the catalog
-        auto added = add_resource(types::resource(type, title), rvalue_cast(path), line, attributes);
-        if (!added) {
-            return nullptr;
-        }
-
-        // Evaluate the defined type
-        if (!it->second.evaluate(context, *added, create_exception)) {
-            return nullptr;
-        }
-        return added;
+        return &it->second;
     }
 
-    void catalog::define_node(shared_ptr<compiler::context> context, ast::node_definition_expression const& expression)
+    void catalog::define_type(
+        string type,
+        shared_ptr<compiler::context> const& context,
+        ast::defined_type_expression const& expression)
+    {
+        // Add the defined type
+        defined_type defined(type, context, expression);
+        auto result = _defined_types.emplace(make_pair(rvalue_cast(type), rvalue_cast(defined)));
+        if (!result.second) {
+            auto const& existing = result.first->second;
+            throw evaluation_exception(
+                (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
+                 existing.type() %
+                 *existing.path() %
+                 existing.line()
+                ).str(),
+                context,
+                expression.name().position());
+        }
+    }
+
+    runtime::resource& catalog::declare_defined_type(
+        runtime::context& evaluation_context,
+        types::resource type,
+        shared_ptr<compiler::context> const& compilation_context,
+        lexer::position const& position,
+        shared_ptr<runtime::attributes> attributes)
+    {
+        if (!compilation_context) {
+            throw evaluation_exception("expected a compilation context.");
+        }
+        if (!type.fully_qualified()) {
+            throw evaluation_exception("defined type name is not fully qualified.", compilation_context, position);
+        }
+
+        // Attempt to find the existing resource
+        if (auto existing = find_resource(type)) {
+            throw evaluation_exception((boost::format("defined type '%1%' was previously declared at %2%:%3%.") % type % *existing->path() % existing->line()).str(), compilation_context, position);
+        }
+
+        // Lookup the defined type
+        auto it = _defined_types.find(type.title());
+        if (it == _defined_types.end()) {
+            // TODO: search node for defined type
+            throw evaluation_exception((boost::format("cannot declare defined type %1% because it has not been defined.") % type).str(), compilation_context, position);
+        }
+
+        // Add the resource
+        auto& resource = add_resource(rvalue_cast(type), compilation_context->path(), position.line(), attributes);
+
+        try {
+            // Evaluate the defined type
+            it->second.evaluate(evaluation_context, resource);
+        } catch (evaluation_exception const& ex) {
+            // If the original exception has context, log an error with full context
+            if (ex.context()) {
+                ex.context()->log(logging::level::error, ex.position(), ex.what());
+                throw evaluation_exception((boost::format("failed to evaluate defined type '%1%'.") % resource.type()).str(), compilation_context, position);
+            }
+            throw evaluation_exception((boost::format("failed to evaluate defined type '%1%': %2%") % resource.type() % ex.what()).str(), compilation_context, position);
+        }
+        return resource;
+    }
+
+    void catalog::define_node(shared_ptr<compiler::context> const& context, ast::node_definition_expression const& expression)
     {
         // Emplace the node
-        _nodes.emplace_back(*this, rvalue_cast(context), expression);
-        size_t node_index = _nodes.size() -1;
+        _nodes.emplace_back(context, expression);
+        size_t node_index = _nodes.size() - 1;
 
         for (auto const& name : expression.names()) {
             // Check for default node
             if (name.is_default()) {
-                if (_default_node_index < 0) {
-                    _default_node_index = static_cast<ssize_t>(node_index);
+                if (!_default_node_index) {
+                    _default_node_index = node_index;
                     continue;
                 }
-                auto const& previous = _nodes[_default_node_index];
-                throw evaluation_exception(context, name.position(), (boost::format("a default node was previously defined at %1%:%2%.") % previous.path() % previous.line()).str());
+                auto const& previous = _nodes[*_default_node_index];
+                throw evaluation_exception((boost::format("a default node was previously defined at %1%:%2%.") % *previous.context()->path() % previous.position().line()).str(), context, name.position());
             }
             // Check for regular expression names
             if (name.regex()) {
-                auto it = find_if(_regex_node_definitions.begin(), _regex_node_definitions.end(), [&](decltype(_regex_node_definitions.front()) existing) { return existing.first.pattern() == name.value(); });
-                if (it != _regex_node_definitions.end()) {
+                auto it = find_if(_regex_nodes.begin(), _regex_nodes.end(), [&](std::pair<values::regex, size_t> const& existing) { return existing.first.pattern() == name.value(); });
+                if (it != _regex_nodes.end()) {
                     auto const& previous = _nodes[it->second];
-                    throw evaluation_exception(context, name.position(), (boost::format("node /%1%/ was previously defined at %2%:%3%.") % name.value() % previous.path() % previous.line()).str());
+                    throw evaluation_exception((boost::format("node /%1%/ was previously defined at %2%:%3%.") % name.value() % *previous.context()->path() % previous.position().line()).str(), context, name.position());
                 }
 
                 try {
-                    _regex_node_definitions.emplace_back(values::regex(name.value()), node_index);
+                    _regex_nodes.emplace_back(values::regex(name.value()), node_index);
                 } catch (regex_error const& ex) {
-                    throw evaluation_exception(context, name.position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
+                    throw evaluation_exception((boost::format("invalid regular expression: %1%") % ex.what()).str(), context, name.position());
                 }
                 continue;
             }
@@ -646,34 +565,34 @@ namespace puppet { namespace runtime {
             auto it = _named_nodes.find(name.value());
             if (it != _named_nodes.end()) {
                 auto const& previous = _nodes[it->second];
-                throw evaluation_exception(context, name.position(), (boost::format("node '%1%' was previously defined at %2%:%3%.") % name.value() % previous.path() % previous.line()).str());
+                throw evaluation_exception((boost::format("node '%1%' was previously defined at %2%:%3%.") % name.value() % *previous.context()->path() % previous.position().line()).str(), context, name.position());
             }
             _named_nodes.emplace(make_pair(boost::to_lower_copy(name.value()), node_index));
         }
     }
 
-    bool catalog::evaluate_node(runtime::context& context, compiler::node const& node)
+    runtime::resource* catalog::declare_node(runtime::context& evaluation_context, compiler::node const& node)
     {
         // If there are no node definitions, do nothing
         if (_nodes.empty()) {
-            return true;
+            return nullptr;
         }
 
         // Find a node definition
-        string scope_name;
+        string node_name;
         node_definition* definition = nullptr;
         node.each_name([&](string const& name) {
             // First check by name
             auto it = _named_nodes.find(name);
             if (it != _named_nodes.end()) {
-                scope_name = "Node[" + it->first + "]";
+                node_name = it->first;
                 definition = &_nodes[it->second];
                 return false;
             }
             // Next, check by looking at every regex
-            for (auto const& kvp : _regex_node_definitions) {
+            for (auto const& kvp : _regex_nodes) {
                 if (regex_search(name, kvp.first.value())) {
-                    scope_name = "Node[/" + kvp.first.pattern() + "/]";
+                    node_name = "/" + kvp.first.pattern() + "/";
                     definition = &_nodes[kvp.second];
                     return false;
                 }
@@ -682,7 +601,7 @@ namespace puppet { namespace runtime {
         });
 
         if (!definition) {
-            if (_default_node_index < 0) {
+            if (!_default_node_index) {
                 ostringstream message;
                 message << "could not find a default node or a node with the following names: ";
                 bool first = true;
@@ -696,45 +615,38 @@ namespace puppet { namespace runtime {
                     return true;
                 });
                 message << ".";
-                throw compiler::compilation_exception(message.str());
+                throw evaluation_exception(message.str());
             }
-            scope_name = "Node[default]";
-            definition = &_nodes[_default_node_index];
+            node_name = "default";
+            definition = &_nodes[*_default_node_index];
         }
 
+        // Add a Node resource to the catalog
+        auto& context = definition->context();
+        auto& position = definition->position();
+        auto& resource = add_resource(types::resource("node", node_name), context->path(), position.line());
+
         // Set the node scope for the remainder of the evaluation
-        node_scope scope(context, rvalue_cast(scope_name));
+        node_scope scope{evaluation_context, &resource};
 
         // Evaluate the node definition
-        return definition->evaluate(context);
+        try {
+            definition->evaluate(evaluation_context);
+        } catch (evaluation_exception const& ex) {
+            // If the original exception has context, log an error with full context
+            if (ex.context()) {
+                ex.context()->log(logging::level::error, ex.position(), ex.what());
+                throw evaluation_exception("failed to evaluate node.", context, position);
+            }
+            throw evaluation_exception((boost::format("failed to evaluate node: %2%.") % ex.what()).str(), context, position);
+        }
+        return &resource;
     }
 
     void catalog::finalize()
     {
         // Populate the dependency graph
         populate_graph();
-    }
-
-    void catalog::validate_parameters(bool klass, shared_ptr<compiler::context> const& context, vector<ast::parameter> const& parameters)
-    {
-        for (auto const& parameter : parameters) {
-            auto const& name = parameter.variable().name();
-
-            // Check for reserved names
-            if (name == "title" || name == "name") {
-                throw evaluation_exception(context, parameter.variable().position(), (boost::format("parameter $%1% is reserved and cannot be used.") % name).str());
-            }
-
-            // Check for capture parameters
-            if (parameter.captures()) {
-                throw evaluation_exception(context, parameter.variable().position(), (boost::format("%1% parameter $%2% cannot \"captures rest\".") % (klass ? "class" : "defined type") % name).str());
-            }
-
-            // Check for metaparameter names
-            if (resource::is_metaparameter(name)) {
-                throw evaluation_exception(context, parameter.variable().position(), (boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str());
-            }
-        }
     }
 
     void catalog::populate_graph()
@@ -773,7 +685,7 @@ namespace puppet { namespace runtime {
             // Locate the target in the catalog
             auto target = find_resource(target_resource);
             if (!target) {
-                throw compiler::compilation_exception(
+                throw evaluation_exception(
                     (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the resource does not exist in the catalog.") %
                      source.type() %
                      *source.path() %
@@ -783,7 +695,7 @@ namespace puppet { namespace runtime {
             }
 
             if (&source == target) {
-                throw compiler::compilation_exception(
+                throw evaluation_exception(
                     (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the relationship is self-referencing.") %
                      source.type() %
                      *source.path() %
@@ -795,7 +707,7 @@ namespace puppet { namespace runtime {
             // Add the relationship
             add_relationship(relationship, source, *target);
         }, [&](string const& message) {
-            throw compiler::compilation_exception(
+            throw evaluation_exception(
                 (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship: %5%") %
                  source.type() %
                  *source.path() %

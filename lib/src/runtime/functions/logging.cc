@@ -19,9 +19,9 @@ namespace puppet { namespace runtime { namespace functions {
         string message = ss.str();
 
         auto& evaluator = context.evaluator();
-        auto& logger = evaluator.logger();
+        auto& logger = evaluator.compilation_context()->logger();
         if (logger.would_log(_level)) {
-            logger.log(_level, "%1%: %2%", *evaluator.context().current_scope(), message);
+            logger.log(_level, "%1%: %2%", *evaluator.evaluation_context().current_scope(), message);
         }
         return message;
     }

@@ -1,5 +1,7 @@
 #include <puppet/runtime/definition_scanner.hpp>
 #include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/runtime/executor.hpp>
+#include <puppet/compiler/node.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -15,9 +17,9 @@ namespace puppet { namespace runtime {
      */
     struct scanning_visitor : boost::static_visitor<void>
     {
-        scanning_visitor(shared_ptr<compiler::context> compilation_context, runtime::catalog& catalog) :
-            _compilation_context(rvalue_cast(compilation_context)),
-            _catalog(catalog)
+        scanning_visitor(runtime::catalog& catalog, shared_ptr<compiler::context> const& context) :
+            _catalog(catalog),
+            _context(context)
         {
             // Push a "top level" scope
             _scopes.push_back("::");
@@ -302,17 +304,43 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::class_definition_expression const& expr)
         {
-            // Ensure the name is valid
-            if (boost::starts_with(expr.name().value(), "::")) {
-                throw evaluation_exception(_compilation_context, expr.name().position(), (boost::format("'%1%' is not a valid class name.") % expr.name()).str());
+            // Validate the class name
+            types::klass klass(validate_name(true, expr.name()));
+
+            // Check to see if this class's parent matches existing definitions
+            if (expr.parent()) {
+                auto definitions = _catalog.find_class(klass);
+                if (definitions) {
+                    types::klass parent(expr.parent()->value());
+                    for (auto const& definition : *definitions) {
+                        auto existing = definition.parent();
+                        if (!existing) {
+                            continue;
+                        }
+                        if (parent == *existing) {
+                            continue;
+                        }
+                        throw evaluation_exception(
+                            (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%.") %
+                             klass.title() %
+                             expr.parent()->value() %
+                             existing->title() %
+                             *definition.path() %
+                             definition.line()
+                            ).str(),
+                            _context,
+                            expr.parent()->position());
+                    }
+                }
             }
 
-            if (!can_define()) {
-                throw evaluation_exception(_compilation_context, expr.position(), "classes can only be defined at top-level scope or inside another class.");
+            // Validate the class parameters
+            if (expr.parameters()) {
+                validate_parameters(true, *expr.parameters());
             }
 
-            // Define the class in the context
-            _catalog.define_class(types::klass(qualify(expr.name().value())), _compilation_context, expr);
+            // Push back the class definition
+            _catalog.define_class(klass, _context, expr);
 
             // Scan the parameters
             if (expr.parameters()) {
@@ -342,17 +370,13 @@ namespace puppet { namespace runtime {
 
         result_type operator()(ast::defined_type_expression const& expr)
         {
-            // Ensure the name is valid
-            if (boost::starts_with(expr.name().value(), "::")) {
-                throw evaluation_exception(_compilation_context, expr.name().position(), (boost::format("'%1%' is not a valid defined type name.") % expr.name()).str());
+            // Validate the defined type parameters
+            if (expr.parameters()) {
+                validate_parameters(false, *expr.parameters());
             }
 
-            if (!can_define()) {
-                throw evaluation_exception(_compilation_context, expr.position(), "defined types can only be defined at top-level scope or inside a class.");
-            }
-
-            // Define the type in the context
-            _catalog.define_type(qualify(expr.name().value()), _compilation_context, expr);
+            // Add the defined type
+            _catalog.define_type(validate_name(false, expr.name()), _context, expr);
 
             // Defined types have no class scope
             class_scope scope(_scopes, {});
@@ -380,11 +404,11 @@ namespace puppet { namespace runtime {
         result_type operator()(ast::node_definition_expression const& expr)
         {
             if (!can_define()) {
-                throw evaluation_exception(_compilation_context, expr.position(), "node definitions can only be defined at top-level scope or inside a class.");
+                throw evaluation_exception("node definitions can only be defined at top-level or inside a class.", _context, expr.position());
             }
 
-            // Define the node in the context
-            _catalog.define_node(_compilation_context, expr);
+            // Define the node in the catalog
+            _catalog.define_node(_context, expr);
 
             // Node definitions have no class scope
             class_scope scope(_scopes, {});
@@ -414,23 +438,6 @@ namespace puppet { namespace runtime {
         }
 
      private:
-        struct class_scope
-        {
-            explicit class_scope(deque<string>& scopes, string name = {}) :
-                _scopes(scopes)
-            {
-                scopes.push_back(std::move(name));
-            }
-
-            ~class_scope()
-            {
-                _scopes.pop_back();
-            }
-
-         private:
-            deque<string>& _scopes;
-        };
-
         bool can_define() const
         {
             return !_scopes.back().empty();
@@ -456,8 +463,84 @@ namespace puppet { namespace runtime {
             return qualified;
         }
 
-        shared_ptr<compiler::context> _compilation_context;
+        string validate_name(bool is_class, ast::name const& name)
+        {
+            if (!can_define()) {
+                throw evaluation_exception((boost::format("%1% can only be defined at top-level or inside a class.") % (is_class ? "classes" : "defined types")).str(), _context, name.position());
+            }
+
+            if (name.value().empty()) {
+                throw evaluation_exception((boost::format("a %1% cannot have an empty name.") % (is_class ? "class" : "defined type")).str(), _context, name.position());
+            }
+
+            // Ensure the name is valid
+            if (boost::starts_with(name.value(), "::")) {
+                throw evaluation_exception((boost::format("'%1%' is not a valid %2% name.") % name % (is_class ? "class" : "defined type")).str(), _context, name.position());
+            }
+
+            // Cannot define a class called "main" or "settings" because they are built-in objects
+            auto qualified_name = qualify(name.value());
+            if (qualified_name == "main" || qualified_name == "settings") {
+                throw evaluation_exception((boost::format("'%1%' is the name of a built-in class and cannot be used.") % qualified_name).str(), _context, name.position());
+            }
+
+            // Check for conflicts between defined types and classes
+            if (is_class) {
+                auto type = _catalog.find_defined_type(qualified_name);
+                if (type) {
+                    throw evaluation_exception((boost::format("'%1%' was previously defined as a defined type at %2%:%3%.") % qualified_name % *type->path() % type->line()).str(), _context, name.position());
+                }
+            } else {
+                auto definitions = _catalog.find_class(types::klass(qualified_name));
+                if (definitions) {
+                    auto& first = definitions->front();
+                    throw evaluation_exception((boost::format("'%1%' was previously defined as a class at %2%:%3%.") % qualified_name % *first.path() % first.line()).str(), _context, name.position());
+                }
+            }
+            return qualified_name;
+        }
+
+        void validate_parameters(bool is_class, vector<ast::parameter> const& parameters)
+        {
+            for (auto const& parameter : parameters) {
+                auto const& name = parameter.variable().name();
+
+                // Check for reserved names
+                if (name == "title" || name == "name") {
+                    throw evaluation_exception((boost::format("parameter $%1% is reserved and cannot be used.") % name).str(), _context, parameter.variable().position());
+                }
+
+                // Check for capture parameters
+                if (parameter.captures()) {
+                    throw evaluation_exception((boost::format("%1% parameter $%2% cannot \"captures rest\".") % (is_class ? "class" : "defined type") % name).str(), _context, parameter.variable().position());
+                }
+
+                // Check for metaparameter names
+                if (resource::is_metaparameter(name)) {
+                    throw evaluation_exception((boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str(), _context, parameter.variable().position());
+                }
+            }
+        }
+
+        struct class_scope
+        {
+            explicit class_scope(deque<string>& scopes, string name = {}) :
+                _scopes(scopes)
+            {
+                scopes.push_back(std::move(name));
+            }
+
+            ~class_scope()
+            {
+                _scopes.pop_back();
+            }
+
+         private:
+            deque<string>& _scopes;
+        };
+
         runtime::catalog& _catalog;
+        shared_ptr<compiler::context> const& _context;
         deque<string> _scopes;
     };
 
@@ -466,18 +549,18 @@ namespace puppet { namespace runtime {
     {
     }
 
-    void definition_scanner::scan(shared_ptr<compiler::context> compilation_context)
+    void definition_scanner::scan(shared_ptr<compiler::context> const& context)
     {
-        if (!compilation_context) {
+        if (!context) {
             return;
         }
 
-        auto& tree = compilation_context->tree();
+        auto& tree = context->tree();
         if (!tree.body()) {
             return;
         }
 
-        scanning_visitor visitor(rvalue_cast(compilation_context), _catalog);
+        scanning_visitor visitor(_catalog, context);
         for (auto const& expression : *tree.body()) {
             visitor(expression);
         }

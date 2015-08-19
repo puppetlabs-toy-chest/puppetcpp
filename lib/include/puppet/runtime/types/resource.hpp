@@ -196,7 +196,7 @@ namespace puppet { namespace runtime { namespace types {
         if (type.title().empty()) {
             return os;
         }
-        os << "['" << type.title() << "']";
+        os << "[" << type.title() << "]";
         return os;
     }
 
