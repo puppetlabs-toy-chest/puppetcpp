@@ -26,7 +26,7 @@ namespace puppet { namespace runtime {
         return lambda->parameters();
     }
 
-    static optional<vector<ast::expression>> const& lamda_body(optional<ast::lambda> const& lambda)
+    static optional<vector<ast::expression>> const& lambda_body(optional<ast::lambda> const& lambda)
     {
         static optional<vector<ast::expression>> none;
         if (!lambda) {
@@ -47,7 +47,7 @@ namespace puppet { namespace runtime {
             _evaluator(evaluator),
             _name(name),
             _position(position),
-            _lambda(evaluator, _position, lambda_parameters(lambda), lamda_body(lambda)),
+            _lambda(evaluator, _position, lambda_parameters(lambda), lambda_body(lambda)),
             _lambda_given(lambda)
     {
         _arguments.reserve((arguments ? arguments->size() : 0) + (first_value ? 1 : 0));
