@@ -13,6 +13,9 @@
 
 namespace puppet { namespace runtime {
 
+    // Forward declaration of resource.
+    struct resource;
+
     /**
      * Represents an assigned variable.
      */
@@ -58,34 +61,29 @@ namespace puppet { namespace runtime {
         /**
          * Constructs a scope.
          * @param parent The parent scope.
-         * @param name The name of the scope (e.g. foo).
-         * @param display_name The display name of the scope (e.g. Class[foo]).
+         * @param resource The resource associated with the scope.
          */
-        explicit scope(std::shared_ptr<scope> parent, std::string name = std::string(), std::string display_name = std::string());
+        explicit scope(std::shared_ptr<scope> parent, runtime::resource* resource = nullptr);
 
         /**
          * Constructs the top scope.
          * @param facts The facts provider to use for the top scope.
+         * @param resource The resource associated with the top scope.
          */
-        explicit scope(std::shared_ptr<facts::provider> facts);
-
-        /**
-         * Gets the name of the scope.
-         * @return Returns the name of scope.
-         */
-        std::string const& name() const;
-
-        /**
-         * Gets the display name of the scope.
-         * @return Returns the display name of scope.
-         */
-        std::string const& display_name() const;
+        explicit scope(std::shared_ptr<facts::provider> facts, runtime::resource* resource = nullptr);
 
         /**
          * Gets the parent scope.
          * @return Returns the parent scope or nullptr if at top scope.
          */
         std::shared_ptr<scope> const& parent() const;
+
+        /**
+         * Gets the resource associated with the scope.
+         * Resources associated with a scope denote the container resource.
+         * @return Returns the resource associated with the scope or nullptr if there is no associated resource.
+         */
+        runtime::resource* resource() const;
 
         /**
          * Qualifies the given name using the scope's name.
@@ -114,8 +112,7 @@ namespace puppet { namespace runtime {
      private:
         std::shared_ptr<facts::provider> _facts;
         std::shared_ptr<scope> _parent;
-        std::string _name;
-        std::string _display_name;
+        runtime::resource* _resource;
         std::unordered_map<std::string, assigned_variable> _variables;
     };
 

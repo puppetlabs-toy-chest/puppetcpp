@@ -8,9 +8,11 @@ namespace puppet { namespace runtime { namespace functions {
 
     value with::operator()(call_context& context) const
     {
-        return context.lambda().execute(context.arguments(), [&](size_t index, string message) {
-            return context.evaluator().create_exception(context.position(index), rvalue_cast(message));
-        });
+        try {
+            return context.yield_without_catch(context.arguments());
+        } catch (argument_exception const& ex) {
+            throw context.evaluator().create_exception(context.position(ex.index()), ex.what());
+        }
     }
 
 }}}  // namespace puppet::runtime::functions

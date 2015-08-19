@@ -21,7 +21,7 @@ namespace puppet { namespace runtime { namespace operators {
             try {
                 smatch matches;
                 bool result = right.empty() || regex_search(left, matches, std::regex(right));
-                evaluator.context().set(matches);
+                evaluator.evaluation_context().set(matches);
                 return result;
             } catch (regex_error const& ex) {
                 throw evaluator.create_exception(_context.right_position(), (boost::format("invalid regular expression: %1%") % ex.what()).str());
@@ -32,7 +32,7 @@ namespace puppet { namespace runtime { namespace operators {
         {
             smatch matches;
             bool result = right.pattern().empty() || regex_search(left, matches, right.value());
-            _context.evaluator().context().set(matches);
+            _context.evaluator().evaluation_context().set(matches);
             return result;
         }
 

@@ -7,6 +7,7 @@
 #include "exceptions.hpp"
 #include "settings.hpp"
 #include "../runtime/catalog.hpp"
+#include "../runtime/context.hpp"
 #include "../logging/logger.hpp"
 #include "environment.hpp"
 #include <exception>
@@ -55,6 +56,9 @@ namespace puppet { namespace compiler {
         void each_name(std::function<bool(std::string const&)> const& callback) const;
 
      private:
+        static void create_main(runtime::catalog& catalog);
+        static void create_settings_scope(runtime::context& context, compiler::settings const& settings);
+
         std::set<std::string> _names;
         compiler::environment& _environment;
     };

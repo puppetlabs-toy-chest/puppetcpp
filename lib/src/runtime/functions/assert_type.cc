@@ -34,7 +34,7 @@ namespace puppet { namespace runtime { namespace functions {
         }
 
         arguments[1] = get_type(arguments[1]);
-        return context.lambda().execute(arguments);
+        return context.yield(arguments);
     }
 
 }}}  // namespace puppet::runtime::functions

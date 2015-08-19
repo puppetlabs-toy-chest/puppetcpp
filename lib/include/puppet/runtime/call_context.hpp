@@ -74,16 +74,36 @@ namespace puppet { namespace runtime {
         values::array& arguments();
 
         /**
-         * Gets the executor for the lambda.
-         * @return Returns the executor for the lambda.
-         */
-        runtime::executor const& lambda() const;
-
-        /**
          * Determines if a lambda was passed to the function.
          * @return Returns true if a lambda was passed or false if one was not.
          */
         bool lambda_given() const;
+
+        /**
+         * Gets the count the lambda's parameters.
+         * @return Returns the number of lambda parameters or 0 if no lambda was given.
+         */
+        size_t lambda_parameter_count() const;
+
+        /**
+         * Gets the position of the lambda if one was passed.
+         * @return Returns the position of the lambda passed to the function or the position of the function call if one was not passed.
+         */
+        lexer::position const& lambda_position() const;
+
+        /**
+         * Yields to the lambda if one is present.
+         * @param arguments The arguments to yield to the lambda.
+         * @return Returns the value that was returned by the lambda.
+         */
+        values::value yield(values::array& arguments) const;
+
+        /**
+         * Yields to the lambda if one is present, without catching argument exceptions.
+         * @param arguments The arguments to yield to the lambda.
+         * @return Returns the value that was returned by the lambda.
+         */
+        values::value yield_without_catch(values::array& arguments) const;
 
     private:
         expression_evaluator& _evaluator;
@@ -91,7 +111,7 @@ namespace puppet { namespace runtime {
         lexer::position const& _position;
         values::array _arguments;
         std::vector<lexer::position> _positions;
-        runtime::executor _executor;
+        runtime::executor _lambda;
         bool _lambda_given;
     };
 
