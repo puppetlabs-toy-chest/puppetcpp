@@ -117,7 +117,6 @@ namespace puppet { namespace runtime {
     {
         /**
          * Creates a resource with the given type and title.
-         * @param catalog The catalog that contains the resource.
          * @param type The resource type (e.g. File['/tmp/foo']).
          * @param path The path of the file defining the resource.
          * @param line The line defining the resource.
@@ -125,18 +124,11 @@ namespace puppet { namespace runtime {
          * @param exported True if the resource is exported or false if not.
          */
         resource(
-            runtime::catalog& catalog,
             types::resource type,
             std::shared_ptr<std::string> path = nullptr,
             size_t line = 0,
             std::shared_ptr<attributes> attributes = nullptr,
             bool exported = false);
-
-        /**
-         * Gets the catalog that contains the resource.
-         * @return Returns the catalog that contains the resource.
-         */
-        runtime::catalog const& catalog() const;
 
         /**
          * Gets the resource type of the resource.
@@ -192,7 +184,6 @@ namespace puppet { namespace runtime {
         size_t vertex_id() const;
         void vertex_id(size_t id);
 
-        runtime::catalog& _catalog;
         types::resource _type;
         std::shared_ptr<std::string> _path;
         size_t _line;
@@ -423,6 +414,7 @@ namespace puppet { namespace runtime {
          * Declares a defined type.
          * A defined type cannot be declared more than once.
          * @param evaluation_context The current evaluation context.
+         * @param type_name The lower-case type name for the defined type.
          * @param type The resource type for the defined type.
          * @param compilation_context The compilation context where the class is being declared.
          * @param position The position where the class is being declared.
@@ -431,6 +423,7 @@ namespace puppet { namespace runtime {
          */
         runtime::resource& declare_defined_type(
             runtime::context& evaluation_context,
+            std::string const& type_name,
             types::resource type,
             std::shared_ptr<compiler::context> const& compilation_context,
             lexer::position const& position,

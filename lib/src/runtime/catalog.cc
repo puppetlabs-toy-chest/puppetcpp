@@ -104,13 +104,11 @@ namespace puppet { namespace runtime {
     }
 
     resource::resource(
-        runtime::catalog& catalog,
         types::resource type,
         std::shared_ptr<std::string> path,
         size_t line,
         std::shared_ptr<runtime::attributes> attributes,
         bool exported) :
-            _catalog(catalog),
             _type(rvalue_cast(type)),
             _path(rvalue_cast(path)),
             _line(line),
@@ -123,11 +121,6 @@ namespace puppet { namespace runtime {
         if (!_attributes) {
             _attributes = make_shared<runtime::attributes>();
         }
-    }
-
-    runtime::catalog const& resource::catalog() const
-    {
-        return _catalog;
     }
 
     types::resource const& resource::type() const
@@ -380,7 +373,7 @@ namespace puppet { namespace runtime {
 
         auto& resources = _resources[rvalue_cast(resource_type)];
 
-        auto result = resources.emplace(make_pair(rvalue_cast(title), runtime::resource(*this, rvalue_cast(type), rvalue_cast(path), line, rvalue_cast(attributes), exported)));
+        auto result = resources.emplace(make_pair(rvalue_cast(title), runtime::resource(rvalue_cast(type), rvalue_cast(path), line, rvalue_cast(attributes), exported)));
         auto& resource = result.first->second;
         if (!result.second) {
             throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % type % *resource.path() % resource.line()).str());
@@ -489,6 +482,7 @@ namespace puppet { namespace runtime {
 
     runtime::resource& catalog::declare_defined_type(
         runtime::context& evaluation_context,
+        string const& type_name,
         types::resource type,
         shared_ptr<compiler::context> const& compilation_context,
         lexer::position const& position,
@@ -507,7 +501,7 @@ namespace puppet { namespace runtime {
         }
 
         // Lookup the defined type
-        auto it = _defined_types.find(type.title());
+        auto it = _defined_types.find(type_name);
         if (it == _defined_types.end()) {
             // TODO: search node for defined type
             throw evaluation_exception((boost::format("cannot declare defined type %1% because it has not been defined.") % type).str(), compilation_context, position);
