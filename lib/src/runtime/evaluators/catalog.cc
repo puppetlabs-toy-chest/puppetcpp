@@ -98,7 +98,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                         catalog->declare_class(evaluation_context, type, compilation_context, body.position(), attributes);
                     } else if (is_defined_type) {
                         // Declare the defined type
-                        catalog->declare_defined_type(evaluation_context, type, compilation_context, body.position(), attributes);
+                        catalog->declare_defined_type(evaluation_context, type_name, type, compilation_context, body.position(), attributes);
                     } else {
                         // Add the resource to the catalog
                         catalog->add_resource(type, compilation_context->path(), body.position().line(), attributes);
