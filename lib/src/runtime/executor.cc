@@ -153,12 +153,14 @@ namespace puppet { namespace runtime {
             for (auto const& parameter : *_parameters) {
                 auto const& name = parameter.variable().name();
 
-                // Check that parameters without default values are in the resource's attributes
-                if (!parameter.default_value()) {
-                    if (!attributes.get(name)) {
-                        throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% is required but no value was given.") % name).str());
-                    }
+                // Check if the attribute exists
+                if (attributes.get(name)) {
                     continue;
+                }
+
+                // If there's no default value, the parameter is required
+                if (!parameter.default_value()) {
+                    throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% is required but no value was given.") % name).str());
                 }
 
                 // Evaluate the default value
