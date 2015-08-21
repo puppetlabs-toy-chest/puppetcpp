@@ -63,14 +63,13 @@ namespace puppet { namespace runtime {
          * @param parent The parent scope.
          * @param resource The resource associated with the scope.
          */
-        explicit scope(std::shared_ptr<scope> parent, runtime::resource* resource = nullptr);
+        explicit scope(std::shared_ptr<scope> parent, runtime::resource const* resource = nullptr);
 
         /**
          * Constructs the top scope.
          * @param facts The facts provider to use for the top scope.
-         * @param resource The resource associated with the top scope.
          */
-        explicit scope(std::shared_ptr<facts::provider> facts, runtime::resource* resource = nullptr);
+        explicit scope(std::shared_ptr<facts::provider> facts);
 
         /**
          * Gets the parent scope.
@@ -80,10 +79,15 @@ namespace puppet { namespace runtime {
 
         /**
          * Gets the resource associated with the scope.
-         * Resources associated with a scope denote the container resource.
          * @return Returns the resource associated with the scope or nullptr if there is no associated resource.
          */
-        runtime::resource* resource() const;
+        runtime::resource const* resource() const;
+
+        /**
+         * Sets the resource associated with the scope.
+         * @param resource The new resource to associate with the scope.
+         */
+        void resource(runtime::resource const* resource);
 
         /**
          * Qualifies the given name using the scope's name.
@@ -112,7 +116,7 @@ namespace puppet { namespace runtime {
      private:
         std::shared_ptr<facts::provider> _facts;
         std::shared_ptr<scope> _parent;
-        runtime::resource* _resource;
+        runtime::resource const* _resource;
         std::unordered_map<std::string, assigned_variable> _variables;
     };
 

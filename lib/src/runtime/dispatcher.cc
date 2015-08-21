@@ -1,5 +1,6 @@
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/runtime/functions/assert_type.hpp>
+#include <puppet/runtime/functions/contain.hpp>
 #include <puppet/runtime/functions/each.hpp>
 #include <puppet/runtime/functions/fail.hpp>
 #include <puppet/runtime/functions/filter.hpp>
@@ -170,6 +171,7 @@ namespace puppet { namespace runtime {
         static const unordered_map<string, function_type> functions {
             { "alert",          functions::logging_function(logging::level::alert) },
             { "assert_type",    functions::assert_type() },
+            { "contain",        functions::contain() },
             { "crit",           functions::logging_function(logging::level::critical) },
             { "debug",          functions::logging_function(logging::level::debug) },
             { "each",           functions::each() },

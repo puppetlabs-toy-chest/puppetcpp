@@ -89,7 +89,7 @@ namespace puppet { namespace runtime {
     enum class relationship
     {
         /**
-         * Class or defined type containment.
+         * Resource containment.
          */
         contains,
         /**
@@ -167,6 +167,12 @@ namespace puppet { namespace runtime {
         runtime::attributes const& attributes() const;
 
         /**
+         * Gets the vertex id of the resource in the catalog dependency graph.
+         * @return Returns the vertex id of the resource in the catalog dependency graph.
+         */
+        size_t vertex_id() const;
+
+        /**
          * Makes the resource's attributes unique.
          */
         void make_attributes_unique();
@@ -180,8 +186,6 @@ namespace puppet { namespace runtime {
 
      private:
         friend struct catalog;
-
-        size_t vertex_id() const;
         void vertex_id(size_t id);
 
         types::resource _type;
@@ -333,6 +337,14 @@ namespace puppet { namespace runtime {
         dependency_graph const& graph() const;
 
         /**
+         * Adds a relationship to the dependency graph.
+         * @param relationship The relationship from the source to the target.
+         * @param source The source resource.
+         * @param target The target resource.
+         */
+        void add_relationship(runtime::relationship relationship, runtime::resource const& source, runtime::resource const& target);
+
+        /**
          * Finds a resource in the catalog.
          * @param resource The resource type to find.
          * @return Returns the resource if found or nullptr if the resource is not in the catalog.
@@ -341,18 +353,20 @@ namespace puppet { namespace runtime {
 
         /**
          * Adds a resource to the catalog.
+         * @param evaluation_context The current evaluation context.
          * @param type The qualified resource type to add.
-         * @param path The path of the file declaring the resource.
-         * @param line The line declaring the resource.
+         * @param compilation_context The compilation context where the resource is being declared.
+         * @param position The position where the resource is being declared.
          * @param attributes The resource's initial attributes.
          * @param exported True if the resource is exported or false if it is not.
          * @return Returns the resource that was added.
          */
         runtime::resource& add_resource(
+            runtime::context& evaluation_context,
             types::resource type,
-            std::shared_ptr<std::string> path,
-            size_t line,
-            std::shared_ptr<attributes> attributes = nullptr,
+            std::shared_ptr<compiler::context> const& compilation_context,
+            lexer::position const& position,
+            std::shared_ptr<runtime::attributes> attributes = nullptr,
             bool exported = false);
 
         /**
@@ -453,7 +467,6 @@ namespace puppet { namespace runtime {
      private:
         void populate_graph();
         void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
-        void add_relationship(runtime::relationship relationship, runtime::resource const& source, runtime::resource const& target);
         void detect_cycles();
 
         std::unordered_map<std::string, std::unordered_map<std::string, resource>> _resources;

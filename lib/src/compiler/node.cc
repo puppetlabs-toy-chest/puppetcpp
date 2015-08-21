@@ -39,13 +39,13 @@ namespace puppet { namespace compiler {
 
     catalog node::compile(logging::logger& logger, compiler::settings const& settings)
     {
-        // Create a catalog with the "main" resources
+        // Create a catalog, main evaluation context, and main compilation context
         runtime::catalog catalog;
-        create_main(catalog);
+        runtime::context evaluation_context{ settings.facts(), &catalog };
+        auto compilation_context = make_shared<compiler::context>(logger, make_shared<string>("main"), *this, false /* dummy context */);
 
         // Create an evaluation context and a settings scope
-        runtime::context evaluation_context{ settings.facts(), &catalog };
-        create_settings_scope(evaluation_context, settings);
+        create_initial_resources(evaluation_context, compilation_context, settings);
 
         // TODO: set node parameters in the top scope
 
@@ -100,40 +100,38 @@ namespace puppet { namespace compiler {
         }
     }
 
-    void node::create_main(runtime::catalog& catalog)
+    void node::create_initial_resources(
+        runtime::context& evaluation_context,
+        shared_ptr<compiler::context> const& compilation_context,
+        compiler::settings const& settings)
     {
-        auto path = make_shared<string>("<generated>");
-
-        // Create Stage[main]
-        catalog.add_resource(types::resource("stage", "main"), path, 1);
-
-        // Create Class[main]
-        catalog.add_resource(types::resource("class", "main"), path, 1);
-
-        // TODO: add containment edge from Class[main] to Stage[main]
-    }
-
-    void node::create_settings_scope(runtime::context& context, compiler::settings const& settings)
-    {
-        auto catalog = context.catalog();
+        auto catalog = evaluation_context.catalog();
         if (!catalog) {
             return;
         }
 
-        // Find Stage[main]
-        auto main = catalog->find_resource(types::resource("stage", "main"));
-        if (!main) {
-            return;
-        }
+        // Use line 1 for the dummy position of these resources
+        lexer::position position(0, 1);
 
-        // Create Class[Settings]
-        auto& settings_resource = catalog->add_resource(types::resource("class", "settings"), main->path(), 1);
-        auto settings_scope = make_shared<runtime::scope>(context.top_scope(), &settings_resource);
-        context.add_scope(settings_scope);
+        // Create Stage[main]
+        auto& stage_main = catalog->add_resource(evaluation_context, types::resource("stage", "main"), compilation_context, position);
+
+        // Create Class[main] and associate it with the top scope
+        auto& class_main = catalog->add_resource(evaluation_context, types::resource("class", "main"), compilation_context, position);
+        evaluation_context.top_scope()->resource(&class_main);
+
+        // Contain Class[main] in Stage[main]
+        catalog->add_relationship(relationship::contains, stage_main, class_main);
+
+        // Create Class[Settings] and add the settings scope
+        auto& settings_resource = catalog->add_resource(evaluation_context, types::resource("class", "settings"), compilation_context, position);
+        auto settings_scope = make_shared<runtime::scope>(evaluation_context.top_scope(), &settings_resource);
+        evaluation_context.add_scope(settings_scope);
 
         // TODO: set settings in the scope
 
-        // TODO: add containment edge from Class[settings] -> Stage[main]
+        // Contain Class[Settings] in Stage[main]
+        catalog->add_relationship(relationship::contains, stage_main, settings_resource);
     }
 
 }}  // namespace puppet::compiler

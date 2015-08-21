@@ -113,6 +113,7 @@ namespace puppet { namespace runtime {
             _path(rvalue_cast(path)),
             _line(line),
             _attributes(rvalue_cast(attributes)),
+            _vertex_id(static_cast<size_t>(-1)),
             _exported(exported)
     {
         if (!_path) {
@@ -153,6 +154,11 @@ namespace puppet { namespace runtime {
         return *_attributes;
     }
 
+    size_t resource::vertex_id() const
+    {
+        return _vertex_id;
+    }
+
     void resource::make_attributes_unique()
     {
         if (_attributes.unique()) {
@@ -179,11 +185,6 @@ namespace puppet { namespace runtime {
             "tag"
         };
         return metaparameters.count(name) > 0;
-    }
-
-    size_t resource::vertex_id() const
-    {
-        return _vertex_id;
     }
 
     void resource::vertex_id(size_t id)
@@ -344,6 +345,23 @@ namespace puppet { namespace runtime {
         return _graph;
     }
 
+    void catalog::add_relationship(runtime::relationship relationship, runtime::resource const& source, runtime::resource const& target)
+    {
+        auto source_ptr = &source;
+        auto target_ptr = &target;
+
+        // For "reverse" relationships (require and subscribe), swap the target and source vertices
+        if (relationship == runtime::relationship::require || relationship == runtime::relationship::subscribe) {
+            source_ptr = &target;
+            target_ptr = &source;
+        }
+
+        // Add the edge to the graph if it doesn't already exist
+        if (!boost::edge(source_ptr->vertex_id(), target_ptr->vertex_id(), _graph).second) {
+            boost::add_edge(source_ptr->vertex_id(), target_ptr->vertex_id(), relationship, _graph);
+        }
+    }
+
     resource* catalog::find_resource(types::resource const& resource)
     {
         if (!resource.fully_qualified()) {
@@ -362,25 +380,50 @@ namespace puppet { namespace runtime {
         return &it->second;
     }
 
-    runtime::resource& catalog::add_resource(types::resource type, shared_ptr<string> path, size_t line, shared_ptr<runtime::attributes> attributes, bool exported)
+    runtime::resource& catalog::add_resource(
+        runtime::context& evaluation_context,
+        types::resource type,
+        shared_ptr<compiler::context> const& compilation_context,
+        lexer::position const& position,
+        shared_ptr<runtime::attributes> attributes,
+        bool exported)
     {
+        if (!compilation_context) {
+            throw evaluation_exception("expected a compilation context.");
+        }
         if (!type.fully_qualified()) {
-            throw evaluation_exception("resource name is not fully qualified.");
+            throw evaluation_exception("resource name is not fully qualified.", compilation_context, position);
+        }
+
+        bool is_class = type.is_class();
+        bool is_stage = type.is_stage();
+
+        // Check for the "stage" attribute for non-classes
+        if (attributes && !is_class && attributes->get("stage")) {
+            throw attribute_name_exception("stage metaparameter can only be used on classes.", "stage");
         }
 
         string resource_type = type.type_name();
         string title = type.title();
 
         auto& resources = _resources[rvalue_cast(resource_type)];
-
-        auto result = resources.emplace(make_pair(rvalue_cast(title), runtime::resource(rvalue_cast(type), rvalue_cast(path), line, rvalue_cast(attributes), exported)));
+        auto result = resources.emplace(make_pair(rvalue_cast(title), runtime::resource(rvalue_cast(type), compilation_context->path(), position.line(), rvalue_cast(attributes), exported)));
         auto& resource = result.first->second;
         if (!result.second) {
-            throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % type % *resource.path() % resource.line()).str());
+            throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % resource.type() % *resource.path() % resource.line()).str(), compilation_context, position);
         }
 
         // Add a graph vertex for the resource
         resource.vertex_id(boost::add_vertex(&resource, _graph));
+
+        // If not a stage (has no container) and not a class (special case), contain the resource
+        if (!is_stage && !is_class) {
+            auto container = evaluation_context.current_scope()->resource();
+            if (!container) {
+                throw evaluation_exception("cannot add resource to catalog: current scope has no associated resource.", compilation_context, position);
+            }
+            add_relationship(relationship::contains, *container, resource);
+        }
         return resource;
     }
 
@@ -432,7 +475,29 @@ namespace puppet { namespace runtime {
         }
 
         // Add the resource
-        auto& resource = add_resource(rvalue_cast(type), compilation_context->path(), position.line(), attributes);
+        auto& resource = add_resource(evaluation_context, rvalue_cast(type), compilation_context, position, attributes);
+
+        // Validate the stage metaparameter
+        string stage_name;
+        if (attributes) {
+            if (auto stage_value = attributes->get("stage")) {
+                auto ptr = as<string>(*stage_value);
+                if (!ptr) {
+                    throw attribute_value_exception((boost::format("expected %1% for 'stage' metaparameter but found %2%.") % types::string::name() % get_type(*stage_value)).str(), "stage");
+                }
+                stage_name = *ptr;
+            }
+        }
+        // If no stage was given, fallback to main
+        if (stage_name.empty()) {
+            stage_name = "main";
+        }
+        // Find the stage and add a containment relationship
+        auto stage = find_resource(types::resource("stage", stage_name));
+        if (!stage) {
+            throw attribute_value_exception((boost::format("stage '%1%' does not exist in the catalog.") % stage_name).str(), "stage");
+        }
+        add_relationship(relationship::contains, *stage, resource);
 
         try {
             // Evaluate all definitions of the class
@@ -494,6 +559,9 @@ namespace puppet { namespace runtime {
         if (!type.fully_qualified()) {
             throw evaluation_exception("defined type name is not fully qualified.", compilation_context, position);
         }
+        if (!evaluation_context.current_scope()->resource()) {
+            throw evaluation_exception("cannot declare defined type because the current evaluation scope has no associated resource.", compilation_context, position);
+        }
 
         // Attempt to find the existing resource
         if (auto existing = find_resource(type)) {
@@ -508,7 +576,7 @@ namespace puppet { namespace runtime {
         }
 
         // Add the resource
-        auto& resource = add_resource(rvalue_cast(type), compilation_context->path(), position.line(), attributes);
+        auto& resource = add_resource(evaluation_context, rvalue_cast(type), compilation_context, position, attributes);
 
         try {
             // Evaluate the defined type
@@ -618,7 +686,7 @@ namespace puppet { namespace runtime {
         // Add a Node resource to the catalog
         auto& context = definition->context();
         auto& position = definition->position();
-        auto& resource = add_resource(types::resource("node", node_name), context->path(), position.line());
+        auto& resource = add_resource(evaluation_context, types::resource("node", node_name), context, position);
 
         // Set the node scope for the remainder of the evaluation
         node_scope scope{evaluation_context, &resource};
@@ -650,7 +718,7 @@ namespace puppet { namespace runtime {
         string require_parameter = "require";
         string subscribe_parameter = "subscribe";
 
-        // Loop through each resource and add relationships
+        // Loop through each resource and add metaparameter relationships
         for (auto const& types_pair : _resources) {
             for (auto const& resource_pair : types_pair.second) {
                 auto const& source = resource_pair.second;
@@ -660,8 +728,6 @@ namespace puppet { namespace runtime {
                 process_relationship_parameter(source, notify_parameter, runtime::relationship::notify);
                 process_relationship_parameter(source, require_parameter, runtime::relationship::require);
                 process_relationship_parameter(source, subscribe_parameter, runtime::relationship::subscribe);
-
-                // TODO: handle containment
             }
         }
 
@@ -709,23 +775,6 @@ namespace puppet { namespace runtime {
                  name %
                  message).str());
         });
-    }
-
-    void catalog::add_relationship(runtime::relationship relationship, runtime::resource const& source, runtime::resource const& target)
-    {
-        auto source_ptr = &source;
-        auto target_ptr = &target;
-
-        // For "reverse" relationships (require and subscribe), swap the target and source vertices
-        if (relationship == runtime::relationship::require || relationship == runtime::relationship::subscribe) {
-            source_ptr = &target;
-            target_ptr = &source;
-        }
-
-        // Add the edge to the graph if it doesn't already exist
-        if (!boost::edge(source_ptr->vertex_id(), target_ptr->vertex_id(), _graph).second) {
-            boost::add_edge(source_ptr->vertex_id(), target_ptr->vertex_id(), relationship, _graph);
-        }
     }
 
     struct cycle_visitor

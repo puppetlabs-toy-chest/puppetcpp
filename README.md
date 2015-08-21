@@ -97,7 +97,7 @@ Puppet functions implemented:
 
 * [x] alert
 * [x] assert_type
-* [ ] contain
+* [x] contain
 * [ ] create_resources
 * [x] crit
 * [x] debug

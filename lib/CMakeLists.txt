@@ -61,6 +61,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/evaluators/postfix.cc
     src/runtime/evaluators/primary.cc
     src/runtime/functions/assert_type.cc
+    src/runtime/functions/contain.cc
     src/runtime/functions/each.cc
     src/runtime/functions/fail.cc
     src/runtime/functions/filter.cc
