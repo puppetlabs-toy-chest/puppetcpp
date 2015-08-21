@@ -6,6 +6,7 @@
 #include <puppet/runtime/functions/filter.hpp>
 #include <puppet/runtime/functions/include.hpp>
 #include <puppet/runtime/functions/logging.hpp>
+#include <puppet/runtime/functions/require.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
 #include <puppet/cast.hpp>
@@ -182,6 +183,7 @@ namespace puppet { namespace runtime {
             { "include",        functions::include() },
             { "info",           functions::logging_function(logging::level::info) },
             { "notice",         functions::logging_function(logging::level::notice) },
+            { "require",        functions::require() },
             { "split",          functions::split() },
             { "warning",        functions::logging_function(logging::level::warning) },
             { "with",           functions::with() },

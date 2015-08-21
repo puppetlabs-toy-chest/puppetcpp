@@ -128,7 +128,7 @@ Puppet functions implemented:
 * [ ] realize
 * [ ] reduce
 * [ ] regsubst
-* [ ] require
+* [x] require
 * [ ] scanf
 * [ ] search
 * [ ] sha1

@@ -67,6 +67,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/functions/filter.cc
     src/runtime/functions/include.cc
     src/runtime/functions/logging.cc
+    src/runtime/functions/require.cc
     src/runtime/functions/split.cc
     src/runtime/functions/with.cc
     src/runtime/operators/assignment.cc
