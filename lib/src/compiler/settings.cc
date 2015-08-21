@@ -312,7 +312,8 @@ namespace puppet { namespace compiler {
         _show_help(false),
         _show_version(false)
     {
-        parse(0, nullptr);
+        char const* argv[] = { "puppetcpp" };
+        parse(sizeof(argv) / sizeof(char const*), argv);
     }
 
     settings::settings(int argc, char const* argv[]) :
@@ -409,46 +410,44 @@ namespace puppet { namespace compiler {
     {
         po::variables_map vm;
 
-        if (argc > 1) {
-            auto visible_options = create_options();
+        auto visible_options = create_options();
 
-            // Build a list of "hidden" options that are not visible on the command line
-            po::options_description hidden_options("");
-            hidden_options.add_options()
-                    ("manifests", po::value<vector<string>>());
+        // Build a list of "hidden" options that are not visible on the command line
+        po::options_description hidden_options("");
+        hidden_options.add_options()
+            ("manifests", po::value<vector<string>>());
 
-            // Create the supported command line options (visible + hidden)
-            po::options_description command_line_options;
-            command_line_options.add(visible_options).add(hidden_options);
+        // Create the supported command line options (visible + hidden)
+        po::options_description command_line_options;
+        command_line_options.add(visible_options).add(hidden_options);
 
-            // Build a list of positional options (in our case, just manifest files)
-            po::positional_options_description positional_options;
-            positional_options.add("manifests", -1);
+        // Build a list of positional options (in our case, just manifest files)
+        po::positional_options_description positional_options;
+        positional_options.add("manifests", -1);
 
-            try {
-                // Store the options
-                po::store(
-                    po::command_line_parser(argc, argv).
-                        style(po::command_line_style::unix_style & ~po::command_line_style::allow_guessing).
-                        options(command_line_options).
-                        positional(positional_options).
-                        run(), vm);
+        try {
+            // Store the options
+            po::store(
+                po::command_line_parser(argc, argv).
+                    style(po::command_line_style::unix_style & ~po::command_line_style::allow_guessing).
+                    options(command_line_options).
+                    positional(positional_options).
+                    run(), vm);
 
-                // Check for help or version before notifying
-                if (vm.count("help")) {
-                    _show_help = true;
-                    return;
-                }
-                if (vm.count("version")) {
-                    _show_version = true;
-                    return;
-                }
-
-                // Notify the callbacks
-                po::notify(vm);
-            } catch (po::error const &ex) {
-                throw settings_exception(ex.what());
+            // Check for help or version before notifying
+            if (vm.count("help")) {
+                _show_help = true;
+                return;
             }
+            if (vm.count("version")) {
+                _show_version = true;
+                return;
+            }
+
+            // Notify the callbacks
+            po::notify(vm);
+        } catch (po::error const &ex) {
+            throw settings_exception(ex.what());
         }
 
         // Populate the logging level
