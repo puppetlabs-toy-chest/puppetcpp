@@ -424,6 +424,11 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(types::resource const& type)
     {
+        // If the type is fully qualified, then this is an attribute access
+        if (type.fully_qualified()) {
+            return access_resource(type);
+        }
+
         // If the resource doesn't have a type, the first argument should be the type
         size_t offset = 0;
         string type_name = type.type_name();
@@ -465,6 +470,11 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(types::klass const& type)
     {
+        // If the type is fully qualified, then this is an attribute access
+        if (type.fully_qualified()) {
+            return access_resource(types::resource("class", type.title()));
+        }
+
         // If there is only one string parameter, return a single class
         if (_arguments.size() == 1 && as<string>(_arguments[0])) {
             return types::klass(mutate_as<string>(_arguments[0]));
@@ -504,6 +514,47 @@ namespace puppet { namespace runtime { namespace evaluators {
         } else {
             throw _evaluator.create_exception(position, (boost::format("expected %1% for class title but found %2%.") % types::string::name() % get_type(argument)).str());
         }
+    }
+
+    values::value access_expression_evaluator::access_resource(types::resource const& type)
+    {
+        // Ensure there's a catalog
+        auto catalog = _evaluator.evaluation_context().catalog();
+        if (!catalog) {
+            throw _evaluator.create_exception(_expression.position(), "resource access expressions are not supported.");
+        }
+        // Find the resource
+        auto resource = catalog->find_resource(type);
+        if (!resource) {
+            throw _evaluator.create_exception(_expression.position(), (boost::format("resource %1% does not exist in the catalog.") % type).str());
+        }
+
+        // Check for single access
+        if (_arguments.size() == 1) {
+            return access_attribute(*resource, 0);
+        }
+
+        // Lookup each argument as an attribute
+        values::array attributes;
+        for (size_t i = 0; i < _arguments.size(); ++i) {
+            attributes.emplace_back(access_attribute(*resource, i));
+        }
+        return attributes;
+    }
+
+    values::value access_expression_evaluator::access_attribute(runtime::resource const& resource, size_t index)
+    {
+        if (!as<string>(_arguments[index])) {
+            throw _evaluator.create_exception(_positions[index], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[index])).str());
+        }
+        // Lookup the attribute
+        auto name = mutate_as<string>(_arguments[index]);
+        auto attribute = resource.attributes().get(name);
+        if (!attribute) {
+            throw _evaluator.create_exception(_positions[index], (boost::format("resource %1% does not have a parameter named '%2%'.") % resource.type() % name).str());
+        }
+        // Treat the value as a variable so we don't needlessly copy the value
+        return values::variable(rvalue_cast(name), attribute);
     }
 
 }}}  // namespace puppet::runtime::evaluators

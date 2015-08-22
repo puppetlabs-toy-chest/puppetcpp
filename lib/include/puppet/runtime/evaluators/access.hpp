@@ -55,6 +55,8 @@ namespace puppet { namespace runtime { namespace evaluators {
 
         void add_resource_reference(values::array& result, std::string const& type_name, values::value& argument, lexer::position const& position);
         void add_class_reference(values::array& result, values::value& argument, lexer::position const& position);
+        values::value access_resource(types::resource const& type);
+        values::value access_attribute(runtime::resource const& resource, size_t index);
 
         template <typename T>
         result_type operator()(T const& target)
