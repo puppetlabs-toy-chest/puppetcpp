@@ -31,7 +31,7 @@ namespace puppet { namespace runtime { namespace operators {
         if (auto existing = as<variable>(context.right())) {
             value = existing->value_ptr();
         } else {
-            value = make_shared<values::value const>(rvalue_cast(context.right()));
+            value = std::make_shared<values::value const>(rvalue_cast(context.right()));
         }
 
         // Assign the existing value

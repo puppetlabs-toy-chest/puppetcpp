@@ -42,7 +42,7 @@ namespace puppet { namespace compiler {
         // Create a catalog, main evaluation context, and main compilation context
         runtime::catalog catalog;
         runtime::context evaluation_context{ settings.facts(), &catalog };
-        auto compilation_context = make_shared<compiler::context>(logger, make_shared<string>("main"), *this, false /* dummy context */);
+        auto compilation_context = std::make_shared<compiler::context>(logger, std::make_shared<string>("main"), *this, false /* dummy context */);
 
         // Create an evaluation context and a settings scope
         create_initial_resources(evaluation_context, compilation_context, settings);

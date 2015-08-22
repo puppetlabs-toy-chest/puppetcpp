@@ -127,7 +127,7 @@ namespace puppet { namespace facts {
                 ptr->emplace(make_pair(name, rvalue_cast(value)));
             }
         } else {
-            _cache.emplace(make_pair(boost::to_lower_copy(name), make_shared<values::value>(rvalue_cast(value))));
+            _cache.emplace(make_pair(boost::to_lower_copy(name), std::make_shared<values::value>(rvalue_cast(value))));
         }
     }
 

@@ -4,6 +4,7 @@
 #include <puppet/compiler/node.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <boost/graph/tiernan_all_cycles.hpp>
+#include <boost/graph/graphviz.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -38,7 +39,7 @@ namespace puppet { namespace runtime {
     void attributes::set(string const& name, values::value value)
     {
         // Set the value
-        _values[name] = make_shared<values::value>(rvalue_cast(value));
+        _values[name] = std::make_shared<values::value>(rvalue_cast(value));
     }
 
     bool attributes::append(string const& name, values::value value, bool append_duplicates)
@@ -101,6 +102,37 @@ namespace puppet { namespace runtime {
                 return _values.count(name) != 0 || callback(name, value);
             });
         }
+    }
+
+    ostream& operator<<(ostream& out, runtime::relationship relationship)
+    {
+        // These are labels for edges in a dependency graph.
+        // Thus, they should always read as "A <string> B", where the string explains why A depends on B.
+        switch (relationship) {
+            case runtime::relationship::contains:
+                out << "contains";
+                break;
+
+            case runtime::relationship::before:
+                out << "after";
+                break;
+
+            case runtime::relationship::require:
+                out << "requires";
+                break;
+
+            case runtime::relationship::notify:
+                out << "notified by";
+                break;
+
+            case runtime::relationship::subscribe:
+                out << "subscribes to";
+                break;
+
+            default:
+                throw runtime_error("unexpected relationship.");
+        }
+        return out;
     }
 
     resource::resource(
@@ -350,8 +382,8 @@ namespace puppet { namespace runtime {
         auto source_ptr = &source;
         auto target_ptr = &target;
 
-        // For "reverse" relationships (require and subscribe), swap the target and source vertices
-        if (relationship == runtime::relationship::require || relationship == runtime::relationship::subscribe) {
+        // For before and notify, swap the target and source vertices so that the target depends on the source
+        if (relationship == runtime::relationship::before || relationship == runtime::relationship::notify) {
             source_ptr = &target;
             target_ptr = &source;
         }
@@ -711,69 +743,13 @@ namespace puppet { namespace runtime {
         populate_graph();
     }
 
-    void catalog::populate_graph()
+    void catalog::write_graph(ostream& out)
     {
-        string before_parameter = "before";
-        string notify_parameter = "notify";
-        string require_parameter = "require";
-        string subscribe_parameter = "subscribe";
-
-        // Loop through each resource and add metaparameter relationships
-        for (auto const& types_pair : _resources) {
-            for (auto const& resource_pair : types_pair.second) {
-                auto const& source = resource_pair.second;
-
-                // Proccess the relationship metaparameters for the resource
-                process_relationship_parameter(source, before_parameter, runtime::relationship::before);
-                process_relationship_parameter(source, notify_parameter, runtime::relationship::notify);
-                process_relationship_parameter(source, require_parameter, runtime::relationship::require);
-                process_relationship_parameter(source, subscribe_parameter, runtime::relationship::subscribe);
-            }
-        }
-
-        // Finally, detect any cycles
-        detect_cycles();
-    }
-
-    void catalog::process_relationship_parameter(resource const& source, string const& name, runtime::relationship relationship)
-    {
-        auto parameter = source.attributes().get(name);
-        if (!parameter) {
-            return;
-        }
-        each_resource(*parameter, [&](types::resource const& target_resource) {
-            // Locate the target in the catalog
-            auto target = find_resource(target_resource);
-            if (!target) {
-                throw evaluation_exception(
-                    (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the resource does not exist in the catalog.") %
-                     source.type() %
-                     *source.path() %
-                     source.line() %
-                     name %
-                     target_resource).str());
-            }
-
-            if (&source == target) {
-                throw evaluation_exception(
-                    (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the relationship is self-referencing.") %
-                     source.type() %
-                     *source.path() %
-                     source.line() %
-                     name %
-                     target_resource).str());
-            }
-
-            // Add the relationship
-            add_relationship(relationship, source, *target);
-        }, [&](string const& message) {
-            throw evaluation_exception(
-                (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship: %5%") %
-                 source.type() %
-                 *source.path() %
-                 source.line() %
-                 name %
-                 message).str());
+        boost::write_graphviz(out, _graph, [&](ostream& out, size_t v) {
+            auto resource = _graph[v];
+            out << "[label=" << boost::escape_dot_string(boost::lexical_cast<string>(resource->type())) << "]";
+        }, [&](ostream& out, boost::detail::edge_desc_impl<boost::directed_tag, unsigned long> const& e) {
+            out << "[label=\"" << _graph[e] << "\"]";
         });
     }
 
@@ -825,7 +801,70 @@ namespace puppet { namespace runtime {
             }
             message << "  " << i + 1 << ". " << cycles[i];
         }
-        throw compiler::compilation_exception(message.str());
+        throw evaluation_exception(message.str());
+    }
+
+    void catalog::populate_graph()
+    {
+        string before_parameter = "before";
+        string notify_parameter = "notify";
+        string require_parameter = "require";
+        string subscribe_parameter = "subscribe";
+
+        // Loop through each resource and add metaparameter relationships
+        for (auto const& types_pair : _resources) {
+            for (auto const& resource_pair : types_pair.second) {
+                auto const& source = resource_pair.second;
+
+                // Proccess the relationship metaparameters for the resource
+                process_relationship_parameter(source, before_parameter, runtime::relationship::before);
+                process_relationship_parameter(source, notify_parameter, runtime::relationship::notify);
+                process_relationship_parameter(source, require_parameter, runtime::relationship::require);
+                process_relationship_parameter(source, subscribe_parameter, runtime::relationship::subscribe);
+            }
+        }
+    }
+
+    void catalog::process_relationship_parameter(resource const& source, string const& name, runtime::relationship relationship)
+    {
+        auto parameter = source.attributes().get(name);
+        if (!parameter) {
+            return;
+        }
+        each_resource(*parameter, [&](types::resource const& target_resource) {
+            // Locate the target in the catalog
+            auto target = find_resource(target_resource);
+            if (!target) {
+                throw evaluation_exception(
+                    (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the resource does not exist in the catalog.") %
+                     source.type() %
+                     *source.path() %
+                     source.line() %
+                     name %
+                     target_resource).str());
+            }
+
+            if (&source == target) {
+                throw evaluation_exception(
+                    (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the relationship is self-referencing.") %
+                     source.type() %
+                     *source.path() %
+                     source.line() %
+                     name %
+                     target_resource).str());
+            }
+
+            // Add the relationship
+            add_relationship(relationship, source, *target);
+        }, [&](string const& message) {
+            throw evaluation_exception(
+                (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship: %5%") %
+                 source.type() %
+                 *source.path() %
+                 source.line() %
+                 name %
+                 message).str());
+        });
     }
 
 }}  // namespace puppet::runtime

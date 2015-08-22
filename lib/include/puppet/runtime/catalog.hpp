@@ -14,6 +14,7 @@
 #include <functional>
 #include <unordered_map>
 #include <exception>
+#include <ostream>
 
 namespace puppet { namespace compiler {
 
@@ -109,6 +110,14 @@ namespace puppet { namespace runtime {
          */
         subscribe
     };
+
+    /**
+     * Stream insertion operator for relationship.
+     * @param out The output stream to write the relationship to.
+     * @param relationship The relationship to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& out, runtime::relationship relationship);
 
     /**
      * Represents a declared resource in a catalog.
@@ -337,7 +346,8 @@ namespace puppet { namespace runtime {
         dependency_graph const& graph() const;
 
         /**
-         * Adds a relationship to the dependency graph.
+         * Adds a relationship (i.e. an edge) to the dependency graph.
+         * The source will become dependent upon the target (reversed for before and notify relationships).
          * @param relationship The relationship from the source to the target.
          * @param source The source resource.
          * @param target The target resource.
@@ -464,10 +474,21 @@ namespace puppet { namespace runtime {
          */
         void finalize();
 
+        /**
+         * Writes the dependency graph as a DOT file.
+         * @param out The output stream to write the file to.
+         */
+        void write_graph(std::ostream& out);
+
+        /**
+         * Detects cycles within the graph.
+         * Throws an evaluation exception if cycles are detected.
+         */
+        void detect_cycles();
+
      private:
         void populate_graph();
         void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
-        void detect_cycles();
 
         std::unordered_map<std::string, std::unordered_map<std::string, resource>> _resources;
         std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;

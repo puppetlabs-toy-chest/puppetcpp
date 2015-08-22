@@ -1,6 +1,7 @@
 #include <puppet/compiler/settings.hpp>
 #include <puppet/compiler/node.hpp>
 #include <puppet/facts/yaml.hpp>
+#include <fstream>
 
 using namespace std;
 using namespace puppet::logging;
@@ -48,6 +49,20 @@ int main(int argc, char const* argv[])
 
             // Compile the manifest
             auto catalog = node.compile(logger, settings);
+
+            // Write the graph file if given one
+            if (!settings.graph_file().empty()) {
+                LOG(notice, "writing dependency graph to '%1%'.", settings.graph_file());
+                ofstream file(settings.graph_file());
+                if (!file) {
+                    LOG(error, "failed to open '%1%' for writing.", settings.graph_file());
+                } else {
+                    catalog.write_graph(file);
+                }
+            }
+
+            // Detect dependency cycles
+            catalog.detect_cycles();
 
             // TODO: output the catalog
         } catch (compiler::compilation_exception const& ex) {
