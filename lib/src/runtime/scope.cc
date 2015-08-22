@@ -30,7 +30,7 @@ namespace puppet { namespace runtime {
         return _line;
     }
 
-    scope::scope(shared_ptr<scope> parent, runtime::resource* resource) :
+    scope::scope(shared_ptr<scope> parent, runtime::resource const* resource) :
         _parent(rvalue_cast(parent)),
         _resource(resource)
     {
@@ -39,9 +39,9 @@ namespace puppet { namespace runtime {
         }
     }
 
-    scope::scope(shared_ptr<facts::provider> facts, runtime::resource* resource) :
+    scope::scope(shared_ptr<facts::provider> facts) :
         _facts(rvalue_cast(facts)),
-        _resource(resource)
+        _resource(nullptr)
     {
     }
 
@@ -50,9 +50,17 @@ namespace puppet { namespace runtime {
         return _parent;
     }
 
-    runtime::resource* scope::resource() const
+    runtime::resource const* scope::resource() const
     {
-        return _resource;
+        if (_resource) {
+            return _resource;
+        }
+        return _parent ? _parent->resource() : nullptr;
+    }
+
+    void scope::resource(runtime::resource const* resource)
+    {
+        _resource = resource;
     }
 
     string scope::qualify(string const& name) const

@@ -82,6 +82,15 @@ namespace puppet { namespace runtime { namespace types {
         }
 
         /**
+         * Determines if the resource is a stage.
+         * @return Returns true if the resource is a stage or false if not.
+         */
+        bool is_stage() const
+        {
+            return _type_name == "Stage";
+        }
+
+        /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Resource).
          */

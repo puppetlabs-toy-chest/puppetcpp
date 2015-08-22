@@ -54,6 +54,11 @@ namespace puppet { namespace compiler {
                 "The path to the YAML facts file to use. Defaults to the current system's facts."
             )
             (
+                "graph,g",
+                po::value<string>(),
+                "The path to write a DOT language file for viewing the catalog depencency graph."
+            )
+            (
                 "help",
                 "Print this help message."
             )
@@ -238,6 +243,22 @@ namespace puppet { namespace compiler {
         return manifests;
     }
 
+    static string get_output_file(po::variables_map const& vm)
+    {
+        if (vm.count("output")) {
+            return vm["output"].as<string>();
+        }
+        return {};
+    }
+
+    static string get_graph_file(po::variables_map const& vm)
+    {
+        if (vm.count("graph")) {
+            return vm["graph"].as<string>();
+        }
+        return {};
+    }
+
     static string get_environment_directory(po::variables_map const& vm, string const& code_directory, string const& environment)
     {
         bool specified = false;
@@ -354,6 +375,16 @@ namespace puppet { namespace compiler {
         return _node_name;
     }
 
+    string const& settings::output_file() const
+    {
+        return _output_file;
+    }
+
+    string const& settings::graph_file() const
+    {
+        return _graph_file;
+    }
+
     shared_ptr<facts::provider> const& settings::facts() const
     {
         return _facts;
@@ -467,6 +498,12 @@ namespace puppet { namespace compiler {
 
         // Populate the facts provider
         _facts = get_facts(vm);
+
+        // Populate the output file
+        _output_file = get_output_file(vm);
+
+        // Populate the graph file
+        _graph_file = get_graph_file(vm);
 
         // Populate the node name
         _node_name = get_node(vm, *_facts);

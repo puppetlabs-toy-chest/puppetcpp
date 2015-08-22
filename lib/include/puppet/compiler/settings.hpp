@@ -76,6 +76,12 @@ namespace puppet { namespace compiler {
         std::string const& output_file() const;
 
         /**
+         * Gets the path to the graph file.
+         * @return Returns the path to the graph file.
+         */
+        std::string const& graph_file() const;
+
+        /**
          * Gets the facts provider to use.
          * Defaults to the facter facts provider.
          * @return Returns the facts provider to use.
@@ -136,6 +142,7 @@ namespace puppet { namespace compiler {
         std::vector<std::string> _manifests;
         std::string _node_name;
         std::string _output_file;
+        std::string _graph_file;
         std::shared_ptr<facts::provider> _facts;
         logging::level _log_level;
         bool _show_help;

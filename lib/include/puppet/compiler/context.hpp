@@ -26,9 +26,10 @@ namespace puppet { namespace compiler {
          * Constructs a compilation context.
          * @param logger The logger to use during compilation.
          * @param path The path to the file being compiled.
-         * @param node The node the file is being compiled for.
+         * @param node The compilation node.
+         * @param parse True if the file should be parsed or false if not.
          */
-        context(logging::logger& logger, std::shared_ptr<std::string> path, compiler::node& node);
+        context(logging::logger& logger, std::shared_ptr<std::string> path, compiler::node& node, bool parse = true);
 
         /**
          * Gets the logger used for logging messages.

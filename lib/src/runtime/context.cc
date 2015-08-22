@@ -53,11 +53,8 @@ namespace puppet { namespace runtime {
     context::context(shared_ptr<facts::provider> facts, runtime::catalog* catalog) :
         _catalog(catalog)
     {
-        // Get the "main" resource if given a catalog
-        runtime::resource* main = _catalog ? _catalog->find_resource(types::resource("class", "main")) : nullptr;
-
         // Add the top scope
-        auto top = make_shared<runtime::scope>(rvalue_cast(facts), main);
+        auto top = make_shared<runtime::scope>(rvalue_cast(facts));
         _scopes.emplace(make_pair("", top));
         _scope_stack.emplace_back(rvalue_cast(top));
 

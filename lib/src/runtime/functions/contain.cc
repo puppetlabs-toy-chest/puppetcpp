@@ -1,4 +1,4 @@
-#include <puppet/runtime/functions/include.hpp>
+#include <puppet/runtime/functions/contain.hpp>
 #include <puppet/runtime/definition_scanner.hpp>
 
 using namespace std;
@@ -7,9 +7,9 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace functions {
 
-    struct include_visitor : boost::static_visitor<void>
+    struct contain_visitor : boost::static_visitor<void>
     {
-        include_visitor(call_context& context, size_t index) :
+        contain_visitor(call_context& context, size_t index) :
             _context(context),
             _index(index)
         {
@@ -17,7 +17,7 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(string const& argument) const
         {
-            include_class(types::klass(argument));
+            contain_class(types::klass(argument));
         }
 
         result_type operator()(values::type const& argument) const
@@ -34,7 +34,7 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(types::klass const& argument) const
         {
-            include_class(argument);
+            contain_class(argument);
         }
 
         result_type operator()(types::resource const& argument) const
@@ -42,7 +42,7 @@ namespace puppet { namespace runtime { namespace functions {
             if (!argument.is_class()) {
                 throw _context.evaluator().create_exception(_context.position(_index), (boost::format("expected Class %1% for argument but found %2%.") % types::resource::name() % argument).str());
             }
-            include_class(types::klass(argument.title()));
+            contain_class(types::klass(argument.title()));
         }
 
         template <typename T>
@@ -58,31 +58,38 @@ namespace puppet { namespace runtime { namespace functions {
         }
 
      private:
-        void include_class(types::klass const& klass) const
+        void contain_class(types::klass const& klass) const
         {
             types::resource type("class", klass.title());
 
             auto& evaluator = _context.evaluator();
             if (!type.fully_qualified()) {
-                throw evaluator.create_exception(_context.position(_index), "cannot include a class with an unspecified title.");
+                throw evaluator.create_exception(_context.position(_index), "cannot contain a class with an unspecified title.");
+            }
+
+            auto& context = evaluator.evaluation_context();
+            auto* container = context.current_scope()->resource();
+            if (!container) {
+                throw evaluator.create_exception(_context.position(_index), "the current scope has no associated resource.");
             }
 
             // Check to see if the class already exists in the catalog; if so, do nothing
-            auto& context = evaluator.evaluation_context();
             auto catalog = context.catalog();
-            if (catalog->find_resource(type)) {
+            if (auto resource = catalog->find_resource(type)) {
+                catalog->add_relationship(relationship::contains, *container, *resource);
                 return;
             }
 
             // Declare the class
-            catalog->declare_class(context, type, evaluator.compilation_context(), _context.position(_index));
+            auto& resource = catalog->declare_class(context, type, evaluator.compilation_context(), _context.position(_index));
+            catalog->add_relationship(relationship::contains, *container, resource);
         }
 
         call_context& _context;
         size_t _index;
     };
 
-    value include::operator()(call_context& context) const
+    value contain::operator()(call_context& context) const
     {
         auto& evaluator = context.evaluator();
         auto& arguments = context.arguments();
@@ -93,7 +100,7 @@ namespace puppet { namespace runtime { namespace functions {
             throw evaluator.create_exception(context.position(), (boost::format("cannot call '%1%' function: catalog functions are not supported.") % context.name()).str());
         }
         for (size_t i = 0; i < arguments.size(); ++i) {
-            boost::apply_visitor(include_visitor(context, i), arguments[i]);
+            boost::apply_visitor(contain_visitor(context, i), arguments[i]);
         }
         return value();
     }

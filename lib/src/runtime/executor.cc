@@ -131,7 +131,7 @@ namespace puppet { namespace runtime {
                     throw argument_exception(rvalue_cast(message), i);
                 });
 
-                if (current_scope->set(name, make_shared<values::value>(rvalue_cast(value)), _evaluator.compilation_context()->path(), parameter.position().line())) {
+                if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), _evaluator.compilation_context()->path(), parameter.position().line())) {
                     throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }
@@ -153,12 +153,14 @@ namespace puppet { namespace runtime {
             for (auto const& parameter : *_parameters) {
                 auto const& name = parameter.variable().name();
 
-                // Check that parameters without default values are in the resource's attributes
-                if (!parameter.default_value()) {
-                    if (!attributes.get(name)) {
-                        throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% is required but no value was given.") % name).str());
-                    }
+                // Check if the attribute exists
+                if (attributes.get(name)) {
                     continue;
+                }
+
+                // If there's no default value, the parameter is required
+                if (!parameter.default_value()) {
+                    throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% is required but no value was given.") % name).str());
                 }
 
                 // Evaluate the default value
@@ -170,7 +172,7 @@ namespace puppet { namespace runtime {
                 });
 
                 // Set the default value into the scope
-                if (current_scope->set(name, make_shared<values::value>(rvalue_cast(value)), path, parameter.position().line())) {
+                if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), path, parameter.position().line())) {
                     throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
                 }
             }

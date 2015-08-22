@@ -97,7 +97,7 @@ Puppet functions implemented:
 
 * [x] alert
 * [x] assert_type
-* [ ] contain
+* [x] contain
 * [ ] create_resources
 * [x] crit
 * [x] debug
@@ -128,7 +128,7 @@ Puppet functions implemented:
 * [ ] realize
 * [ ] reduce
 * [ ] regsubst
-* [ ] require
+* [x] require
 * [ ] scanf
 * [ ] search
 * [ ] sha1

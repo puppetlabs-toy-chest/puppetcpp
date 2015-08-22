@@ -14,8 +14,12 @@
 #include <functional>
 #include <set>
 #include <vector>
+#include <memory>
 
 namespace puppet { namespace compiler {
+
+    // Forward declaration of compiler context
+    struct context;
 
     /**
      * Represents a compilation node.
@@ -56,8 +60,10 @@ namespace puppet { namespace compiler {
         void each_name(std::function<bool(std::string const&)> const& callback) const;
 
      private:
-        static void create_main(runtime::catalog& catalog);
-        static void create_settings_scope(runtime::context& context, compiler::settings const& settings);
+        static void create_initial_resources(
+            runtime::context& evaluation_context,
+            std::shared_ptr<compiler::context> const& compilation_context,
+            compiler::settings const& settings);
 
         std::set<std::string> _names;
         compiler::environment& _environment;
