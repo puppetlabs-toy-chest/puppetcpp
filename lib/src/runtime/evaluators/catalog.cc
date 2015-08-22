@@ -280,6 +280,8 @@ namespace puppet { namespace runtime { namespace evaluators {
                 // Set the attribute
                 attributes->set(attribute.name().value(), evaluate_attribute(attribute));
             }
+        } else if (parent) {
+            attributes = make_shared<runtime::attributes>(rvalue_cast(parent));
         }
         return attributes;
     }
