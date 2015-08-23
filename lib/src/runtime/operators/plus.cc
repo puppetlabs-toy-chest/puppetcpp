@@ -91,7 +91,7 @@ namespace puppet { namespace runtime { namespace operators {
             // Move everything from the right into the left
             left.reserve(left.size() + right.size());
             for (auto& element : right) {
-                left.emplace(make_pair(element.first, rvalue_cast(element.second)));
+                left[element.first] = rvalue_cast(element.second);
             }
             return rvalue_cast(left);
         }
