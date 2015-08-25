@@ -1,12 +1,10 @@
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/runtime/functions/assert_type.hpp>
-#include <puppet/runtime/functions/contain.hpp>
+#include <puppet/runtime/functions/declare.hpp>
 #include <puppet/runtime/functions/each.hpp>
 #include <puppet/runtime/functions/fail.hpp>
 #include <puppet/runtime/functions/filter.hpp>
-#include <puppet/runtime/functions/include.hpp>
 #include <puppet/runtime/functions/logging.hpp>
-#include <puppet/runtime/functions/require.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
 #include <puppet/cast.hpp>
@@ -172,7 +170,7 @@ namespace puppet { namespace runtime {
         static const unordered_map<string, function_type> functions {
             { "alert",          functions::logging_function(logging::level::alert) },
             { "assert_type",    functions::assert_type() },
-            { "contain",        functions::contain() },
+            { "contain",        functions::declare(relationship::contains) },
             { "crit",           functions::logging_function(logging::level::critical) },
             { "debug",          functions::logging_function(logging::level::debug) },
             { "each",           functions::each() },
@@ -180,10 +178,10 @@ namespace puppet { namespace runtime {
             { "err",            functions::logging_function(logging::level::error) },
             { "fail",           functions::fail() },
             { "filter",         functions::filter() },
-            { "include",        functions::include() },
+            { "include",        functions::declare() },
             { "info",           functions::logging_function(logging::level::info) },
             { "notice",         functions::logging_function(logging::level::notice) },
-            { "require",        functions::require() },
+            { "require",        functions::declare(relationship::require) },
             { "split",          functions::split() },
             { "warning",        functions::logging_function(logging::level::warning) },
             { "with",           functions::with() },

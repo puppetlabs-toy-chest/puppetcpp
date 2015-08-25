@@ -9,6 +9,7 @@
 #include <vector>
 #include <memory>
 #include <tuple>
+#include <unordered_set>
 
 namespace puppet { namespace runtime { namespace evaluators {
 
@@ -42,9 +43,20 @@ namespace puppet { namespace runtime { namespace evaluators {
 
         static bool is_default_expression(ast::primary_expression const& expr);
         ast::resource_body const* find_default_body(ast::resource_expression const& expr);
-        std::shared_ptr<runtime::attributes> evaluate_attributes(ast::resource_body const* body, std::shared_ptr<runtime::attributes const> parent = nullptr);
-        values::value evaluate_attribute(ast::attribute_expression const& attribute);
-        static lexer::position find_attribute_position(bool for_value, std::string const& name, ast::resource_body const& current, ast::resource_body const* default_body = nullptr);
+        std::vector<std::pair<ast::attribute_operator, std::shared_ptr<attribute>>> evaluate_attributes(
+            bool is_class,
+            boost::optional<std::vector<ast::attribute_expression>> const& expressions);
+        void validate_attribute(lexer::position const& position, std::string const& name, values::value& value);
+        void splat_attribute(
+            std::vector<std::pair<ast::attribute_operator, std::shared_ptr<attribute>>>& attributes,
+            std::unordered_set<std::string>& names,
+            ast::attribute_expression const& attribute);
+        std::vector<resource*> create_resources(
+            bool is_class,
+            std::string const& type_name,
+            ast::resource_expression const& expression,
+            std::vector<std::pair<ast::attribute_operator, std::shared_ptr<attribute>>> const& default_attributes);
+        void set_attributes(runtime::resource& resource, std::vector<std::pair<ast::attribute_operator, std::shared_ptr<attribute>>> const& attributes);
 
         template <typename T>
         bool for_each(values::value& parameter, std::function<void(T&)> const& callback)

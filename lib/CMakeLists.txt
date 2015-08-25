@@ -58,16 +58,14 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/evaluators/basic.cc
     src/runtime/evaluators/catalog.cc
     src/runtime/evaluators/control_flow.cc
+    src/runtime/functions/declare.cc
     src/runtime/evaluators/postfix.cc
     src/runtime/evaluators/primary.cc
     src/runtime/functions/assert_type.cc
-    src/runtime/functions/contain.cc
     src/runtime/functions/each.cc
     src/runtime/functions/fail.cc
     src/runtime/functions/filter.cc
-    src/runtime/functions/include.cc
     src/runtime/functions/logging.cc
-    src/runtime/functions/require.cc
     src/runtime/functions/split.cc
     src/runtime/functions/with.cc
     src/runtime/operators/assignment.cc

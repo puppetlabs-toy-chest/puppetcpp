@@ -58,9 +58,9 @@ namespace puppet { namespace compiler {
                 (statement_expression > *binary_statement) [ _val = phx::construct<ast::expression>(_1, _2) ];
             statement_expression =
                 (
-                    resource_expression          |
-                    resource_defaults_expression |
                     resource_override_expression |
+                    resource_defaults_expression |
+                    resource_expression          |
                     class_definition_expression  |
                     defined_type_expression      |
                     node_definition_expression
@@ -177,7 +177,7 @@ namespace puppet { namespace compiler {
                 token(token_id::keyword_class) [ _val = phx::construct<ast::basic_expression>(phx::construct<ast::name>(_1)) ] |
                 type_expression                [ _val = _1 ];
             resource_body =
-                ((expression >> raw_token(':')) > -(attribute_expression % raw_token(',')) > -raw_token(',')) [ _val = phx::construct<ast::resource_body>(_1, _2) ];
+                ((primary_expression >> raw_token(':')) > -(attribute_expression % raw_token(',')) > -raw_token(',')) [ _val = phx::construct<ast::resource_body>(_1, _2) ];
             attribute_expression =
                 (attribute_name > attribute_operator > expression) [ _val = phx::construct<ast::attribute_expression>(_1, _2, _3) ];
             attribute_operator =
@@ -187,6 +187,7 @@ namespace puppet { namespace compiler {
                 (
                     token(token_id::name)             |
                     token(token_id::statement_call)   |
+                    token('*')                        |
                     token(token_id::keyword_and)      |
                     token(token_id::keyword_case)     |
                     token(token_id::keyword_class)    |

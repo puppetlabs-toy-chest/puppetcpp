@@ -108,13 +108,13 @@ namespace puppet { namespace ast {
          * @param title The title expression of the resource.
          * @param attributes The optional attributes.
          */
-        resource_body(expression title, boost::optional<std::vector<attribute_expression>> attributes);
+        resource_body(primary_expression title, boost::optional<std::vector<attribute_expression>> attributes);
 
         /**
          * Gets the resource body's title expression.
          * @return Returns the resource body's title expression.
          */
-        expression const& title() const;
+        primary_expression const& title() const;
 
         /**
          * Gets the optional attributes of the resource.
@@ -129,7 +129,7 @@ namespace puppet { namespace ast {
         lexer::position const& position() const;
 
      private:
-        expression _title;
+        primary_expression _title;
         boost::optional<std::vector<attribute_expression>> _attributes;
     };
 

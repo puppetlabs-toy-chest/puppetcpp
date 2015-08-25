@@ -29,6 +29,15 @@ namespace puppet { namespace runtime { namespace operators {
             throw evaluator.create_exception(context.right_position(), message);
         });
 
+        // Create the new attribute
+        auto attribute = std::make_shared<runtime::attribute>(
+            context.evaluator().compilation_context(),
+            attribute_name,
+            context.right_position(),
+            std::make_shared<values::value>(rvalue_cast(result)),
+            context.right_position()
+        );
+
         // Now associate each left-hand side resource with those on the right
         each_resource(context.left(),[&](types::resource const& source_resource) {
             // Locate the source in the catalog
@@ -36,8 +45,7 @@ namespace puppet { namespace runtime { namespace operators {
             if (!source) {
                 throw evaluator.create_exception(context.left_position(), (boost::format("cannot create relationship: resource %1% does not exist in the catalog.") % source_resource).str());
             }
-
-            source->attributes().append(attribute_name, result, true /* remove duplicates */);
+            source->append(attribute);
         }, [&](string const& message) {
             throw evaluator.create_exception(context.left_position(), message);
         });

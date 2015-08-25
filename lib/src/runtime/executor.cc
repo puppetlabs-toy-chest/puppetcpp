@@ -20,28 +20,6 @@ namespace puppet { namespace runtime {
         return _index;
     }
 
-    attribute_name_exception::attribute_name_exception(string const& message, string name) :
-        runtime_error(message),
-        _name(rvalue_cast(name))
-    {
-    }
-
-    string const& attribute_name_exception::name() const
-    {
-        return _name;
-    }
-
-    attribute_value_exception::attribute_value_exception(string const& message, string name) :
-        runtime_error(message),
-        _name(rvalue_cast(name))
-    {
-    }
-
-    string const& attribute_value_exception::name() const
-    {
-        return _name;
-    }
-
     executor::executor(expression_evaluator& evaluator, lexer::position const& position, optional<vector<ast::parameter>> const& parameters, optional<vector<ast::expression>> const& body) :
         _evaluator(evaluator),
         _position(position),
@@ -140,13 +118,11 @@ namespace puppet { namespace runtime {
         return evaluate_body();
     }
 
-    values::value executor::execute(runtime::resource const& resource, shared_ptr<runtime::scope> const& scope) const
+    values::value executor::execute(runtime::resource& resource, shared_ptr<runtime::scope> const& scope) const
     {
         // Create the execution scope
-        auto const& path = _evaluator.compilation_context()->path();
         auto local_scope = _evaluator.evaluation_context().create_local_scope(scope);
         auto& current_scope = _evaluator.evaluation_context().current_scope();
-        auto const& attributes = resource.attributes();
 
         // Set any default parameters without attributes
         if (_parameters) {
@@ -154,7 +130,7 @@ namespace puppet { namespace runtime {
                 auto const& name = parameter.variable().name();
 
                 // Check if the attribute exists
-                if (attributes.get(name)) {
+                if (resource.get(name)) {
                     continue;
                 }
 
@@ -166,15 +142,14 @@ namespace puppet { namespace runtime {
                 // Evaluate the default value
                 auto value = _evaluator.evaluate(*parameter.default_value());
 
-                // Verify the value matches the parameter type
-                validate_type(parameter, value, [&](string message) {
-                    throw _evaluator.create_exception(parameter.default_value()->position(), rvalue_cast(message));
-                });
-
-                // Set the default value into the scope
-                if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), path, parameter.position().line())) {
-                    throw _evaluator.create_exception(parameter.position(), (boost::format("parameter $%1% already exists in the parameter list.") % name).str());
-                }
+                // Set the parameter as an attribute on the resource
+                resource.set(std::make_shared<runtime::attribute>(
+                    _evaluator.compilation_context(),
+                    parameter.variable().name(),
+                    parameter.variable().position(),
+                    std::make_shared<values::value>(rvalue_cast(value)),
+                    parameter.default_value()->position()
+                ));
             }
         }
 
@@ -182,10 +157,10 @@ namespace puppet { namespace runtime {
         shared_ptr<values::value const> name = title;
 
         // Set each attribute in the scope
-        attributes.each([&](string const& attribute_name, shared_ptr<values::value const> const& attribute_value) {
+        resource.each_attribute([&](runtime::attribute const& attribute) {
             // Check for resource name
-            if (attribute_name == "name") {
-                name = attribute_value;
+            if (attribute.name() == "name") {
+                name = attribute.value();
                 return true;
             }
 
@@ -193,7 +168,7 @@ namespace puppet { namespace runtime {
             ast::parameter const* parameter = nullptr;
             if (_parameters) {
                 for (auto const& p : *_parameters) {
-                    if (p.variable().name() == attribute_name) {
+                    if (p.variable().name() == attribute.name()) {
                         parameter = &p;
                         break;
                     }
@@ -203,27 +178,29 @@ namespace puppet { namespace runtime {
             // If the attribute is a parameter, validate it
             if (parameter) {
                 // Verify the value matches the parameter type
-                validate_type(*parameter, *attribute_value, [&](string message) {
-                    throw attribute_value_exception(rvalue_cast(message), attribute_name);
+                validate_type(*parameter, *attribute.value(), [&](string message) {
+                    throw evaluation_exception(rvalue_cast(message), attribute.context(), attribute.value_position());
                 });
-            } else if (!resource::is_metaparameter(attribute_name)) {
+            } else if (!resource::is_metaparameter(attribute.name())) {
                 // Not a parameter or metaparameter for the class or defined type
                 if (resource.type().is_class()) {
-                    throw attribute_name_exception(
-                        (boost::format("'%1%' is not a valid parameter for class '%2%'.") % attribute_name % resource.type().title()).str(),
-                        attribute_name);
+                    throw evaluation_exception(
+                        (boost::format("'%1%' is not a valid parameter for class '%2%'.") %
+                         attribute.name() %
+                         resource.type().title()
+                        ).str(),
+                        attribute.context(),
+                        attribute.name_position());
                 }
-                throw attribute_name_exception(
-                    (boost::format("'%1%' is not a valid parameter for defined type '%2%'.") % attribute_name % resource.type().type_name()).str(),
-                    attribute_name);
             }
 
-            current_scope->set(attribute_name, attribute_value, resource.path(), resource.line());
+            current_scope->set(attribute.name(), attribute.value(), attribute.context()->path(), attribute.value_position().line());
             return true;
         });
 
-        scope->set("title", rvalue_cast(title), path, resource.line());
-        scope->set("name", rvalue_cast(name), path, resource.line());
+        auto const& path = _evaluator.compilation_context()->path();
+        scope->set("title", rvalue_cast(title), path, _position.line());
+        scope->set("name", rvalue_cast(name), path, _position.line());
 
         return evaluate_body();
     }
