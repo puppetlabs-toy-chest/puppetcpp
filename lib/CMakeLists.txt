@@ -71,6 +71,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/functions/filter.cc
     src/runtime/functions/logging.cc
     src/runtime/functions/realize.cc
+    src/runtime/functions/shellquote.cc
     src/runtime/functions/split.cc
     src/runtime/functions/versioncmp.cc
     src/runtime/functions/with.cc
