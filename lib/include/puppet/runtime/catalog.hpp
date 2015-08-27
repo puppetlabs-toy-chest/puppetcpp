@@ -354,7 +354,7 @@ namespace puppet { namespace runtime {
     /**
      * Represnce a resource dependency graph.
      */
-    using dependency_graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, resource*, relationship>;
+    using dependency_graph = boost::adjacency_list<boost::multisetS, boost::vecS, boost::directedS, resource*, relationship>;
 
     /**
      * Represents the Puppet catalog.

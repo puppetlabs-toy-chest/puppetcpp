@@ -377,9 +377,13 @@ namespace puppet { namespace runtime {
         }
 
         // Add the edge to the graph if it doesn't already exist
-        if (!boost::edge(source_ptr->vertex_id(), target_ptr->vertex_id(), _graph).second) {
-            boost::add_edge(source_ptr->vertex_id(), target_ptr->vertex_id(), relationship, _graph);
+        auto range = boost::edge_range(source_ptr->vertex_id(), target_ptr->vertex_id(), _graph);
+        for (auto it = range.first; it != range.second; ++it) {
+            if (_graph[*it] == relationship) {
+                return;
+            }
         }
+        boost::add_edge(source_ptr->vertex_id(), target_ptr->vertex_id(), relationship, _graph);
     }
 
     resource* catalog::find_resource(types::resource const& resource)
@@ -429,13 +433,13 @@ namespace puppet { namespace runtime {
         // Add a graph vertex for the resource
         resource.vertex_id(boost::add_vertex(&resource, _graph));
 
-        if (!is_stage && !is_class) {
-            // If given a container, add a containment relationship
-            if (container) {
-                add_relationship(relationship::contains, *container, resource);
-            }
+        // Stages should never be contained
+        if (!is_stage && container) {
+            add_relationship(relationship::contains, *container, resource);
+        }
 
-            // If a defined type, add it to the list of declared defined types
+        // If a defined type, add it to the list of declared defined types
+        if (!is_class) {
             if (auto definition = find_defined_type(boost::to_lower_copy(resource.type().type_name()))) {
                 _declared_defined_types.emplace_back(make_pair(definition, &resource));
             }

@@ -380,7 +380,8 @@ namespace puppet { namespace runtime { namespace evaluators {
         auto& compilation_context = _evaluator.compilation_context();
         auto catalog = evaluation_context.catalog();
 
-        resource const* container = evaluation_context.current_scope()->resource();
+        // If a class, don't set a container; one will be set when the class is declared
+        resource const* container = is_class ? nullptr : evaluation_context.current_scope()->resource();
 
         vector<resource*> resources;
         for (auto const& body : expression.bodies()) {

@@ -121,18 +121,12 @@ namespace puppet { namespace compiler {
         auto& class_main = catalog->add_resource(types::resource("class", "main"), compilation_context, position, &stage_main);
         evaluation_context.top_scope()->resource(&class_main);
 
-        // Contain Class[main] in Stage[main]
-        catalog->add_relationship(relationship::contains, stage_main, class_main);
-
         // Create Class[Settings] and add the settings scope
         auto& settings_resource = catalog->add_resource(types::resource("class", "settings"), compilation_context, position, &stage_main);
         auto settings_scope = make_shared<runtime::scope>(evaluation_context.top_scope(), &settings_resource);
         evaluation_context.add_scope(settings_scope);
 
         // TODO: set settings in the scope
-
-        // Contain Class[Settings] in Stage[main]
-        catalog->add_relationship(relationship::contains, stage_main, settings_resource);
     }
 
 }}  // namespace puppet::compiler
