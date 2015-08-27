@@ -424,7 +424,17 @@ namespace puppet { namespace runtime {
         string title = type.title();
 
         auto& resources = _resources[type.type_name()];
-        auto result = resources.emplace(make_pair(rvalue_cast(title), runtime::resource(rvalue_cast(type), compilation_context, position, exported)));
+        auto result = resources.emplace(
+            make_pair(
+                rvalue_cast(title),
+                runtime::resource(
+                    rvalue_cast(type),
+                    compilation_context,
+                    position,
+                    exported
+                )
+            )
+        );
         auto& resource = result.first->second;
         if (!result.second) {
             throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % resource.type() % resource.path() % resource.position().line()).str(), compilation_context, position);
@@ -435,6 +445,7 @@ namespace puppet { namespace runtime {
 
         // Stages should never be contained
         if (!is_stage && container) {
+            // Add a relationship to the container
             add_relationship(relationship::contains, *container, resource);
         }
 
@@ -484,8 +495,6 @@ namespace puppet { namespace runtime {
             throw evaluation_exception("cannot declare a class with an unspecified title.", compilation_context, position);
         }
 
-        // TODO: check if the class has already been evaluated
-
         // Find the class definition
         auto definitions = find_class(types::klass(type.title()), &compilation_context->node());
         if (!definitions) {
@@ -533,7 +542,7 @@ namespace puppet { namespace runtime {
             }
         }
 
-        // Add the relationship to the stage
+        // Set the stage as the container of the class
         add_relationship(relationship::contains, *stage, *klass);
 
         try {
@@ -701,6 +710,25 @@ namespace puppet { namespace runtime {
             throw evaluation_exception((boost::format("failed to evaluate node: %1%.") % ex.what()).str(), context, position);
         }
         return &resource;
+    }
+
+    bool catalog::is_contained(runtime::resource const& resource, runtime::resource const& container) const
+    {
+        // Search through the out edges of the container
+        auto iterators = boost::out_edges(container.vertex_id(), _graph);
+        for (auto it = iterators.first; it != iterators.second; ++it) {
+            // If the edge is not a containment edge, ignore
+            auto relationship = _graph[*it];
+            if (relationship != runtime::relationship::contains) {
+                continue;
+            }
+            // If the target is the given resource, the resource is contained
+            auto target = _graph[boost::target(*it, _graph)];
+            if (&resource == target) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void catalog::finalize(runtime::context& context)

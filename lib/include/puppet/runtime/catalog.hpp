@@ -471,6 +471,14 @@ namespace puppet { namespace runtime {
         resource* declare_node(runtime::context& evaluation_context, compiler::node const& node);
 
         /**
+         * Determines if the given resource is containd by the given container resource.
+         * @param resource The resource to check to see if it is contained in the container.
+         * @param container The container resource.
+         * @return Returns true if the resource is contained by the container or false if not.
+         */
+        bool is_contained(runtime::resource const& resource, runtime::resource const& container) const;
+
+        /**
          * Finalizes the catalog.
          * Generates resources and populates the dependency graph.
          * @param context The current evaluation context.
