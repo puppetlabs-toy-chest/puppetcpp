@@ -79,6 +79,12 @@ namespace puppet { namespace runtime { namespace values {
     value const& dereference(value const& val);
 
     /**
+     * This exists to prevent unintentional invocations of the "dereference" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    value const& dereference(value const*);
+
+    /**
      * Casts the value to a pointer of the given type.
      * Use this over boost::get for values to properly dereference variables.
      * @tparam T The type to cast the value to.
@@ -125,10 +131,22 @@ namespace puppet { namespace runtime { namespace values {
     bool is_undef(value const& val);
 
     /**
+     * This exists to prevent unintentional invocations of the "is_undef" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    bool is_undef(value const*);
+
+    /**
      * Determines if the given value is default.
      * @return Returns true for default values or false if not.
      */
     bool is_default(value const& val);
+
+    /**
+     * This exists to prevent unintentional invocations of the "is_default" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    bool is_default(value const*);
 
     /**
      * Determines if a value is the "true" value.
@@ -138,11 +156,23 @@ namespace puppet { namespace runtime { namespace values {
     bool is_true(value const& val);
 
     /**
+     * This exists to prevent unintentional invocations of the "is_true" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    bool is_true(value const*);
+
+    /**
      * Determines if a value is the "false" value.
      * @param val The value to test.
      * @return Returns true if the value is exactly "false", or false if not.
      */
     bool is_false(value const& val);
+
+    /**
+     * This exists to prevent unintentional invocations of the "is_false" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    bool is_false(value const*);
 
     /**
      * Determines if a value is "truthy".
@@ -152,11 +182,23 @@ namespace puppet { namespace runtime { namespace values {
     bool is_truthy(value const& val);
 
     /**
+     * This exists to prevent unintentional invocations of the "is_truthy" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    bool is_truthy(value const*);
+
+    /**
      * Gets the type of the given value.
      * @param val The runtime value to get the type of.
      * @return Returns the runtime type of the value.
      */
     values::type get_type(value const& val);
+
+    /**
+     * This exists to prevent unintentional invocations of the "get_type" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    values::type get_type(value const*);
 
     /**
      * Determines if the given value is an instance of the given type.
@@ -165,6 +207,12 @@ namespace puppet { namespace runtime { namespace values {
      * @return Returns true if the value is an instance of the given type or false if not.
      */
     bool is_instance(value const& val, type const& t);
+
+    /**
+     * This exists to prevent unintentional invocations of the "is_instance" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    bool is_instance(value const* val, type const& t);
 
     /**
      * Determines if the second type is a specialization of the first.
@@ -295,6 +343,12 @@ namespace puppet { namespace runtime { namespace values {
      * @return Returns true if both values are equal or false if they are not equal.
      */
     bool equals(value const& left, value const& right);
+
+    /**
+    * This exists to prevent unintentional invocations of the "equals" function.
+    * See the documentation for as<T>(value const*) for an explanation.
+    */
+    bool equals(value const* left, value const* right);
 
     /**
      * Compares a value with a value type.
