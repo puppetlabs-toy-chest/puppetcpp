@@ -74,13 +74,13 @@ namespace puppet { namespace ast {
     {
     }
 
-    resource_body::resource_body(expression title, optional<vector<attribute_expression>> attributes) :
+    resource_body::resource_body(primary_expression title, optional<vector<attribute_expression>> attributes) :
         _title(rvalue_cast(title)),
         _attributes(rvalue_cast(attributes))
     {
     }
 
-    expression const& resource_body::title() const
+    primary_expression const& resource_body::title() const
     {
         return _title;
     }
@@ -92,14 +92,11 @@ namespace puppet { namespace ast {
 
     lexer::position const& resource_body::position() const
     {
-        return _title.position();
+        return get_position(_title);
     }
 
     ostream& operator<<(ostream& os, resource_body const& body)
     {
-        if (body.title().blank()) {
-            return os;
-        }
         os << body.title() << ": ";
         pretty_print(os, body.attributes(), ", ");
         return os;

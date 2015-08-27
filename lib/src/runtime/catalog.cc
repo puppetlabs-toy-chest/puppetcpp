@@ -20,88 +20,43 @@ namespace boost {
 
 namespace puppet { namespace runtime {
 
-    attributes::attributes(shared_ptr<runtime::attributes const> parent) :
-        _parent(rvalue_cast(parent))
+    attribute::attribute(
+        shared_ptr<compiler::context> context,
+        string name,
+        lexer::position name_position,
+        shared_ptr<values::value> value,
+        lexer::position value_position) :
+            _context(rvalue_cast(context)),
+            _name(rvalue_cast(name)),
+            _name_position(rvalue_cast(name_position)),
+            _value(rvalue_cast(value)),
+            _value_position(rvalue_cast(value_position))
     {
     }
 
-    shared_ptr<values::value const> attributes::get(string const& name, bool check_parent) const
+    shared_ptr<compiler::context> const& attribute::context() const
     {
-        // Check the values first
-        auto it = _values.find(name);
-        if (it != _values.end()) {
-            return is_undef(*it->second) ? nullptr : it->second;
-        }
-        // Check the parent if there is one
-        return (check_parent && _parent) ? _parent->get(name) : nullptr;
+        return _context;
     }
 
-    void attributes::set(string const& name, values::value value)
+    string const& attribute::name() const
     {
-        // Set the value
-        _values[name] = std::make_shared<values::value>(rvalue_cast(value));
+        return _name;
     }
 
-    bool attributes::append(string const& name, values::value value, bool append_duplicates)
+    lexer::position const& attribute::name_position() const
     {
-        values::array new_value = to_array(value);
-
-        // Check to see if the attribute already exists
-        auto existing = get(name);
-        if (!existing) {
-            set(name, rvalue_cast(new_value));
-            return true;
-        }
-
-        // Ensure the attribute is an array
-        if (!as<values::array>(*existing)) {
-            return false;
-        }
-
-        values::array existing_value;
-        auto it = _values.find(name);
-        if (it != _values.end()) {
-            // The value is stored locally, so mutate the existing one
-            existing_value = mutate_as<values::array>(*it->second);
-        } else {
-            // Otherwise, it's stored in a parent and cannot be changed; create a copy
-            existing_value = *as<values::array>(*existing);
-        }
-
-        // Move the elements from the value into the existing array
-        existing_value.reserve(existing_value.size() + new_value.size());
-        for (auto& element : new_value) {
-            // Check to see if the value already exists, if requested to do so
-            if (append_duplicates && find_if(existing_value.begin(), existing_value.end(), [&](values::value const& v) { return values::equals(v, element); }) != existing_value.end()) {
-                continue;
-            }
-            existing_value.emplace_back(rvalue_cast(element));
-        }
-
-        // Set the appended value
-        set(name, rvalue_cast(existing_value));
-        return true;
+        return _name_position;
     }
 
-    void attributes::each(function<bool(string const& name, shared_ptr<values::value const> const& value)> const& callback) const
+    shared_ptr<values::value> const& attribute::value() const
     {
-        // Enumerate this collection's values first
-        for (auto const& element : _values) {
-            // Skip undefined elements as they aren't set
-            if (is_undef(*element.second)) {
-                continue;
-            }
-            if (!callback(element.first, element.second)) {
-                return;
-            }
-        }
+        return _value;
+    }
 
-        // Enumerate the parent and call the callback for any attribute not in this collection
-        if (_parent) {
-            _parent->each([&](string const& name, shared_ptr<values::value const> const& value) {
-                return _values.count(name) != 0 || callback(name, value);
-            });
-        }
+    lexer::position const& attribute::value_position() const
+    {
+        return _value_position;
     }
 
     ostream& operator<<(ostream& out, runtime::relationship relationship)
@@ -137,23 +92,19 @@ namespace puppet { namespace runtime {
 
     resource::resource(
         types::resource type,
-        std::shared_ptr<std::string> path,
-        size_t line,
-        std::shared_ptr<runtime::attributes> attributes,
+        shared_ptr<compiler::context> context,
+        lexer::position position,
         bool exported) :
             _type(rvalue_cast(type)),
-            _path(rvalue_cast(path)),
-            _line(line),
-            _attributes(rvalue_cast(attributes)),
+            _context(rvalue_cast(context)),
+            _position(rvalue_cast(position)),
             _vertex_id(static_cast<size_t>(-1)),
             _exported(exported)
     {
-        if (!_path) {
-            throw evaluation_exception("a declared resource must have a path.");
+        if (!_context) {
+            throw evaluation_exception("a compilation context is required.");
         }
-        if (!_attributes) {
-            _attributes = make_shared<runtime::attributes>();
-        }
+        _path = _context->path();
     }
 
     types::resource const& resource::type() const
@@ -161,14 +112,19 @@ namespace puppet { namespace runtime {
         return _type;
     }
 
-    shared_ptr<string> const& resource::path() const
+    shared_ptr<compiler::context> const& resource::context() const
     {
-        return _path;
+        return _context;
     }
 
-    size_t resource::line() const
+    lexer::position const& resource::position() const
     {
-        return _line;
+        return _position;
+    }
+
+    string const& resource::path() const
+    {
+        return *_path;
     }
 
     bool resource::exported() const
@@ -176,29 +132,76 @@ namespace puppet { namespace runtime {
         return _exported;
     }
 
-    runtime::attributes& resource::attributes()
+    void resource::set(shared_ptr<runtime::attribute> attribute)
     {
-        return *_attributes;
+        if (!attribute) {
+            return;
+        }
+
+        _attributes[attribute->name()] = rvalue_cast(attribute);
     }
 
-    runtime::attributes const& resource::attributes() const
+    void resource::append(shared_ptr<runtime::attribute> attribute)
     {
-        return *_attributes;
+        if (!attribute) {
+            return;
+        }
+
+        auto it = _attributes.find(attribute->name());
+        if (it == _attributes.end()) {
+            // Not present, just set
+            set(rvalue_cast(attribute));
+            return;
+        }
+
+        // Ensure the existing value is an array
+        auto existing = as<values::array>(*it->second->value());
+        if (!existing) {
+            throw evaluation_exception(
+                (boost::format("attribute '%1%' cannot be appended to because it is not an array.") %
+                 attribute->name()
+                ).str(),
+                attribute->context(),
+                attribute->name_position());
+        }
+
+        // Copy the existing value
+        values::array new_value = *existing;
+
+        // Append the value to the array
+        auto value = to_array(*attribute->value());
+        new_value.insert(new_value.end(), std::make_move_iterator(value.begin()), std::make_move_iterator(value.end()));
+
+        // Update the attribute's value and set it
+        *attribute->value() = rvalue_cast(new_value);
+        set(rvalue_cast(attribute));
+    }
+
+    shared_ptr<attribute> resource::get(string const& name) const
+    {
+        auto it = _attributes.find(name);
+        if (it == _attributes.end()) {
+            return nullptr;
+        }
+        return it->second;
+    }
+
+    void resource::each_attribute(std::function<bool(runtime::attribute const&)> const& callback) const
+    {
+        if (!callback) {
+            return;
+        }
+
+        for (auto const& kvp : _attributes) {
+            if (!callback(*kvp.second)) {
+                break;
+            }
+        }
     }
 
     size_t resource::vertex_id() const
     {
         return _vertex_id;
-    }
-
-    void resource::make_attributes_unique()
-    {
-        if (_attributes.unique()) {
-            return;
-        }
-
-        // Create a new set of attributes inherited from the current one
-        _attributes = make_shared<runtime::attributes>(_attributes);
     }
 
     bool resource::is_metaparameter(string const& name)
@@ -227,19 +230,14 @@ namespace puppet { namespace runtime {
     class_definition::class_definition(types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const& expression) :
         _klass(rvalue_cast(klass)),
         _context(rvalue_cast(context)),
-        _expression(&expression)
+        _expression(expression)
     {
         if (!_context) {
             throw evaluation_exception("a class definition must have a compilation context.");
         }
 
-        _path = _context->path();
-
-        if (_expression) {
-            _line = _expression->position().line();
-            if (_expression->parent()) {
-                _parent = types::klass(_expression->parent()->value());
-            }
+        if (_expression.parent()) {
+            _parent = types::klass(_expression.parent()->value());
         }
     }
 
@@ -253,22 +251,18 @@ namespace puppet { namespace runtime {
         return _parent;
     }
 
-    shared_ptr<string> const& class_definition::path() const
+    string const& class_definition::path() const
     {
-        return _path;
+        return *_context->path();
     }
 
-    size_t class_definition::line() const
+    lexer::position const& class_definition::position() const
     {
-        return _line;
+        return _expression.position();
     }
 
-    void class_definition::evaluate(runtime::context& context, runtime::resource& resource)
+    void class_definition::evaluate(runtime::context& context, runtime::resource& resource) const
     {
-        if (!_context || !_expression) {
-            return;
-        }
-
         // Create a scope for the class
         auto scope = make_shared<runtime::scope>(evaluate_parent(context), &resource);
 
@@ -279,15 +273,11 @@ namespace puppet { namespace runtime {
         expression_evaluator evaluator{ _context, context };
 
         // Execute the body of the class
-        runtime::executor executor{ evaluator, _expression->position(), _expression->parameters(), _expression->body() };
+        runtime::executor executor{ evaluator, _expression.position(), _expression.parameters(), _expression.body() };
         executor.execute(resource, scope);
-
-        // Reset the context; classes cannot be evaluated more than once
-        _context.reset();
-        _expression = nullptr;
     }
 
-    shared_ptr<runtime::scope> class_definition::evaluate_parent(runtime::context& context)
+    shared_ptr<runtime::scope> class_definition::evaluate_parent(runtime::context& context) const
     {
         // If no parent, return the node or top scope
         auto const& parent = this->parent();
@@ -295,13 +285,8 @@ namespace puppet { namespace runtime {
             return context.node_or_top();
         }
 
-        // If the parent isn't declared, declare it now
-        auto catalog = context.catalog();
-        types::resource type("class", parent->title());
-        if (!catalog->find_resource(type)) {
-            // Declare the parent class
-            catalog->declare_class(context, rvalue_cast(type), _context, _expression->parent()->position());
-        }
+        // Declare the parent class
+        context.catalog()->declare_class(context, types::resource("class", parent->title()), _context, _expression.parent()->position());
         return context.find_scope(parent->title());
     }
 
@@ -320,17 +305,17 @@ namespace puppet { namespace runtime {
         return _type;
     }
 
-    shared_ptr<string> const& defined_type::path() const
+    string const& defined_type::path() const
     {
-        return _context->path();
+        return *_context->path();
     }
 
-    size_t defined_type::line() const
+    lexer::position const& defined_type::position() const
     {
-        return _expression.position().line();
+        return _expression.position();
     }
 
-    void defined_type::evaluate(runtime::context& context, runtime::resource& resource)
+    void defined_type::evaluate(runtime::context& context, runtime::resource& resource) const
     {
         // Create a temporary scope for evaluating the defined type
         auto scope = make_shared<runtime::scope>(context.node_or_top(), &resource);
@@ -362,8 +347,11 @@ namespace puppet { namespace runtime {
         return _expression.position();
     }
 
-    void node_definition::evaluate(runtime::context& context)
+    void node_definition::evaluate(runtime::context& context, runtime::resource& resource) const
     {
+        // Set the node scope for the remainder of the evaluation
+        node_scope scope{context, &resource};
+
         // Create a new expression evaluator based on the node's compilation context
         expression_evaluator evaluator{ _context, context };
 
@@ -413,11 +401,10 @@ namespace puppet { namespace runtime {
     }
 
     runtime::resource& catalog::add_resource(
-        runtime::context& evaluation_context,
         types::resource type,
         shared_ptr<compiler::context> const& compilation_context,
         lexer::position const& position,
-        shared_ptr<runtime::attributes> attributes,
+        resource const* container,
         bool exported)
     {
         if (!compilation_context) {
@@ -430,39 +417,39 @@ namespace puppet { namespace runtime {
         bool is_class = type.is_class();
         bool is_stage = type.is_stage();
 
-        // Check for the "stage" attribute for non-classes
-        if (attributes && !is_class && attributes->get("stage")) {
-            throw attribute_name_exception("stage metaparameter can only be used on classes.", "stage");
-        }
-
-        string resource_type = type.type_name();
         string title = type.title();
 
-        auto& resources = _resources[rvalue_cast(resource_type)];
-        auto result = resources.emplace(make_pair(rvalue_cast(title), runtime::resource(rvalue_cast(type), compilation_context->path(), position.line(), rvalue_cast(attributes), exported)));
+        auto& resources = _resources[type.type_name()];
+        auto result = resources.emplace(make_pair(rvalue_cast(title), runtime::resource(rvalue_cast(type), compilation_context, position, exported)));
         auto& resource = result.first->second;
         if (!result.second) {
-            throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % resource.type() % *resource.path() % resource.line()).str(), compilation_context, position);
+            throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % resource.type() % resource.path() % resource.position().line()).str(), compilation_context, position);
         }
 
         // Add a graph vertex for the resource
         resource.vertex_id(boost::add_vertex(&resource, _graph));
 
-        // If not a stage (has no container) and not a class (special case), contain the resource
         if (!is_stage && !is_class) {
-            auto container = evaluation_context.current_scope()->resource();
-            if (!container) {
-                throw evaluation_exception("cannot add resource to catalog: current scope has no associated resource.", compilation_context, position);
+            // If given a container, add a containment relationship
+            if (container) {
+                add_relationship(relationship::contains, *container, resource);
             }
-            add_relationship(relationship::contains, *container, resource);
+
+            // If a defined type, add it to the list of declared defined types
+            if (auto definition = find_defined_type(boost::to_lower_copy(resource.type().type_name()))) {
+                _declared_defined_types.emplace_back(make_pair(definition, &resource));
+            }
         }
         return resource;
     }
 
-    vector<class_definition> const* catalog::find_class(types::klass const& klass)
+    vector<class_definition> const* catalog::find_class(types::klass const& klass, compiler::node const* node)
     {
         auto it = _classes.find(klass);
         if (it == _classes.end() || it->second.empty()) {
+            if (node) {
+                // TODO: load class
+            }
             return nullptr;
         }
         return &it->second;
@@ -477,12 +464,11 @@ namespace puppet { namespace runtime {
         definitions.push_back(class_definition(rvalue_cast(klass), context, expression));
     }
 
-    runtime::resource& catalog::declare_class(
+    resource& catalog::declare_class(
         runtime::context& evaluation_context,
-        types::resource type,
+        types::resource const& type,
         shared_ptr<compiler::context> const& compilation_context,
-        lexer::position const& position,
-        shared_ptr<runtime::attributes> attributes)
+        lexer::position const& position)
     {
         if (!compilation_context) {
             throw evaluation_exception("expected a compilation context.");
@@ -491,60 +477,86 @@ namespace puppet { namespace runtime {
             throw evaluation_exception("expected a class resource.", compilation_context, position);
         }
         if (!type.fully_qualified()) {
-            throw evaluation_exception("class name is not fully qualified.", compilation_context, position);
+            throw evaluation_exception("cannot declare a class with an unspecified title.", compilation_context, position);
         }
 
-        // Attempt to find the existing resource
-        if (auto existing = find_resource(type)) {
-            throw evaluation_exception((boost::format("class '%1%' was previously declared at %2%:%3%.") % type.title() % *existing->path() % existing->line()).str(), compilation_context, position);
+        // TODO: check if the class has already been evaluated
+
+        // Find the class definition
+        auto definitions = find_class(types::klass(type.title()), &compilation_context->node());
+        if (!definitions) {
+            throw evaluation_exception((boost::format("cannot evaluate class '%1%' because it has not been defined.") % type.title()).str(), compilation_context, position);
         }
 
-        // Lookup the class
-        auto it = _classes.find(types::klass(type.title()));
-        if (it == _classes.end() || it->second.empty()) {
-            // TODO: search node for class
-            throw evaluation_exception((boost::format("cannot declare class '%1%' because it has not been defined.") % type.title()).str(), compilation_context, position);
+        // Find the resource
+        auto klass = find_resource(type);
+        if (!klass) {
+            // Create the class resource
+            klass = &add_resource(type, compilation_context, position);
         }
 
-        // Add the resource
-        auto& resource = add_resource(evaluation_context, rvalue_cast(type), compilation_context, position, attributes);
+        // If the class was already declared, return it without evaluating
+        if (!_declared_classes.insert(type.title()).second) {
+            return *klass;
+        }
 
         // Validate the stage metaparameter
-        string stage_name;
-        if (attributes) {
-            if (auto stage_value = attributes->get("stage")) {
-                auto ptr = as<string>(*stage_value);
-                if (!ptr) {
-                    throw attribute_value_exception((boost::format("expected %1% for 'stage' metaparameter but found %2%.") % types::string::name() % get_type(*stage_value)).str(), "stage");
-                }
-                stage_name = *ptr;
+        resource const* stage = nullptr;
+        if (auto attribute = klass->get("stage")) {
+            auto ptr = as<string>(*attribute->value());
+            if (!ptr) {
+                throw evaluation_exception(
+                    (boost::format("expected %1% for 'stage' metaparameter but found %2%.") %
+                     types::string::name() %
+                     get_type(*attribute->value())
+                    ).str(),
+                    attribute->context(),
+                    attribute->value_position());
+            }
+            stage = find_resource(types::resource("stage", *ptr));
+            if (!stage) {
+                throw evaluation_exception(
+                    (boost::format("stage '%1%' does not exist in the catalog.") %
+                     *ptr
+                    ).str(),
+                    attribute->context(),
+                    attribute->value_position());
+            }
+        } else {
+            stage = find_resource(types::resource("stage", "main"));
+            if (!stage) {
+                throw evaluation_exception("stage 'main' does not exist in the catalog.");
             }
         }
-        // If no stage was given, fallback to main
-        if (stage_name.empty()) {
-            stage_name = "main";
-        }
-        // Find the stage and add a containment relationship
-        auto stage = find_resource(types::resource("stage", stage_name));
-        if (!stage) {
-            throw attribute_value_exception((boost::format("stage '%1%' does not exist in the catalog.") % stage_name).str(), "stage");
-        }
-        add_relationship(relationship::contains, *stage, resource);
+
+        // Add the relationship to the stage
+        add_relationship(relationship::contains, *stage, *klass);
 
         try {
             // Evaluate all definitions of the class
-            for (auto &definition : it->second) {
-                definition.evaluate(evaluation_context, resource);
+            for (auto& definition : *definitions) {
+                definition.evaluate(evaluation_context, *klass);
             }
         } catch (evaluation_exception const& ex) {
-            // If the original exception has context, log an error with full context
+            // If the original exception has context, log an error with full context first
             if (ex.context()) {
                 ex.context()->log(logging::level::error, ex.position(), ex.what());
-                throw evaluation_exception((boost::format("failed to evaluate class '%1%'.") % resource.type().title()).str(), compilation_context, position);
+                throw evaluation_exception(
+                    (boost::format("failed to evaluate class '%1%'.") %
+                     type.title()
+                    ).str(),
+                    compilation_context,
+                    position);
             }
-            throw evaluation_exception((boost::format("failed to evaluate class '%1%': %2%") % resource.type().title() % ex.what()).str(), compilation_context, position);
+            throw evaluation_exception(
+                (boost::format("failed to evaluate class '%1%': %2%") %
+                 type.title() %
+                 ex.what()
+                ).str(),
+                compilation_context,
+                position);
         }
-        return resource;
+        return *klass;
     }
 
     defined_type const* catalog::find_defined_type(string const& type)
@@ -569,59 +581,12 @@ namespace puppet { namespace runtime {
             throw evaluation_exception(
                 (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
                  existing.type() %
-                 *existing.path() %
-                 existing.line()
+                 existing.path() %
+                 existing.position().line()
                 ).str(),
                 context,
                 expression.name().position());
         }
-    }
-
-    runtime::resource& catalog::declare_defined_type(
-        runtime::context& evaluation_context,
-        string const& type_name,
-        types::resource type,
-        shared_ptr<compiler::context> const& compilation_context,
-        lexer::position const& position,
-        shared_ptr<runtime::attributes> attributes)
-    {
-        if (!compilation_context) {
-            throw evaluation_exception("expected a compilation context.");
-        }
-        if (!type.fully_qualified()) {
-            throw evaluation_exception("defined type name is not fully qualified.", compilation_context, position);
-        }
-        if (!evaluation_context.current_scope()->resource()) {
-            throw evaluation_exception("cannot declare defined type because the current evaluation scope has no associated resource.", compilation_context, position);
-        }
-
-        // Attempt to find the existing resource
-        if (auto existing = find_resource(type)) {
-            throw evaluation_exception((boost::format("defined type '%1%' was previously declared at %2%:%3%.") % type % *existing->path() % existing->line()).str(), compilation_context, position);
-        }
-
-        // Lookup the defined type
-        auto it = _defined_types.find(type_name);
-        if (it == _defined_types.end()) {
-            // TODO: search node for defined type
-            throw evaluation_exception((boost::format("cannot declare defined type %1% because it has not been defined.") % type).str(), compilation_context, position);
-        }
-
-        // Add the resource
-        auto& resource = add_resource(evaluation_context, rvalue_cast(type), compilation_context, position, attributes);
-
-        try {
-            // Evaluate the defined type
-            it->second.evaluate(evaluation_context, resource);
-        } catch (evaluation_exception const& ex) {
-            // If the original exception has context, log an error with full context
-            if (ex.context()) {
-                ex.context()->log(logging::level::error, ex.position(), ex.what());
-                throw evaluation_exception((boost::format("failed to evaluate defined type '%1%'.") % resource.type()).str(), compilation_context, position);
-            }
-            throw evaluation_exception((boost::format("failed to evaluate defined type '%1%': %2%") % resource.type() % ex.what()).str(), compilation_context, position);
-        }
-        return resource;
     }
 
     void catalog::define_node(shared_ptr<compiler::context> const& context, ast::node_definition_expression const& expression)
@@ -718,27 +683,27 @@ namespace puppet { namespace runtime {
         // Add a Node resource to the catalog
         auto& context = definition->context();
         auto& position = definition->position();
-        auto& resource = add_resource(evaluation_context, types::resource("node", node_name), context, position);
-
-        // Set the node scope for the remainder of the evaluation
-        node_scope scope{evaluation_context, &resource};
+        auto& resource = add_resource(types::resource("node", node_name), context, position, evaluation_context.current_scope()->resource());
 
         // Evaluate the node definition
         try {
-            definition->evaluate(evaluation_context);
+            definition->evaluate(evaluation_context, resource);
         } catch (evaluation_exception const& ex) {
             // If the original exception has context, log an error with full context
             if (ex.context()) {
                 ex.context()->log(logging::level::error, ex.position(), ex.what());
                 throw evaluation_exception("failed to evaluate node.", context, position);
             }
-            throw evaluation_exception((boost::format("failed to evaluate node: %2%.") % ex.what()).str(), context, position);
+            throw evaluation_exception((boost::format("failed to evaluate node: %1%.") % ex.what()).str(), context, position);
         }
         return &resource;
     }
 
-    void catalog::finalize()
+    void catalog::finalize(runtime::context& context)
     {
+        // Evaluate defined types
+        evaluate_defined_types(context);
+
         // Populate the dependency graph
         populate_graph();
     }
@@ -772,7 +737,7 @@ namespace puppet { namespace runtime {
                     cycle << " => ";
                 }
                 auto resource = graph[id];
-                cycle << resource->type() << " declared at " << *resource->path() << ":" << resource->line();
+                cycle << resource->type() << " declared at " << resource->path() << ":" << resource->position().line();
             }
             // Append on the first vertex again to complete the cycle
             auto resource = graph[path.front()];
@@ -827,31 +792,35 @@ namespace puppet { namespace runtime {
 
     void catalog::process_relationship_parameter(resource const& source, string const& name, runtime::relationship relationship)
     {
-        auto parameter = source.attributes().get(name);
-        if (!parameter) {
+        auto attribute = source.get(name);
+        if (!attribute) {
             return;
         }
-        each_resource(*parameter, [&](types::resource const& target_resource) {
+        each_resource(*attribute->value(), [&](types::resource const& target_resource) {
             // Locate the target in the catalog
             auto target = find_resource(target_resource);
             if (!target) {
                 throw evaluation_exception(
                     (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the resource does not exist in the catalog.") %
                      source.type() %
-                     *source.path() %
-                     source.line() %
+                     source.path() %
+                     source.position().line() %
                      name %
-                     target_resource).str());
+                     target_resource).str(),
+                    attribute->context(),
+                    attribute->value_position());
             }
 
             if (&source == target) {
                 throw evaluation_exception(
                     (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the relationship is self-referencing.") %
                      source.type() %
-                     *source.path() %
-                     source.line() %
+                     source.path() %
+                     source.position().line() %
                      name %
-                     target_resource).str());
+                     target_resource).str(),
+                    attribute->context(),
+                    attribute->value_position());
             }
 
             // Add the relationship
@@ -860,11 +829,46 @@ namespace puppet { namespace runtime {
             throw evaluation_exception(
                 (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship: %5%") %
                  source.type() %
-                 *source.path() %
-                 source.line() %
+                 source.path() %
+                 source.position().line() %
                  name %
-                 message).str());
+                 message).str(),
+                attribute->context(),
+                attribute->value_position());
         });
+    }
+
+    void catalog::evaluate_defined_types(runtime::context& context)
+    {
+        resource* current = nullptr;
+
+        try {
+            // Evaluate all the declared defined types in order
+            for (auto& kvp : _declared_defined_types) {
+                current = kvp.second;
+                kvp.first->evaluate(context, *current);
+            }
+        } catch (evaluation_exception const& ex) {
+            // If the original exception has context, log an error with full context first
+            if (ex.context()) {
+                ex.context()->log(logging::level::error, ex.position(), ex.what());
+                throw evaluation_exception(
+                    (boost::format("failed to evaluate defined type '%1%'.") %
+                     current->type()
+                    ).str(),
+                    current->context(),
+                    current->position());
+            }
+            throw evaluation_exception(
+                (boost::format("failed to evaluate defined type '%1%': %2%") %
+                 current->type() %
+                 ex.what()
+                ).str(),
+                current->context(),
+                current->position());
+        }
+
+        _declared_defined_types.clear();
     }
 
 }}  // namespace puppet::runtime

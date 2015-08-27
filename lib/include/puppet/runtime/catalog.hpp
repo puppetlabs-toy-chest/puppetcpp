@@ -38,50 +38,61 @@ namespace puppet { namespace runtime {
     struct scope;
 
     /**
-     * Represents a collection of resource attributes.
+     * Represents a resource attribute.
      */
-    struct attributes
+    struct attribute
     {
         /**
-         * Constructs an attribute collection.
-         * @param parent The parent attributes to inherit values from.
+         * Constructs a resource attribute.
+         * @param context The compilation context where the attribute was set.
+         * @param name The name of the attribute.
+         * @param name_position The position of the attribute's name.
+         * @param value The attribute's value.
+         * @param value_position The position of the attribute's value.
          */
-        explicit attributes(std::shared_ptr<attributes const> parent = nullptr);
+        attribute(
+            std::shared_ptr<compiler::context> context,
+            std::string name,
+            lexer::position name_position,
+            std::shared_ptr<values::value> value,
+            lexer::position value_position);
 
         /**
-         * Gets an attribute.
-         * @param name The name of the attribute to get.
-         * @param check_parent True if the parent should be checked for the attribute or false if not.
-         * @return Returns the value if the attribute exists or nullptr if the attribute does not exist.
+         * Gets the compilation context where the attribute was set.
+         * @return Returns the compilation context where the attribute was set.
          */
-        std::shared_ptr<values::value const> get(std::string const& name, bool check_parent = true) const;
+        std::shared_ptr<compiler::context> const& context() const;
 
         /**
-         * Sets an attribute.
-         * @param name The name of the attribute to set.
-         * @param value The value to set.
+         * Gets the name of the attribute.
+         * @return Returns the name of the attribute.
          */
-        void set(std::string const& name, values::value value);
+        std::string const& name() const;
 
         /**
-         * Appends a value to an existing attribute.
-         * If the attribute does not exist, the attribute is set to the value as an array.
-         * @param name The name of the attribute to append to.
-         * @param value The value to append.
-         * @param append_duplicates True if duplicate values in the resulting array are appended or false if they are not.
-         * @return Returns true if the value was appended or false if the attribute already exists and is not an array.
+         * Gets the position of the attribute's name.
+         * @return Returns the position of the attribute's name.
          */
-        bool append(std::string const& name, values::value value, bool append_duplicates = true);
+        lexer::position const& name_position() const;
 
         /**
-         * Enumerates each stored attribute.
-         * @param callback The callback to call for each stored attribute.
+         * Gets the attribute's value.
+         * @return Returns the attribute's value.
          */
-        void each(std::function<bool(std::string const& name, std::shared_ptr<values::value const> const& value)> const& callback) const;
+        std::shared_ptr<values::value> const& value() const;
 
-     private:
-        std::shared_ptr<attributes const> _parent;
-        std::unordered_map<std::string, std::shared_ptr<values::value>> _values;
+        /**
+         * Gets the position of the attribute's value.
+         * @return Returns the position of the attribute's value.
+         */
+        lexer::position const& value_position() const;
+
+    private:
+        std::shared_ptr<compiler::context> _context;
+        std::string _name;
+        lexer::position _name_position;
+        std::shared_ptr<values::value> _value;
+        lexer::position _value_position;
     };
 
     /**
@@ -127,16 +138,14 @@ namespace puppet { namespace runtime {
         /**
          * Creates a resource with the given type and title.
          * @param type The resource type (e.g. File['/tmp/foo']).
-         * @param path The path of the file defining the resource.
-         * @param line The line defining the resource.
-         * @param attributes The resource's attributes.
+         * @param context The compilation context where the resource was declared.
+         * @param position The position where the resource was declared.
          * @param exported True if the resource is exported or false if not.
          */
         resource(
             types::resource type,
-            std::shared_ptr<std::string> path = nullptr,
-            size_t line = 0,
-            std::shared_ptr<attributes> attributes = nullptr,
+            std::shared_ptr<compiler::context> context,
+            lexer::position position,
             bool exported = false);
 
         /**
@@ -146,16 +155,23 @@ namespace puppet { namespace runtime {
         types::resource const& type() const;
 
         /**
+         * Gets the compilation context where the resource was declared.
+         * Note: the compilation context will be reset after the resource is evaluated.
+         * @return Returns the compilation context where the resource was declared.
+         */
+        std::shared_ptr<compiler::context> const& context() const;
+
+        /**
+         * Gets the position where the resource was declared.
+         * @return Returns the position where the resource was declared.
+         */
+        lexer::position const& position() const;
+
+        /**
          * Gets the path of the file where the resource was declared.
          * @return Returns the path of the file where the resource was declared.
          */
-        std::shared_ptr<std::string> const& path() const;
-
-        /**
-         * Gets the line where the resource was declared.
-         * @return Returns the line where the resource was declared or 0 if not declared in a source file.
-         */
-        size_t line() const;
+        std::string const& path() const;
 
         /**
          * Gets whether or not the resource is exported.
@@ -164,27 +180,36 @@ namespace puppet { namespace runtime {
         bool exported() const;
 
         /**
-         * Gets the resource's attributes.
-         * @return Returns the resource's attribute.
+         * Sets an attribute on the resource.
+         * @param attribute The attribute to set on the resource.
          */
-        runtime::attributes& attributes();
+        void set(std::shared_ptr<runtime::attribute> attribute);
 
         /**
-         * Gets the resource's attributes.
-         * @return Returns the resource's attribute.
+         * Appends an attribute on the resource.
+         * If the attribute already exists as an array, the new value is appended to the old.
+         * @param attribute The attribute to append on the resource.
          */
-        runtime::attributes const& attributes() const;
+        void append(std::shared_ptr<runtime::attribute> attribute);
+
+        /**
+         * Gets an attribute on the resource.
+         * @param name The name of the attribute to get.
+         * @return Returns a resource of the given name or nullptr if no attribute exists.
+         */
+        std::shared_ptr<attribute> get(std::string const& name) const;
+
+        /**
+         * Enumerates each attribute in the resource.
+         * @param callback The callback to call for each attribute.
+         */
+        void each_attribute(std::function<bool(attribute const&)> const& callback) const;
 
         /**
          * Gets the vertex id of the resource in the catalog dependency graph.
          * @return Returns the vertex id of the resource in the catalog dependency graph.
          */
         size_t vertex_id() const;
-
-        /**
-         * Makes the resource's attributes unique.
-         */
-        void make_attributes_unique();
 
         /**
          * Determines if the given name is a metaparameter name.
@@ -198,9 +223,10 @@ namespace puppet { namespace runtime {
         void vertex_id(size_t id);
 
         types::resource _type;
+        std::shared_ptr<compiler::context> _context;
         std::shared_ptr<std::string> _path;
-        size_t _line;
-        std::shared_ptr<runtime::attributes> _attributes;
+        lexer::position _position;
+        std::unordered_map<std::string, std::shared_ptr<attribute>> _attributes;
         size_t _vertex_id;
         bool _exported;
     };
@@ -232,28 +258,25 @@ namespace puppet { namespace runtime {
 
         /**
          * Gets the path of the file containing the class definition.
-         * @return Returns the path of the file containing the class definition or nullptr if not defined in a file.
+         * @return Returns the path of the file containing the class definition.
          */
-        std::shared_ptr<std::string> const& path() const;
+        std::string const& path() const;
 
         /**
-         * Gets the line number of the class definition.
-         * @return Returns the line number of the class definition.
+         * Gets the position of the class definition.
+         * @return Returns the position of the class definition.
          */
-        size_t line() const;
+        lexer::position const& position() const;
 
      private:
         friend struct catalog;
-        void evaluate(runtime::context& context, runtime::resource& resource);
-
-        std::shared_ptr<runtime::scope> evaluate_parent(runtime::context& context);
+        void evaluate(runtime::context& context, runtime::resource& resource) const;
+        std::shared_ptr<runtime::scope> evaluate_parent(runtime::context& context) const;
 
         types::klass _klass;
         boost::optional<types::klass> _parent;
         std::shared_ptr<compiler::context> _context;
-        ast::class_definition_expression const* _expression;
-        std::shared_ptr<std::string> _path;
-        size_t _line;
+        ast::class_definition_expression const& _expression;
     };
 
     /**
@@ -276,20 +299,20 @@ namespace puppet { namespace runtime {
         std::string const& type() const;
 
         /**
-         * Gets the path of the file containing the defined type.
-         * @return Returns the path of the file containing the defined type.
+         * Gets the path of the file containing the class definition.
+         * @return Returns the path of the file containing the class definition.
          */
-        std::shared_ptr<std::string> const& path() const;
+        std::string const& path() const;
 
         /**
-         * Gets the line number of the defined type.
-         * @return Returns the line number of the defined type.
+         * Gets the position of the class definition.
+         * @return Returns the position of the class definition.
          */
-        size_t line() const;
+        lexer::position const& position() const;
 
      private:
         friend struct catalog;
-        void evaluate(runtime::context& context, runtime::resource& resource);
+        void evaluate(runtime::context& context, runtime::resource& resource) const;
 
         std::string _type;
         std::shared_ptr<compiler::context> _context;
@@ -322,7 +345,7 @@ namespace puppet { namespace runtime {
 
      private:
         friend struct catalog;
-        void evaluate(runtime::context& context);
+        void evaluate(runtime::context& context, runtime::resource& resource) const;
 
         std::shared_ptr<compiler::context> _context;
         ast::node_definition_expression const& _expression;
@@ -352,39 +375,38 @@ namespace puppet { namespace runtime {
          * @param source The source resource.
          * @param target The target resource.
          */
-        void add_relationship(runtime::relationship relationship, runtime::resource const& source, runtime::resource const& target);
+        void add_relationship(runtime::relationship relationship, resource const& source, resource const& target);
 
         /**
          * Finds a resource in the catalog.
          * @param resource The resource type to find.
          * @return Returns the resource if found or nullptr if the resource is not in the catalog.
          */
-        runtime::resource* find_resource(types::resource const& resource);
+        resource* find_resource(types::resource const& resource);
 
         /**
          * Adds a resource to the catalog.
-         * @param evaluation_context The current evaluation context.
          * @param type The qualified resource type to add.
          * @param compilation_context The compilation context where the resource is being declared.
          * @param position The position where the resource is being declared.
-         * @param attributes The resource's initial attributes.
+         * @param container The container of the resource or nullptr for no container.
          * @param exported True if the resource is exported or false if it is not.
          * @return Returns the resource that was added.
          */
-        runtime::resource& add_resource(
-            runtime::context& evaluation_context,
+        resource& add_resource(
             types::resource type,
             std::shared_ptr<compiler::context> const& compilation_context,
             lexer::position const& position,
-            std::shared_ptr<runtime::attributes> attributes = nullptr,
+            resource const* container = nullptr,
             bool exported = false);
 
         /**
          * Finds the definitions of a class.
          * @param klass The class to find.
+         * @param node The node to load the class from.  If nullptr, the class will not be loaded.
          * @return Returns the class definitions if defined or nullptr if not defined.
          */
-        std::vector<class_definition> const* find_class(types::klass const& klass);
+        std::vector<class_definition> const* find_class(types::klass const& klass, compiler::node const* node = nullptr);
 
         /**
          * Defines a class.
@@ -400,24 +422,22 @@ namespace puppet { namespace runtime {
 
         /**
          * Declares a class.
-         * If the class is already declared, the existing class resource will be returned.
+         * If the class is already declared, the existing class is returned.
          * @param evaluation_context The current evaluation context.
-         * @param type The resource type for the class.
+         * @param type The qualified resource type for the class.
          * @param compilation_context The compilation context where the class is being declared.
          * @param position The position where the class is being declared.
-         * @param attributes The class resource's attributes or nullptr for an empty set.
-         * @return Returns the class resource that was added to the catalog.
+         * @return Returns the declared class resource.
          */
-        runtime::resource& declare_class(
+        resource& declare_class(
             runtime::context& evaluation_context,
-            types::resource type,
+            types::resource const& type,
             std::shared_ptr<compiler::context> const& compilation_context,
-            lexer::position const& position,
-            std::shared_ptr<runtime::attributes> attributes = nullptr);
+            lexer::position const& position);
 
         /**
          * Finds a defined type's definition.
-         * @param type The type name of the defined type.
+         * @param type The type name of the defined type.  Note: this is the lower case type name as used in a manifest, e.g. "foo::bar".
          * @return Returns the defined type's definition if defined or nullptr if not defined.
          */
         defined_type const* find_defined_type(std::string const& type);
@@ -425,6 +445,7 @@ namespace puppet { namespace runtime {
         /**
          * Defines a defined type.
          * Only one definition of a defined type may exist.
+         * Defined types are declared like any other resources and are evaluated when the catalog is finalized.
          * @param type The name of the defined type.
          * @param context The compilation context where the defined type is defined.
          * @param expression The defined type expression.
@@ -433,25 +454,6 @@ namespace puppet { namespace runtime {
             std::string type,
             std::shared_ptr<compiler::context> const& context,
             ast::defined_type_expression const& expression);
-
-        /**
-         * Declares a defined type.
-         * A defined type cannot be declared more than once.
-         * @param evaluation_context The current evaluation context.
-         * @param type_name The lower-case type name for the defined type.
-         * @param type The resource type for the defined type.
-         * @param compilation_context The compilation context where the class is being declared.
-         * @param position The position where the class is being declared.
-         * @param attributes The defined type resource's attributes or nullptr for an empty set.
-         * @return Returns the defined type resource that was added to the catalog.
-         */
-        runtime::resource& declare_defined_type(
-            runtime::context& evaluation_context,
-            std::string const& type_name,
-            types::resource type,
-            std::shared_ptr<compiler::context> const& compilation_context,
-            lexer::position const& position,
-            std::shared_ptr<runtime::attributes> attributes = nullptr);
 
         /**
          * Defines a node.
@@ -466,13 +468,14 @@ namespace puppet { namespace runtime {
          * @param node The node to declare.
          * @return Returns the node resource that was added to the catalog or nullptr if there are no node definitions.
          */
-        runtime::resource* declare_node(runtime::context& evaluation_context, compiler::node const& node);
+        resource* declare_node(runtime::context& evaluation_context, compiler::node const& node);
 
         /**
          * Finalizes the catalog.
-         * Populates the dependency graph and adds any needed resources.
+         * Generates resources and populates the dependency graph.
+         * @param context The current evaluation context.
          */
-        void finalize();
+        void finalize(runtime::context& context);
 
         /**
          * Writes the dependency graph as a DOT file.
@@ -489,10 +492,13 @@ namespace puppet { namespace runtime {
      private:
         void populate_graph();
         void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
+        void evaluate_defined_types(runtime::context& context);
 
         std::unordered_map<std::string, std::unordered_map<std::string, resource>> _resources;
         std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
+        std::unordered_set<std::string> _declared_classes;
         std::unordered_map<std::string, defined_type> _defined_types;
+        std::vector<std::pair<defined_type const*, resource*>> _declared_defined_types;
         std::vector<node_definition> _nodes;
         std::unordered_map<std::string, size_t> _named_nodes;
         std::vector<std::pair<values::regex, size_t>> _regex_nodes;

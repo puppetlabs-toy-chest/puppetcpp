@@ -1,4 +1,4 @@
-#include <puppet/runtime/functions/require.hpp>
+#include <puppet/runtime/functions/declare.hpp>
 #include <puppet/runtime/definition_scanner.hpp>
 
 using namespace std;
@@ -7,17 +7,18 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace functions {
 
-    struct require_visitor : boost::static_visitor<void>
+    struct declare_visitor : boost::static_visitor<void>
     {
-        require_visitor(call_context& context, size_t index) :
+        declare_visitor(call_context& context, size_t index, boost::optional<runtime::relationship> const& relationship) :
             _context(context),
-            _index(index)
+            _index(index),
+            _relationship(relationship)
         {
         }
 
         result_type operator()(string const& argument) const
         {
-            require_class(types::klass(argument));
+            declare_class(types::klass(argument));
         }
 
         result_type operator()(values::type const& argument) const
@@ -34,7 +35,7 @@ namespace puppet { namespace runtime { namespace functions {
 
         result_type operator()(types::klass const& argument) const
         {
-            require_class(argument);
+            declare_class(argument);
         }
 
         result_type operator()(types::resource const& argument) const
@@ -42,7 +43,7 @@ namespace puppet { namespace runtime { namespace functions {
             if (!argument.is_class()) {
                 throw _context.evaluator().create_exception(_context.position(_index), (boost::format("expected Class %1% for argument but found %2%.") % types::resource::name() % argument).str());
             }
-            require_class(types::klass(argument.title()));
+            declare_class(types::klass(argument.title()));
         }
 
         template <typename T>
@@ -58,38 +59,42 @@ namespace puppet { namespace runtime { namespace functions {
         }
 
      private:
-        void require_class(types::klass const& klass) const
+        void declare_class(types::klass const& klass) const
         {
             types::resource type("class", klass.title());
 
             auto& evaluator = _context.evaluator();
             if (!type.fully_qualified()) {
-                throw evaluator.create_exception(_context.position(_index), "cannot require a class with an unspecified title.");
+                throw evaluator.create_exception(_context.position(_index), (boost::format("cannot %1% a class with an unspecified title.") % _context.name()).str());
             }
 
             auto& context = evaluator.evaluation_context();
-            auto* container = context.current_scope()->resource();
-            if (!container) {
-                throw evaluator.create_exception(_context.position(_index), "the current scope has no associated resource.");
-            }
-
-            // Check to see if the class already exists in the catalog; if so, do nothing
             auto catalog = context.catalog();
-            if (auto resource = catalog->find_resource(type)) {
-                catalog->add_relationship(relationship::require, *container, *resource);
-                return;
-            }
 
             // Declare the class
             auto& resource = catalog->declare_class(context, type, evaluator.compilation_context(), _context.position(_index));
-            catalog->add_relationship(relationship::require, *container, resource);
+
+            // Add a relationship to the current resource
+            if (_relationship) {
+                auto* current = context.current_scope()->resource();
+                if (!current) {
+                    throw evaluator.create_exception(_context.position(_index), "the current scope has no associated resource.");
+                }
+                catalog->add_relationship(*_relationship, *current, resource);
+            }
         }
 
         call_context& _context;
         size_t _index;
+        boost::optional<runtime::relationship> const& _relationship;
     };
 
-    value require::operator()(call_context& context) const
+    declare::declare(boost::optional<runtime::relationship> relationship) :
+        _relationship(rvalue_cast(relationship))
+    {
+    }
+
+    value declare::operator()(call_context& context) const
     {
         auto& evaluator = context.evaluator();
         auto& arguments = context.arguments();
@@ -100,7 +105,7 @@ namespace puppet { namespace runtime { namespace functions {
             throw evaluator.create_exception(context.position(), (boost::format("cannot call '%1%' function: catalog functions are not supported.") % context.name()).str());
         }
         for (size_t i = 0; i < arguments.size(); ++i) {
-            boost::apply_visitor(require_visitor(context, i), arguments[i]);
+            boost::apply_visitor(declare_visitor(context, i, _relationship), arguments[i]);
         }
         return value();
     }

@@ -267,7 +267,7 @@ namespace puppet { namespace runtime {
             class_scope scope(_scopes);
 
             for (auto const& body : expr.bodies()) {
-                operator()(body.title());
+                boost::apply_visitor(*this, body.title());
                 if (body.attributes()) {
                     for (auto const& attribute : *body.attributes()) {
                         operator()(attribute.value());
@@ -325,8 +325,8 @@ namespace puppet { namespace runtime {
                              klass.title() %
                              expr.parent()->value() %
                              existing->title() %
-                             *definition.path() %
-                             definition.line()
+                             definition.path() %
+                             definition.position().line()
                             ).str(),
                             _context,
                             expr.parent()->position());
@@ -340,7 +340,7 @@ namespace puppet { namespace runtime {
             }
 
             // Push back the class definition
-            _catalog.define_class(klass, _context, expr);
+            _catalog.define_class(rvalue_cast(klass), _context, expr);
 
             // Scan the parameters
             if (expr.parameters()) {
@@ -488,13 +488,27 @@ namespace puppet { namespace runtime {
             if (is_class) {
                 auto type = _catalog.find_defined_type(qualified_name);
                 if (type) {
-                    throw evaluation_exception((boost::format("'%1%' was previously defined as a defined type at %2%:%3%.") % qualified_name % *type->path() % type->line()).str(), _context, name.position());
+                    throw evaluation_exception(
+                        (boost::format("'%1%' was previously defined as a defined type at %2%:%3%.") %
+                         qualified_name %
+                         type->path() %
+                         type->position().line()
+                        ).str(),
+                        _context,
+                        name.position());
                 }
             } else {
                 auto definitions = _catalog.find_class(types::klass(qualified_name));
                 if (definitions) {
                     auto& first = definitions->front();
-                    throw evaluation_exception((boost::format("'%1%' was previously defined as a class at %2%:%3%.") % qualified_name % *first.path() % first.line()).str(), _context, name.position());
+                    throw evaluation_exception(
+                        (boost::format("'%1%' was previously defined as a class at %2%:%3%.") %
+                         qualified_name %
+                         first.path() %
+                         first.position().line()
+                        ).str(),
+                        _context,
+                        name.position());
                 }
             }
             return qualified_name;

@@ -80,7 +80,8 @@ namespace puppet { namespace compiler {
             // TODO: evaluate generators
 
             // Finalize the catalog
-            catalog.finalize();
+            LOG(debug, "generating resources and populating dependency graph.");
+            catalog.finalize(evaluation_context);
         } catch (evaluation_exception const& ex) {
             if (!ex.context()) {
                 throw compilation_exception(ex.what());
@@ -114,17 +115,17 @@ namespace puppet { namespace compiler {
         lexer::position position(0, 1);
 
         // Create Stage[main]
-        auto& stage_main = catalog->add_resource(evaluation_context, types::resource("stage", "main"), compilation_context, position);
+        auto& stage_main = catalog->add_resource(types::resource("stage", "main"), compilation_context, position);
 
         // Create Class[main] and associate it with the top scope
-        auto& class_main = catalog->add_resource(evaluation_context, types::resource("class", "main"), compilation_context, position);
+        auto& class_main = catalog->add_resource(types::resource("class", "main"), compilation_context, position, &stage_main);
         evaluation_context.top_scope()->resource(&class_main);
 
         // Contain Class[main] in Stage[main]
         catalog->add_relationship(relationship::contains, stage_main, class_main);
 
         // Create Class[Settings] and add the settings scope
-        auto& settings_resource = catalog->add_resource(evaluation_context, types::resource("class", "settings"), compilation_context, position);
+        auto& settings_resource = catalog->add_resource(types::resource("class", "settings"), compilation_context, position, &stage_main);
         auto settings_scope = make_shared<runtime::scope>(evaluation_context.top_scope(), &settings_resource);
         evaluation_context.add_scope(settings_scope);
 

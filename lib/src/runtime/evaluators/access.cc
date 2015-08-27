@@ -549,12 +549,12 @@ namespace puppet { namespace runtime { namespace evaluators {
         }
         // Lookup the attribute
         auto name = mutate_as<string>(_arguments[index]);
-        auto attribute = resource.attributes().get(name);
+        auto attribute = resource.get(name);
         if (!attribute) {
-            throw _evaluator.create_exception(_positions[index], (boost::format("resource %1% does not have a parameter named '%2%'.") % resource.type() % name).str());
+            throw _evaluator.create_exception(_positions[index], (boost::format("resource %1% does not have an attribute named '%2%'.") % resource.type() % name).str());
         }
         // Treat the value as a variable so we don't needlessly copy the value
-        return values::variable(rvalue_cast(name), attribute);
+        return values::variable(rvalue_cast(name), attribute->value());
     }
 
 }}}  // namespace puppet::runtime::evaluators

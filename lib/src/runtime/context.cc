@@ -161,10 +161,8 @@ namespace puppet { namespace runtime {
 
         // Warn if the scope was not found
         if (_catalog && evaluator && position) {
-            // TODO: find the class on the node
-
             string message;
-            if (!_catalog->find_class(types::klass(ns))) {
+            if (!_catalog->find_class(types::klass(ns), &evaluator->compilation_context()->node())) {
                 message = (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % name % ns).str();
             } else if (!_catalog->find_resource(types::resource("class", ns))) {
                 message = (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % name % ns).str();
