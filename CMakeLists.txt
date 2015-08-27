@@ -32,6 +32,7 @@ include(FeatureSummary)
 feature_summary(WHAT ALL)
 
 set(CATCH_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/catch/include")
+set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/rapidjson/include")
 
 # Need to bump up the limit for MPL lists a little bit (default is 20)
 # This is because we stick a lot of different types in boost::variant for runtime types
