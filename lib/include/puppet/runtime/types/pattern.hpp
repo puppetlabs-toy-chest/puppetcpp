@@ -117,8 +117,10 @@ namespace boost {
          */
         size_t operator()(puppet::runtime::types::pattern const& type) const
         {
+            static const size_t name_hash = boost::hash_value(puppet::runtime::types::pattern::name());
+
             size_t seed = 0;
-            hash_combine(seed, puppet::runtime::types::pattern::name());
+            hash_combine(seed, name_hash);
             hash_range(seed, type.patterns().begin(), type.patterns().end());
             return seed;
         }
