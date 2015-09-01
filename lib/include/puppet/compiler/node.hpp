@@ -43,7 +43,7 @@ namespace puppet { namespace compiler {
          * Gets the node's environment.
          * @return Returns the node's environment.
          */
-        compiler::environment& environment();
+        compiler::environment const& environment() const;
 
         /**
          * Compiles manifests into a catalog for this node.

@@ -232,8 +232,10 @@ namespace boost {
          */
         size_t operator()(puppet::runtime::types::basic_hash<Type> const& type) const
         {
+            static const size_t name_hash = boost::hash_value(puppet::runtime::types::basic_hash<Type>::name());
+
             size_t seed = 0;
-            hash_combine(seed, puppet::runtime::types::basic_hash<Type>::name());
+            hash_combine(seed, name_hash);
             hash_combine(seed, type.key_type());
             hash_combine(seed, type.element_type());
             hash_combine(seed, type.from());

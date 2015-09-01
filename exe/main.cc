@@ -1,12 +1,14 @@
 #include <puppet/compiler/settings.hpp>
 #include <puppet/compiler/node.hpp>
 #include <puppet/facts/yaml.hpp>
+#include <boost/filesystem.hpp>
 #include <fstream>
 
 using namespace std;
 using namespace puppet::logging;
 using namespace puppet::facts;
 namespace compiler = puppet::compiler;
+namespace fs = boost::filesystem;
 
 int main(int argc, char const* argv[])
 {
@@ -44,6 +46,13 @@ int main(int argc, char const* argv[])
             throw compiler::settings_exception("expected at least one manifest to compile (default manifest file not yet implemented).");
         }
 
+        // Open the output file for writing
+        auto output_file = (fs::current_path() / settings.output_file()).string();
+        ofstream output(output_file);
+        if (!output) {
+            throw compiler::settings_exception((boost::format("cannot open '%1%' for writing.") % output_file).str());
+        }
+
         try {
             LOG(notice, "compiling for node '%1%' with environment '%2%'.", settings.node_name(), settings.environment());
 
@@ -52,11 +61,12 @@ int main(int argc, char const* argv[])
 
             // Write the graph file if given one
             if (!settings.graph_file().empty()) {
-                LOG(notice, "writing dependency graph to '%1%'.", settings.graph_file());
-                ofstream file(settings.graph_file());
+                auto graph_file = (fs::current_path() / settings.graph_file()).string();
+                ofstream file(graph_file);
                 if (!file) {
-                    LOG(error, "failed to open '%1%' for writing.", settings.graph_file());
+                    LOG(error, "cannot open '%1%' for writing.", graph_file);
                 } else {
+                    LOG(notice, "writing dependency graph to '%1%'.", graph_file);
                     catalog.write_graph(file);
                 }
             }
@@ -64,7 +74,10 @@ int main(int argc, char const* argv[])
             // Detect dependency cycles
             catalog.detect_cycles();
 
-            // TODO: output the catalog
+            // Write the catalog
+            LOG(notice, "writing catalog to '%1%'.", output_file);
+            catalog.write(node, output);
+
         } catch (compiler::compilation_exception const& ex) {
             LOG(error, ex.line(), ex.column(), ex.text(), ex.path(), "node '%1%': %2%", node.name(), ex.what());
         }

@@ -512,7 +512,7 @@ namespace puppet { namespace lexer {
             auto next = doc_end;
             move_next_line(next, eoi);
             end.set_next(next);
-            context.set_value(string_token_type(doc_begin.position(), doc_begin, rvalue_cast(doc_end), rvalue_cast(escapes), 0, interpolated, rvalue_cast(format), margin, remove_break));
+            context.set_value(string_token_type(start.position(), doc_begin, rvalue_cast(doc_end), rvalue_cast(escapes), 0, interpolated, rvalue_cast(format), margin, remove_break));
         }
 
         void parse_single_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)

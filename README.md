@@ -50,7 +50,7 @@ Expression evaluator status:
 * [ ] virtual resource expressions
 * [ ] exported resource expressions
 * [ ] resource defaults expressions
-* [ ] resource override expressions (NYI: scope checking)
+* [x] resource override expressions
 * [x] class definition expressions
 * [x] defined type expressions
 * [x] node definition expressions

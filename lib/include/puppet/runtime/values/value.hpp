@@ -19,6 +19,22 @@
 #include <cstddef>
 #include <functional>
 
+// Forward declare needed RapidJSON types.
+namespace rapidjson {
+    class CrtAllocator;
+    template <typename BaseAllocator> class MemoryPoolAllocator;
+    template <typename Encoding, typename Allocator> class GenericValue;
+    template<typename CharType> struct UTF8;
+    /**
+     * Represents a JSON value.
+     */
+    typedef GenericValue<UTF8<char>, MemoryPoolAllocator<CrtAllocator>> Value;
+    /**
+     * Represents the allocator used by RapidJSON.
+     */
+    typedef MemoryPoolAllocator<CrtAllocator> Allocator;
+}
+
 namespace puppet { namespace runtime { namespace values {
 
     /**
@@ -345,9 +361,9 @@ namespace puppet { namespace runtime { namespace values {
     bool equals(value const& left, value const& right);
 
     /**
-    * This exists to prevent unintentional invocations of the "equals" function.
-    * See the documentation for as<T>(value const*) for an explanation.
-    */
+     * This exists to prevent unintentional invocations of the "equals" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
     bool equals(value const* left, value const* right);
 
     /**
@@ -384,5 +400,18 @@ namespace puppet { namespace runtime { namespace values {
      * @param error The callback to invoke upon error.
      */
     void each_resource(value const& value, std::function<void(types::resource const&)> const& callback, std::function<void(std::string const&)> const& error);
+
+    /**
+     * Creates a RapidJSON value for the given value.
+     * @param allocator The current RapidJSON allocator.
+     * @return Returns the runtime value as a RapidJSON value.
+     */
+    rapidjson::Value to_json(values::value const& value, rapidjson::Allocator& allocator);
+
+    /**
+     * This exists to prevent unintentional invocations of the "to_json" function.
+     * See the documentation for as<T>(value const*) for an explanation.
+     */
+    rapidjson::Value to_json(values::value const* value, rapidjson::Allocator& allocator);
 
 }}}  // namespace puppet::runtime::values

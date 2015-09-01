@@ -212,6 +212,13 @@ namespace puppet { namespace runtime {
         size_t vertex_id() const;
 
         /**
+         * Creates a RapidJSON value for this resource.
+         * @param allocator The current RapidJSON allocator.
+         * @return Returns the resources as a RapidJSON value.
+         */
+        rapidjson::Value to_json(rapidjson::Allocator& allocator) const;
+
+        /**
          * Determines if the given name is a metaparameter name.
          * @param name The name to check.
          * @return Returns true if name is the name of a metaparameter or false if not.
@@ -354,7 +361,7 @@ namespace puppet { namespace runtime {
     /**
      * Represnce a resource dependency graph.
      */
-    using dependency_graph = boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, resource*, relationship>;
+    using dependency_graph = boost::adjacency_list<boost::multisetS, boost::vecS, boost::directedS, resource*, relationship>;
 
     /**
      * Represents the Puppet catalog.
@@ -379,10 +386,10 @@ namespace puppet { namespace runtime {
 
         /**
          * Finds a resource in the catalog.
-         * @param resource The resource type to find.
+         * @param type The resource type to find.
          * @return Returns the resource if found or nullptr if the resource is not in the catalog.
          */
-        resource* find_resource(types::resource const& resource);
+        resource* find_resource(types::resource const& type);
 
         /**
          * Adds a resource to the catalog.
@@ -471,11 +478,26 @@ namespace puppet { namespace runtime {
         resource* declare_node(runtime::context& evaluation_context, compiler::node const& node);
 
         /**
+         * Determines if the given resource is containd by the given container resource.
+         * @param resource The resource to check to see if it is contained in the container.
+         * @param container The container resource.
+         * @return Returns true if the resource is contained by the container or false if not.
+         */
+        bool is_contained(runtime::resource const& resource, runtime::resource const& container) const;
+
+        /**
          * Finalizes the catalog.
          * Generates resources and populates the dependency graph.
          * @param context The current evaluation context.
          */
         void finalize(runtime::context& context);
+
+        /**
+         * Writes the catalog as JSON.
+         * @param node The node associated with the catalog.
+         * @param out The output stream to write the JSON to.
+         */
+        void write(compiler::node const& node, std::ostream& out) const;
 
         /**
          * Writes the dependency graph as a DOT file.
@@ -494,15 +516,30 @@ namespace puppet { namespace runtime {
         void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
         void evaluate_defined_types(runtime::context& context);
 
-        std::unordered_map<std::string, std::unordered_map<std::string, resource>> _resources;
-        std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _classes;
-        std::unordered_set<std::string> _declared_classes;
-        std::unordered_map<std::string, defined_type> _defined_types;
-        std::vector<std::pair<defined_type const*, resource*>> _declared_defined_types;
-        std::vector<node_definition> _nodes;
+        // Stores the resources in declaration order
+        // Note: this is a deque because we need references to not be invalidated when inserting to the end
+        std::deque<resource> _resources;
+        // Stores a mapping between qualified resource type (e.g. Foo[bar]) and resource
+        std::unordered_map<types::resource, resource*, boost::hash<types::resource>> _resource_map;
+        // Stores a mapping between type name (e.g. Foo) and declared resources of that type, in declaration order for resources of that type
+        std::unordered_map<std::string, std::vector<resource*>> _resource_lists;
+        // Stores a mapping between class and definitions in declaration order
+        std::unordered_map<types::klass, std::vector<class_definition>, boost::hash<types::klass>> _class_definitions;
+        // Stores the set of declared classes in the catalog
+        std::unordered_set<std::string> _classes;
+        // Stores the mapping between defined type name (e.g. foo::bar) and the defined type definition
+        std::unordered_map<std::string, defined_type> _defined_type_definitions;
+        // Stores the declared defined types in declaration order
+        std::vector<std::pair<defined_type const*, resource*>> _defined_types;
+        // Stores the node definitions in declaration order
+        std::vector<node_definition> _node_definitions;
+        // Stores the mapping between a node name and the index into the node definitions list
         std::unordered_map<std::string, size_t> _named_nodes;
+        // Stores the node regexes in declaration order, paired with the index into the node definition list
         std::vector<std::pair<values::regex, size_t>> _regex_nodes;
+        // Stores the default index into the node definitions list
         boost::optional<size_t> _default_node_index;
+        // Stores the resource dependency graph
         dependency_graph _graph;
     };
 

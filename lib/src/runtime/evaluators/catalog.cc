@@ -99,7 +99,8 @@ namespace puppet { namespace runtime { namespace evaluators {
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::resource_override_expression const& expr)
     {
-        auto catalog = _evaluator.evaluation_context().catalog();
+        auto& context = _evaluator.evaluation_context();
+        auto catalog = context.catalog();
         auto reference = _evaluator.evaluate(expr.reference());
         auto position = get_position(expr.reference());
 
@@ -148,8 +149,16 @@ namespace puppet { namespace runtime { namespace evaluators {
             for (size_t i = 0; i < resources.size(); ++i) {
                 auto& resource = *resources[i];
 
-                // TODO: check the resource scope; if the current scope inherits from the resource's scope, allow overriding or removing of parameters
+                // Walk the parent scope looking for an associated resource that contains this one
                 bool override = false;
+                auto parent = context.current_scope()->parent().get();
+                while (parent) {
+                    if (parent->resource() && catalog->is_contained(resource, *parent->resource())) {
+                        override = true;
+                        break;
+                    }
+                    parent = parent->parent().get();
+                }
 
                 if (op == ast::attribute_operator::assignment) {
                     if (!override && resource.get(attribute->name())) {
@@ -163,7 +172,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                         }
                         throw _evaluator.create_exception(
                             attribute->name_position(),
-                            (boost::format("attribute '%1%' has already been set for resource %2%.") %
+                            (boost::format("cannot override attribute '%1%' because it has already been set for resource %2%.") %
                              attribute->name() %
                              resource.type()
                             ).str());
@@ -174,7 +183,7 @@ namespace puppet { namespace runtime { namespace evaluators {
                     if (!override && resource.get(attribute->name())) {
                         throw _evaluator.create_exception(
                             attribute->name_position(),
-                            (boost::format("attribute '%1%' has already been set for resource %2% and cannot be appended to.") %
+                            (boost::format("cannot append to attribute '%1%' because it has already been set for resource %2%.") %
                              attribute->name() %
                              resource.type()
                             ).str());
@@ -380,7 +389,8 @@ namespace puppet { namespace runtime { namespace evaluators {
         auto& compilation_context = _evaluator.compilation_context();
         auto catalog = evaluation_context.catalog();
 
-        resource const* container = evaluation_context.current_scope()->resource();
+        // If a class, don't set a container; one will be set when the class is declared
+        resource const* container = is_class ? nullptr : evaluation_context.current_scope()->resource();
 
         vector<resource*> resources;
         for (auto const& body : expression.bodies()) {

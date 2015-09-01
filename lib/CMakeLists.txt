@@ -6,6 +6,7 @@ include_directories(
     include/
     ${Boost_INCLUDE_DIRS}
     ${Facter_INCLUDE_DIRS}
+    ${RAPIDJSON_INCLUDE_DIRS}
 )
 
 # Set common sources

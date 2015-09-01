@@ -77,8 +77,10 @@ namespace boost {
          */
         size_t operator()(puppet::runtime::types::boolean const&) const
         {
+            static const size_t name_hash = boost::hash_value(puppet::runtime::types::boolean::name());
+
             size_t seed = 0;
-            hash_combine(seed, puppet::runtime::types::boolean::name());
+            hash_combine(seed, name_hash);
             return seed;
         }
     };

@@ -208,8 +208,10 @@ namespace boost {
          */
         size_t operator()(puppet::runtime::types::basic_struct<Type> const& type) const
         {
+            static const size_t name_hash = boost::hash_value(puppet::runtime::types::basic_struct<Type>::name());
+
             size_t seed = 0;
-            hash_combine(seed, puppet::runtime::types::basic_struct<Type>::name());
+            hash_combine(seed, name_hash);
             hash_range(seed, type.types().begin(), type.types().end());
             return seed;
         }

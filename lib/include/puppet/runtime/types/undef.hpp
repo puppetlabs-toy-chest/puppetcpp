@@ -78,8 +78,10 @@ namespace boost {
          */
         size_t operator()(puppet::runtime::types::undef const&) const
         {
+            static const size_t name_hash = boost::hash_value(puppet::runtime::types::undef::name());
+
             size_t seed = 0;
-            hash_combine(seed, puppet::runtime::types::undef::name());
+            hash_combine(seed, name_hash);
             return seed;
         }
     };
