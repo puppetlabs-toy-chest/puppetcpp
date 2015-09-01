@@ -139,7 +139,7 @@ Puppet functions implemented:
 * [ ] tag
 * [ ] tagged
 * [ ] template
-* [ ] versioncmp
+* [x] versioncmp
 * [x] warning
 * [x] with
 
