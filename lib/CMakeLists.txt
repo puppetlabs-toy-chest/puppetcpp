@@ -69,6 +69,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/functions/logging.cc
     src/runtime/functions/split.cc
     src/runtime/functions/with.cc
+    src/runtime/functions/versioncmp.cc
     src/runtime/operators/assignment.cc
     src/runtime/operators/binary_context.cc
     src/runtime/operators/divide.cc

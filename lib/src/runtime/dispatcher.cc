@@ -7,6 +7,7 @@
 #include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/with.hpp>
+#include <puppet/runtime/functions/versioncmp.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
@@ -185,6 +186,7 @@ namespace puppet { namespace runtime {
             { "split",          functions::split() },
             { "warning",        functions::logging_function(logging::level::warning) },
             { "with",           functions::with() },
+            { "versioncmp",     functions::versioncmp() },
         };
 
         // Find the function
