@@ -3,8 +3,11 @@
 #include <puppet/cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <rapidjson/document.h>
 
 using namespace std;
+using namespace rapidjson;
 
 namespace puppet { namespace runtime { namespace values {
 
@@ -354,6 +357,110 @@ namespace puppet { namespace runtime { namespace values {
                    types::array(types::variant({ values::type(types::string()), values::type(types::resource()) })) %
                    get_type(value)).str());
         }
+    }
+
+    struct json_visitor : boost::static_visitor<rapidjson::Value>
+    {
+        json_visitor(Allocator& allocator) :
+            _allocator(allocator)
+        {
+        }
+
+        result_type operator()(undef const&) const
+        {
+            rapidjson::Value value;
+            value.SetNull();
+            return value;
+        }
+
+        result_type operator()(defaulted const&) const
+        {
+            rapidjson::Value value;
+            value.SetString("default");
+            return value;
+        }
+
+        result_type operator()(int64_t i) const
+        {
+            rapidjson::Value value;
+            value.SetInt64(i);
+            return value;
+        }
+
+        result_type operator()(long double d) const
+        {
+            rapidjson::Value value;
+            value.SetDouble(static_cast<double>(d));
+            return value;
+        }
+
+        result_type operator()(bool b) const
+        {
+            rapidjson::Value value;
+            value.SetBool(b);
+            return value;
+        }
+
+        result_type operator()(string const& s) const
+        {
+            rapidjson::Value value;
+            value.SetString(StringRef(s.c_str(), s.size()));
+            return value;
+        }
+
+        result_type operator()(values::regex const& regex) const
+        {
+            auto const& pattern = regex.pattern();
+            rapidjson::Value value;
+            value.SetString(StringRef(pattern.c_str(), pattern.size()));
+            return value;
+        }
+
+        result_type operator()(values::type const& type) const
+        {
+            rapidjson::Value value;
+            value.SetString(boost::lexical_cast<string>(type).c_str(), _allocator);
+            return value;
+        }
+
+        result_type operator()(values::variable const& variable) const
+        {
+            return boost::apply_visitor(*this, variable.value());
+        }
+
+        result_type operator()(values::array const& array) const
+        {
+            rapidjson::Value value;
+            value.SetArray();
+            value.Reserve(array.size(), _allocator);
+
+            for (auto const& element : array) {
+                value.PushBack(boost::apply_visitor(*this, element), _allocator);
+            }
+            return value;
+        }
+
+        result_type operator()(values::hash const& hash) const
+        {
+            rapidjson::Value value;
+            value.SetObject();
+
+            for (auto const& element : hash) {
+                value.AddMember(
+                    rapidjson::Value(boost::lexical_cast<string>(element.first).c_str(), _allocator),
+                    boost::apply_visitor(*this, element.second),
+                    _allocator);
+            }
+            return value;
+        }
+
+     private:
+        Allocator& _allocator;
+    };
+
+    rapidjson::Value to_json(values::value const& value, Allocator& allocator)
+    {
+        return boost::apply_visitor(json_visitor(allocator), value);
     }
 
 }}}  // namespace puppet::runtime::values

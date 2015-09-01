@@ -32,7 +32,7 @@ namespace puppet { namespace compiler {
         return *_names.rbegin();
     }
 
-    compiler::environment& node::environment()
+    compiler::environment const& node::environment() const
     {
         return _environment;
     }
@@ -117,16 +117,16 @@ namespace puppet { namespace compiler {
         // Create Stage[main]
         auto& stage_main = catalog->add_resource(types::resource("stage", "main"), compilation_context, position);
 
-        // Create Class[main] and associate it with the top scope
-        auto& class_main = catalog->add_resource(types::resource("class", "main"), compilation_context, position, &stage_main);
-        evaluation_context.top_scope()->resource(&class_main);
-
         // Create Class[Settings] and add the settings scope
         auto& settings_resource = catalog->add_resource(types::resource("class", "settings"), compilation_context, position, &stage_main);
         auto settings_scope = make_shared<runtime::scope>(evaluation_context.top_scope(), &settings_resource);
         evaluation_context.add_scope(settings_scope);
 
         // TODO: set settings in the scope
+
+        // Create Class[main] and associate it with the top scope
+        auto& class_main = catalog->add_resource(types::resource("class", "main"), compilation_context, position, &stage_main);
+        evaluation_context.top_scope()->resource(&class_main);
     }
 
 }}  // namespace puppet::compiler

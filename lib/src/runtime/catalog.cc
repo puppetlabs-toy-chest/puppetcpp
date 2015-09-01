@@ -6,10 +6,14 @@
 #include <boost/graph/tiernan_all_cycles.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/format.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <ctime>
 
 using namespace std;
 using namespace puppet::lexer;
 using namespace puppet::runtime::values;
+using namespace rapidjson;
 
 namespace boost {
     // Helper needed for dependency cycle detection
@@ -204,6 +208,56 @@ namespace puppet { namespace runtime {
         return _vertex_id;
     }
 
+    Value resource::to_json(Allocator& allocator) const
+    {
+        Value value;
+        value.SetObject();
+
+        auto& type_name = _type.type_name();
+        auto& title = _type.title();
+        auto& path = _context->path();
+
+        // Write out the type and title
+        value.AddMember("type", StringRef(type_name.c_str(), type_name.size()), allocator);
+        value.AddMember("title", StringRef(title.c_str(), title.size()), allocator);
+
+        // Write out the tags
+        // TODO: auto populate the resource's tags
+        Value tags;
+        tags.SetArray();
+        value.AddMember("tags", tags, allocator);
+
+        // Write out the file and line if not from "main"
+        if (*path != "main") {
+            value.AddMember("file", StringRef(path->c_str(), path->size()), allocator);
+            value.AddMember("line", static_cast<uint64_t>(_position.line()), allocator);
+        }
+
+        // Write out whether or not the resource is exported
+        value.AddMember("exported", _exported, allocator);
+
+        // Write out the parameters
+        Value parameters;
+        parameters.SetObject();
+        for (auto& attribute : _attributes) {
+            auto const& name = attribute.first;
+            auto const& value = *attribute.second->value();
+
+            // Do not write any values set to undef
+            if (is_undef(value)) {
+                continue;
+            }
+
+            parameters.AddMember(
+                StringRef(name.c_str(), name.size()),
+                ::to_json(value, allocator),
+                allocator);
+        }
+        value.AddMember("parameters", parameters, allocator);
+
+        return value;
+    }
+
     bool resource::is_metaparameter(string const& name)
     {
         static const unordered_set<string> metaparameters = {
@@ -386,22 +440,18 @@ namespace puppet { namespace runtime {
         boost::add_edge(source_ptr->vertex_id(), target_ptr->vertex_id(), relationship, _graph);
     }
 
-    resource* catalog::find_resource(types::resource const& resource)
+    resource* catalog::find_resource(types::resource const& type)
     {
-        if (!resource.fully_qualified()) {
+        if (!type.fully_qualified()) {
             return nullptr;
         }
 
         // Find the resource type and title
-        auto resources = _resources.find(resource.type_name());
-        if (resources == _resources.end()) {
+        auto it = _resource_map.find(type);
+        if (it == _resource_map.end()) {
             return nullptr;
         }
-        auto it = resources->second.find(resource.title());
-        if (it == resources->second.end()) {
-            return nullptr;
-        }
-        return &it->second;
+        return it->second;
     }
 
     runtime::resource& catalog::add_resource(
@@ -418,50 +468,51 @@ namespace puppet { namespace runtime {
             throw evaluation_exception("resource name is not fully qualified.", compilation_context, position);
         }
 
+        // Ensure the resource doesn't already exist
+        if (auto previous = find_resource(type)) {
+            throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % type % previous->path() % previous->position().line()).str(), compilation_context, position);
+        }
+
         bool is_class = type.is_class();
         bool is_stage = type.is_stage();
 
-        string title = type.title();
-
-        auto& resources = _resources[type.type_name()];
-        auto result = resources.emplace(
-            make_pair(
-                rvalue_cast(title),
-                runtime::resource(
-                    rvalue_cast(type),
-                    compilation_context,
-                    position,
-                    exported
-                )
-            )
+        // Add the resource
+        _resources.emplace_back(
+            rvalue_cast(type),
+            compilation_context,
+            position,
+            exported
         );
-        auto& resource = result.first->second;
-        if (!result.second) {
-            throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % resource.type() % resource.path() % resource.position().line()).str(), compilation_context, position);
-        }
+
+        // Map the type to the resource
+        auto resource = &_resources.back();
+        _resource_map[resource->type()] = resource;
+
+        // Append to the type list
+        _resource_lists[resource->type().type_name()].emplace_back(resource);
 
         // Add a graph vertex for the resource
-        resource.vertex_id(boost::add_vertex(&resource, _graph));
+        resource->vertex_id(boost::add_vertex(resource, _graph));
 
         // Stages should never be contained
         if (!is_stage && container) {
             // Add a relationship to the container
-            add_relationship(relationship::contains, *container, resource);
+            add_relationship(relationship::contains, *container, *resource);
         }
 
         // If a defined type, add it to the list of declared defined types
         if (!is_class) {
-            if (auto definition = find_defined_type(boost::to_lower_copy(resource.type().type_name()))) {
-                _declared_defined_types.emplace_back(make_pair(definition, &resource));
+            if (auto definition = find_defined_type(boost::to_lower_copy(resource->type().type_name()))) {
+                _defined_types.emplace_back(make_pair(definition, resource));
             }
         }
-        return resource;
+        return *resource;
     }
 
     vector<class_definition> const* catalog::find_class(types::klass const& klass, compiler::node const* node)
     {
-        auto it = _classes.find(klass);
-        if (it == _classes.end() || it->second.empty()) {
+        auto it = _class_definitions.find(klass);
+        if (it == _class_definitions.end() || it->second.empty()) {
             if (node) {
                 // TODO: load class
             }
@@ -475,7 +526,7 @@ namespace puppet { namespace runtime {
         shared_ptr<compiler::context> const& context,
         ast::class_definition_expression const& expression)
     {
-        auto& definitions = _classes[klass];
+        auto& definitions = _class_definitions[klass];
         definitions.push_back(class_definition(rvalue_cast(klass), context, expression));
     }
 
@@ -509,7 +560,7 @@ namespace puppet { namespace runtime {
         }
 
         // If the class was already declared, return it without evaluating
-        if (!_declared_classes.insert(type.title()).second) {
+        if (!_classes.insert(type.title()).second) {
             return *klass;
         }
 
@@ -574,8 +625,8 @@ namespace puppet { namespace runtime {
 
     defined_type const* catalog::find_defined_type(string const& type)
     {
-        auto it = _defined_types.find(type);
-        if (it == _defined_types.end()) {
+        auto it = _defined_type_definitions.find(type);
+        if (it == _defined_type_definitions.end()) {
             return nullptr;
         }
         return &it->second;
@@ -588,7 +639,7 @@ namespace puppet { namespace runtime {
     {
         // Add the defined type
         defined_type defined(type, context, expression);
-        auto result = _defined_types.emplace(make_pair(rvalue_cast(type), rvalue_cast(defined)));
+        auto result = _defined_type_definitions.emplace(make_pair(rvalue_cast(type), rvalue_cast(defined)));
         if (!result.second) {
             auto const& existing = result.first->second;
             throw evaluation_exception(
@@ -605,8 +656,8 @@ namespace puppet { namespace runtime {
     void catalog::define_node(shared_ptr<compiler::context> const& context, ast::node_definition_expression const& expression)
     {
         // Emplace the node
-        _nodes.emplace_back(context, expression);
-        size_t node_index = _nodes.size() - 1;
+        _node_definitions.emplace_back(context, expression);
+        size_t node_index = _node_definitions.size() - 1;
 
         for (auto const& name : expression.names()) {
             // Check for default node
@@ -615,14 +666,14 @@ namespace puppet { namespace runtime {
                     _default_node_index = node_index;
                     continue;
                 }
-                auto const& previous = _nodes[*_default_node_index];
+                auto const& previous = _node_definitions[*_default_node_index];
                 throw evaluation_exception((boost::format("a default node was previously defined at %1%:%2%.") % *previous.context()->path() % previous.position().line()).str(), context, name.position());
             }
             // Check for regular expression names
             if (name.regex()) {
                 auto it = find_if(_regex_nodes.begin(), _regex_nodes.end(), [&](std::pair<values::regex, size_t> const& existing) { return existing.first.pattern() == name.value(); });
                 if (it != _regex_nodes.end()) {
-                    auto const& previous = _nodes[it->second];
+                    auto const& previous = _node_definitions[it->second];
                     throw evaluation_exception((boost::format("node /%1%/ was previously defined at %2%:%3%.") % name.value() % *previous.context()->path() % previous.position().line()).str(), context, name.position());
                 }
 
@@ -636,7 +687,7 @@ namespace puppet { namespace runtime {
             // Otherwise, this is a qualified node name
             auto it = _named_nodes.find(name.value());
             if (it != _named_nodes.end()) {
-                auto const& previous = _nodes[it->second];
+                auto const& previous = _node_definitions[it->second];
                 throw evaluation_exception((boost::format("node '%1%' was previously defined at %2%:%3%.") % name.value() % *previous.context()->path() % previous.position().line()).str(), context, name.position());
             }
             _named_nodes.emplace(make_pair(boost::to_lower_copy(name.value()), node_index));
@@ -646,7 +697,7 @@ namespace puppet { namespace runtime {
     runtime::resource* catalog::declare_node(runtime::context& evaluation_context, compiler::node const& node)
     {
         // If there are no node definitions, do nothing
-        if (_nodes.empty()) {
+        if (_node_definitions.empty()) {
             return nullptr;
         }
 
@@ -658,14 +709,14 @@ namespace puppet { namespace runtime {
             auto it = _named_nodes.find(name);
             if (it != _named_nodes.end()) {
                 node_name = it->first;
-                definition = &_nodes[it->second];
+                definition = &_node_definitions[it->second];
                 return false;
             }
             // Next, check by looking at every regex
             for (auto const& kvp : _regex_nodes) {
                 if (regex_search(name, kvp.first.value())) {
                     node_name = "/" + kvp.first.pattern() + "/";
-                    definition = &_nodes[kvp.second];
+                    definition = &_node_definitions[kvp.second];
                     return false;
                 }
             }
@@ -690,7 +741,7 @@ namespace puppet { namespace runtime {
                 throw evaluation_exception(message.str());
             }
             node_name = "default";
-            definition = &_nodes[*_default_node_index];
+            definition = &_node_definitions[*_default_node_index];
         }
 
         // Add a Node resource to the catalog
@@ -738,6 +789,107 @@ namespace puppet { namespace runtime {
 
         // Populate the dependency graph
         populate_graph();
+    }
+
+    void catalog::write(compiler::node const& node, ostream& out) const
+    {
+        // Declare an adapter for RapidJSON's pretty writter
+        struct stream_adapter
+        {
+            explicit stream_adapter(ostream& stream) : _stream(stream)
+            {
+            }
+
+            void Put(char c)
+            {
+                _stream.put(c);
+            }
+
+            void Flush()
+            {
+            }
+
+         private:
+            ostream& _stream;
+        } adapter(out);
+
+        // Create the document and treat it as an object
+        Document document;
+        document.SetObject();
+
+        auto& allocator = document.GetAllocator();
+
+        // Write out the tags
+        // TODO: populate top-level tags
+        Value tags;
+        tags.SetArray();
+        document.AddMember("tags", tags, allocator);
+
+        // Write out the catalog attributes
+        auto const& name = node.name();
+        document.AddMember("name", StringRef(name.c_str(), name.size()), allocator);
+        document.AddMember("version", static_cast<int64_t>(std::time(nullptr)), allocator);
+        auto const& environment = node.environment().name();
+        document.AddMember("environment", StringRef(environment.c_str(), environment.size()), allocator);
+
+        // Create an array to store the edges
+        Value edges;
+        edges.SetArray();
+
+        // Write out the resources
+        Value resources;
+        resources.SetArray();
+        resources.Reserve(_resources.size(),allocator);
+        for (auto const& resource : _resources) {
+            // Add the resource
+            resources.PushBack(resource.to_json(allocator), allocator);
+
+            // Get the out edges from this resource
+            auto iterators = boost::out_edges(resource.vertex_id(), _graph);
+            for (auto it = iterators.first; it != iterators.second; ++it) {
+                // If this is not a containment relationship, ignore
+                // Only containment edges end up in a catalog (for now)
+                auto relationship = _graph[*it];
+                if (relationship != runtime::relationship::contains) {
+                    continue;
+                }
+                auto target = _graph[boost::target(*it, _graph)];
+
+                // Create an edge object from source to target
+                Value edge;
+                edge.SetObject();
+                edge.AddMember(
+                    "source",
+                    rapidjson::Value(boost::lexical_cast<string>(resource.type()).c_str(), allocator),
+                    allocator);
+                edge.AddMember(
+                    "target",
+                    rapidjson::Value(boost::lexical_cast<string>(target->type()).c_str(), allocator),
+                    allocator);
+                edges.PushBack(rvalue_cast(edge), allocator);
+            }
+        }
+        document.AddMember("resources", resources, allocator);
+
+        // Write out the containment edges
+        document.AddMember("edges", edges, allocator);
+
+        // Write out the declared classes
+        Value classes;
+        classes.SetArray();
+        classes.Reserve(_classes.size(), allocator);
+        for (auto const& klass : _classes) {
+            classes.PushBack(StringRef(klass.c_str(), klass.size()), allocator);
+        }
+        document.AddMember("classes", classes, allocator);
+
+        // Write the document to the stream
+        PrettyWriter<stream_adapter> writer{adapter};
+        writer.SetIndent(' ', 2);
+        document.Accept(writer);
+
+        // Flush the stream with one last newline
+        out << endl;
     }
 
     void catalog::write_graph(ostream& out)
@@ -809,16 +961,12 @@ namespace puppet { namespace runtime {
         string subscribe_parameter = "subscribe";
 
         // Loop through each resource and add metaparameter relationships
-        for (auto const& types_pair : _resources) {
-            for (auto const& resource_pair : types_pair.second) {
-                auto const& source = resource_pair.second;
-
-                // Proccess the relationship metaparameters for the resource
-                process_relationship_parameter(source, before_parameter, runtime::relationship::before);
-                process_relationship_parameter(source, notify_parameter, runtime::relationship::notify);
-                process_relationship_parameter(source, require_parameter, runtime::relationship::require);
-                process_relationship_parameter(source, subscribe_parameter, runtime::relationship::subscribe);
-            }
+        for (auto const& resource : _resources) {
+            // Proccess the relationship metaparameters for the resource
+            process_relationship_parameter(resource, before_parameter, runtime::relationship::before);
+            process_relationship_parameter(resource, notify_parameter, runtime::relationship::notify);
+            process_relationship_parameter(resource, require_parameter, runtime::relationship::require);
+            process_relationship_parameter(resource, subscribe_parameter, runtime::relationship::subscribe);
         }
     }
 
@@ -876,7 +1024,7 @@ namespace puppet { namespace runtime {
 
         try {
             // Evaluate all the declared defined types in order
-            for (auto& kvp : _declared_defined_types) {
+            for (auto& kvp : _defined_types) {
                 current = kvp.second;
                 kvp.first->evaluate(context, *current);
             }
@@ -899,8 +1047,6 @@ namespace puppet { namespace runtime {
                 current->context(),
                 current->position());
         }
-
-        _declared_defined_types.clear();
     }
 
 }}  // namespace puppet::runtime
