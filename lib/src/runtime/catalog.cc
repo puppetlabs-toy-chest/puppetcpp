@@ -459,7 +459,8 @@ namespace puppet { namespace runtime {
         shared_ptr<compiler::context> const& compilation_context,
         lexer::position const& position,
         resource const* container,
-        bool exported)
+        bool exported,
+        defined_type const* definition)
     {
         if (!compilation_context) {
             throw evaluation_exception("expected a compilation context.");
@@ -472,9 +473,6 @@ namespace puppet { namespace runtime {
         if (auto previous = find_resource(type)) {
             throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % type % previous->path() % previous->position().line()).str(), compilation_context, position);
         }
-
-        bool is_class = type.is_class();
-        bool is_stage = type.is_stage();
 
         // Add the resource
         _resources.emplace_back(
@@ -495,28 +493,30 @@ namespace puppet { namespace runtime {
         resource->vertex_id(boost::add_vertex(resource, _graph));
 
         // Stages should never be contained
-        if (!is_stage && container) {
+        if (!type.is_stage() && container) {
             // Add a relationship to the container
             add_relationship(relationship::contains, *container, *resource);
         }
 
         // If a defined type, add it to the list of declared defined types
-        if (!is_class) {
-            if (auto definition = find_defined_type(boost::to_lower_copy(resource->type().type_name()))) {
-                _defined_types.emplace_back(make_pair(definition, resource));
-            }
+        if (definition) {
+            _defined_types.emplace_back(make_pair(definition, resource));
         }
         return *resource;
     }
 
-    vector<class_definition> const* catalog::find_class(types::klass const& klass, compiler::node const* node)
+    vector<class_definition> const* catalog::find_class(types::klass const& klass, runtime::context* context)
     {
         auto it = _class_definitions.find(klass);
         if (it == _class_definitions.end() || it->second.empty()) {
-            if (node) {
-                // TODO: load class
+            if (!context) {
+                return nullptr;
             }
-            return nullptr;
+            context->node().load_manifest(*context, klass.title());
+            it = _class_definitions.find(klass);
+            if (it == _class_definitions.end() || it->second.empty()) {
+                return nullptr;
+            }
         }
         return &it->second;
     }
@@ -547,7 +547,7 @@ namespace puppet { namespace runtime {
         }
 
         // Find the class definition
-        auto definitions = find_class(types::klass(type.title()), &compilation_context->node());
+        auto definitions = find_class(types::klass(type.title()), &evaluation_context);
         if (!definitions) {
             throw evaluation_exception((boost::format("cannot evaluate class '%1%' because it has not been defined.") % type.title()).str(), compilation_context, position);
         }
@@ -623,11 +623,18 @@ namespace puppet { namespace runtime {
         return *klass;
     }
 
-    defined_type const* catalog::find_defined_type(string const& type)
+    defined_type const* catalog::find_defined_type(string const& type, runtime::context* context)
     {
         auto it = _defined_type_definitions.find(type);
         if (it == _defined_type_definitions.end()) {
-            return nullptr;
+            if (!context) {
+                return nullptr;
+            }
+            context->node().load_manifest(*context, type);
+            it = _defined_type_definitions.find(type);
+            if (it == _defined_type_definitions.end()) {
+                return nullptr;
+            }
         }
         return &it->second;
     }

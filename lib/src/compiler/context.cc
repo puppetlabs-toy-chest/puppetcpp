@@ -9,11 +9,12 @@ using namespace puppet::logging;
 
 namespace puppet { namespace compiler {
 
-    context::context(logging::logger& logger, shared_ptr<string> path, compiler::node& node, bool parse) :
-        _logger(logger),
+    context::context(shared_ptr<string> path, compiler::node& node, bool parse) :
         _path(rvalue_cast(path)),
         _node(node)
     {
+        auto& logger = node.logger();
+
         if (!_path) {
             throw compilation_exception("expected a path for compilation context.");
         }
@@ -35,11 +36,6 @@ namespace puppet { namespace compiler {
         }
     }
 
-    logging::logger& context::logger()
-    {
-        return _logger;
-    }
-
     shared_ptr<string> const& context::path() const
     {
         return _path;
@@ -57,7 +53,8 @@ namespace puppet { namespace compiler {
 
     void context::log(logging::level level, lexer::position const& position, std::string const& message)
     {
-        if (!_logger.would_log(level)) {
+        auto& logger = _node.logger();
+        if (!logger.would_log(level)) {
             return;
         }
 
@@ -65,9 +62,9 @@ namespace puppet { namespace compiler {
             string text;
             size_t column;
             tie(text, column) = get_text_and_column(_stream, position.offset());
-            _logger.log(level, position.line(), column, text, *_path, "node '%1%': %2%", _node.name(), message);
+            logger.log(level, position.line(), column, text, *_path, "node '%1%': %2%", _node.name(), message);
         } else {
-            _logger.log(level, "node '%1%': %2%", _node.name(), message);
+            logger.log(level, "node '%1%': %2%", _node.name(), message);
         }
     }
 

@@ -50,6 +50,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/context.cc
     src/compiler/environment.cc
     src/compiler/exceptions.cc
+    src/compiler/module.cc
     src/compiler/node.cc
     src/compiler/parser.cc
     src/compiler/settings.cc

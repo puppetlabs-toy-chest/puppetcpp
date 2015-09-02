@@ -56,8 +56,7 @@ namespace puppet { namespace compiler {
         std::vector<std::string> const& module_directories() const;
 
         /**
-         * Gets the manifests to compile.
-         * Defaults to the manifest for the environment or the root site.pp.
+         * Gets the manifests to compile on the command line.
          * @return Returns the manifests to compile.
          */
         std::vector<std::string> const& manifests() const;

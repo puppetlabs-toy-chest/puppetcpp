@@ -398,6 +398,7 @@ namespace puppet { namespace runtime {
          * @param position The position where the resource is being declared.
          * @param container The container of the resource or nullptr for no container.
          * @param exported True if the resource is exported or false if it is not.
+         * @param definition The associated defined type definition to run during catalog finalization.
          * @return Returns the resource that was added.
          */
         resource& add_resource(
@@ -405,15 +406,16 @@ namespace puppet { namespace runtime {
             std::shared_ptr<compiler::context> const& compilation_context,
             lexer::position const& position,
             resource const* container = nullptr,
-            bool exported = false);
+            bool exported = false,
+            defined_type const* definition = nullptr);
 
         /**
          * Finds the definitions of a class.
          * @param klass The class to find.
-         * @param node The node to load the class from.  If nullptr, the class will not be loaded.
+         * @param context The evaluation context to load a class into.  If nullptr, no classes will be loaded.
          * @return Returns the class definitions if defined or nullptr if not defined.
          */
-        std::vector<class_definition> const* find_class(types::klass const& klass, compiler::node const* node = nullptr);
+        std::vector<class_definition> const* find_class(types::klass const& klass, runtime::context* context = nullptr);
 
         /**
          * Defines a class.
@@ -445,9 +447,10 @@ namespace puppet { namespace runtime {
         /**
          * Finds a defined type's definition.
          * @param type The type name of the defined type.  Note: this is the lower case type name as used in a manifest, e.g. "foo::bar".
+         * @param context The evaluation context to load a defined type.  If nullptr, no defined types will be loaded.
          * @return Returns the defined type's definition if defined or nullptr if not defined.
          */
-        defined_type const* find_defined_type(std::string const& type);
+        defined_type const* find_defined_type(std::string const& type, runtime::context* context = nullptr);
 
         /**
          * Defines a defined type.

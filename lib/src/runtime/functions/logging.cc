@@ -1,4 +1,5 @@
 #include <puppet/runtime/functions/logging.hpp>
+#include <puppet/compiler/node.hpp>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -19,7 +20,7 @@ namespace puppet { namespace runtime { namespace functions {
         string message = ss.str();
 
         auto& evaluator = context.evaluator();
-        auto& logger = evaluator.compilation_context()->logger();
+        auto& logger = evaluator.evaluation_context().node().logger();
         if (logger.would_log(_level)) {
             logger.log(_level, "%1%: %2%", *evaluator.evaluation_context().current_scope(), message);
         }

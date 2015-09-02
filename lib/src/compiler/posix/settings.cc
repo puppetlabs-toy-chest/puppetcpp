@@ -14,7 +14,7 @@ namespace puppet { namespace compiler {
 
         // For root or if the directory exists, use the global code directory
         sys::error_code ec;
-        if (!home || geteuid() == 0 || fs::exists("/etc/puppetlabs/code", ec)) {
+        if (!home || geteuid() == 0 || fs::is_directory("/etc/puppetlabs/code", ec)) {
             return "/etc/puppetlabs/code";
         }
 

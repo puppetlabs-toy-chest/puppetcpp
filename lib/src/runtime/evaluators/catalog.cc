@@ -59,10 +59,6 @@ namespace puppet { namespace runtime { namespace evaluators {
             throw _evaluator.create_exception(expr.position(), "exported resource expressions are not yet implemented.");
         }
 
-        // TODO: check for known type
-        // TODO: if not a known type and not a "class" resource, load the defined type
-        // TODO: if type still unknown, raise an error
-
         // Get the default body attributes
         vector<pair<ast::attribute_operator, shared_ptr<attribute>>> default_attributes;
         if (auto default_body = find_default_body(expr)) {
@@ -385,9 +381,19 @@ namespace puppet { namespace runtime { namespace evaluators {
         ast::resource_expression const& expression,
         vector<pair<ast::attribute_operator, shared_ptr<attribute>>> const& default_attributes)
     {
+
         auto& evaluation_context = _evaluator.evaluation_context();
         auto& compilation_context = _evaluator.compilation_context();
         auto catalog = evaluation_context.catalog();
+
+        // Lookup a defined type if not a built-in or class
+        defined_type const* definition = nullptr;
+        if (!is_class && !types::resource(type_name).is_builtin()) {
+            definition = catalog->find_defined_type(boost::to_lower_copy(type_name), &evaluation_context);
+            if (!definition) {
+                throw _evaluator.create_exception(expression.position(), (boost::format("type '%1%' has not been defined.") % type_name).str());
+            }
+        }
 
         // If a class, don't set a container; one will be set when the class is declared
         resource const* container = is_class ? nullptr : evaluation_context.current_scope()->resource();
@@ -415,7 +421,9 @@ namespace puppet { namespace runtime { namespace evaluators {
                     types::resource(type_name, rvalue_cast(resource_title)),
                     compilation_context,
                     body.position(),
-                    container);
+                    container,
+                    false,
+                    definition);
 
                 // Set the default attributes
                 set_attributes(resource, default_attributes);
