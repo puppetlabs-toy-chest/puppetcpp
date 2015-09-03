@@ -24,45 +24,63 @@ namespace puppet { namespace ast {
         return os;
     }
 
-    query::query() :
+    attribute_query::attribute_query() :
         _op(attribute_query_operator::none)
     {
     }
 
-    query::query(name attribute, attribute_query_operator op, basic_expression value) :
+    attribute_query::attribute_query(name attribute, attribute_query_operator op, basic_expression value) :
         _attribute(rvalue_cast(attribute)),
         _op(op),
         _value(rvalue_cast(value))
     {
     }
 
-    name const& query::attribute() const
+    name const& attribute_query::attribute() const
     {
         return _attribute;
     }
 
-    attribute_query_operator query::op() const
+    attribute_query_operator attribute_query::op() const
     {
         return _op;
     }
 
-    basic_expression const& query::value() const
+    basic_expression const& attribute_query::value() const
     {
         return _value;
     }
 
-    lexer::position const& query::position() const
+    lexer::position const& attribute_query::position() const
     {
         return _attribute.position();
     }
 
-    ostream& operator<<(ostream& os, ast::query const& query)
+    ostream& operator<<(ostream& os, ast::attribute_query const& query)
     {
         if (query.attribute().value().empty()) {
             return os;
         }
         os << query.attribute() << " " << query.op() << " " << query.value();
         return os;
+    }
+
+    struct query_position_visitor : boost::static_visitor<lexer::position const&>
+    {
+        result_type operator()(ast::attribute_query const& query) const
+        {
+            return query.position();
+        }
+
+        result_type operator()(ast::query const& query) const
+        {
+            return query.position();
+        }
+    };
+
+    lexer::position const& get_query_position(ast::primary_attribute_query const& query)
+    {
+        return boost::apply_visitor(query_position_visitor(), query);
     }
 
     ostream& operator<<(ostream& os, binary_query_operator const& op)
@@ -87,7 +105,7 @@ namespace puppet { namespace ast {
     {
     }
 
-    binary_query_expression::binary_query_expression(binary_query_operator op, query operand) :
+    binary_query_expression::binary_query_expression(binary_query_operator op, primary_attribute_query operand) :
         _op(op),
         _operand(rvalue_cast(operand))
     {
@@ -98,14 +116,14 @@ namespace puppet { namespace ast {
         return _op;
     }
 
-    query const& binary_query_expression::operand() const
+    primary_attribute_query const& binary_query_expression::operand() const
     {
         return _operand;
     }
 
     lexer::position const& binary_query_expression::position() const
     {
-        return _operand.position();
+        return get_query_position(_operand);
     }
 
     ostream& operator<<(ostream& os, binary_query_expression const& expr)
@@ -114,7 +132,47 @@ namespace puppet { namespace ast {
             return os;
         }
 
-        os << expr.op() << " " << expr.operand();
+        os << " " << expr.op() << " " << expr.operand();
+        return os;
+    }
+
+    query::query()
+    {
+    }
+
+    query::query(primary_attribute_query primary, vector<binary_query_expression> binary) :
+        _primary(rvalue_cast(primary)),
+        _binary(rvalue_cast(binary))
+    {
+    }
+
+    primary_attribute_query const& query::primary() const
+    {
+        return _primary;
+    }
+
+    vector<binary_query_expression> const& query::binary() const
+    {
+        return _binary;
+    }
+
+    lexer::position const& query::position() const
+    {
+        return get_query_position(_primary);
+    }
+
+    ostream& operator<<(ostream& os, ast::query const& query)
+    {
+        if (!query.binary().empty()) {
+            os << '(';
+        }
+        os << query.primary();
+        for (auto const& binary : query.binary()) {
+            os << binary;
+        }
+        if (!query.binary().empty()) {
+            os << ')';
+        }
         return os;
     }
 
@@ -123,11 +181,10 @@ namespace puppet { namespace ast {
     {
     }
 
-    collection_expression::collection_expression(collection_kind kind, ast::type type, optional<query> first, vector<binary_query_expression> remainder) :
+    collection_expression::collection_expression(collection_kind kind, ast::type type, optional<ast::query> query) :
         _kind(kind),
         _type(rvalue_cast(type)),
-        _first(rvalue_cast(first)),
-        _remainder(rvalue_cast(remainder))
+        _query(rvalue_cast(query))
     {
     }
 
@@ -141,14 +198,9 @@ namespace puppet { namespace ast {
         return _type;
     }
 
-    optional<query> const& collection_expression::first() const
+    optional<query> const& collection_expression::query() const
     {
-        return _first;
-    }
-
-    vector<binary_query_expression> const& collection_expression::remainder() const
-    {
-        return _remainder;
+        return _query;
     }
 
     lexer::position const& collection_expression::position() const
@@ -162,11 +214,8 @@ namespace puppet { namespace ast {
             return os;
         }
         os << expr.type() << " " << (expr.kind() == collection_kind::all ? "<| " : "<<| ");
-        if (expr.first()) {
-            os << *expr.first();
-        }
-        for (auto const& bexpr : expr.remainder()) {
-            os << bexpr;
+        if (expr.query()) {
+            os << *expr.query();
         }
         os << (expr.kind() == collection_kind::all ? " |>" : " |>>");
         return os;

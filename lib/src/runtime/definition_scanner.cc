@@ -427,14 +427,29 @@ namespace puppet { namespace runtime {
             class_scope scope(_scopes, {});
 
             // Scan the first query's value
-            if (expr.first()) {
-                operator()(expr.first()->value());
+            if (expr.query()) {
+                operator()(*expr.query());
             }
+        }
 
-            // Scan all the remaining query expression values
-            for (auto const& binary : expr.remainder()) {
-                operator()(binary.operand().value());
+        result_type operator()(ast::query const& expr)
+        {
+            // Queries have no class scope
+            class_scope scope(_scopes, {});
+
+            boost::apply_visitor(*this, expr.primary());
+
+            for (auto const& binary : expr.binary()) {
+                boost::apply_visitor(*this, binary.operand());
             }
+        }
+
+        result_type operator()(ast::attribute_query const& expr)
+        {
+            // Attribute queries have no class scope
+            class_scope scope(_scopes, {});
+
+            boost::apply_visitor(*this, expr.value());
         }
 
      private:
