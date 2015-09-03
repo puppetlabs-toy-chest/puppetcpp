@@ -50,13 +50,10 @@ namespace puppet { namespace runtime { namespace evaluators {
             throw _evaluator.create_exception(expr.position(), (boost::format("expected %1% or qualified %2% for resource type but found %3%.") % types::string::name() % types::resource::name() % get_type(type_value)).str());
         }
 
-        if (expr.status() == ast::resource_status::virtualized) {
-            // TODO: add to a list of virtual resources
-            throw _evaluator.create_exception(expr.position(), "virtual resource expressions are not yet implemented.");
-        }
-        if (expr.status() == ast::resource_status::exported) {
-            // TODO: add to a list of virtual exported resources
-            throw _evaluator.create_exception(expr.position(), "exported resource expressions are not yet implemented.");
+        if (is_class && expr.status() == ast::resource_status::virtualized) {
+            throw _evaluator.create_exception(expr.position(), "classes cannot be virtual resources.");
+        } else if (is_class && expr.status() == ast::resource_status::exported) {
+            throw _evaluator.create_exception(expr.position(), "classes cannot be exported resources.");
         }
 
         // Get the default body attributes
@@ -398,6 +395,9 @@ namespace puppet { namespace runtime { namespace evaluators {
         // If a class, don't set a container; one will be set when the class is declared
         resource const* container = is_class ? nullptr : evaluation_context.current_scope()->resource();
 
+        bool is_exported = expression.status() == ast::resource_status::exported;
+        bool is_virtual = is_exported || expression.status() == ast::resource_status::virtualized;
+
         vector<resource*> resources;
         for (auto const& body : expression.bodies()) {
             auto title = _evaluator.evaluate(body.title());
@@ -422,7 +422,8 @@ namespace puppet { namespace runtime { namespace evaluators {
                     compilation_context,
                     body.position(),
                     container,
-                    false,
+                    is_virtual,
+                    is_exported,
                     definition);
 
                 // Set the default attributes

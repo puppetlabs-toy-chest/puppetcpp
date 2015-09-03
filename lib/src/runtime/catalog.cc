@@ -98,11 +98,13 @@ namespace puppet { namespace runtime {
         types::resource type,
         shared_ptr<compiler::context> context,
         lexer::position position,
+        bool virtualized,
         bool exported) :
             _type(rvalue_cast(type)),
             _context(rvalue_cast(context)),
             _position(rvalue_cast(position)),
             _vertex_id(static_cast<size_t>(-1)),
+            _virtualized(virtualized),
             _exported(exported)
     {
         if (!_context) {
@@ -129,6 +131,11 @@ namespace puppet { namespace runtime {
     string const& resource::path() const
     {
         return *_path;
+    }
+
+    bool resource::virtualized() const
+    {
+        return _virtualized;
     }
 
     bool resource::exported() const
@@ -459,6 +466,7 @@ namespace puppet { namespace runtime {
         shared_ptr<compiler::context> const& compilation_context,
         lexer::position const& position,
         resource const* container,
+        bool virtualized,
         bool exported,
         defined_type const* definition)
     {
@@ -479,6 +487,7 @@ namespace puppet { namespace runtime {
             rvalue_cast(type),
             compilation_context,
             position,
+            virtualized,
             exported
         );
 
@@ -848,6 +857,11 @@ namespace puppet { namespace runtime {
         resources.SetArray();
         resources.Reserve(_resources.size(),allocator);
         for (auto const& resource : _resources) {
+            // Skip virtual resources
+            if (resource.virtualized()) {
+                continue;
+            }
+
             // Add the resource
             resources.PushBack(resource.to_json(allocator), allocator);
 
@@ -861,6 +875,10 @@ namespace puppet { namespace runtime {
                     continue;
                 }
                 auto target = _graph[boost::target(*it, _graph)];
+                // Skip virtual resources
+                if (target->virtualized()) {
+                    continue;
+                }
 
                 // Create an edge object from source to target
                 Value edge;
@@ -1033,6 +1051,11 @@ namespace puppet { namespace runtime {
             // Evaluate all the declared defined types in order
             for (auto& kvp : _defined_types) {
                 current = kvp.second;
+
+                // Don't evaluate virtualized defined types
+                if (current->virtualized()) {
+                    continue;
+                }
                 kvp.first->evaluate(context, *current);
             }
         } catch (evaluation_exception const& ex) {

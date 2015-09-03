@@ -140,12 +140,14 @@ namespace puppet { namespace runtime {
          * @param type The resource type (e.g. File['/tmp/foo']).
          * @param context The compilation context where the resource was declared.
          * @param position The position where the resource was declared.
+         * @param virtualized True if the resource is virtual or false if it is realized.
          * @param exported True if the resource is exported or false if not.
          */
         resource(
             types::resource type,
             std::shared_ptr<compiler::context> context,
             lexer::position position,
+            bool virtualized = false,
             bool exported = false);
 
         /**
@@ -172,6 +174,12 @@ namespace puppet { namespace runtime {
          * @return Returns the path of the file where the resource was declared.
          */
         std::string const& path() const;
+
+        /**
+         * Gets whether or not this resource is virtual.
+         * @return Returns true if the resource is virtual or false if it is realized.
+         */
+        bool virtualized() const;
 
         /**
          * Gets whether or not the resource is exported.
@@ -235,6 +243,7 @@ namespace puppet { namespace runtime {
         lexer::position _position;
         std::unordered_map<std::string, std::shared_ptr<attribute>> _attributes;
         size_t _vertex_id;
+        bool _virtualized;
         bool _exported;
     };
 
@@ -397,6 +406,7 @@ namespace puppet { namespace runtime {
          * @param compilation_context The compilation context where the resource is being declared.
          * @param position The position where the resource is being declared.
          * @param container The container of the resource or nullptr for no container.
+         * @param virtualized True if the resource is virtualized or false if it not.
          * @param exported True if the resource is exported or false if it is not.
          * @param definition The associated defined type definition to run during catalog finalization.
          * @return Returns the resource that was added.
@@ -406,6 +416,7 @@ namespace puppet { namespace runtime {
             std::shared_ptr<compiler::context> const& compilation_context,
             lexer::position const& position,
             resource const* container = nullptr,
+            bool virtualized = false,
             bool exported = false,
             defined_type const* definition = nullptr);
 

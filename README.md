@@ -47,14 +47,15 @@ Expression evaluator status:
 * [x] lambdas
 * [x] resource expressions
 * [x] resource metaparameters
-* [ ] virtual resource expressions
-* [ ] exported resource expressions
+* [x] virtual resource expressions
+* [x] exported resource expressions
 * [ ] resource defaults expressions
 * [x] resource override expressions
 * [x] class definition expressions
 * [x] defined type expressions
 * [x] node definition expressions
-* [ ] collection expressions
+* [ ] resource collection expressions
+* [ ] exported resource collection expressions 
 * [x] loading classes from modules
 * [x] loading defined types from modules
 * [x] access expressions
