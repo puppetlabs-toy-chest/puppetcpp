@@ -47,15 +47,17 @@ Expression evaluator status:
 * [x] lambdas
 * [x] resource expressions
 * [x] resource metaparameters
-* [ ] virtual resource expressions
-* [ ] exported resource expressions
+* [x] virtual resource expressions
+* [x] exported resource expressions
 * [ ] resource defaults expressions
 * [x] resource override expressions
 * [x] class definition expressions
 * [x] defined type expressions
 * [x] node definition expressions
-* [ ] collection expressions
-* [ ] loading files from modules
+* [ ] resource collection expressions
+* [ ] exported resource collection expressions 
+* [x] loading classes from modules
+* [x] loading defined types from modules
 * [x] access expressions
 * [x] global scope
 * [x] local scope
@@ -146,10 +148,7 @@ Puppet functions implemented:
 Catalog compiling status:
 
 * [x] Facts from files and Facter
-* [ ] JSON catalog compilation from evaluation context
-
-The output of `puppetcpp` is currently just the evaluation of the given manifest files.
-Eventually it will output a JSON representation of a compiled catalog.
+* [ ] JSON catalog generation (TODO: populate tags)
 
 Build Requirements
 ------------------

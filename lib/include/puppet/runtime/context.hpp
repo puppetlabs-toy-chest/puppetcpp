@@ -90,10 +90,17 @@ namespace puppet { namespace runtime {
     {
         /**
          * Constructs an evaluation context.
+         * @param node The current compilation node.
          * @param facts The facts provider to use for fact lookup.
          * @param catalog The catalog being compiled or nullptr if catalog expressions are not supported.
          */
-        explicit context(std::shared_ptr<facts::provider> facts = nullptr, runtime::catalog* catalog = nullptr);
+        explicit context(compiler::node& node, std::shared_ptr<facts::provider> facts = nullptr, runtime::catalog* catalog = nullptr);
+
+        /**
+         * Gets the current compilation node.
+         * @return Returns the current compilation node.
+         */
+        compiler::node& node();
 
         /**
          * Gets the catalog being compiled.
@@ -180,6 +187,7 @@ namespace puppet { namespace runtime {
         friend struct local_scope;
         friend struct node_scope;
 
+        compiler::node& _node;
         runtime::catalog* _catalog;
         std::unordered_map<std::string, std::shared_ptr<runtime::scope>> _scopes;
         std::vector<std::shared_ptr<runtime::scope>> _scope_stack;

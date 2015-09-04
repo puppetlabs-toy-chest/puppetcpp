@@ -215,8 +215,8 @@ namespace puppet { namespace lexer {
          * Constructs a new lexer.
          */
         lexer() :
-            single_quoted_string("'([^\\\\']|\\\\\\\\|\\\\.)*'",        static_cast<id_type>(token_id::single_quoted_string)),
-            double_quoted_string("\\\"([^\\\\\"]|\\\\\\\\|\\\\.)*\\\"", static_cast<id_type>(token_id::double_quoted_string)),
+            single_quoted_string("'([^\\\\']|\\\\.)*'",                 static_cast<id_type>(token_id::single_quoted_string)),
+            double_quoted_string("\\\"([^\\\\\"]|\\\\.)*\\\"",          static_cast<id_type>(token_id::double_quoted_string)),
             heredoc(HEREDOC_PATTERN,                                    static_cast<id_type>(token_id::heredoc)),
             number("\\d\\w*(\\.\\d\\w*)?([eE]-?\\w*)?",                 static_cast<id_type>(token_id::number))
         {
@@ -333,7 +333,7 @@ namespace puppet { namespace lexer {
                 lex::token_def<>("((::)?[A-Z][\\w]*)+",                                 static_cast<id_type>(token_id::type))           [ no_regex ] |
                 lex::token_def<>("((::)?[a-z][\\w]*)(::[a-z][\\w]*)*",                  static_cast<id_type>(token_id::name))           [ no_regex ] |
                 lex::token_def<>("[a-z_]([\\w\\-]*[\\w])?",                             static_cast<id_type>(token_id::bare_word))      [ no_regex ] |
-                lex::token_def<>("(\\/\\/)|(\\/[^*][^/\\n]*\\/)",                       static_cast<id_type>(token_id::regex))          [ no_regex ] |
+                lex::token_def<>("\\/([^\\\\/\\n]|\\\\.)*\\/",                          static_cast<id_type>(token_id::regex))          [ no_regex ] |
                 single_quoted_string                                                                                                    [ bind(&lexer::parse_single_quoted_string, this, _1, _2, _3, _4, _5) ] |
                 double_quoted_string                                                                                                    [ bind(&lexer::parse_double_quoted_string, this, _1, _2, _3, _4, _5) ] |
                 heredoc                                                                                                                 [ bind(&lexer::parse_heredoc, this, _1, _2, _3, _4, _5) ] |

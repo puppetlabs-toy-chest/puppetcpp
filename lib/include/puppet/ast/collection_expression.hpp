@@ -10,6 +10,9 @@
 
 namespace puppet { namespace ast {
 
+    // Forward declaration of query
+    struct query;
+
     /**
      * Represents the possible attribute query operators.
      */
@@ -40,22 +43,22 @@ namespace puppet { namespace ast {
     std::ostream& operator<<(std::ostream& os, attribute_query_operator const& op);
 
     /**
-     * Represents a collection query.
+     * Represents an attribute query.
      */
-    struct query
+    struct attribute_query
     {
         /**
-         * Default constructor for query.
+         * Default constructor for attribute query.
          */
-        query();
+        attribute_query();
 
         /**
-         * Constructs a query with the given attribute, operator, and value.
+         * Constructs an attribute query with the given attribute, operator, and value.
          * @param attribute The attribute being queried.
          * @param op The attribute query operator.
          * @param value The query value.
          */
-        query(name attribute, attribute_query_operator op, basic_expression value);
+        attribute_query(name attribute, attribute_query_operator op, basic_expression value);
 
         /**
          * Gets the attribute being queried.
@@ -93,7 +96,22 @@ namespace puppet { namespace ast {
      * @param query The query to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, ast::query const& query);
+    std::ostream& operator<<(std::ostream& os, ast::attribute_query const& query);
+
+    /**
+     * Represents a primary attribute query.
+     */
+    typedef boost::variant<
+        attribute_query,
+        boost::recursive_wrapper<query>
+    > primary_attribute_query;
+
+    /**
+     * Gets the position of the primary attribute query.
+     * @param expr The primary attribute query to get the position of.
+     * @return Returns the position of the primary attribute query.
+     */
+    lexer::position const& get_query_position(primary_attribute_query const& query);
 
     /**
      * Represents the possible binary query operators.
@@ -139,7 +157,7 @@ namespace puppet { namespace ast {
          * @param op The binary query operator used in the expression.
          * @param operand The right-hand query operand.
          */
-        binary_query_expression(binary_query_operator op, query operand);
+        binary_query_expression(binary_query_operator op, primary_attribute_query operand);
 
         /**
          * Gets the binary query operator in the expression.
@@ -151,7 +169,7 @@ namespace puppet { namespace ast {
          * Gets the right-hand operand of the binary query expression.
          * @return Returns the right-hand operand of the binary query expression.
          */
-        query const& operand() const;
+        primary_attribute_query const& operand() const;
 
         /**
          * Gets the position of the binary query expression.
@@ -161,7 +179,7 @@ namespace puppet { namespace ast {
 
      private:
         binary_query_operator _op;
-        query _operand;
+        primary_attribute_query _operand;
     };
 
     /**
@@ -194,6 +212,54 @@ namespace puppet { namespace ast {
     };
 
     /**
+     * Represents an AST collector query.
+     */
+    struct query
+    {
+        /**
+         * Default constructor for collector query.
+         */
+        query();
+
+        /**
+         * Constructs a collector query.
+         * @param primary The primary expression.
+         * @param binary The binary expressions to apply.
+         */
+        explicit query(primary_attribute_query primary, std::vector<binary_query_expression> binary = std::vector<binary_query_expression>());
+
+        /**
+         * Gets the primary attribute query.
+         * @return Returns the primary attribute query.
+         */
+        primary_attribute_query const& primary() const;
+
+        /**
+         * Gets the binary query expressions.
+         * @return Returns the binary query expressions.
+         */
+        std::vector<binary_query_expression> const& binary() const;
+
+        /**
+         * Gets the position of the expression.
+         * @return Returns the position of the expression.
+         */
+        lexer::position const& position() const;
+
+    private:
+        primary_attribute_query _primary;
+        std::vector<binary_query_expression> _binary;
+    };
+
+    /**
+     * Stream insertion operator for AST collection query.
+     * @param os The output stream to write the expression to.
+     * @param query The query to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, ast::query const& query);
+
+    /**
      * Represents an AST collection expression.
      */
     struct collection_expression
@@ -207,10 +273,9 @@ namespace puppet { namespace ast {
          * Constructs a collection expression with the given type, first query, and binary query expressions.
          * @param kind The kind of collection expression.
          * @param type The type being collected.
-         * @param first The optional first query.
-         * @param remainder The remaining binary query expressions.
+         * @param query The collection query.
          */
-        collection_expression(collection_kind kind, ast::type type, boost::optional<query> first, std::vector<binary_query_expression> remainder = std::vector<binary_query_expression>());
+        collection_expression(collection_kind kind, ast::type type, boost::optional<ast::query> query);
 
         /**
          * Gets the kind of collection expression.
@@ -225,16 +290,10 @@ namespace puppet { namespace ast {
         ast::type const& type() const;
 
         /**
-         * Gets the optional first query in the expression.
-         * @return Returns the first query in the expression.
+         * Gets the optional query in the expression.
+         * @return Returns the optional query in the expression.
          */
-        boost::optional<query> const& first() const;
-
-        /**
-         * Gets the remainder of the expression (for binary query expressions).
-         * @return Returns the remainder of the expression.
-         */
-        std::vector<binary_query_expression> const& remainder() const;
+        boost::optional<ast::query> const& query() const;
 
         /**
          * Gets the position of the expression.
@@ -245,8 +304,7 @@ namespace puppet { namespace ast {
     private:
         collection_kind _kind;
         ast::type _type;
-        boost::optional<query> _first;
-        std::vector<binary_query_expression> _remainder;
+        boost::optional<ast::query> _query;
     };
 
     /**

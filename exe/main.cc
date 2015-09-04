@@ -15,7 +15,7 @@ int main(int argc, char const* argv[])
     console_logger logger;
 
     try {
-        compiler::settings settings(argc, argv);
+        compiler::settings settings{argc, argv};
 
         if (settings.show_version()) {
             cout << "0.1.0-FIXME" << endl;
@@ -36,15 +36,10 @@ int main(int argc, char const* argv[])
         }
 
         // Construct an environment
-        compiler::environment environment(settings.environment(), settings.environment_directory());
+        compiler::environment environment{logger, settings.environment(), settings.environment_directory()};
 
         // Construct a node
-        compiler::node node(settings.node_name(), environment);
-
-        // TODO: remove this check
-        if (settings.manifests().empty()) {
-            throw compiler::settings_exception("expected at least one manifest to compile (default manifest file not yet implemented).");
-        }
+        compiler::node node{logger, settings.node_name(), settings.module_directories(), environment};
 
         // Open the output file for writing
         auto output_file = (fs::current_path() / settings.output_file()).string();
@@ -56,8 +51,8 @@ int main(int argc, char const* argv[])
         try {
             LOG(notice, "compiling for node '%1%' with environment '%2%'.", settings.node_name(), settings.environment());
 
-            // Compile the manifest
-            auto catalog = node.compile(logger, settings);
+            // Compile the node
+            auto catalog = node.compile(settings);
 
             // Write the graph file if given one
             if (!settings.graph_file().empty()) {

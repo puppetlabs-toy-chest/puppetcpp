@@ -98,11 +98,13 @@ namespace puppet { namespace runtime {
         types::resource type,
         shared_ptr<compiler::context> context,
         lexer::position position,
+        bool virtualized,
         bool exported) :
             _type(rvalue_cast(type)),
             _context(rvalue_cast(context)),
             _position(rvalue_cast(position)),
             _vertex_id(static_cast<size_t>(-1)),
+            _virtualized(virtualized),
             _exported(exported)
     {
         if (!_context) {
@@ -129,6 +131,11 @@ namespace puppet { namespace runtime {
     string const& resource::path() const
     {
         return *_path;
+    }
+
+    bool resource::virtualized() const
+    {
+        return _virtualized;
     }
 
     bool resource::exported() const
@@ -459,7 +466,9 @@ namespace puppet { namespace runtime {
         shared_ptr<compiler::context> const& compilation_context,
         lexer::position const& position,
         resource const* container,
-        bool exported)
+        bool virtualized,
+        bool exported,
+        defined_type const* definition)
     {
         if (!compilation_context) {
             throw evaluation_exception("expected a compilation context.");
@@ -473,14 +482,12 @@ namespace puppet { namespace runtime {
             throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % type % previous->path() % previous->position().line()).str(), compilation_context, position);
         }
 
-        bool is_class = type.is_class();
-        bool is_stage = type.is_stage();
-
         // Add the resource
         _resources.emplace_back(
             rvalue_cast(type),
             compilation_context,
             position,
+            virtualized,
             exported
         );
 
@@ -495,28 +502,30 @@ namespace puppet { namespace runtime {
         resource->vertex_id(boost::add_vertex(resource, _graph));
 
         // Stages should never be contained
-        if (!is_stage && container) {
+        if (!type.is_stage() && container) {
             // Add a relationship to the container
             add_relationship(relationship::contains, *container, *resource);
         }
 
         // If a defined type, add it to the list of declared defined types
-        if (!is_class) {
-            if (auto definition = find_defined_type(boost::to_lower_copy(resource->type().type_name()))) {
-                _defined_types.emplace_back(make_pair(definition, resource));
-            }
+        if (definition) {
+            _defined_types.emplace_back(make_pair(definition, resource));
         }
         return *resource;
     }
 
-    vector<class_definition> const* catalog::find_class(types::klass const& klass, compiler::node const* node)
+    vector<class_definition> const* catalog::find_class(types::klass const& klass, runtime::context* context)
     {
         auto it = _class_definitions.find(klass);
         if (it == _class_definitions.end() || it->second.empty()) {
-            if (node) {
-                // TODO: load class
+            if (!context) {
+                return nullptr;
             }
-            return nullptr;
+            context->node().load_manifest(*context, klass.title());
+            it = _class_definitions.find(klass);
+            if (it == _class_definitions.end() || it->second.empty()) {
+                return nullptr;
+            }
         }
         return &it->second;
     }
@@ -547,7 +556,7 @@ namespace puppet { namespace runtime {
         }
 
         // Find the class definition
-        auto definitions = find_class(types::klass(type.title()), &compilation_context->node());
+        auto definitions = find_class(types::klass(type.title()), &evaluation_context);
         if (!definitions) {
             throw evaluation_exception((boost::format("cannot evaluate class '%1%' because it has not been defined.") % type.title()).str(), compilation_context, position);
         }
@@ -623,11 +632,18 @@ namespace puppet { namespace runtime {
         return *klass;
     }
 
-    defined_type const* catalog::find_defined_type(string const& type)
+    defined_type const* catalog::find_defined_type(string const& type, runtime::context* context)
     {
         auto it = _defined_type_definitions.find(type);
         if (it == _defined_type_definitions.end()) {
-            return nullptr;
+            if (!context) {
+                return nullptr;
+            }
+            context->node().load_manifest(*context, type);
+            it = _defined_type_definitions.find(type);
+            if (it == _defined_type_definitions.end()) {
+                return nullptr;
+            }
         }
         return &it->second;
     }
@@ -784,8 +800,36 @@ namespace puppet { namespace runtime {
 
     void catalog::finalize(runtime::context& context)
     {
-        // Evaluate defined types
-        evaluate_defined_types(context);
+        vector<pair<defined_type const*, resource*>> virtualized;
+        while (true) {
+            // TODO: collect resources
+
+            // We've collected, so check to see if all remaining defined types are virtual
+            bool all_virtual = std::all_of(
+                virtualized.begin(),
+                virtualized.end(),
+                [](pair<defined_type const*, resource*> const& element) {
+                    return element.second->virtualized();
+                });
+
+            // If there are some realized defined types, move the entire collection over to evaluate
+            if (!all_virtual) {
+                _defined_types.insert(
+                    _defined_types.begin(),
+                    std::make_move_iterator(virtualized.begin()),
+                    std::make_move_iterator(virtualized.end()));
+
+                virtualized.clear();
+            }
+
+            // If there are no more defined types to evaluate, we're done
+            if (_defined_types.empty()) {
+                break;
+            }
+
+            // Evaluate the defined types
+            evaluate_defined_types(context, virtualized);
+        }
 
         // Populate the dependency graph
         populate_graph();
@@ -841,6 +885,11 @@ namespace puppet { namespace runtime {
         resources.SetArray();
         resources.Reserve(_resources.size(),allocator);
         for (auto const& resource : _resources) {
+            // Skip virtual resources
+            if (resource.virtualized()) {
+                continue;
+            }
+
             // Add the resource
             resources.PushBack(resource.to_json(allocator), allocator);
 
@@ -854,6 +903,10 @@ namespace puppet { namespace runtime {
                     continue;
                 }
                 auto target = _graph[boost::target(*it, _graph)];
+                // Skip virtual resources
+                if (target->virtualized()) {
+                    continue;
+                }
 
                 // Create an edge object from source to target
                 Value edge;
@@ -1018,17 +1071,43 @@ namespace puppet { namespace runtime {
         });
     }
 
-    void catalog::evaluate_defined_types(runtime::context& context)
+    void catalog::evaluate_defined_types(runtime::context& context, vector<pair<defined_type const*, resource*>>& virtualized)
     {
         resource* current = nullptr;
 
         try {
-            // Evaluate all the declared defined types in order
-            for (auto& kvp : _defined_types) {
-                current = kvp.second;
-                kvp.first->evaluate(context, *current);
+            const size_t max_iterations = 1000;
+            size_t iteration = 0;
+
+            // Because evaluation of defined types may declare more defined types, loop to exhaust the queue
+            while (!_defined_types.empty()) {
+                // Loop from now until the *current* end
+                auto size = _defined_types.size();
+                for (size_t i = 0; i < size; ++i) {
+                    auto& defined_type = _defined_types[i];
+                    current = defined_type.second;
+
+                    if (current->virtualized()) {
+                        // Defined type is virtual, enqueue it for later evaluation
+                        virtualized.emplace_back(rvalue_cast(defined_type));
+                        continue;
+                    }
+                    defined_type.first->evaluate(context, *current);
+                }
+
+                // Erase everything that was just evaluated
+                _defined_types.erase(_defined_types.begin(), _defined_types.begin() + size);
+
+                // Guard against infinite recursion by limiting the number of outer loop iterations
+                if (iteration++ >= max_iterations) {
+                    current = nullptr;
+                    throw evaluation_exception("maximum defined type evaluations exceeded: a defined type may be infinitely recursive.");
+                }
             }
         } catch (evaluation_exception const& ex) {
+            if (!current) {
+                throw;
+            }
             // If the original exception has context, log an error with full context first
             if (ex.context()) {
                 ex.context()->log(logging::level::error, ex.position(), ex.what());

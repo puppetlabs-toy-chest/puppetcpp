@@ -50,7 +50,8 @@ namespace puppet { namespace runtime {
         _context._node_scope.reset();
     }
 
-    context::context(shared_ptr<facts::provider> facts, runtime::catalog* catalog) :
+    context::context(compiler::node& node, shared_ptr<facts::provider> facts, runtime::catalog* catalog) :
+        _node(node),
         _catalog(catalog)
     {
         // Add the top scope
@@ -60,6 +61,11 @@ namespace puppet { namespace runtime {
 
         // Add an empty top match scope
         _match_stack.emplace_back();
+    }
+
+    compiler::node& context::node()
+    {
+        return _node;
     }
 
     runtime::catalog* context::catalog()
@@ -162,7 +168,7 @@ namespace puppet { namespace runtime {
         // Warn if the scope was not found
         if (_catalog && evaluator && position) {
             string message;
-            if (!_catalog->find_class(types::klass(ns), &evaluator->compilation_context()->node())) {
+            if (!_catalog->find_class(types::klass(ns), &evaluator->evaluation_context())) {
                 message = (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % name % ns).str();
             } else if (!_catalog->find_resource(types::resource("class", ns))) {
                 message = (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % name % ns).str();

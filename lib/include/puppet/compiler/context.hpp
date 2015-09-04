@@ -24,18 +24,11 @@ namespace puppet { namespace compiler {
     {
         /**
          * Constructs a compilation context.
-         * @param logger The logger to use during compilation.
          * @param path The path to the file being compiled.
          * @param node The compilation node.
          * @param parse True if the file should be parsed or false if not.
          */
-        context(logging::logger& logger, std::shared_ptr<std::string> path, compiler::node& node, bool parse = true);
-
-        /**
-         * Gets the logger used for logging messages.
-         * @return Returns the logger used for logging messages.
-         */
-        logging::logger& logger();
+        context(std::shared_ptr<std::string> path, compiler::node& node, bool parse = true);
 
         /**
          * Gets the path of the file being compiled.
@@ -72,7 +65,6 @@ namespace puppet { namespace compiler {
         compilation_exception create_exception(lexer::position const& position, std::string const& message);
 
      private:
-        logging::logger& _logger;
         std::ifstream _stream;
         std::shared_ptr<std::string> _path;
         ast::syntax_tree _tree;

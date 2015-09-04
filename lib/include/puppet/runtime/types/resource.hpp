@@ -12,6 +12,7 @@
 #include <ostream>
 #include <string>
 #include <regex>
+#include <unordered_set>
 
 namespace puppet { namespace runtime { namespace types {
 
@@ -88,6 +89,68 @@ namespace puppet { namespace runtime { namespace types {
         bool is_stage() const
         {
             return _type_name == "Stage";
+        }
+
+        /**
+         * Determines if the resource is a "built-in" type.
+         * @return Returns true if the resource is a "built-in" type or false if not.
+         */
+        bool is_builtin() const
+        {
+            // TODO: remove this member once built-in types can be defined
+            static const std::unordered_set<std::string> builtin_types = {
+                "Augeas",
+                "Class",
+                "Computer",
+                "Cron",
+                "Exec",
+                "File",
+                "Filebucket",
+                "Group",
+                "Host",
+                "Interface",
+                "5klogin",
+                "Macauthorization",
+                "Mailalias",
+                "Maillist",
+                "Mcx",
+                "Mount",
+                "Nagios_command",
+                "Nagios_contact",
+                "Nagios_contactgroup",
+                "Nagios_host",
+                "Nagios_hostdependency",
+                "Nagios_hostescalation",
+                "Nagios_hostextinfo",
+                "Nagios_hostgroup",
+                "Nagios_service",
+                "Nagios_servicedependency",
+                "Nagios_serviceescalation",
+                "Nagios_serviceextinfo",
+                "Nagios_servicegroup",
+                "Nagios_timeperiod",
+                "Node",
+                "Notify",
+                "Package",
+                "Resources",
+                "Router",
+                "Schedule",
+                "Scheduled_task",
+                "Selboolean",
+                "Selmodule",
+                "Service",
+                "Ssh_authorized_key",
+                "Sshkey",
+                "Stage",
+                "Tidy",
+                "User",
+                "Vlan",
+                "Yumrepo",
+                "Zfs",
+                "Zone",
+                "Zpool"
+            };
+            return builtin_types.count(_type_name) > 0;
         }
 
         /**

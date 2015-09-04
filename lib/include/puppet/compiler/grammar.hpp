@@ -223,15 +223,15 @@ namespace puppet { namespace compiler {
                 regex                                          [ _val = phx::construct<ast::hostname>(_1) ] |
                 ((name | bare_word | number) % raw_token('.')) [ _val = phx::construct<ast::hostname>(_1) ];
             collection_expression =
-                ((type >> raw_token(token_id::left_collect)) > -query > *binary_query_expression > raw_token(token_id::right_collect))               [ _val = phx::construct<ast::collection_expression>(ast::collection_kind::all, _1, _2, _3) ] |
-                ((type >> raw_token(token_id::left_double_collect)) > -query > *binary_query_expression > raw_token(token_id::right_double_collect)) [ _val = phx::construct<ast::collection_expression>(ast::collection_kind::exported, _1, _2, _3) ];
-            binary_query_expression =
-                (binary_query_operator > query) [ _val = phx::construct<ast::binary_query_expression>(_1, _2) ];
-            binary_query_operator =
-                raw_token(token_id::keyword_and) [ _val = ast::binary_query_operator::logical_and ] |
-                raw_token(token_id::keyword_or)  [ _val = ast::binary_query_operator::logical_or ];
+                ((type >> raw_token(token_id::left_collect)) > -query > raw_token(token_id::right_collect))               [ _val = phx::construct<ast::collection_expression>(ast::collection_kind::all, _1, _2) ] |
+                ((type >> raw_token(token_id::left_double_collect)) > -query > raw_token(token_id::right_double_collect)) [ _val = phx::construct<ast::collection_expression>(ast::collection_kind::exported, _1, _2) ];
             query =
-                (name > attribute_query_operator > attribute_query_value) [ _val = phx::construct<ast::query>(_1, _2, _3) ];
+                (primary_attribute_query > *binary_query_expression) [ _val = phx::construct<ast::query>(_1, _2) ];
+            primary_attribute_query =
+                attribute_query |
+                (raw_token('(') > query > raw_token(')'));
+            attribute_query =
+                (name > attribute_query_operator > attribute_query_value) [ _val = phx::construct<ast::attribute_query>(_1, _2, _3) ];
             attribute_query_operator =
                 raw_token(token_id::equals)     [ _val = ast::attribute_query_operator::equals ] |
                 raw_token(token_id::not_equals) [ _val = ast::attribute_query_operator::not_equals ];
@@ -241,6 +241,11 @@ namespace puppet { namespace compiler {
                 boolean  |
                 number   |
                 name;
+            binary_query_expression =
+                (binary_query_operator > primary_attribute_query) [ _val = phx::construct<ast::binary_query_expression>(_1, _2) ];
+            binary_query_operator =
+                raw_token(token_id::keyword_and) [ _val = ast::binary_query_operator::logical_and ] |
+                raw_token(token_id::keyword_or)  [ _val = ast::binary_query_operator::logical_or ];
 
             // Unary expressions
             unary_expression =
@@ -358,11 +363,13 @@ namespace puppet { namespace compiler {
             node_definition_expression.name("node definition expression");
             hostname.name("hostname");
             collection_expression.name("collection expression");
-            binary_query_expression.name("binary query expression");
-            binary_query_operator.name("binary query operator");
             query.name("query");
+            primary_attribute_query.name("primary attribute query");
+            attribute_query.name("attribute query");
             attribute_query_operator.name("attribute query operator");
             attribute_query_value.name("attribute query value");
+            binary_query_expression.name("binary query expression");
+            binary_query_operator.name("binary query operator");
 
             // Unary expressions
             unary_expression.name("unary expression");
@@ -444,11 +451,13 @@ namespace puppet { namespace compiler {
             debug(node_definition_expression);
             debug(hostname);
             debug(collection_expression);
-            debug(binary_query_expression);
-            debug(binary_query_operator);
             debug(query);
+            debug(primary_attribute_query);
+            debug(attribute_query);
             debug(attribute_query_operator);
             debug(attribute_query_value);
+            debug(binary_query_expression);
+            debug(binary_query_operator);
 
             // Unary expressions
             debug(unary_expression);
@@ -532,11 +541,13 @@ namespace puppet { namespace compiler {
         boost::spirit::qi::rule<iterator_type, puppet::ast::node_definition_expression()> node_definition_expression;
         boost::spirit::qi::rule<iterator_type, puppet::ast::hostname()> hostname;
         boost::spirit::qi::rule<iterator_type, puppet::ast::collection_expression()> collection_expression;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_query_expression()> binary_query_expression;
-        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_query_operator()> binary_query_operator;
         boost::spirit::qi::rule<iterator_type, puppet::ast::query()> query;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::primary_attribute_query()> primary_attribute_query;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_query()> attribute_query;
         boost::spirit::qi::rule<iterator_type, puppet::ast::attribute_query_operator()> attribute_query_operator;
         boost::spirit::qi::rule<iterator_type, puppet::ast::basic_expression()> attribute_query_value;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_query_expression()> binary_query_expression;
+        boost::spirit::qi::rule<iterator_type, puppet::ast::binary_query_operator()> binary_query_operator;
 
         // Unary expressions
         boost::spirit::qi::rule<iterator_type, puppet::ast::unary_expression()> unary_expression;

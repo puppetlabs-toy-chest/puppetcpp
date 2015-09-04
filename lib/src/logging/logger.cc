@@ -166,14 +166,29 @@ namespace puppet { namespace logging {
 
         // Output the offending line's text
         if (!text.empty() && column > 0) {
-            stream << "    ";
-
             // Ignore leading whitespace in the line
             size_t offset = 0;
-            for (; offset < text.size() && isspace(text[offset]); ++offset);
-            stream.write(text.c_str() + offset, text.size() - offset);
+            size_t column_offset = 0;
+            for (; offset < text.size(); ++offset, ++column_offset) {
+                // If the current offset into the string is not a space, break out
+                if (!isspace(text[offset])) {
+                    break;
+                }
+                // If a tab, offset the column by a tab width (3 + 1)
+                if (text[offset] == '\t') {
+                    column_offset += 3;
+                    continue;
+                }
+            }
 
-            stream << '\n' << setfill(' ') << setw(column + 5 - offset) << "^\n";
+            // Write the line
+            stream << "    ";
+            stream.write(text.c_str() + offset, text.size() - offset);
+            stream << '\n';
+
+            // Write the "pointer" pointing at the column
+            fill_n(ostream_iterator<char>(stream), column - column_offset + 3, ' ');
+            stream << "^\n";
         }
 
         // Reset the colorization

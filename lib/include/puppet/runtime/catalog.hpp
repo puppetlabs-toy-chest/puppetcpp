@@ -11,6 +11,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <string>
 #include <vector>
+#include <deque>
 #include <functional>
 #include <unordered_map>
 #include <exception>
@@ -140,12 +141,14 @@ namespace puppet { namespace runtime {
          * @param type The resource type (e.g. File['/tmp/foo']).
          * @param context The compilation context where the resource was declared.
          * @param position The position where the resource was declared.
+         * @param virtualized True if the resource is virtual or false if it is realized.
          * @param exported True if the resource is exported or false if not.
          */
         resource(
             types::resource type,
             std::shared_ptr<compiler::context> context,
             lexer::position position,
+            bool virtualized = false,
             bool exported = false);
 
         /**
@@ -172,6 +175,12 @@ namespace puppet { namespace runtime {
          * @return Returns the path of the file where the resource was declared.
          */
         std::string const& path() const;
+
+        /**
+         * Gets whether or not this resource is virtual.
+         * @return Returns true if the resource is virtual or false if it is realized.
+         */
+        bool virtualized() const;
 
         /**
          * Gets whether or not the resource is exported.
@@ -235,6 +244,7 @@ namespace puppet { namespace runtime {
         lexer::position _position;
         std::unordered_map<std::string, std::shared_ptr<attribute>> _attributes;
         size_t _vertex_id;
+        bool _virtualized;
         bool _exported;
     };
 
@@ -397,7 +407,9 @@ namespace puppet { namespace runtime {
          * @param compilation_context The compilation context where the resource is being declared.
          * @param position The position where the resource is being declared.
          * @param container The container of the resource or nullptr for no container.
+         * @param virtualized True if the resource is virtualized or false if it not.
          * @param exported True if the resource is exported or false if it is not.
+         * @param definition The associated defined type definition to run during catalog finalization.
          * @return Returns the resource that was added.
          */
         resource& add_resource(
@@ -405,15 +417,17 @@ namespace puppet { namespace runtime {
             std::shared_ptr<compiler::context> const& compilation_context,
             lexer::position const& position,
             resource const* container = nullptr,
-            bool exported = false);
+            bool virtualized = false,
+            bool exported = false,
+            defined_type const* definition = nullptr);
 
         /**
          * Finds the definitions of a class.
          * @param klass The class to find.
-         * @param node The node to load the class from.  If nullptr, the class will not be loaded.
+         * @param context The evaluation context to load a class into.  If nullptr, no classes will be loaded.
          * @return Returns the class definitions if defined or nullptr if not defined.
          */
-        std::vector<class_definition> const* find_class(types::klass const& klass, compiler::node const* node = nullptr);
+        std::vector<class_definition> const* find_class(types::klass const& klass, runtime::context* context = nullptr);
 
         /**
          * Defines a class.
@@ -445,9 +459,10 @@ namespace puppet { namespace runtime {
         /**
          * Finds a defined type's definition.
          * @param type The type name of the defined type.  Note: this is the lower case type name as used in a manifest, e.g. "foo::bar".
+         * @param context The evaluation context to load a defined type.  If nullptr, no defined types will be loaded.
          * @return Returns the defined type's definition if defined or nullptr if not defined.
          */
-        defined_type const* find_defined_type(std::string const& type);
+        defined_type const* find_defined_type(std::string const& type, runtime::context* context = nullptr);
 
         /**
          * Defines a defined type.
@@ -514,7 +529,7 @@ namespace puppet { namespace runtime {
      private:
         void populate_graph();
         void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
-        void evaluate_defined_types(runtime::context& context);
+        void evaluate_defined_types(runtime::context& context, std::vector<std::pair<defined_type const*, resource*>>& virtualized);
 
         // Stores the resources in declaration order
         // Note: this is a deque because we need references to not be invalidated when inserting to the end
@@ -530,7 +545,7 @@ namespace puppet { namespace runtime {
         // Stores the mapping between defined type name (e.g. foo::bar) and the defined type definition
         std::unordered_map<std::string, defined_type> _defined_type_definitions;
         // Stores the declared defined types in declaration order
-        std::vector<std::pair<defined_type const*, resource*>> _defined_types;
+        std::deque<std::pair<defined_type const*, resource*>> _defined_types;
         // Stores the node definitions in declaration order
         std::vector<node_definition> _node_definitions;
         // Stores the mapping between a node name and the index into the node definitions list

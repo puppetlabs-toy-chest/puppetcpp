@@ -50,18 +50,11 @@ namespace puppet { namespace runtime { namespace evaluators {
             throw _evaluator.create_exception(expr.position(), (boost::format("expected %1% or qualified %2% for resource type but found %3%.") % types::string::name() % types::resource::name() % get_type(type_value)).str());
         }
 
-        if (expr.status() == ast::resource_status::virtualized) {
-            // TODO: add to a list of virtual resources
-            throw _evaluator.create_exception(expr.position(), "virtual resource expressions are not yet implemented.");
+        if (is_class && expr.status() == ast::resource_status::virtualized) {
+            throw _evaluator.create_exception(expr.position(), "classes cannot be virtual resources.");
+        } else if (is_class && expr.status() == ast::resource_status::exported) {
+            throw _evaluator.create_exception(expr.position(), "classes cannot be exported resources.");
         }
-        if (expr.status() == ast::resource_status::exported) {
-            // TODO: add to a list of virtual exported resources
-            throw _evaluator.create_exception(expr.position(), "exported resource expressions are not yet implemented.");
-        }
-
-        // TODO: check for known type
-        // TODO: if not a known type and not a "class" resource, load the defined type
-        // TODO: if type still unknown, raise an error
 
         // Get the default body attributes
         vector<pair<ast::attribute_operator, shared_ptr<attribute>>> default_attributes;
@@ -385,12 +378,25 @@ namespace puppet { namespace runtime { namespace evaluators {
         ast::resource_expression const& expression,
         vector<pair<ast::attribute_operator, shared_ptr<attribute>>> const& default_attributes)
     {
+
         auto& evaluation_context = _evaluator.evaluation_context();
         auto& compilation_context = _evaluator.compilation_context();
         auto catalog = evaluation_context.catalog();
 
+        // Lookup a defined type if not a built-in or class
+        defined_type const* definition = nullptr;
+        if (!is_class && !types::resource(type_name).is_builtin()) {
+            definition = catalog->find_defined_type(boost::to_lower_copy(type_name), &evaluation_context);
+            if (!definition) {
+                throw _evaluator.create_exception(expression.position(), (boost::format("type '%1%' has not been defined.") % type_name).str());
+            }
+        }
+
         // If a class, don't set a container; one will be set when the class is declared
         resource const* container = is_class ? nullptr : evaluation_context.current_scope()->resource();
+
+        bool is_exported = expression.status() == ast::resource_status::exported;
+        bool is_virtual = is_exported || expression.status() == ast::resource_status::virtualized;
 
         vector<resource*> resources;
         for (auto const& body : expression.bodies()) {
@@ -415,7 +421,10 @@ namespace puppet { namespace runtime { namespace evaluators {
                     types::resource(type_name, rvalue_cast(resource_title)),
                     compilation_context,
                     body.position(),
-                    container);
+                    container,
+                    is_virtual,
+                    is_exported,
+                    definition);
 
                 // Set the default attributes
                 set_attributes(resource, default_attributes);
