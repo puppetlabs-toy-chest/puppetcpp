@@ -11,6 +11,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <string>
 #include <vector>
+#include <deque>
 #include <functional>
 #include <unordered_map>
 #include <exception>
@@ -528,7 +529,7 @@ namespace puppet { namespace runtime {
      private:
         void populate_graph();
         void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
-        void evaluate_defined_types(runtime::context& context);
+        void evaluate_defined_types(runtime::context& context, std::vector<std::pair<defined_type const*, resource*>>& virtualized);
 
         // Stores the resources in declaration order
         // Note: this is a deque because we need references to not be invalidated when inserting to the end
@@ -544,7 +545,7 @@ namespace puppet { namespace runtime {
         // Stores the mapping between defined type name (e.g. foo::bar) and the defined type definition
         std::unordered_map<std::string, defined_type> _defined_type_definitions;
         // Stores the declared defined types in declaration order
-        std::vector<std::pair<defined_type const*, resource*>> _defined_types;
+        std::deque<std::pair<defined_type const*, resource*>> _defined_types;
         // Stores the node definitions in declaration order
         std::vector<node_definition> _node_definitions;
         // Stores the mapping between a node name and the index into the node definitions list

@@ -800,8 +800,36 @@ namespace puppet { namespace runtime {
 
     void catalog::finalize(runtime::context& context)
     {
-        // Evaluate defined types
-        evaluate_defined_types(context);
+        vector<pair<defined_type const*, resource*>> virtualized;
+        while (true) {
+            // TODO: collect resources
+
+            // We've collected, so check to see if all remaining defined types are virtual
+            bool all_virtual = std::all_of(
+                virtualized.begin(),
+                virtualized.end(),
+                [](pair<defined_type const*, resource*> const& element) {
+                    return element.second->virtualized();
+                });
+
+            // If there are some realized defined types, move the entire collection over to evaluate
+            if (!all_virtual) {
+                _defined_types.insert(
+                    _defined_types.begin(),
+                    std::make_move_iterator(virtualized.begin()),
+                    std::make_move_iterator(virtualized.end()));
+
+                virtualized.clear();
+            }
+
+            // If there are no more defined types to evaluate, we're done
+            if (_defined_types.empty()) {
+                break;
+            }
+
+            // Evaluate the defined types
+            evaluate_defined_types(context, virtualized);
+        }
 
         // Populate the dependency graph
         populate_graph();
@@ -1043,22 +1071,43 @@ namespace puppet { namespace runtime {
         });
     }
 
-    void catalog::evaluate_defined_types(runtime::context& context)
+    void catalog::evaluate_defined_types(runtime::context& context, vector<pair<defined_type const*, resource*>>& virtualized)
     {
         resource* current = nullptr;
 
         try {
-            // Evaluate all the declared defined types in order
-            for (auto& kvp : _defined_types) {
-                current = kvp.second;
+            const size_t max_iterations = 1000;
+            size_t iteration = 0;
 
-                // Don't evaluate virtualized defined types
-                if (current->virtualized()) {
-                    continue;
+            // Because evaluation of defined types may declare more defined types, loop to exhaust the queue
+            while (!_defined_types.empty()) {
+                // Loop from now until the *current* end
+                auto size = _defined_types.size();
+                for (size_t i = 0; i < size; ++i) {
+                    auto& defined_type = _defined_types[i];
+                    current = defined_type.second;
+
+                    if (current->virtualized()) {
+                        // Defined type is virtual, enqueue it for later evaluation
+                        virtualized.emplace_back(rvalue_cast(defined_type));
+                        continue;
+                    }
+                    defined_type.first->evaluate(context, *current);
                 }
-                kvp.first->evaluate(context, *current);
+
+                // Erase everything that was just evaluated
+                _defined_types.erase(_defined_types.begin(), _defined_types.begin() + size);
+
+                // Guard against infinite recursion by limiting the number of outer loop iterations
+                if (iteration++ >= max_iterations) {
+                    current = nullptr;
+                    throw evaluation_exception("maximum defined type evaluations exceeded: a defined type may be infinitely recursive.");
+                }
             }
         } catch (evaluation_exception const& ex) {
+            if (!current) {
+                throw;
+            }
             // If the original exception has context, log an error with full context first
             if (ex.context()) {
                 ex.context()->log(logging::level::error, ex.position(), ex.what());
