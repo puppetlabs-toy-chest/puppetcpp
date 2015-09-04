@@ -263,7 +263,7 @@ namespace puppet { namespace runtime {
                         try {
                             // Parse the rest of the string
                             // The parsing will stop at the first unmatched } token
-                            auto tree = parser::parser::parse(next, end, true);
+                            auto tree = parser::parser::parse(next, end);
                             if (tree.body()) {
                                 // Evaluate the body and add the result to the string
                                 value val;
