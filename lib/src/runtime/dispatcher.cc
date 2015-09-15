@@ -5,9 +5,10 @@
 #include <puppet/runtime/functions/fail.hpp>
 #include <puppet/runtime/functions/filter.hpp>
 #include <puppet/runtime/functions/logging.hpp>
+#include <puppet/runtime/functions/realize.hpp>
 #include <puppet/runtime/functions/split.hpp>
-#include <puppet/runtime/functions/with.hpp>
 #include <puppet/runtime/functions/versioncmp.hpp>
+#include <puppet/runtime/functions/with.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
@@ -182,11 +183,12 @@ namespace puppet { namespace runtime {
             { "include",        functions::declare() },
             { "info",           functions::logging_function(logging::level::info) },
             { "notice",         functions::logging_function(logging::level::notice) },
+            { "realize",        functions::realize() },
             { "require",        functions::declare(relationship::require) },
             { "split",          functions::split() },
+            { "versioncmp",     functions::versioncmp() },
             { "warning",        functions::logging_function(logging::level::warning) },
             { "with",           functions::with() },
-            { "versioncmp",     functions::versioncmp() },
         };
 
         // Find the function

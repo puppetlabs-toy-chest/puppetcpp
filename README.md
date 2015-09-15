@@ -127,7 +127,7 @@ Puppet functions implemented:
 * [ ] match
 * [ ] md5
 * [x] notice
-* [ ] realize
+* [x] realize
 * [ ] reduce
 * [ ] regsubst
 * [x] require

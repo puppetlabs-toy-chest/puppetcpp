@@ -56,6 +56,8 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/settings.cc
     src/facts/facter.cc
     src/facts/yaml.cc
+    src/runtime/collectors/collector.cc
+    src/runtime/collectors/list_collector.cc
     src/runtime/evaluators/access.cc
     src/runtime/evaluators/basic.cc
     src/runtime/evaluators/catalog.cc
@@ -68,9 +70,10 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/functions/fail.cc
     src/runtime/functions/filter.cc
     src/runtime/functions/logging.cc
+    src/runtime/functions/realize.cc
     src/runtime/functions/split.cc
-    src/runtime/functions/with.cc
     src/runtime/functions/versioncmp.cc
+    src/runtime/functions/with.cc
     src/runtime/operators/assignment.cc
     src/runtime/operators/binary_context.cc
     src/runtime/operators/divide.cc
