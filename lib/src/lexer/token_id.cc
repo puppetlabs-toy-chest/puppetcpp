@@ -63,6 +63,7 @@ namespace puppet { namespace lexer {
             { token_id::comment,                "comment" },
             { token_id::whitespace,             "whitespace" },
             { token_id::unclosed_quote,         "unclosed quote" },
+            { token_id::unclosed_comment,       "unclosed comment" },
         };
 
         if (static_cast<size_t>(id) == boost::lexer::npos) {

@@ -345,8 +345,9 @@ namespace puppet { namespace lexer {
 
             // Lastly, a catch for unclosed quotes and unknown tokens
             this->self.add
-                ("['\"]", static_cast<id_type>(token_id::unclosed_quote))
-                (".",     static_cast<id_type>(token_id::unknown));
+                ("['\"]",  static_cast<id_type>(token_id::unclosed_quote))
+                ("\\/\\*", static_cast<id_type>(token_id::unclosed_comment))
+                (".",      static_cast<id_type>(token_id::unknown));
         }
 
         /**
