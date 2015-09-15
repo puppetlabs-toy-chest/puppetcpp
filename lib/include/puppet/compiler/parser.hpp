@@ -22,26 +22,23 @@ namespace puppet { namespace compiler {
         /**
          * Parses the given file into a syntax tree.
          * @param input The input file to parse.
-         * @param interpolation True if parsing for string interpolation or false if not.
          * @return Returns the parsed syntax tree.
          */
-        static ast::syntax_tree parse(std::ifstream& input, bool interpolation = false);
+        static ast::syntax_tree parse(std::ifstream& input);
         /**
          * Parses the given string into a syntax tree.
          * @param input The input string to parse.
-         * @param interpolation True if parsing for string interpolation or false if not.
          * @return Returns the parsed syntax tree.
          */
-        static ast::syntax_tree parse(std::string const& input, bool interpolation = false);
+        static ast::syntax_tree parse(std::string const& input);
 
         /**
-         * Parses the given iterator range into a syntax tree.
+         * Parses an interpolated string given the string's iterator range.
          * @param begin The beginning of the input.
-         * @param end The end of the input.  If interpolating, the parsing may terminate before the end (stops at non-matching '}' token).
-         * @param interpolation True if parsing for string interpolation or false if not.
+         * @param end The end of the input. The parsing may terminate before the end (stops at non-matching '}' token).
          * @return Returns the parsed syntax tree.
          */
-        static ast::syntax_tree parse(lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end, bool interpolation = false);
+        static ast::syntax_tree parse(lexer::lexer_string_iterator& begin, lexer::lexer_string_iterator const& end);
 
      private:
         struct expectation_info_printer
@@ -79,7 +76,7 @@ namespace puppet { namespace compiler {
         }
 
         template <typename Lexer, typename Input, typename Iterator>
-        static ast::syntax_tree parse(Lexer& lexer, Input& input, Iterator& begin, Iterator const& end, bool interpolation)
+        static ast::syntax_tree parse(Lexer& lexer, compiler::grammar<Lexer>& grammar, Input& input, Iterator& begin, Iterator const& end)
         {
             using namespace std;
             using namespace puppet::lexer;
@@ -87,14 +84,13 @@ namespace puppet { namespace compiler {
 
             try {
                 // Construct a lexer of the given type with a callback that reports warnings
-                Lexer lexer;
                 auto token_begin = lexer.begin(begin, end);
                 auto token_end = lexer.end();
 
                 // Parse the input into a syntax tree
                 ast::syntax_tree tree;
-                if (qi::parse(token_begin, token_end, grammar<Lexer>(lexer, interpolation), tree) &&
-                    (token_begin == token_end || token_begin->id() == boost::lexer::npos || interpolation)) {
+                if (qi::parse(token_begin, token_end, grammar, tree) &&
+                    (token_begin == token_end || token_begin->id() == boost::lexer::npos || grammar.interpolation())) {
                     return tree;
                 }
 
@@ -105,7 +101,7 @@ namespace puppet { namespace compiler {
             } catch (lexer_exception<Iterator> const& ex) {
                 throw parse_exception(ex.location().position(), ex.what());
             } catch (qi::expectation_failure<typename Lexer::iterator_type> const& ex) {
-                throw parse_exception(get_position(input, *ex.first), to_string(ex, interpolation));
+                throw parse_exception(get_position(input, *ex.first), to_string(ex, grammar.interpolation()));
             }
 
             // Unexpected character in the input

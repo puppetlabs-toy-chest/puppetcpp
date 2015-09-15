@@ -7,27 +7,33 @@ using namespace boost::spirit;
 
 namespace puppet { namespace compiler {
 
-    ast::syntax_tree parser::parse(ifstream& input, bool interpolation)
+    ast::syntax_tree parser::parse(ifstream& input)
     {
         file_static_lexer lexer;
+        compiler::grammar<file_static_lexer> grammar{lexer};
+
         auto begin = lex_begin(input);
         auto end = lex_end(input);
-        return parse(lexer, input, begin, end, interpolation);
+        return parse(lexer, grammar, input, begin, end);
     }
 
-    ast::syntax_tree parser::parse(string const& input, bool interpolation)
+    ast::syntax_tree parser::parse(string const& input)
     {
         string_static_lexer lexer;
+        compiler::grammar<string_static_lexer> grammar{lexer};
+
         auto begin = lex_begin(input);
         auto end = lex_end(input);
-        return parse(lexer, input, begin, end, interpolation);
+        return parse(lexer, grammar, input, begin, end);
     }
 
-    ast::syntax_tree parser::parse(lexer_string_iterator& begin, lexer_string_iterator const& end, bool interpolation)
+    ast::syntax_tree parser::parse(lexer_string_iterator& begin, lexer_string_iterator const& end)
     {
         string_static_lexer lexer;
+        compiler::grammar<string_static_lexer> grammar{lexer, true};
+
         auto range = boost::make_iterator_range(begin, end);
-        return parse(lexer, range, begin, end, interpolation);
+        return parse(lexer, grammar, range, begin, end);
     }
 
     parser::expectation_info_printer::expectation_info_printer(ostream& os) :

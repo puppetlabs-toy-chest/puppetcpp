@@ -351,7 +351,7 @@ namespace puppet { namespace runtime { namespace values {
         }
 
         if (error) {
-            error((boost::format("expected %1%, %2%, or %3% for relationship operator but found %4%.") %
+            error((boost::format("expected %1%, fully qualified %2%, or %3% for relationship but found %4%.") %
                    types::string::name() %
                    types::resource::name() %
                    types::array(types::variant({ values::type(types::string()), values::type(types::resource()) })) %

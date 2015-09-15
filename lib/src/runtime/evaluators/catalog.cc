@@ -57,7 +57,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         }
 
         // Get the default body attributes
-        vector<pair<ast::attribute_operator, shared_ptr<attribute>>> default_attributes;
+        runtime::attributes default_attributes;
         if (auto default_body = find_default_body(expr)) {
             default_attributes = evaluate_attributes(is_class, default_body->attributes());
         }
@@ -94,98 +94,54 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         auto& context = _evaluator.evaluation_context();
         auto catalog = context.catalog();
-        auto reference = _evaluator.evaluate(expr.reference());
-        auto position = get_position(expr.reference());
 
-        // Convert the value into an array of resource pointers
-        vector<resource*> resources;
-        if (!for_each<values::type>(reference, [&](values::type& resource_reference) {
+        static const auto to_resource_type = [](values::type const& type, expression_evaluator& evaluator, lexer::position const& position) {
             // Check for Class types
-            if (boost::get<types::klass>(&resource_reference)) {
-                throw _evaluator.create_exception(position, "cannot override attributes of a class resource.");
+            if (boost::get<types::klass>(&type)) {
+                throw evaluator.create_exception(position, "cannot override attributes of a class resource.");
             }
 
-            // Make sure the type is a qualified Resource type
-            auto resource_type = boost::get<types::resource>(&resource_reference);
-            if (!resource_type) {
-                throw _evaluator.create_exception(position, (boost::format("expected qualified %1% but found %2%.") % types::resource::name() % get_type(resource_reference)).str());
-            }
-
-            if (!resource_type->fully_qualified()) {
-                // TODO: implement
-                throw _evaluator.create_exception(expr.position(), "resource defaults expressions are not yet implemented.");
+            // Make sure the type is a resource type
+            auto resource = boost::get<types::resource>(&type);
+            if (!resource) {
+                throw evaluator.create_exception(position, (boost::format("expected qualified %1% but found %2%.") % types::resource::name() % get_type(type)).str());
             }
 
             // Classes cannot be overridden
-            if (resource_type->is_class()) {
-                throw _evaluator.create_exception(position, "cannot override attributes of a class resource.");
+            if (resource->is_class()) {
+                throw evaluator.create_exception(position, "cannot override attributes of a class resource.");
             }
-
-            // Find the resource
-            auto resource = catalog->find_resource(*resource_type);
-            if (!resource) {
-                throw _evaluator.create_exception(position, (boost::format("resource %1% does not exist in the catalog.") % *resource_type).str());
-            }
-            resources.push_back(resource);
-        })) {
-            throw _evaluator.create_exception(position, (boost::format("expected %1% or %2% for resource reference.") % types::resource::name() % types::array(types::resource())).str());
-        }
+            return resource;
+        };
 
         auto attributes = evaluate_attributes(false, expr.attributes());
 
-        // Loop through each attribute
-        for (auto& kvp : attributes) {
-            auto op = kvp.first;
-            auto& attribute = kvp.second;
+        auto reference = _evaluator.evaluate(expr.reference());
+        auto position = get_position(expr.reference());
 
-            // Set or append the attribute on each resource
-            for (size_t i = 0; i < resources.size(); ++i) {
-                auto& resource = *resources[i];
-
-                // Walk the parent scope looking for an associated resource that contains this one
-                bool override = false;
-                auto parent = context.current_scope()->parent().get();
-                while (parent) {
-                    if (parent->resource() && catalog->is_contained(resource, *parent->resource())) {
-                        override = true;
-                        break;
+        // TODO: implement collectors in resource override expressions
+        if (auto array = as<values::array>(reference)) {
+            for (auto const& element : *array) {
+                if (auto type = as<values::type>(element)) {
+                    auto resource_type = to_resource_type(*type, _evaluator, position);
+                    if (!resource_type->fully_qualified()) {
+                        // TODO: support resource defaults expression
+                        throw _evaluator.create_exception(expr.position(), "resource defaults expressions are not yet implemented.");
                     }
-                    parent = parent->parent().get();
-                }
-
-                if (op == ast::attribute_operator::assignment) {
-                    if (!override && resource.get(attribute->name())) {
-                        if (is_undef(*attribute->value())) {
-                            throw _evaluator.create_exception(
-                                attribute->name_position(),
-                                (boost::format("cannot remove attribute '%1%' from resource %2%.") %
-                                 attribute->name() %
-                                 resource.type()
-                                ).str());
-                        }
-                        throw _evaluator.create_exception(
-                            attribute->name_position(),
-                            (boost::format("cannot override attribute '%1%' because it has already been set for resource %2%.") %
-                             attribute->name() %
-                             resource.type()
-                            ).str());
-                    }
-                    // Set the attribute on the resource
-                    resource.set(attribute);
-                } else if (op == ast::attribute_operator::append) {
-                    if (!override && resource.get(attribute->name())) {
-                        throw _evaluator.create_exception(
-                            attribute->name_position(),
-                            (boost::format("cannot append to attribute '%1%' because it has already been set for resource %2%.") %
-                             attribute->name() %
-                             resource.type()
-                            ).str());
-                    }
-                    resource.append(attribute);
+                    catalog->add_override(resource_override(_evaluator.compilation_context(), expr.position(), *resource_type, attributes, context.current_scope()));
                 } else {
-                    throw runtime_error("unexpected attribute operator");
+                    throw _evaluator.create_exception(position, (boost::format("expected qualified %1% for array element but found %2%.") % types::resource::name() % get_type(element)).str());
                 }
             }
+        } else if (auto type = as<values::type>(reference)) {
+            auto resource_type = to_resource_type(*type, _evaluator, position);
+            if (!resource_type->fully_qualified()) {
+                // TODO: support resource defaults expression
+                throw _evaluator.create_exception(expr.position(), "resource defaults expressions are not yet implemented.");
+            }
+            catalog->add_override(resource_override(_evaluator.compilation_context(), expr.position(), *resource_type, rvalue_cast(attributes), context.current_scope()));
+        } else {
+            throw _evaluator.create_exception(position, (boost::format("expected qualified %1% for resource reference but found %2%.") % types::resource::name() % get_type(reference)).str());
         }
         return reference;
     }
@@ -243,9 +199,9 @@ namespace puppet { namespace runtime { namespace evaluators {
         return default_body;
     }
 
-    vector<pair<ast::attribute_operator, shared_ptr<attribute>>> catalog_expression_evaluator::evaluate_attributes(bool is_class, optional<vector<ast::attribute_expression>> const& expressions)
+    runtime::attributes catalog_expression_evaluator::evaluate_attributes(bool is_class, optional<vector<ast::attribute_expression>> const& expressions)
     {
-        vector<pair<ast::attribute_operator, shared_ptr<attribute>>> attributes;
+        runtime::attributes attributes;
         if (!expressions) {
             return attributes;
         }
@@ -267,7 +223,7 @@ namespace puppet { namespace runtime { namespace evaluators {
             }
 
             if (!names.insert(name).second) {
-                throw _evaluator.create_exception(expression.position(), (boost::format("attribute '%1%' already exists in this resource body.") % name).str());
+                throw _evaluator.create_exception(expression.position(), (boost::format("attribute '%1%' already exists in the list.") % name).str());
             }
 
             // Evaluate and validate the attribute value
@@ -337,7 +293,7 @@ namespace puppet { namespace runtime { namespace evaluators {
     }
 
     void catalog_expression_evaluator::splat_attribute(
-        vector<pair<ast::attribute_operator, shared_ptr<attribute>>>& attributes,
+        runtime::attributes& attributes,
         unordered_set<string>& names,
         ast::attribute_expression const& attribute)
     {
@@ -376,9 +332,8 @@ namespace puppet { namespace runtime { namespace evaluators {
         bool is_class,
         string const& type_name,
         ast::resource_expression const& expression,
-        vector<pair<ast::attribute_operator, shared_ptr<attribute>>> const& default_attributes)
+        runtime::attributes const& default_attributes)
     {
-
         auto& evaluation_context = _evaluator.evaluation_context();
         auto& compilation_context = _evaluator.compilation_context();
         auto catalog = evaluation_context.catalog();
@@ -416,6 +371,10 @@ namespace puppet { namespace runtime { namespace evaluators {
                     throw _evaluator.create_exception(body.position(), "resource title cannot be empty.");
                 }
 
+                if (is_class) {
+                    resource_title = types::klass(resource_title).title();
+                }
+
                 // Add the resource to the catalog
                 auto& resource = catalog->add_resource(
                     types::resource(type_name, rvalue_cast(resource_title)),
@@ -432,6 +391,9 @@ namespace puppet { namespace runtime { namespace evaluators {
                 // Set the resource's attributes
                 set_attributes(resource, attributes);
 
+                // Apply any overrides now
+                catalog->evaluate_overrides(resource.type());
+
                 // Add the resource to the list
                 resources.emplace_back(&resource);
             })) {
@@ -441,7 +403,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         return resources;
     }
 
-    void catalog_expression_evaluator::set_attributes(runtime::resource& resource, vector<pair<ast::attribute_operator, shared_ptr<attribute>>> const& attributes)
+    void catalog_expression_evaluator::set_attributes(runtime::resource& resource, runtime::attributes const& attributes)
     {
         // Set the default attributes
         for (auto& kvp : attributes) {

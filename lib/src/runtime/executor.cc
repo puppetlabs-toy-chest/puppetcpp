@@ -191,6 +191,14 @@ namespace puppet { namespace runtime {
                         ).str(),
                         attribute.context(),
                         attribute.name_position());
+                } else {
+                    throw evaluation_exception(
+                        (boost::format("'%1%' is not a valid parameter for defined type %2%.") %
+                         attribute.name() %
+                         resource.type()
+                        ).str(),
+                        attribute.context(),
+                        attribute.name_position());
                 }
             }
 
