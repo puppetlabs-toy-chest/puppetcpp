@@ -105,7 +105,7 @@ namespace puppet { namespace runtime { namespace functions {
             throw evaluator.create_exception(context.position(), (boost::format("cannot call '%1%' function: catalog functions are not supported.") % context.name()).str());
         }
         for (size_t i = 0; i < arguments.size(); ++i) {
-            boost::apply_visitor(declare_visitor(context, i, _relationship), arguments[i]);
+            boost::apply_visitor(declare_visitor(context, i, _relationship), dereference(arguments[i]));
         }
         return value();
     }

@@ -275,6 +275,11 @@ namespace puppet { namespace runtime {
         return value;
     }
 
+    void resource::realize()
+    {
+        _virtualized = false;
+    }
+
     bool resource::is_metaparameter(string const& name)
     {
         static const unordered_set<string> metaparameters = {
@@ -1098,6 +1103,11 @@ namespace puppet { namespace runtime {
         return false;
     }
 
+    void catalog::add_collector(shared_ptr<collectors::collector> collector)
+    {
+        _collectors.emplace_back(rvalue_cast(collector));
+    }
+
     void catalog::finalize(runtime::context& context)
     {
         // TODO: check if the catalog has already been finalized
@@ -1109,9 +1119,12 @@ namespace puppet { namespace runtime {
         // Keep track of a list of defined types that are virtual
         list<pair<defined_type const*, resource*>> virtualized;
         while (true) {
-            // TODO: collect resources
+            // Run all collectors
+            for (auto& collector : _collectors) {
+                collector->collect(*this);
+            }
 
-            // After a collection, if all defined types have been evaluated and the elements of the virtualized list are
+            // After collection, if all defined types have been evaluated and the elements of the virtualized list are
             // still virtual, then there is nothing left to do
             if (index >= _defined_types.size() && std::all_of(virtualized.begin(), virtualized.end(), [](pair<defined_type const*, resource*> const& element) {
                 return element.second->virtualized();
@@ -1126,6 +1139,13 @@ namespace puppet { namespace runtime {
             if (iteration++ >= max_iterations) {
                 throw evaluation_exception("maximum defined type evaluations exceeded: a defined type may be infinitely recursive.");
             }
+
+            // Loop one more time so that collectors are run again
+        }
+
+        // Ensure there are no uncollected resources
+        for (auto const& collector : _collectors) {
+            collector->detect_uncollected();
         }
 
         // Evaluate all resource relationships

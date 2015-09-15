@@ -6,6 +6,7 @@
 
 #include "../lexer/position.hpp"
 #include "../ast/syntax_tree.hpp"
+#include "collectors/collector.hpp"
 #include "values/value.hpp"
 #include <boost/optional.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -241,6 +242,11 @@ namespace puppet { namespace runtime {
          * @return Returns the resources as a RapidJSON value.
          */
         rapidjson::Value to_json(rapidjson::Allocator& allocator, dependency_graph const& graph) const;
+
+        /**
+         * Realizes the resource if the resource is virtual.
+         */
+        void realize();
 
         /**
          * Determines if the given name is a metaparameter name.
@@ -667,6 +673,12 @@ namespace puppet { namespace runtime {
         bool is_contained(runtime::resource const& resource, runtime::resource const& container) const;
 
         /**
+         * Adds a collector to the catalog.
+         * @param collector The collector to add.
+         */
+        void add_collector(std::shared_ptr<collectors::collector> collector);
+
+        /**
          * Finalizes the catalog.
          * Generates resources and populates the dependency graph.
          * @param context The current evaluation context.
@@ -724,6 +736,8 @@ namespace puppet { namespace runtime {
         std::unordered_multimap<types::resource, resource_override, boost::hash<types::resource>> _overrides;
         // Stores the resource relationships processed at finalization
         std::vector<resource_relationship> _relationships;
+        // Stores the collectors
+        std::vector<std::shared_ptr<collectors::collector>> _collectors;
         // Stores the resource dependency graph
         dependency_graph _graph;
     };
