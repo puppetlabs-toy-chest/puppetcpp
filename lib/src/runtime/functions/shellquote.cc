@@ -6,8 +6,7 @@ using namespace puppet::lexer;
 using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace functions {
-    // FIXME: How should this handle unicode? The original ruby only handles
-    // the printable ascii range.
+    // TODO: Handle unicode.
 
     // Faithfully translated from the original lib/puppet/parser/functions/shellquote.rb
     /** Quote and concatenate arguments for use in Bourne shell.
@@ -21,58 +20,48 @@ namespace puppet { namespace runtime { namespace functions {
     */
     value shellquote::operator()(call_context& context) const
     {
-        // EWWWW!!
-        const string safe = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0-9@%_+=:,./-";
-        const string dangerous =  "!\"`$\\";
         auto& evaluator = context.evaluator();
-        vector<const string> result;
-
         auto& arguments = context.arguments();
+        return _quotify(arguments, evaluator, context);
+    }
+
+    string shellquote::_quotify(const values::array& arguments, expression_evaluator& evaluator, call_context& context) const
+    {
+        static const string dangerous =  "!\"`$\\";
+
+        string result;
         for (size_t i = 0; i < arguments.size(); ++i) {
+            // Each argument may be a string or an array. If it is an array
+            // (or worse, an array of arrays) then recursively quotify it.
+
+            // First assume it's a string.
             auto word = as<string>(arguments[i]);
             if (!word) {
-                throw evaluator.create_exception(context.position(i), (boost::format("expected %1% for first argument but found %2%.") % types::string::name() % get_type(arguments[i])).str());
+                // Okay, it's not a string, let's try an array.
+                auto sub_array = as<values::array>(arguments[i]);
+                if (!sub_array) {
+                    // Crap, let's give up.
+                    throw evaluator.create_exception(context.position(i), (boost::format("expected %1% or %2% for first argument but found %3%.") % types::string::name() % types::array::name() % get_type(arguments[i])).str());
+                }
+                // Okay quotify it and add it to the result.
+                result += " " + _quotify(*sub_array, evaluator, context);
+                continue;
             }
-            if (word->length() != 0 && _count_chars(*word, safe) == word->length()) {
-                result.push_back(*word);
-            } else if (_count_chars(*word, dangerous) == 0) {
-                result.push_back((boost::format("\"%1%\"") % *word).str());
-            } else if (_count_chars(*word, "'") == 0) {
-                result.push_back((boost::format("'%1%'") % *word).str());
+            if (word->find_first_of(dangerous) == string::npos) {
+                result += " " + (boost::format("\"%1%\"") % *word).str();
+            } else if (word->find_first_of("'") == string::npos) {
+                result += " " + (boost::format("'%1%'") % *word).str();
             } else {
-                string r = "\"";
+                result += "\"";
                 for (auto &c : *word) {
                     if (dangerous.find(c) != string::npos) {
-                        r += "\\";
+                        result += "\\";
                     }
-                    r += c;
+                    result += c;
                 }
-                r += "\"";
-                result.push_back(r);
+                result += "\"";
             }
         }
-        // There's probably a better way to do this too.
-        string ret;
-        for (auto &str : result) {
-            ret += str;
-            ret += " ";
-        }
-        return ret;
+        return result;
     }
-
-    // O(N*M) :( Is there some sort of cheap hash function which
-    // Also, there's probably functional C++11 wizardry which could make this
-    // a 1 liner.
-    size_t shellquote::_count_chars(const string &word, const string &set) const {
-        int count = 0;
-        for (auto const &chr : word) {
-            for (auto const &elem : set) {
-                if (chr == elem) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
 }}}  // namespace puppet::runtime::functions

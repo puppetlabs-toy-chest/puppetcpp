@@ -21,7 +21,7 @@ namespace puppet { namespace runtime { namespace functions {
         values::value operator()(call_context& context) const;
 
         private:
-            size_t _count_chars(const std::string &word, const std::string &set) const;
+            std::string _quotify(const values::array& arguments, expression_evaluator& evaluator, call_context& context) const;
     };
 
 }}}  // puppet::runtime::functions
