@@ -2,7 +2,7 @@
 #include <puppet/compiler/parser.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
-#include <codecvt>
+#include <utf8.h>
 #include <cctype>
 #include <sstream>
 
@@ -323,8 +323,8 @@ namespace puppet { namespace runtime {
             variable_length = true;
         }
 
-        string characters;
-        characters.reserve(6);
+        string digits;
+        digits.reserve(6);
         for (; begin != end; ++begin) {
             // Break on '}' for variable length
             if (variable_length && *begin == '}') {
@@ -336,10 +336,10 @@ namespace puppet { namespace runtime {
                 return false;
             }
 
-            characters.push_back(*begin);
+            digits.push_back(*begin);
 
-            // Break on 4 characters for fixed length
-            if (!variable_length && characters.size() == 4) {
+            // Break on 4 digits for fixed length
+            if (!variable_length && digits.size() == 4) {
                 break;
             }
         }
@@ -349,38 +349,22 @@ namespace puppet { namespace runtime {
                 _evaluator.warn(position, "a closing '}' was not found for unicode escape sequence.");
                 return false;
             }
-            if (characters.empty() || characters.size() > 6) {
+            if (digits.empty() || digits.size() > 6) {
                 _evaluator.warn(position, "expected at least 1 and at most 6 hexadecimal digits for unicode escape sequence.");
                 return false;
             }
         }
 
         // Convert the input to a unicode character
-        char32_t from;
         try {
-            from = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(characters));
+            char32_t character = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(digits));
+            utf8::utf32to8(&character, &character + 1, back_inserter(result));
         } catch (boost::bad_lexical_cast const&) {
             _evaluator.warn(position, "invalid unicode escape sequence.");
             return false;
-        }
-
-        // Convert the unicode character to utf8 bytes (maximum is 4 bytes)
-        codecvt_utf8<char32_t> converter;
-        char32_t const* next_from = nullptr;
-        char* next_to = nullptr;
-        auto state = mbstate_t();
-        char buffer[4] = {};
-        converter.out(state, &from, &from + 1, next_from, buffer, std::end(buffer), next_to);
-
-        // Ensure all characters were converted (there was only one)
-        if (next_from != &from + 1) {
-            _evaluator.warn(position, "invalid unicode code point.");
+        } catch (utf8::invalid_code_point const&) {
+            _evaluator.warn(position, "invalid unicode escape sequence.");
             return false;
-        }
-
-        // Output the number of bytes converted
-        for (size_t i = 0; (&buffer[0] + i) < next_to; ++i) {
-            result += buffer[i];
         }
         return true;
     }

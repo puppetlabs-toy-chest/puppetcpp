@@ -7,6 +7,7 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
     ${Facter_INCLUDE_DIRS}
     ${RAPIDJSON_INCLUDE_DIRS}
+    ${UTF8CPP_INCLUDE_DIRS}
 )
 
 # Set common sources
