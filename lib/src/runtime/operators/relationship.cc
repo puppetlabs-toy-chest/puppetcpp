@@ -7,7 +7,7 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace runtime { namespace operators {
 
-    static value add_relationship(binary_context& context, string const& attribute_name)
+    static value add_relationship(binary_context& context, runtime::relationship relationship)
     {
         auto& evaluator = context.evaluator();
         auto catalog = evaluator.evaluation_context().catalog();
@@ -17,59 +17,44 @@ namespace puppet { namespace runtime { namespace operators {
 
         // Populate an array of resource references from the right-hand side
         values::array result;
-        each_resource(context.right(), [&](types::resource const& target_resource) {
-            // Locate the target in the catalog
-            auto target = catalog->find_resource(target_resource);
-            if (!target) {
-                throw evaluator.create_exception(context.right_position(), (boost::format("cannot create relationship: resource %1% does not exist in the catalog.") % target_resource).str());
-            }
-
-            result.emplace_back(target_resource);
+        each_resource(context.right(), [&](types::resource const& target) {
+            result.push_back(target);
         }, [&](string const& message) {
             throw evaluator.create_exception(context.right_position(), message);
         });
 
-        // Create the new attribute
-        auto attribute = std::make_shared<runtime::attribute>(
-            context.evaluator().compilation_context(),
-            attribute_name,
-            context.right_position(),
-            std::make_shared<values::value>(rvalue_cast(result)),
-            context.right_position()
-        );
+        // Add the relationship; it will be evaluated upon finalization
+        catalog->add_relationship(
+           resource_relationship(
+               evaluator.compilation_context(),
+               rvalue_cast(context.left()),
+               context.left_position(),
+               rvalue_cast(context.right()),
+               context.right_position(),
+               relationship
+           ));
 
-        // Now associate each left-hand side resource with those on the right
-        each_resource(context.left(),[&](types::resource const& source_resource) {
-            // Locate the source in the catalog
-            auto source = catalog->find_resource(source_resource);
-            if (!source) {
-                throw evaluator.create_exception(context.left_position(), (boost::format("cannot create relationship: resource %1% does not exist in the catalog.") % source_resource).str());
-            }
-            source->append(attribute);
-        }, [&](string const& message) {
-            throw evaluator.create_exception(context.left_position(), message);
-        });
         return result;
     }
 
     value in_edge::operator()(binary_context& context) const
     {
-        return add_relationship(context, "before");
+        return add_relationship(context, relationship::before);
     }
 
     value in_edge_subscribe::operator()(binary_context& context) const
     {
-        return add_relationship(context, "notify");
+        return add_relationship(context, relationship::notify);
     }
 
     value out_edge::operator()(binary_context& context) const
     {
-        return add_relationship(context, "require");
+        return add_relationship(context, relationship::require);
     }
 
     value out_edge_subscribe::operator()(binary_context& context) const
     {
-        return add_relationship(context, "subscribe");
+        return add_relationship(context, relationship::subscribe);
     }
 
 }}}  // namespace puppet::runtime::operators

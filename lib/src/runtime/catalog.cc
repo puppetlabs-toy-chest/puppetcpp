@@ -215,7 +215,7 @@ namespace puppet { namespace runtime {
         return _vertex_id;
     }
 
-    Value resource::to_json(Allocator& allocator) const
+    Value resource::to_json(Allocator& allocator, dependency_graph const& graph) const
     {
         Value value;
         value.SetObject();
@@ -232,7 +232,7 @@ namespace puppet { namespace runtime {
         // TODO: auto populate the resource's tags
         Value tags;
         tags.SetArray();
-        value.AddMember("tags", tags, allocator);
+        value.AddMember("tags", rvalue_cast(tags), allocator);
 
         // Write out the file and line if not from "main"
         if (*path != "main") {
@@ -255,12 +255,22 @@ namespace puppet { namespace runtime {
                 continue;
             }
 
+            // Do not write out relationship metaparameters (sourced from dependency graph below)
+            if (name == "before" || name == "notify" || name == "require"  || name == "subscribe") {
+                continue;
+            }
+
             parameters.AddMember(
                 StringRef(name.c_str(), name.size()),
                 ::to_json(value, allocator),
                 allocator);
         }
-        value.AddMember("parameters", parameters, allocator);
+
+        write_relationship_parameters(parameters, allocator, graph);
+
+        if (parameters.MemberCount() > 0) {
+            value.AddMember("parameters", rvalue_cast(parameters), allocator);
+        }
 
         return value;
     }
@@ -286,6 +296,47 @@ namespace puppet { namespace runtime {
     void resource::vertex_id(size_t id)
     {
         _vertex_id = id;
+    }
+
+    void resource::write_relationship_parameters(Value& parameters, Allocator& allocator, dependency_graph const& graph) const
+    {
+        Value require_parameter;
+        Value subscribe_parameter;
+
+        require_parameter.SetArray();
+        subscribe_parameter.SetArray();
+
+        auto iterators = boost::out_edges(_vertex_id, graph);
+        for (auto it = iterators.first; it != iterators.second; ++it) {
+            auto relationship = graph[*it];
+
+            // Ignore containment edges; those are handled by the catalog
+            Value* parameter = nullptr;
+            if (relationship == runtime::relationship::contains) {
+                continue;
+            }
+
+            // Since the outedges represent those resources this resouce depends on, treat before as require and notify as subscribe
+            if (relationship == runtime::relationship::before || relationship == runtime::relationship::require) {
+                parameter = &require_parameter;
+            } else if (relationship == runtime::relationship::notify || relationship == runtime::relationship::subscribe) {
+                parameter = &subscribe_parameter;
+            }
+
+            if (!parameter) {
+                throw runtime_error("unexpected relationship.");
+            }
+
+            // Add the target to the parameter
+            auto target = graph[boost::target(*it, graph)];
+            parameter->PushBack(rapidjson::Value(boost::lexical_cast<string>(target->type()).c_str(), allocator), allocator);
+        }
+        if (require_parameter.Size() > 0) {
+            parameters.AddMember("require", rvalue_cast(require_parameter), allocator);
+        }
+        if (subscribe_parameter.Size() > 0) {
+            parameters.AddMember("subscribe", rvalue_cast(subscribe_parameter), allocator);
+        }
     }
 
     class_definition::class_definition(types::klass klass, shared_ptr<compiler::context> context, ast::class_definition_expression const& expression) :
@@ -421,6 +472,221 @@ namespace puppet { namespace runtime {
         executor.execute(context.node_scope());
     }
 
+    resource_override::resource_override(
+        shared_ptr<compiler::context> context,
+        lexer::position position,
+        types::resource type,
+        runtime::attributes attributes,
+        shared_ptr<runtime::scope> scope) :
+            _context(rvalue_cast(context)),
+            _position(rvalue_cast(position)),
+            _type(rvalue_cast(type)),
+            _attributes(rvalue_cast(attributes)),
+            _scope(rvalue_cast(scope))
+    {
+        if (!_type.fully_qualified()) {
+            throw runtime_error("expected a fully qualified resource type.");
+        }
+    }
+
+    shared_ptr<compiler::context> const& resource_override::context() const
+    {
+        return _context;
+    }
+
+    lexer::position const& resource_override::position() const
+    {
+        return _position;
+    }
+
+    types::resource const& resource_override::type() const
+    {
+        return _type;
+    }
+
+    runtime::attributes const& resource_override::attributes() const
+    {
+        return _attributes;
+    }
+
+    shared_ptr<runtime::scope> const& resource_override::scope() const
+    {
+        return _scope;
+    }
+
+    void resource_override::evaluate(runtime::catalog& catalog) const
+    {
+        auto resource = catalog.find_resource(_type);
+        if (!resource) {
+            throw evaluation_exception(
+                (boost::format("resource %1% does not exist in the catalog.") %
+                 _type
+                ).str(),
+                _context,
+                _position);
+        }
+
+        // No attributes? Nothing to do once we've checked existence
+        if (_attributes.empty()) {
+            return;
+        }
+
+        // Walk the parent scope looking for an associated resource that contains this one
+        bool override = true;
+        if (_scope) {
+            override = false;
+            auto parent = _scope->parent().get();
+            while (parent) {
+                if (parent->resource() && catalog.is_contained(*resource, *parent->resource())) {
+                    override = true;
+                    break;
+                }
+                parent = parent->parent().get();
+            }
+        }
+
+        // Apply the overrides
+        for (auto& pair : _attributes) {
+            auto op = pair.first;
+            auto& attribute = pair.second;
+            if (op == ast::attribute_operator::assignment) {
+                if (!override) {
+                    if (auto previous = resource->get(attribute->name())) {
+                        if (is_undef(*attribute->value())) {
+                            throw evaluation_exception(
+                                (boost::format("cannot remove attribute '%1%' from resource %2% that was previously set at %3%:%4%.") %
+                                 attribute->name() %
+                                 resource->type() %
+                                 *previous->context()->path() %
+                                 previous->name_position().line()
+                                ).str(),
+                                attribute->context(),
+                                attribute->name_position());
+                        }
+                        throw evaluation_exception(
+                            (boost::format("cannot override attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
+                             attribute->name() %
+                             resource->type() %
+                             *previous->context()->path() %
+                             previous->name_position().line()
+                            ).str(),
+                            attribute->context(),
+                            attribute->name_position());
+                    }
+                }
+                // Set the attribute on the resource
+                resource->set(attribute);
+            } else if (op == ast::attribute_operator::append) {
+                if (!override) {
+                    if (auto previous = resource->get(attribute->name())) {
+                        throw evaluation_exception(
+                            (boost::format("cannot append to attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
+                             attribute->name() %
+                             resource->type() %
+                             *previous->context()->path() %
+                             previous->name_position().line()
+                            ).str(),
+                            attribute->context(),
+                            attribute->name_position());
+                    }
+                }
+                resource->append(attribute);
+            } else {
+                throw runtime_error("unexpected attribute operator");
+            }
+        }
+    }
+
+    resource_relationship::resource_relationship(
+        shared_ptr<compiler::context> context,
+        values::value source,
+        lexer::position source_position,
+        values::value target,
+        lexer::position target_position,
+        runtime::relationship relationship) :
+            _context(rvalue_cast(context)),
+            _source(rvalue_cast(source)),
+            _source_position(rvalue_cast(source_position)),
+            _target(rvalue_cast(target)),
+            _target_position(rvalue_cast(target_position)),
+            _relationship(relationship)
+    {
+    }
+
+    shared_ptr<compiler::context> const& resource_relationship::context() const
+    {
+        return _context;
+    }
+
+    values::value const& resource_relationship::source() const
+    {
+        return _source;
+    }
+
+    lexer::position const& resource_relationship::source_position() const
+    {
+        return _source_position;
+    }
+
+    values::value const& resource_relationship::target() const
+    {
+        return _target;
+    }
+
+    lexer::position const& resource_relationship::target_position() const
+    {
+        return _target_position;
+    }
+
+    runtime::relationship resource_relationship::relationship() const
+    {
+        return _relationship;
+    }
+
+    void resource_relationship::evaluate(runtime::catalog& catalog) const
+    {
+        // TODO: support collectors
+
+        // Build a list of targets
+        vector<resource*> targets;
+        each_resource(_target, [&](types::resource const& target_resource) {
+            // Locate the target in the catalog
+            auto target = catalog.find_resource(target_resource);
+            if (!target) {
+                throw evaluation_exception((boost::format("cannot create relationship: resource %1% does not exist in the catalog.") % target_resource).str(), _context, _target_position);
+            }
+
+            targets.push_back(target);
+        }, [&](string const& message) {
+            throw evaluation_exception(message, _context, _target_position);
+        });
+
+        // Now add a relationship from each source
+        each_resource(_source,[&](types::resource const& source_resource) {
+            // Locate the source in the catalog
+            auto source = catalog.find_resource(source_resource);
+            if (!source) {
+                throw evaluation_exception((boost::format("cannot create relationship: resource %1% does not exist in the catalog.") % source_resource).str(), _context, _source_position);
+            }
+
+            // Add a relationship to each target
+            for (auto target : targets) {
+                if (source == target) {
+                    throw evaluation_exception(
+                        (boost::format("resource %1% cannot form a relationship with itself.") %
+                         source->type()
+                        ).str(),
+                        _context,
+                        _source_position);
+                }
+
+                catalog.add_relationship(_relationship, *source, *target);
+            }
+        }, [&](string const& message) {
+            throw evaluation_exception(message, _context, _source_position);
+        });
+    }
+
     dependency_graph const& catalog::graph() const
     {
         return _graph;
@@ -445,6 +711,11 @@ namespace puppet { namespace runtime {
             }
         }
         boost::add_edge(source_ptr->vertex_id(), target_ptr->vertex_id(), relationship, _graph);
+    }
+
+    void catalog::add_relationship(resource_relationship relationship)
+    {
+        _relationships.emplace_back(rvalue_cast(relationship));
     }
 
     resource* catalog::find_resource(types::resource const& type)
@@ -512,6 +783,35 @@ namespace puppet { namespace runtime {
             _defined_types.emplace_back(make_pair(definition, resource));
         }
         return *resource;
+    }
+
+    void catalog::add_override(resource_override override)
+    {
+        auto type = override.type();
+
+        // Find the resource first
+        auto resource = find_resource(type);
+        if (!resource) {
+            // Not yet declared, so store for later
+            _overrides.insert(make_pair(rvalue_cast(type), rvalue_cast(override)));
+            return;
+        }
+
+        // Evaluate any existing overrides first
+        evaluate_overrides(type);
+
+        // Now apply the given override
+        override.evaluate(*this);
+    }
+
+    void catalog::evaluate_overrides(types::resource const& type)
+    {
+        // Evaluate the overrides for the given type
+        auto range = _overrides.equal_range(type);
+        for (auto it = range.first; it != range.second; ++it) {
+            it->second.evaluate(*this);
+        }
+        _overrides.erase(type);
     }
 
     vector<class_definition> const* catalog::find_class(types::klass const& klass, runtime::context* context)
@@ -800,39 +1100,48 @@ namespace puppet { namespace runtime {
 
     void catalog::finalize(runtime::context& context)
     {
-        vector<pair<defined_type const*, resource*>> virtualized;
+        // TODO: check if the catalog has already been finalized
+
+        const size_t max_iterations = 1000;
+        size_t iteration = 0;
+        size_t index = 0;
+
+        // Keep track of a list of defined types that are virtual
+        list<pair<defined_type const*, resource*>> virtualized;
         while (true) {
             // TODO: collect resources
 
-            // We've collected, so check to see if all remaining defined types are virtual
-            bool all_virtual = std::all_of(
-                virtualized.begin(),
-                virtualized.end(),
-                [](pair<defined_type const*, resource*> const& element) {
-                    return element.second->virtualized();
-                });
-
-            // If there are some realized defined types, move the entire collection over to evaluate
-            if (!all_virtual) {
-                _defined_types.insert(
-                    _defined_types.begin(),
-                    std::make_move_iterator(virtualized.begin()),
-                    std::make_move_iterator(virtualized.end()));
-
-                virtualized.clear();
-            }
-
-            // If there are no more defined types to evaluate, we're done
-            if (_defined_types.empty()) {
+            // After a collection, if all defined types have been evaluated and the elements of the virtualized list are
+            // still virtual, then there is nothing left to do
+            if (index >= _defined_types.size() && std::all_of(virtualized.begin(), virtualized.end(), [](pair<defined_type const*, resource*> const& element) {
+                return element.second->virtualized();
+            })) {
                 break;
             }
 
             // Evaluate the defined types
-            evaluate_defined_types(context, virtualized);
+            evaluate_defined_types(context, index, virtualized);
+
+            // Guard against infinite recursion by limiting the number of loop iterations
+            if (iteration++ >= max_iterations) {
+                throw evaluation_exception("maximum defined type evaluations exceeded: a defined type may be infinitely recursive.");
+            }
+        }
+
+        // Evaluate all resource relationships
+        for (auto const& relationship : _relationships) {
+            relationship.evaluate(*this);
+        }
+
+        // Evaluate any remaining overrides
+        for (auto& kvp : _overrides) {
+            kvp.second.evaluate(*this);
         }
 
         // Populate the dependency graph
         populate_graph();
+
+        // TODO: clear all data structures other than the resources
     }
 
     void catalog::write(compiler::node const& node, ostream& out) const
@@ -867,7 +1176,7 @@ namespace puppet { namespace runtime {
         // TODO: populate top-level tags
         Value tags;
         tags.SetArray();
-        document.AddMember("tags", tags, allocator);
+        document.AddMember("tags", rvalue_cast(tags), allocator);
 
         // Write out the catalog attributes
         auto const& name = node.name();
@@ -891,7 +1200,7 @@ namespace puppet { namespace runtime {
             }
 
             // Add the resource
-            resources.PushBack(resource.to_json(allocator), allocator);
+            resources.PushBack(resource.to_json(allocator, _graph), allocator);
 
             // Get the out edges from this resource
             auto iterators = boost::out_edges(resource.vertex_id(), _graph);
@@ -922,10 +1231,10 @@ namespace puppet { namespace runtime {
                 edges.PushBack(rvalue_cast(edge), allocator);
             }
         }
-        document.AddMember("resources", resources, allocator);
+        document.AddMember("resources", rvalue_cast(resources), allocator);
 
         // Write out the containment edges
-        document.AddMember("edges", edges, allocator);
+        document.AddMember("edges", rvalue_cast(edges), allocator);
 
         // Write out the declared classes
         Value classes;
@@ -934,7 +1243,7 @@ namespace puppet { namespace runtime {
         for (auto const& klass : _classes) {
             classes.PushBack(StringRef(klass.c_str(), klass.size()), allocator);
         }
-        document.AddMember("classes", classes, allocator);
+        document.AddMember("classes", rvalue_cast(classes), allocator);
 
         // Write the document to the stream
         PrettyWriter<stream_adapter> writer{adapter};
@@ -1008,13 +1317,18 @@ namespace puppet { namespace runtime {
 
     void catalog::populate_graph()
     {
-        string before_parameter = "before";
-        string notify_parameter = "notify";
-        string require_parameter = "require";
-        string subscribe_parameter = "subscribe";
+        const string before_parameter = "before";
+        const string notify_parameter = "notify";
+        const string require_parameter = "require";
+        const string subscribe_parameter = "subscribe";
 
         // Loop through each resource and add metaparameter relationships
         for (auto const& resource : _resources) {
+            // Skip any virtual resources
+            if (resource.virtualized()) {
+                continue;
+            }
+
             // Proccess the relationship metaparameters for the resource
             process_relationship_parameter(resource, before_parameter, runtime::relationship::before);
             process_relationship_parameter(resource, notify_parameter, runtime::relationship::notify);
@@ -1046,12 +1360,9 @@ namespace puppet { namespace runtime {
 
             if (&source == target) {
                 throw evaluation_exception(
-                    (boost::format("resource %1% (declared at %2%:%3%) cannot form a '%4%' relationship with resource %5%: the relationship is self-referencing.") %
-                     source.type() %
-                     source.path() %
-                     source.position().line() %
-                     name %
-                     target_resource).str(),
+                    (boost::format("resource %1% cannot form a relationship with itself.") %
+                     source.type()
+                    ).str(),
                     attribute->context(),
                     attribute->value_position());
             }
@@ -1071,43 +1382,37 @@ namespace puppet { namespace runtime {
         });
     }
 
-    void catalog::evaluate_defined_types(runtime::context& context, vector<pair<defined_type const*, resource*>>& virtualized)
+    void catalog::evaluate_defined_types(runtime::context& context, size_t& index, list<pair<defined_type const*, resource*>>& virtualized)
     {
         resource* current = nullptr;
 
         try {
-            const size_t max_iterations = 1000;
-            size_t iteration = 0;
-
-            // Because evaluation of defined types may declare more defined types, loop to exhaust the queue
-            while (!_defined_types.empty()) {
-                // Loop from now until the *current* end
-                auto size = _defined_types.size();
-                for (size_t i = 0; i < size; ++i) {
-                    auto& defined_type = _defined_types[i];
-                    current = defined_type.second;
-
-                    if (current->virtualized()) {
-                        // Defined type is virtual, enqueue it for later evaluation
-                        virtualized.emplace_back(rvalue_cast(defined_type));
-                        continue;
-                    }
-                    defined_type.first->evaluate(context, *current);
+            // Evaluate any previously virtual defined type
+            virtualized.remove_if([&](pair<defined_type const*, resource*>& element) {
+                current = element.second;
+                if (current->virtualized()) {
+                    return false;
                 }
+                element.first->evaluate(context, *current);
+                return true;
+            });
 
-                // Erase everything that was just evaluated
-                _defined_types.erase(_defined_types.begin(), _defined_types.begin() + size);
+            // Evaluate all non-virtual define types from the current start to the current end *only*
+            // Any defined types that are added to the list as a result of the evaluation will be themselves
+            // evaluated on the next pass.
+            auto size = _defined_types.size();
+            for (; index < size; ++index) {
+                auto& defined_type = _defined_types[index];
+                current = defined_type.second;
 
-                // Guard against infinite recursion by limiting the number of outer loop iterations
-                if (iteration++ >= max_iterations) {
-                    current = nullptr;
-                    throw evaluation_exception("maximum defined type evaluations exceeded: a defined type may be infinitely recursive.");
+                if (current->virtualized()) {
+                    // Defined type is virtual, enqueue it for later evaluation
+                    virtualized.emplace_back(rvalue_cast(defined_type));
+                    continue;
                 }
+                defined_type.first->evaluate(context, *current);
             }
         } catch (evaluation_exception const& ex) {
-            if (!current) {
-                throw;
-            }
             // If the original exception has context, log an error with full context first
             if (ex.context()) {
                 ex.context()->log(logging::level::error, ex.position(), ex.what());

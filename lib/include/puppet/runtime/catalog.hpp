@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <deque>
+#include <list>
 #include <functional>
 #include <unordered_map>
 #include <exception>
@@ -37,6 +38,9 @@ namespace puppet { namespace runtime {
 
     // Forward declaration of scope.
     struct scope;
+
+    // Forward declaration of resource.
+    struct resource;
 
     /**
      * Represents a resource attribute.
@@ -122,6 +126,16 @@ namespace puppet { namespace runtime {
          */
         subscribe
     };
+
+    /**
+     * Represents a resource dependency graph.
+     */
+    using dependency_graph = boost::adjacency_list<boost::multisetS, boost::vecS, boost::directedS, resource*, relationship>;
+
+    /**
+     * Represents a list of attributes paired with the attribute operator.
+     */
+    using attributes = std::vector<std::pair<ast::attribute_operator, std::shared_ptr<attribute>>>;
 
     /**
      * Stream insertion operator for relationship.
@@ -223,9 +237,10 @@ namespace puppet { namespace runtime {
         /**
          * Creates a RapidJSON value for this resource.
          * @param allocator The current RapidJSON allocator.
+         * @param graph The dependency graph to source relationships from.
          * @return Returns the resources as a RapidJSON value.
          */
-        rapidjson::Value to_json(rapidjson::Allocator& allocator) const;
+        rapidjson::Value to_json(rapidjson::Allocator& allocator, dependency_graph const& graph) const;
 
         /**
          * Determines if the given name is a metaparameter name.
@@ -237,6 +252,7 @@ namespace puppet { namespace runtime {
      private:
         friend struct catalog;
         void vertex_id(size_t id);
+        void write_relationship_parameters(rapidjson::Value& parameters, rapidjson::Allocator& allocator, dependency_graph const& graph) const;
 
         types::resource _type;
         std::shared_ptr<compiler::context> _context;
@@ -369,9 +385,137 @@ namespace puppet { namespace runtime {
     };
 
     /**
-     * Represnce a resource dependency graph.
+     * Represents a resource override.
+     * Resource overrides are applied immediately, upon resource declaration, or during catalog finalization.
      */
-    using dependency_graph = boost::adjacency_list<boost::multisetS, boost::vecS, boost::directedS, resource*, relationship>;
+    struct resource_override
+    {
+        /**
+         * Constructs a resource override.
+         * @param context The context for the resource override.
+         * @param position The position of the resource override.
+         * @param type The resource type being overridden.
+         * @param attributes The attributes being overridden.
+         * @param scope The scope where the override is taking place.
+         */
+        resource_override(
+            std::shared_ptr<compiler::context> context,
+            lexer::position position,
+            types::resource type,
+            runtime::attributes attributes = runtime::attributes(),
+            std::shared_ptr<runtime::scope> scope = nullptr);
+
+        /**
+         * Gets the context for the resource override.
+         * @return Returns the context for the resource override.
+         */
+        std::shared_ptr<compiler::context> const& context() const;
+
+        /**
+         * Gets the position of the resource override.
+         * @return Returns the position of the resource override.
+         */
+        lexer::position const& position() const;
+
+        /**
+         * Gets the resource type being overridden.
+         * @return Returns the resource type being overridden.
+         */
+        types::resource const& type() const;
+
+        /**
+         * Gets the attributes being overridden.
+         * @return Returns the attributes being overridden.
+         */
+        runtime::attributes const& attributes() const;
+
+        /**
+         * Gets the scope where the override is taking place.
+         * @return Returns the scope where the override is taking place.
+         */
+        std::shared_ptr<runtime::scope> const& scope() const;
+
+     private:
+        friend struct catalog;
+        void evaluate(runtime::catalog& catalog) const;
+
+        std::shared_ptr<compiler::context> _context;
+        lexer::position _position;
+        types::resource _type;
+        runtime::attributes _attributes;
+        std::shared_ptr<runtime::scope> _scope;
+    };
+
+    /**
+     * Represents a resource relationship resulting from a relationship operator.
+     * Resource relationships are evaluated when a catalog is finalized.
+     */
+    struct resource_relationship
+    {
+        /**
+         * Constructs a resource relationship.
+         * @param context The compilation context for the relationship.
+         * @param source The value representing the source.
+         * @param source_position The position of the source.
+         * @param target The value representing the target.
+         * @param target_position The position of the target.
+         * @param relationship The relationship between the source and the target.
+         */
+        resource_relationship(
+            std::shared_ptr<compiler::context> context,
+            values::value source,
+            lexer::position source_position,
+            values::value target,
+            lexer::position target_position,
+            runtime::relationship relationship);
+
+        /**
+         * Gets the compilation context for the relationship.
+         * @return Returns the compilation context for the relationship.
+         */
+        std::shared_ptr<compiler::context> const& context() const;
+
+        /**
+         * Gets the source value.
+         * @return Returns the source value.
+         */
+        values::value const& source() const;
+
+        /**
+         * Gets the position of the source.
+         * @return Returns the position of the source.
+         */
+        lexer::position const& source_position() const;
+
+        /**
+         * Gets the target value.
+         * @return Returns the target value.
+         */
+        values::value const& target() const;
+
+        /**
+         * Gets the position of the target.
+         * @return Returns the position of the target.
+         */
+        lexer::position const& target_position() const;
+
+        /**
+         * Gets the relationship between the source and the target.
+         * @return Returns the relationship between the source and the target.
+         */
+        runtime::relationship relationship() const;
+
+     private:
+        friend struct catalog;
+        void evaluate(runtime::catalog& catalog) const;
+
+        std::shared_ptr<compiler::context> _context;
+        values::value _source;
+        lexer::position _source_position;
+        values::value _target;
+        lexer::position _target_position;
+        runtime::relationship _relationship;
+    };
 
     /**
      * Represents the Puppet catalog.
@@ -393,6 +537,13 @@ namespace puppet { namespace runtime {
          * @param target The target resource.
          */
         void add_relationship(runtime::relationship relationship, resource const& source, resource const& target);
+
+        /**
+         * Adds a resource relationship.
+         * Resource relationships are processed upon catalog finalization.
+         * @param relationship The relationship to add.
+         */
+        void add_relationship(resource_relationship relationship);
 
         /**
          * Finds a resource in the catalog.
@@ -420,6 +571,21 @@ namespace puppet { namespace runtime {
             bool virtualized = false,
             bool exported = false,
             defined_type const* definition = nullptr);
+
+        /**
+         * Adds a resource override.
+         * If the resource does not exist yet, the override will be evaluated upon declaration or catalog finalization.
+         * If the resource does exist, the override will be evaluated immediately.
+         * @param override The resource override.
+         */
+        void add_override(resource_override override);
+
+        /**
+         * Evaluates the overrides for a resource.
+         * If the resource does not exist, an evaluation exception will be thrown.
+         * @param type The resource type to evaluate the overrides for.
+         */
+        void evaluate_overrides(types::resource const& type);
 
         /**
          * Finds the definitions of a class.
@@ -529,7 +695,7 @@ namespace puppet { namespace runtime {
      private:
         void populate_graph();
         void process_relationship_parameter(resource const& source, std::string const& name, runtime::relationship relationship);
-        void evaluate_defined_types(runtime::context& context, std::vector<std::pair<defined_type const*, resource*>>& virtualized);
+        void evaluate_defined_types(runtime::context& context, size_t& index, std::list<std::pair<defined_type const*, resource*>>& virtualized);
 
         // Stores the resources in declaration order
         // Note: this is a deque because we need references to not be invalidated when inserting to the end
@@ -554,6 +720,10 @@ namespace puppet { namespace runtime {
         std::vector<std::pair<values::regex, size_t>> _regex_nodes;
         // Stores the default index into the node definitions list
         boost::optional<size_t> _default_node_index;
+        // Stores the delayed resource overrides
+        std::unordered_multimap<types::resource, resource_override, boost::hash<types::resource>> _overrides;
+        // Stores the resource relationships processed at finalization
+        std::vector<resource_relationship> _relationships;
         // Stores the resource dependency graph
         dependency_graph _graph;
     };
