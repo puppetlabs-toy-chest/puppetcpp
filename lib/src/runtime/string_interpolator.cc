@@ -311,6 +311,12 @@ namespace puppet { namespace runtime {
                 result.pop_back();
             }
         }
+
+        // Ensure the string is valid UTF8
+        auto invalid = utf8::find_invalid(result.begin(), result.end());
+        if (invalid != result.end()) {
+            throw _evaluator.create_exception(position, "invalid UTF8 sequence in string.");
+        }
         return result;
     }
 

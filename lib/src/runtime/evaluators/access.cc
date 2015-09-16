@@ -1,6 +1,7 @@
 #include <puppet/runtime/evaluators/access.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/cast.hpp>
+#include <utf8.h>
 
 using namespace std;
 using namespace puppet::lexer;
@@ -72,10 +73,21 @@ namespace puppet { namespace runtime { namespace evaluators {
             count += index;
             index = 0;
         }
-        if (count <= 0) {
+
+        if (target.empty() || static_cast<size_t>(index) >= target.size() || count <= 0) {
             return string();
         }
-        return target.substr(static_cast<size_t>(index), static_cast<size_t>(count));
+
+        // Iterate as Unicode characters
+        auto begin = target.begin();
+        for (int64_t i = 0; i < index && begin != target.end(); ++i) {
+            utf8::next(begin, target.end());
+        }
+        auto end = begin;
+        for (int64_t i = 0; i < count && end != target.end(); ++i) {
+            utf8::next(end, target.end());
+        }
+        return string(begin, end);
     }
 
     access_expression_evaluator::result_type access_expression_evaluator::operator()(values::array const& target)
