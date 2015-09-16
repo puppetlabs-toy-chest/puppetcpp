@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "../../cast.hpp"
 #include <boost/functional/hash.hpp>
 #include <boost/variant.hpp>
 #include <ostream>
@@ -15,6 +16,35 @@ namespace puppet { namespace runtime { namespace types {
      */
     struct runtime
     {
+        /**
+         * Constructs a Runtime type.
+         * @param runtime_name The name of the runtime (e.g. C++).
+         * @param type_name The name of the type (e.g. QueryCollector).
+         */
+        explicit runtime(std::string runtime_name = {}, std::string type_name = {}) :
+            _runtime_name(rvalue_cast(runtime_name)),
+            _type_name(rvalue_cast(type_name))
+        {
+        }
+
+        /**
+         * Gets the runtime name.
+         * @return Returns the runtime name.
+         */
+        std::string const& runtime_name() const
+        {
+            return _runtime_name;
+        }
+
+        /**
+         * Gets the type name.
+         * @return Returns the type name.
+         */
+        std::string const& type_name() const
+        {
+            return _type_name;
+        }
+
         /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Runtime).
@@ -30,7 +60,7 @@ namespace puppet { namespace runtime { namespace types {
         template <typename Value>
         bool is_instance(Value const& value) const
         {
-            // TODO: implement
+            // No values are instances of runtime objects
             return false;
         }
 
@@ -43,17 +73,36 @@ namespace puppet { namespace runtime { namespace types {
         template <typename Type>
         bool is_specialization(Type const& other) const
         {
-            // TODO: implement
-            return false;
+            // Check that the other Runtime is specialized
+            auto type = boost::get<runtime>(&other);
+            if (!type) {
+                // Not the same type
+                return false;
+            }
+            // If this Runtime object has no runtime name, the other is specialized if it does have one
+            if (_runtime_name.empty()) {
+                return !type->runtime_name().empty();
+            }
+            // Otherwise, the runtimes need to be the same
+            if (_runtime_name != type->runtime_name()) {
+                return false;
+            }
+            // Otherwise, the other one is a specialization if this does not have a type but the other one does
+            return _type_name.empty() && !type->type_name().empty();
         }
+
+     private:
+        std::string _runtime_name;
+        std::string _type_name;
     };
 
     /**
      * Stream insertion operator for runtime type.
      * @param os The output stream to write the type to.
+     * @param type The Runtime type to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, runtime const&);
+    std::ostream& operator<<(std::ostream& os, runtime const& type);
 
     /**
      * Equality operator for runtime.
@@ -61,7 +110,7 @@ namespace puppet { namespace runtime { namespace types {
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    bool operator==(runtime const&, runtime const&);
+    bool operator==(runtime const& left, runtime const& right);
 
 }}}  // puppet::runtime::types
 
@@ -74,14 +123,17 @@ namespace boost {
     {
         /**
          * Hashes the Runtime type.
+         * @param type The type to hash.
          * @return Returns the hash value for the type.
          */
-        size_t operator()(puppet::runtime::types::runtime const&) const
+        size_t operator()(puppet::runtime::types::runtime const& type) const
         {
             static const size_t name_hash = boost::hash_value(puppet::runtime::types::runtime::name());
 
             size_t seed = 0;
             hash_combine(seed, name_hash);
+            hash_combine(seed, type.runtime_name());
+            hash_combine(seed, type.type_name());
             return seed;
         }
     };

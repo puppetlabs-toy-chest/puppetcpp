@@ -500,6 +500,32 @@ namespace puppet { namespace runtime { namespace evaluators {
         return result;
     }
 
+    access_expression_evaluator::result_type access_expression_evaluator::operator()(types::runtime const& type)
+    {
+        // Ensure there are at most 2 arguments to runtime
+        if (_arguments.size() > 2) {
+            throw _evaluator.create_exception(_positions[2], (boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::runtime::name() % _arguments.size()).str());
+        }
+
+        // First argument should be a string
+        if (!as<string>(_arguments[0])) {
+            throw _evaluator.create_exception(_positions[0], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[0])).str());
+        }
+        string runtime_name = mutate_as<string>(_arguments[0]);
+
+        // Check for the optional type name
+        string type_name;
+        if (_arguments.size() > 1) {
+            if (!as<string>(_arguments[1])) {
+                throw _evaluator.create_exception(_positions[1], (boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % get_type(_arguments[1])).str());
+            }
+
+            type_name = mutate_as<string>(_arguments[1]);
+        }
+
+        return types::runtime(rvalue_cast(runtime_name), rvalue_cast(type_name));
+    }
+
     void access_expression_evaluator::add_resource_reference(values::array& result, string const& type_name, values::value& argument, lexer::position const& position)
     {
         if (as<string>(argument)) {

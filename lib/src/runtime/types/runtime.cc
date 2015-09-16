@@ -9,15 +9,23 @@ namespace puppet { namespace runtime { namespace types {
         return "Runtime";
     }
 
-    ostream& operator<<(ostream& os, runtime const&)
+    ostream& operator<<(ostream& os, types::runtime const& type)
     {
         os << runtime::name();
+        if (type.runtime_name().empty()) {
+            return os;
+        }
+        os << "[" << type.runtime_name();
+        if (!type.type_name().empty()) {
+            os << ", " << type.type_name();
+        }
+        os << "]";
         return os;
     }
 
-    bool operator==(runtime const&, runtime const&)
+    bool operator==(runtime const& left, runtime const& right)
     {
-        return true;
+        return left.runtime_name() == right.runtime_name() && left.type_name() == right.type_name();
     }
 
 }}}  // namespace puppet::runtime::types

@@ -52,6 +52,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         result_type operator()(types::variant const& type);
         result_type operator()(types::resource const& type);
         result_type operator()(types::klass const& type);
+        result_type operator()(types::runtime const& type);
 
         void add_resource_reference(values::array& result, std::string const& type_name, values::value& argument, lexer::position const& position);
         void add_class_reference(values::array& result, values::value& argument, lexer::position const& position);

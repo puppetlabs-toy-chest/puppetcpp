@@ -86,7 +86,7 @@ Type system implemented:
 * [x] Pattern
 * [x] Regexp
 * [x] Resource
-* [ ] Runtime
+* [x] Runtime
 * [x] Scalar
 * [x] String
 * [x] Struct
