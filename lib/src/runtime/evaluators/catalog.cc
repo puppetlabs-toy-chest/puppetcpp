@@ -1,6 +1,7 @@
 #include <puppet/runtime/evaluators/catalog.hpp>
 #include <puppet/runtime/definition_scanner.hpp>
 #include <puppet/runtime/executor.hpp>
+#include <puppet/runtime/collectors/query_collector.hpp>
 #include <puppet/ast/expression_def.hpp>
 #include <puppet/cast.hpp>
 
@@ -119,7 +120,6 @@ namespace puppet { namespace runtime { namespace evaluators {
         auto reference = _evaluator.evaluate(expr.reference());
         auto position = get_position(expr.reference());
 
-        // TODO: implement collectors in resource override expressions
         if (auto array = as<values::array>(reference)) {
             for (auto const& element : *array) {
                 if (auto type = as<values::type>(element)) {
@@ -134,6 +134,17 @@ namespace puppet { namespace runtime { namespace evaluators {
                 }
             }
         } else if (auto type = as<values::type>(reference)) {
+            // Check for a collector
+            if (auto runtime = boost::get<types::runtime>(type)) {
+                if (runtime->object()) {
+                    if (auto collector = boost::get<shared_ptr<collectors::collector>>(*runtime->object())) {
+                        // The value is a collector; set the attributes
+                        collector->attributes(rvalue_cast(attributes));
+                        return reference;
+                    }
+                }
+            }
+
             auto resource_type = to_resource_type(*type, _evaluator, position);
             if (!resource_type->fully_qualified()) {
                 // TODO: support resource defaults expression
@@ -164,13 +175,16 @@ namespace puppet { namespace runtime { namespace evaluators {
     {
         // Node definition expressions are handled by the definition scanner
         // Just return undef
-        return values::undef();
+        return undef();
     }
 
     catalog_expression_evaluator::result_type catalog_expression_evaluator::operator()(ast::collection_expression const& expr)
     {
-        // TODO: implement
-        throw _evaluator.create_exception(expr.position(), "collection expressions are not yet implemented.");
+        // Create and add a collector to the catalog
+        auto& context = _evaluator.evaluation_context();
+        auto collector = make_shared<collectors::query_collector>(_evaluator.compilation_context(), expr, context.current_scope());
+        context.catalog()->add_collector(collector);
+        return types::runtime(types::runtime::object_type(rvalue_cast(collector)));
     }
 
     bool catalog_expression_evaluator::is_default_expression(ast::primary_expression const& expr)

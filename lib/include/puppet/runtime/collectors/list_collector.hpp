@@ -5,6 +5,7 @@
 #pragma once
 
 #include "collector.hpp"
+#include "../../compiler/context.hpp"
 #include "../values/type.hpp"
 #include <list>
 
@@ -24,9 +25,9 @@ namespace puppet { namespace runtime { namespace collectors {
 
         /**
          * Collects the resources.
-         * @param catalog The catalog to collect resources from.
+         * @param context The current evaluation context.
          */
-        void collect(runtime::catalog& catalog) override;
+        void collect(runtime::context& context) override;
 
         /**
          * Detects uncollected resources.

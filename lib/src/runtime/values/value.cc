@@ -341,6 +341,16 @@ namespace puppet { namespace runtime { namespace values {
                     callback(types::resource("class", klass->title()));
                     return;
                 }
+            } else if (auto runtime = boost::get<types::runtime>(type)) {
+                // Check for a collector
+                if (runtime->object()) {
+                    if (auto collector = boost::get<shared_ptr<collectors::collector>>(*runtime->object())) {
+                        for (auto resource : collector->resources()) {
+                            callback(resource->type());
+                        }
+                        return;
+                    }
+                }
             }
         } else if (auto array = as<values::array>(value)) {
             // For arrays, recurse on each element

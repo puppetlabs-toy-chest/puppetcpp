@@ -211,7 +211,10 @@ namespace puppet { namespace compiler {
             resource_defaults_expression =
                 ((type >> raw_token('{')) > -(attribute_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::resource_defaults_expression>(_1, _2) ];
             resource_override_expression =
-                ((variable_type_expression >> raw_token('{')) > -(attribute_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::resource_override_expression>(_1, _2) ];
+                ((override_reference >> raw_token('{')) > -(attribute_expression % raw_token(',')) > -raw_token(',') > raw_token('}')) [ _val = phx::construct<ast::resource_override_expression>(_1, _2) ];
+            override_reference =
+                collection_expression [ _val = phx::construct<ast::catalog_expression>(_1) ] |
+                ((type | variable) > *type_access_expression) [ _val = phx::construct<ast::postfix_expression>(phx::construct<ast::basic_expression>(_1), _2) ];
             class_definition_expression =
                 (token_pos(token_id::keyword_class) > name > -(raw_token('(') > -(parameter % raw_token(',')) > -raw_token(',') > raw_token(')')) > -(raw_token(token_id::keyword_inherits) > name) > raw_token('{') > -statements > raw_token('}')) [ _val = phx::construct<ast::class_definition_expression>(_1, _2, _3, _4, _5) ];
             defined_type_expression =
@@ -237,11 +240,7 @@ namespace puppet { namespace compiler {
                 raw_token(token_id::equals)     [ _val = ast::attribute_query_operator::equals ] |
                 raw_token(token_id::not_equals) [ _val = ast::attribute_query_operator::not_equals ];
             attribute_query_value =
-                variable |
-                string   |
-                boolean  |
-                number   |
-                name;
+                basic_expression;
             binary_query_expression =
                 (binary_query_operator > primary_attribute_query) [ _val = phx::construct<ast::binary_query_expression>(_1, _2) ];
             binary_query_operator =
@@ -299,8 +298,6 @@ namespace puppet { namespace compiler {
             // Type expression
             type_expression =
                 (type > *type_access_expression) [ _val = phx::construct<ast::postfix_expression>(phx::construct<ast::basic_expression>(_1), _2) ];
-            variable_type_expression =
-                ((type | variable) > *type_access_expression) [ _val = phx::construct<ast::postfix_expression>(phx::construct<ast::basic_expression>(_1), _2) ];
             type_access_expression =
                 access_expression;
 
@@ -359,6 +356,7 @@ namespace puppet { namespace compiler {
             attribute_name.name("attribute name");
             resource_defaults_expression.name("resource defaults expression");
             resource_override_expression.name("resource override expression");
+            override_reference.name("override reference");
             class_definition_expression.name("class definition expression");
             defined_type_expression.name("defined type expression");
             node_definition_expression.name("node definition expression");
@@ -388,7 +386,6 @@ namespace puppet { namespace compiler {
 
             // Type expression
             type_expression.name("type expression");
-            variable_type_expression.name("variable or type expression");
             type_access_expression.name("type access expression");
 
 #ifdef DEBUG_GRAMMAR
@@ -447,6 +444,7 @@ namespace puppet { namespace compiler {
             debug(attribute_name);
             debug(resource_defaults_expression);
             debug(resource_override_expression);
+            debug(override_reference);
             debug(class_definition_expression);
             debug(defined_type_expression);
             debug(node_definition_expression);
@@ -476,7 +474,6 @@ namespace puppet { namespace compiler {
 
             // Type expression
             debug(type_expression);
-            debug(variable_type_expression);
             debug(type_access_expression);
 #endif
         }
@@ -548,6 +545,7 @@ namespace puppet { namespace compiler {
         rule<puppet::ast::name>                         attribute_name;
         rule<puppet::ast::resource_defaults_expression> resource_defaults_expression;
         rule<puppet::ast::resource_override_expression> resource_override_expression;
+        rule<puppet::ast::primary_expression>           override_reference;
         rule<puppet::ast::class_definition_expression>  class_definition_expression;
         rule<puppet::ast::defined_type_expression>      defined_type_expression;
         rule<puppet::ast::node_definition_expression>   node_definition_expression;
@@ -557,7 +555,7 @@ namespace puppet { namespace compiler {
         rule<puppet::ast::primary_attribute_query>      primary_attribute_query;
         rule<puppet::ast::attribute_query>              attribute_query;
         rule<puppet::ast::attribute_query_operator>     attribute_query_operator;
-        rule<puppet::ast::basic_expression>             attribute_query_value;
+        rule<puppet::ast::primary_expression>           attribute_query_value;
         rule<puppet::ast::binary_query_expression>      binary_query_expression;
         rule<puppet::ast::binary_query_operator>        binary_query_operator;
 
@@ -577,7 +575,6 @@ namespace puppet { namespace compiler {
 
         // Type expression
         rule<puppet::ast::primary_expression>    type_expression;
-        rule<puppet::ast::primary_expression>    variable_type_expression;
         rule<puppet::ast::postfix_subexpression> type_access_expression;
 
         bool _interpolation;
