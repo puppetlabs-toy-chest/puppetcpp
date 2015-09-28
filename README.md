@@ -54,8 +54,8 @@ Expression evaluator status:
 * [x] class definition expressions
 * [x] defined type expressions
 * [x] node definition expressions
-* [ ] resource collection expressions
-* [ ] exported resource collection expressions 
+* [x] resource collection expressions
+* [ ] exported resource collection expressions (NYI: importing resources)
 * [x] loading classes from modules
 * [x] loading defined types from modules
 * [x] access expressions
@@ -86,7 +86,7 @@ Type system implemented:
 * [x] Pattern
 * [x] Regexp
 * [x] Resource
-* [ ] Runtime
+* [x] Runtime
 * [x] Scalar
 * [x] String
 * [x] Struct
@@ -157,8 +157,8 @@ Build Requirements
 * GCC >= 5.0 or Clang >= 3.4 (with libc++)
 * CMake >= 3.0
 * Boost Libraries >= 1.57
-* [Facter](https://github.com/puppetlabs/facter) >= 3.0 
-* yaml-cpp >= 0.5.1 
+* [Facter](https://github.com/puppetlabs/facter) >= 3.0
+* yaml-cpp >= 0.5.1
 
 Pre-Build
 ---------

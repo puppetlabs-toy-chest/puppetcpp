@@ -210,6 +210,13 @@ namespace puppet { namespace runtime {
         void set(std::shared_ptr<runtime::attribute> attribute);
 
         /**
+         * Sets the given attributes.
+         * @param attributes The attributes to set.
+         * @param override True if existing attributes can be overriden or false if not.
+         */
+        void set(runtime::attributes const& attributes, bool override = false);
+
+        /**
          * Appends an attribute on the resource.
          * If the attribute already exists as an array, the new value is appended to the old.
          * @param attribute The attribute to append on the resource.
@@ -556,7 +563,14 @@ namespace puppet { namespace runtime {
          * @param type The resource type to find.
          * @return Returns the resource if found or nullptr if the resource is not in the catalog.
          */
-        resource* find_resource(types::resource const& type);
+        resource* find_resource(types::resource const& type) const;
+
+        /**
+         * Finds resources in the catalog of a particular type.
+         * @param type_name The type name to find the resources of.
+         * @return Returns a vector of the resources of the type or nullptr if no resources exist of that type.
+         */
+        std::vector<resource*> const* find_resources(std::string const& type_name) const;
 
         /**
          * Adds a resource to the catalog.

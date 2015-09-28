@@ -29,7 +29,7 @@ namespace puppet { namespace ast {
     {
     }
 
-    attribute_query::attribute_query(name attribute, attribute_query_operator op, basic_expression value) :
+    attribute_query::attribute_query(name attribute, attribute_query_operator op, primary_expression value) :
         _attribute(rvalue_cast(attribute)),
         _op(op),
         _value(rvalue_cast(value))
@@ -46,7 +46,7 @@ namespace puppet { namespace ast {
         return _op;
     }
 
-    basic_expression const& attribute_query::value() const
+    primary_expression const& attribute_query::value() const
     {
         return _value;
     }

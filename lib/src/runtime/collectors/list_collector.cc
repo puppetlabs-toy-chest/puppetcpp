@@ -26,24 +26,27 @@ namespace puppet { namespace runtime { namespace collectors {
             front.second);
     }
 
-    void list_collector::collect(runtime::catalog& catalog)
+    void list_collector::collect(runtime::context& context)
     {
+        auto catalog = context.catalog();
+        if (!catalog) {
+            return;
+        }
+
         auto it = _list.begin();
 
         // Loop through any remaining resources in the list and realize them
         while (it != _list.end()) {
-            auto resource = catalog.find_resource(it->first);
+            auto resource = catalog->find_resource(it->first);
             if (!resource) {
                 ++it;
                 continue;
             }
 
-            // Realize the resource and add it to the list if it isn't a duplicate
-            resource->realize();
-            if (find(_resources.begin(), _resources.end(), resource) == _resources.end()) {
-                _resources.push_back(resource);
-            }
+            // Collect the resource
+            collect_resource(resource);
 
+            // Remove from the list
             _list.erase(it++);
         }
     }

@@ -152,6 +152,61 @@ namespace puppet { namespace runtime {
         _attributes[attribute->name()] = rvalue_cast(attribute);
     }
 
+    void resource::set(runtime::attributes const& attributes, bool override)
+    {
+        // Go through each given attribute
+        for (auto& pair : attributes) {
+            auto op = pair.first;
+            auto& attribute = pair.second;
+            // Check for assignment or append
+            if (op == ast::attribute_operator::assignment) {
+                if (!override) {
+                    if (auto previous = get(attribute->name())) {
+                        if (is_undef(*attribute->value())) {
+                            throw evaluation_exception(
+                                (boost::format("cannot remove attribute '%1%' from resource %2% that was previously set at %3%:%4%.") %
+                                 attribute->name() %
+                                 this->type() %
+                                 *previous->context()->path() %
+                                 previous->name_position().line()
+                                ).str(),
+                                attribute->context(),
+                                attribute->name_position());
+                        }
+                        throw evaluation_exception(
+                            (boost::format("cannot override attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
+                             attribute->name() %
+                             this->type() %
+                             *previous->context()->path() %
+                             previous->name_position().line()
+                            ).str(),
+                            attribute->context(),
+                            attribute->name_position());
+                    }
+                }
+                // Set the attribute on the resource
+                set(attribute);
+            } else if (op == ast::attribute_operator::append) {
+                if (!override) {
+                    if (auto previous = get(attribute->name())) {
+                        throw evaluation_exception(
+                            (boost::format("cannot append to attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
+                             attribute->name() %
+                             this->type() %
+                             *previous->context()->path() %
+                             previous->name_position().line()
+                            ).str(),
+                            attribute->context(),
+                            attribute->name_position());
+                    }
+                }
+                append(attribute);
+            } else {
+                throw runtime_error("unexpected attribute operator");
+            }
+        }
+    }
+
     void resource::append(shared_ptr<runtime::attribute> attribute)
     {
         if (!attribute) {
@@ -550,56 +605,8 @@ namespace puppet { namespace runtime {
             }
         }
 
-        // Apply the overrides
-        for (auto& pair : _attributes) {
-            auto op = pair.first;
-            auto& attribute = pair.second;
-            if (op == ast::attribute_operator::assignment) {
-                if (!override) {
-                    if (auto previous = resource->get(attribute->name())) {
-                        if (is_undef(*attribute->value())) {
-                            throw evaluation_exception(
-                                (boost::format("cannot remove attribute '%1%' from resource %2% that was previously set at %3%:%4%.") %
-                                 attribute->name() %
-                                 resource->type() %
-                                 *previous->context()->path() %
-                                 previous->name_position().line()
-                                ).str(),
-                                attribute->context(),
-                                attribute->name_position());
-                        }
-                        throw evaluation_exception(
-                            (boost::format("cannot override attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
-                             attribute->name() %
-                             resource->type() %
-                             *previous->context()->path() %
-                             previous->name_position().line()
-                            ).str(),
-                            attribute->context(),
-                            attribute->name_position());
-                    }
-                }
-                // Set the attribute on the resource
-                resource->set(attribute);
-            } else if (op == ast::attribute_operator::append) {
-                if (!override) {
-                    if (auto previous = resource->get(attribute->name())) {
-                        throw evaluation_exception(
-                            (boost::format("cannot append to attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
-                             attribute->name() %
-                             resource->type() %
-                             *previous->context()->path() %
-                             previous->name_position().line()
-                            ).str(),
-                            attribute->context(),
-                            attribute->name_position());
-                    }
-                }
-                resource->append(attribute);
-            } else {
-                throw runtime_error("unexpected attribute operator");
-            }
-        }
+        // Override the attributes
+        resource->set(_attributes, override);
     }
 
     resource_relationship::resource_relationship(
@@ -650,8 +657,6 @@ namespace puppet { namespace runtime {
 
     void resource_relationship::evaluate(runtime::catalog& catalog) const
     {
-        // TODO: support collectors
-
         // Build a list of targets
         vector<resource*> targets;
         each_resource(_target, [&](types::resource const& target_resource) {
@@ -723,7 +728,7 @@ namespace puppet { namespace runtime {
         _relationships.emplace_back(rvalue_cast(relationship));
     }
 
-    resource* catalog::find_resource(types::resource const& type)
+    resource* catalog::find_resource(types::resource const& type) const
     {
         if (!type.fully_qualified()) {
             return nullptr;
@@ -735,6 +740,16 @@ namespace puppet { namespace runtime {
             return nullptr;
         }
         return it->second;
+    }
+
+    vector<resource*> const* catalog::find_resources(string const& type_name) const
+    {
+        // Find the type and return the list
+        auto it = _resource_lists.find(type_name);
+        if (it == _resource_lists.end()) {
+            return nullptr;
+        }
+        return &it->second;
     }
 
     runtime::resource& catalog::add_resource(
@@ -1121,7 +1136,7 @@ namespace puppet { namespace runtime {
         while (true) {
             // Run all collectors
             for (auto& collector : _collectors) {
-                collector->collect(*this);
+                collector->collect(context);
             }
 
             // After collection, if all defined types have been evaluated and the elements of the virtualized list are

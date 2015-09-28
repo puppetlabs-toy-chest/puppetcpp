@@ -58,7 +58,7 @@ namespace puppet { namespace ast {
          * @param op The attribute query operator.
          * @param value The query value.
          */
-        attribute_query(name attribute, attribute_query_operator op, basic_expression value);
+        attribute_query(name attribute, attribute_query_operator op, primary_expression value);
 
         /**
          * Gets the attribute being queried.
@@ -76,7 +76,7 @@ namespace puppet { namespace ast {
          * Gets the query value.
          * @return Returns the query value.
          */
-        basic_expression const& value() const;
+        primary_expression const& value() const;
 
         /**
          * Gets the position of the query.
@@ -87,7 +87,7 @@ namespace puppet { namespace ast {
      private:
         name _attribute;
         attribute_query_operator _op;
-        basic_expression _value;
+        primary_expression _value;
     };
 
     /**

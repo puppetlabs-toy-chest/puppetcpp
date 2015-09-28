@@ -59,6 +59,8 @@ set(PUPPET_COMMON_SOURCES
     src/facts/yaml.cc
     src/runtime/collectors/collector.cc
     src/runtime/collectors/list_collector.cc
+    src/runtime/collectors/query_collector.cc
+    src/runtime/collectors/query_evaluator.cc
     src/runtime/evaluators/access.cc
     src/runtime/evaluators/basic.cc
     src/runtime/evaluators/catalog.cc
@@ -112,7 +114,6 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/types/numeric.cc
     src/runtime/types/pattern.cc
     src/runtime/types/regexp.cc
-    src/runtime/types/runtime.cc
     src/runtime/types/scalar.cc
     src/runtime/types/string.cc
     src/runtime/types/type.cc
