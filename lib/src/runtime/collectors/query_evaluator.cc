@@ -39,28 +39,36 @@ namespace puppet { namespace runtime { namespace collectors {
         // Otherwise, this should be an attribute query
         auto& query = boost::get<ast::attribute_query>(expression);
 
-        // If the attribute doesn't exist, return false
-        auto attribute = resource.get(query.attribute().value());
-        if (!attribute) {
-            return false;
-        }
-
         // Evaluate the expected value
         auto expected = _evaluator.evaluate(query.value());
 
-        // If the attribute's value is an array, first check for containment
+        // If the query is on the title, search the resource's title
         bool result = false;
-        if (auto array = as<values::array>(*attribute->value())) {
-            for (auto const& element : *array) {
-                if (equals(element, expected)) {
-                    result = true;
-                    break;
+        if (query.attribute().value() == "title") {
+            if (auto str = as<string>(expected)) {
+                result = resource.type().title() == *str;
+            }
+        } else {
+            // If the attribute doesn't exist, return false
+            auto attribute = resource.get(query.attribute().value());
+            if (!attribute) {
+                return false;
+            }
+
+            // If the attribute's value is an array, first check for containment
+            if (auto array = as<values::array>(*attribute->value())) {
+                for (auto const& element : *array) {
+                    if (equals(element, expected)) {
+                        result = true;
+                        break;
+                    }
                 }
             }
+
+            // Otherwise, compare for equality
+            result = result || equals(*attribute->value(), expected);
         }
 
-        // Otherwise, compare for equality
-        result = result || equals(*attribute->value(), expected);
         if (query.op() == ast::attribute_query_operator::not_equals) {
             result = !result;
         }
