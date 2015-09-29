@@ -714,7 +714,7 @@ namespace puppet { namespace runtime {
 
         /**
          * Detects cycles within the graph.
-         * Throws an evaluation exception if cycles are detected.
+         * Throws a compilation_exception if cycles are detected.
          */
         void detect_cycles();
 
@@ -737,7 +737,7 @@ namespace puppet { namespace runtime {
         // Stores the mapping between defined type name (e.g. foo::bar) and the defined type definition
         std::unordered_map<std::string, defined_type> _defined_type_definitions;
         // Stores the declared defined types in declaration order
-        std::deque<std::pair<defined_type const*, resource*>> _defined_types;
+        std::vector<std::pair<defined_type const*, resource*>> _defined_types;
         // Stores the node definitions in declaration order
         std::vector<node_definition> _node_definitions;
         // Stores the mapping between a node name and the index into the node definitions list
