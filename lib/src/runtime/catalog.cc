@@ -3,7 +3,7 @@
 #include <puppet/runtime/executor.hpp>
 #include <puppet/compiler/node.hpp>
 #include <puppet/ast/expression_def.hpp>
-#include <boost/graph/tiernan_all_cycles.hpp>
+#include <boost/graph/hawick_circuits.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/format.hpp>
 #include <rapidjson/document.h>
@@ -1333,7 +1333,7 @@ namespace puppet { namespace runtime {
     {
         // Check for cycles in the graph
         vector<string> cycles;
-        boost::tiernan_all_cycles(_graph, cycle_visitor(cycles));
+        boost::hawick_unique_circuits(_graph, cycle_visitor(cycles));
         if (cycles.empty()) {
             return;
         }
@@ -1347,7 +1347,7 @@ namespace puppet { namespace runtime {
             }
             message << "  " << i + 1 << ". " << cycles[i];
         }
-        throw evaluation_exception(message.str());
+        throw compiler::compilation_exception(message.str());
     }
 
     void catalog::populate_graph()

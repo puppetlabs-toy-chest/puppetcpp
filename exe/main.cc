@@ -79,11 +79,10 @@ int main(int argc, char const* argv[])
     } catch (yaml_parse_exception const& ex) {
         LOG(error, ex.line(), ex.column(), ex.text(), ex.path(), ex.what());
     } catch (compiler::settings_exception const& ex) {
-        LOG(error, "%1%", ex.what());
+        LOG(error, ex.what());
         LOG(notice, "use 'puppetcpp --help' for help.");
         return EXIT_FAILURE;
-    }
-    catch (exception const& ex) {
+    } catch (exception const& ex) {
         LOG(critical, "unhandled exception: %1%", ex.what());
     }
 
