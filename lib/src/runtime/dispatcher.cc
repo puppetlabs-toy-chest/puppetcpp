@@ -1,6 +1,7 @@
 #include <puppet/runtime/dispatcher.hpp>
 #include <puppet/runtime/functions/assert_type.hpp>
 #include <puppet/runtime/functions/declare.hpp>
+#include <puppet/runtime/functions/defined.hpp>
 #include <puppet/runtime/functions/each.hpp>
 #include <puppet/runtime/functions/fail.hpp>
 #include <puppet/runtime/functions/filter.hpp>
@@ -175,6 +176,7 @@ namespace puppet { namespace runtime {
             { "contain",        functions::declare(relationship::contains) },
             { "crit",           functions::logging_function(logging::level::critical) },
             { "debug",          functions::logging_function(logging::level::debug) },
+            { "defined",        functions::defined() },
             { "each",           functions::each() },
             { "emerg",          functions::logging_function(logging::level::emergency) },
             { "err",            functions::logging_function(logging::level::error) },
