@@ -103,7 +103,7 @@ Puppet functions implemented:
 * [ ] create_resources
 * [x] crit
 * [x] debug
-* [ ] defined
+* [x] defined
 * [ ] digest
 * [x] each
 * [x] emerg

@@ -124,6 +124,18 @@ namespace puppet { namespace runtime {
         auto local_scope = _evaluator.evaluation_context().create_local_scope(scope);
         auto& current_scope = _evaluator.evaluation_context().current_scope();
 
+        // Set the title in the scope
+        auto const& path = _evaluator.compilation_context()->path();
+        shared_ptr<values::value const> title = make_shared<values::value const>(resource.type().title());
+        scope->set("title", title, path, _position.line());
+
+        // Set the name in the scope
+        shared_ptr<values::value const> name = rvalue_cast(title);
+        if (auto attribute = resource.get("name")) {
+            name = attribute->value();
+        }
+        scope->set("name", rvalue_cast(name), path, _position.line());
+
         // Set any default parameters without attributes
         if (_parameters) {
             for (auto const& parameter : *_parameters) {
@@ -153,14 +165,10 @@ namespace puppet { namespace runtime {
             }
         }
 
-        shared_ptr<values::value const> title = make_shared<values::value const>(resource.type().title());
-        shared_ptr<values::value const> name = title;
-
         // Set each attribute in the scope
         resource.each_attribute([&](runtime::attribute const& attribute) {
-            // Check for resource name
+            // Ignore the name attribute as it was already set
             if (attribute.name() == "name") {
-                name = attribute.value();
                 return true;
             }
 
@@ -205,10 +213,6 @@ namespace puppet { namespace runtime {
             current_scope->set(attribute.name(), attribute.value(), attribute.context()->path(), attribute.value_position().line());
             return true;
         });
-
-        auto const& path = _evaluator.compilation_context()->path();
-        scope->set("title", rvalue_cast(title), path, _position.line());
-        scope->set("name", rvalue_cast(name), path, _position.line());
 
         return evaluate_body();
     }

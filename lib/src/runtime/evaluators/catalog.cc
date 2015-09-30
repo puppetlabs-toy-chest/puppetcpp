@@ -225,6 +225,11 @@ namespace puppet { namespace runtime { namespace evaluators {
         for (auto const& expression : *expressions) {
             auto& name = expression.name().value();
 
+            // Check for setting the title via an attribute
+            if (name == "title") {
+                throw _evaluator.create_exception(expression.position(), "title is not a valid parameter name.");
+            }
+
             // Splat the attribute if named '*'
             if (name == "*") {
                 splat_attribute(attributes, names, expression);
@@ -301,7 +306,7 @@ namespace puppet { namespace runtime { namespace evaluators {
         }
 
         // Validate the type of the parameter
-        if (type && !is_instance(value, *type)) {
+        if (type && !is_undef(value) && !is_instance(value, *type)) {
             throw _evaluator.create_exception(position, (boost::format("expected %1% for attribute '%2%' but found %3%.") % *type % name % get_type(converted ? as<values::array>(value)->at(0) : value)).str());
         }
     }

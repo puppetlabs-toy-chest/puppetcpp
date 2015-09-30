@@ -146,6 +146,11 @@ namespace puppet { namespace compiler {
     {
         auto& logger = _logger;
 
+        // If already loaded, do nothing
+        if (!_loaded_manifests.insert(name).second) {
+            return;
+        }
+
         compiler::module const* module = nullptr;
         auto pos = name.find("::");
         string manifest_name;
@@ -174,15 +179,9 @@ namespace puppet { namespace compiler {
             return;
         }
 
-        // If already loaded, do nothing
-        if (!_loaded_manifests.insert(manifest).second) {
-            return;
-        }
-
         auto compilation_context = make_shared<compiler::context>(make_shared<string>(rvalue_cast(manifest)), *this);
-
-        LOG(debug, "scanning for class or defined type definitions in '%1%'.", *compilation_context->path());
         if (evaluation_context.catalog()) {
+            LOG(debug, "scanning for class or defined type definitions in '%1%'.", *compilation_context->path());
             definition_scanner scanner{ *evaluation_context.catalog() };
             scanner.scan(compilation_context);
         }
