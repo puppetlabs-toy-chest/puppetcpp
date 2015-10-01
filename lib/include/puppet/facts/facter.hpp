@@ -7,16 +7,7 @@
 #include "provider.hpp"
 #include "../logging/logger.hpp"
 #include <unordered_map>
-
-namespace facter { namespace facts {
-
-    // Forward declaration of collection
-    struct collection;
-
-    // Forward declaration of value
-    struct value;
-
-}}  // namespace facter::facts
+#include <facter/facts/collection.hpp>
 
 namespace puppet { namespace facts {
 

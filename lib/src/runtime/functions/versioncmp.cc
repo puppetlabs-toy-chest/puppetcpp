@@ -44,22 +44,22 @@ namespace puppet { namespace runtime { namespace functions {
             } else if (a == "-" && b == "-") {
                 continue;
             } else if (a == "-") {
-                return -1ll;
+                return static_cast<int64_t>(-1);
             } else if (b == "-") {
-                return 1ll;
+                return static_cast<int64_t>(1);
             } else if (a == "." && b == ".") {
                 continue;
             } else if (a == ".") {
-                return -1ll;
+                return static_cast<int64_t>(-1);
             } else if (b == ".") {
-                return 1ll;
+                return static_cast<int64_t>(1);
             } else if (regex_match(a, digit_regex) &&
                        regex_match(b, digit_regex) &&
                        a[0] != '0' &&
                        b[0] != '0') {
                 return static_cast<int64_t>(stoi(a) - stoi(b));
             } else {
-                return boost::ilexicographical_compare(a, b) ? -1ll : 1ll;
+                return static_cast<int64_t>(boost::ilexicographical_compare(a, b) ? -1 : 1);
             }
         }
         return static_cast<int64_t>(version_a->compare(*version_b));
