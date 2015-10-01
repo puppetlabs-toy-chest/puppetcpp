@@ -1,6 +1,8 @@
 Puppet Compiler in C++
 ======================
 
+[![Build Status](https://travis-ci.org/peterhuene/puppetcpp.svg?branch=master)](https://travis-ci.org/peterhuene/puppetcpp)
+
 This is a (very early) attempt to write a Puppet 4 compiler in C++11.
 
 Parser status:
@@ -150,6 +152,26 @@ Catalog compiling status:
 * [x] Facts from files and Facter
 * [ ] JSON catalog generation (TODO: populate tags)
 
+Building with Docker
+--------------------
+
+The `peterhuene/puppetcpp` image on Docker Hub contains an Arch Linux image with all build dependencies already installed.
+
+Run bash from within the container:
+
+    $ docker run -t -i -v `pwd`:/puppetcpp peterhuene/puppetcpp /bin/bash
+
+Build the compiler (note: replace the `-j 2` below with the appropriate job count for faster parallel builds):
+
+    $ mkdir -p /puppetcpp/release
+    $ cd /puppetcpp/release
+    $ cmake ..
+    $ make -j 2
+
+Run the compiler:
+
+    $ bin/puppetcpp --help
+
 Build Requirements
 ------------------
 
@@ -180,15 +202,17 @@ To generate build files with debug information:
 Build
 -----
 
+Note: replace the `-j 2` below with the appropriate job count for faster parallel builds.
+
 To build puppetcpp, use 'make':
 
     $ cd release
-    $ make
+    $ make -j 2
 
 To build puppetcpp with debug information:
 
     $ cd debug
-    $ make
+    $ make -j 2
 
 Run
 ---
