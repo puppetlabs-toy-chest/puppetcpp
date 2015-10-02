@@ -12,9 +12,8 @@ namespace puppet { namespace compiler {
     {
         auto home = getenv("HOME");
 
-        // For root or if the directory exists, use the global code directory
-        sys::error_code ec;
-        if (!home || geteuid() == 0 || fs::is_directory("/etc/puppetlabs/code", ec)) {
+        // For root or users without a HOME directory, use the global location
+        if (!home || geteuid() == 0) {
             return "/etc/puppetlabs/code";
         }
 
