@@ -50,7 +50,7 @@ namespace puppet { namespace runtime { namespace collectors {
             }
 
             // Collect the resource
-            collect_resource(resource, false);
+            collect_resource(*catalog, *resource, false);
         }
     }
 

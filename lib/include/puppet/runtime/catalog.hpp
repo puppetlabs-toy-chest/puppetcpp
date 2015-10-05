@@ -156,14 +156,14 @@ namespace puppet { namespace runtime {
          * @param type The resource type (e.g. File['/tmp/foo']).
          * @param context The compilation context where the resource was declared.
          * @param position The position where the resource was declared.
-         * @param virtualized True if the resource is virtual or false if it is realized.
+         * @param container The container of this resource; expected to be nullptr for stages and classes (class containment is explicit).
          * @param exported True if the resource is exported or false if not.
          */
         resource(
             types::resource type,
             std::shared_ptr<compiler::context> context,
             lexer::position position,
-            bool virtualized = false,
+            runtime::resource const* container = nullptr,
             bool exported = false);
 
         /**
@@ -190,6 +190,12 @@ namespace puppet { namespace runtime {
          * @return Returns the path of the file where the resource was declared.
          */
         std::string const& path() const;
+
+        /**
+         * Gets the container of this resource.
+         * @return Returns the container of this resource.
+         */
+        runtime::resource const* container() const;
 
         /**
          * Gets whether or not this resource is virtual.
@@ -238,7 +244,7 @@ namespace puppet { namespace runtime {
 
         /**
          * Gets the vertex id of the resource in the catalog dependency graph.
-         * @return Returns the vertex id of the resource in the catalog dependency graph.
+         * @return Returns the vertex id of the resource in the catalog dependency graph or numeric_limits<size_t>::max() if the resource is virtual.
          */
         size_t vertex_id() const;
 
@@ -249,11 +255,6 @@ namespace puppet { namespace runtime {
          * @return Returns the resources as a RapidJSON value.
          */
         rapidjson::Value to_json(rapidjson::Allocator& allocator, dependency_graph const& graph) const;
-
-        /**
-         * Realizes the resource if the resource is virtual.
-         */
-        void realize();
 
         /**
          * Determines if the given name is a metaparameter name.
@@ -271,9 +272,9 @@ namespace puppet { namespace runtime {
         std::shared_ptr<compiler::context> _context;
         std::shared_ptr<std::string> _path;
         lexer::position _position;
+        runtime::resource const* _container;
         std::unordered_map<std::string, std::shared_ptr<attribute>> _attributes;
         size_t _vertex_id;
-        bool _virtualized;
         bool _exported;
     };
 
@@ -593,6 +594,13 @@ namespace puppet { namespace runtime {
             defined_type const* definition = nullptr);
 
         /**
+         * Realizes a virtual resource.
+         * Note: if the resource is already realized, this is a no-op.
+         * @param resource The resource to realize.
+         */
+        void realize(runtime::resource& resource);
+
+        /**
          * Adds a resource override.
          * If the resource does not exist yet, the override will be evaluated upon declaration or catalog finalization.
          * If the resource does exist, the override will be evaluated immediately.
@@ -677,14 +685,6 @@ namespace puppet { namespace runtime {
          * @return Returns the node resource that was added to the catalog or nullptr if there are no node definitions.
          */
         resource* declare_node(runtime::context& evaluation_context, compiler::node const& node);
-
-        /**
-         * Determines if the given resource is containd by the given container resource.
-         * @param resource The resource to check to see if it is contained in the container.
-         * @param container The container resource.
-         * @return Returns true if the resource is contained by the container or false if not.
-         */
-        bool is_contained(runtime::resource const& resource, runtime::resource const& container) const;
 
         /**
          * Adds a collector to the catalog.

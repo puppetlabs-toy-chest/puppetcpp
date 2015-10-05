@@ -98,13 +98,13 @@ namespace puppet { namespace runtime {
         types::resource type,
         shared_ptr<compiler::context> context,
         lexer::position position,
-        bool virtualized,
+        runtime::resource const* container,
         bool exported) :
             _type(rvalue_cast(type)),
             _context(rvalue_cast(context)),
             _position(rvalue_cast(position)),
-            _vertex_id(static_cast<size_t>(-1)),
-            _virtualized(virtualized),
+            _container(container),
+            _vertex_id(numeric_limits<size_t>::max()),
             _exported(exported)
     {
         if (!_context) {
@@ -133,9 +133,14 @@ namespace puppet { namespace runtime {
         return *_path;
     }
 
+    runtime::resource const* resource::container() const
+    {
+        return _container;
+    }
+
     bool resource::virtualized() const
     {
-        return _virtualized;
+        return _vertex_id == numeric_limits<size_t>::max();
     }
 
     bool resource::exported() const
@@ -328,11 +333,6 @@ namespace puppet { namespace runtime {
         }
 
         return value;
-    }
-
-    void resource::realize()
-    {
-        _virtualized = false;
     }
 
     bool resource::is_metaparameter(string const& name)
@@ -597,7 +597,7 @@ namespace puppet { namespace runtime {
             override = false;
             auto parent = _scope->parent().get();
             while (parent) {
-                if (parent->resource() && catalog.is_contained(*resource, *parent->resource())) {
+                if (parent->resource() && (resource->container() == parent->resource())) {
                     override = true;
                     break;
                 }
@@ -773,12 +773,17 @@ namespace puppet { namespace runtime {
             throw evaluation_exception((boost::format("resource %1% was previously declared at %2%:%3%.") % type % previous->path() % previous->position().line()).str(), compilation_context, position);
         }
 
+        // Stages should not have containers
+        if (type.is_stage()) {
+            container = nullptr;
+        }
+
         // Add the resource
         _resources.emplace_back(
             rvalue_cast(type),
             compilation_context,
             position,
-            virtualized,
+            container,
             exported
         );
 
@@ -789,13 +794,9 @@ namespace puppet { namespace runtime {
         // Append to the type list
         _resource_lists[resource->type().type_name()].emplace_back(resource);
 
-        // Add a graph vertex for the resource
-        resource->vertex_id(boost::add_vertex(resource, _graph));
-
-        // Stages should never be contained
-        if (!type.is_stage() && container) {
-            // Add a relationship to the container
-            add_relationship(relationship::contains, *container, *resource);
+        // Realize the resource if not virtual
+        if (!virtualized) {
+            realize(*resource);
         }
 
         // If a defined type, add it to the list of declared defined types
@@ -803,6 +804,22 @@ namespace puppet { namespace runtime {
             _defined_types.emplace_back(make_pair(definition, resource));
         }
         return *resource;
+    }
+
+    void catalog::realize(runtime::resource& resource)
+    {
+        if (!resource.virtualized()) {
+            return;
+        }
+
+        // Add a graph vertex for the resource
+        resource.vertex_id(boost::add_vertex(&resource, _graph));
+
+        // Add a relationship from container to this resource
+        if (resource.container()) {
+            // Add a relationship to the container
+            add_relationship(relationship::contains, *resource.container(), resource);
+        }
     }
 
     void catalog::add_override(resource_override override)
@@ -1097,25 +1114,6 @@ namespace puppet { namespace runtime {
             throw evaluation_exception((boost::format("failed to evaluate node: %1%.") % ex.what()).str(), context, position);
         }
         return &resource;
-    }
-
-    bool catalog::is_contained(runtime::resource const& resource, runtime::resource const& container) const
-    {
-        // Search through the out edges of the container
-        auto iterators = boost::out_edges(container.vertex_id(), _graph);
-        for (auto it = iterators.first; it != iterators.second; ++it) {
-            // If the edge is not a containment edge, ignore
-            auto relationship = _graph[*it];
-            if (relationship != runtime::relationship::contains) {
-                continue;
-            }
-            // If the target is the given resource, the resource is contained
-            auto target = _graph[boost::target(*it, _graph)];
-            if (&resource == target) {
-                return true;
-            }
-        }
-        return false;
     }
 
     void catalog::add_collector(shared_ptr<collectors::collector> collector)
