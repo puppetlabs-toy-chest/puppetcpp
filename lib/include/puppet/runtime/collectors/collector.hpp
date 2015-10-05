@@ -62,10 +62,11 @@ namespace puppet { namespace runtime { namespace collectors {
      protected:
         /**
          * Collects the given resource.
+         * @param catalog The current catalog.
          * @param resource The resource to collect.
          * @param check True to check if the resource is already in the list or false to always add the resource.
          */
-        void collect_resource(runtime::resource* resource, bool check = true);
+        void collect_resource(runtime::catalog& catalog, runtime::resource& resource, bool check = true);
 
      private:
         std::vector<resource*> _resources;
