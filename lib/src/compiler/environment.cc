@@ -57,7 +57,7 @@ namespace puppet { namespace compiler {
 
         // Add all files to the
         for (; it != end; ++it) {
-            if (fs::is_regular_file(it->status())) {
+            if (fs::is_regular_file(it->status()) && it->path().extension() == ".pp") {
                 paths.emplace_back(it->path().string());
             }
         }
