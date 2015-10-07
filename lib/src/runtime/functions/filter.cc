@@ -21,20 +21,22 @@ namespace puppet { namespace runtime { namespace functions {
 
             values::array arguments;
             arguments.reserve(2);
-            for (size_t i = 0; i < argument.size(); ++i) {
-                arguments.clear();
 
-                string value(1, argument[i]);
+            // Enumerate the string as Unicode codepoints
+            int64_t i = 0;
+            enumerate_string(argument, [&](string codepoint) {
+                arguments.clear();
                 if (_context.lambda_parameter_count() == 1) {
-                    arguments.push_back(value);
+                    arguments.push_back(codepoint);
                 } else {
-                    arguments.push_back(static_cast<int64_t>(i));
-                    arguments.push_back(value);
+                    arguments.push_back(i++);
+                    arguments.push_back(codepoint);
                 }
                 if (is_true(_context.yield(arguments))) {
-                    result.emplace_back(rvalue_cast(value));
+                    result.emplace_back(rvalue_cast(codepoint));
                 }
-            }
+                return true;
+            });
             return result;
         }
 
