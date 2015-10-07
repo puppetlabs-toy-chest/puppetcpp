@@ -414,4 +414,11 @@ namespace puppet { namespace runtime { namespace values {
      */
     rapidjson::Value to_json(values::value const* value, rapidjson::Allocator& allocator);
 
+    /**
+     * Enumerates each Unicode code point in the given string.
+     * @param str The string to enumerate.
+     * @param callback The callback to call for each Unicode code point, passed as a UTF-8 string.
+     */
+    void enumerate_string(std::string const& str, std::function<bool(std::string)> const& callback);
+
 }}}  // namespace puppet::runtime::values

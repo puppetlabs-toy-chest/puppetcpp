@@ -18,16 +18,20 @@ namespace puppet { namespace runtime { namespace functions {
         {
             values::array arguments;
             arguments.reserve(2);
-            for (size_t i = 0; i < argument.size(); ++i) {
+
+            // Enumerate the string as Unicode codepoints
+            int64_t i = 0;
+            enumerate_string(argument, [&](string codepoint) {
                 arguments.clear();
                 if (_context.lambda_parameter_count() == 1) {
-                    arguments.push_back(string(1, argument[i]));
+                    arguments.push_back(rvalue_cast(codepoint));
                 } else {
-                    arguments.push_back(static_cast<int64_t>(i));
-                    arguments.push_back(string(1, argument[i]));
+                    arguments.push_back(i++);
+                    arguments.push_back(rvalue_cast(codepoint));
                 }
                 _context.yield(arguments);
-            }
+                return true;
+            });
         }
 
         result_type operator()(int64_t argument) const

@@ -5,6 +5,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <rapidjson/document.h>
+#include <utf8.h>
 
 using namespace std;
 using namespace rapidjson;
@@ -471,6 +472,19 @@ namespace puppet { namespace runtime { namespace values {
     rapidjson::Value to_json(values::value const& value, Allocator& allocator)
     {
         return boost::apply_visitor(json_visitor(allocator), value);
+    }
+
+    void enumerate_string(string const& str, function<bool(string)> const& callback)
+    {
+        // Go through each Unicode code point in the string
+        auto current = str.begin();
+        while (current != str.end()) {
+            auto begin = current;
+            utf8::next(current, str.end());
+            if (!callback(string(begin, current))) {
+                break;
+            }
+        }
     }
 
 }}}  // namespace puppet::runtime::values
