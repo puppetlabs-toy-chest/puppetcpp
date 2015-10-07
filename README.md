@@ -125,7 +125,7 @@ Puppet functions implemented:
 * [ ] inline_epp
 * [ ] inline_template
 * [ ] lookup
-* [ ] map
+* [x] map
 * [ ] match
 * [ ] md5
 * [x] notice
