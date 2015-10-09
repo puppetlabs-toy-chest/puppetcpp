@@ -15,7 +15,7 @@ namespace puppet { namespace runtime { namespace functions {
         {
         }
 
-        result_type operator()(string const& argument)
+        result_type operator()(string const& argument) const
         {
             values::array result;
 
@@ -40,7 +40,7 @@ namespace puppet { namespace runtime { namespace functions {
             return result;
         }
 
-        result_type operator()(int64_t argument)
+        result_type operator()(int64_t argument) const
         {
             if (argument <= 0) {
                 return values::array();
@@ -48,7 +48,7 @@ namespace puppet { namespace runtime { namespace functions {
             return enumerate(types::integer(0, argument));
         }
 
-        result_type operator()(values::array& argument)
+        result_type operator()(values::array& argument) const
         {
             values::array result;
 
@@ -69,33 +69,38 @@ namespace puppet { namespace runtime { namespace functions {
             return result;
         }
 
-        result_type operator()(values::hash& argument)
+        result_type operator()(values::hash& argument) const
         {
-            values::hash result;
-
             values::array arguments;
             arguments.reserve(2);
-            for (auto& kvp : argument) {
+
+            // Rather than returning a copy of the hash, just erase elements from it
+            auto begin = argument.begin();
+            while (begin != argument.end()) {
                 arguments.clear();
                 if (_context.lambda_parameter_count() == 1) {
-                    arguments.emplace_back(values::array { kvp.first, kvp.second });
+                    values::array pair(2);
+                    pair[0] = begin->first;
+                    pair[1] = begin->second;
+                    arguments.emplace_back(rvalue_cast(pair));
                 } else {
-                    arguments.push_back(kvp.first);
-                    arguments.push_back(kvp.second);
+                    arguments.push_back(begin->first);
+                    arguments.push_back(begin->second);
                 }
+                auto current = begin++;
                 if (is_true(_context.yield(arguments))) {
-                    result.emplace(make_pair(kvp.first, rvalue_cast(kvp.second)));
+                    argument.erase(static_cast<values::hash::const_iterator>(current));
                 }
             }
-            return result;
+            return rvalue_cast(argument);
         }
 
-        result_type operator()(type& argument)
+        result_type operator()(type& argument) const
         {
             return boost::apply_visitor(*this, argument);
         }
 
-        result_type operator()(types::integer& argument)
+        result_type operator()(types::integer& argument) const
         {
             if (!argument.enumerable()) {
                 throw _context.evaluator().create_exception(_context.position(0), (boost::format("%1% is not enumerable.") % argument).str());
@@ -104,13 +109,13 @@ namespace puppet { namespace runtime { namespace functions {
         }
 
         template <typename T>
-        result_type operator()(T const& argument)
+        result_type operator()(T const& argument) const
         {
             throw _context.evaluator().create_exception(_context.position(0), (boost::format("expected enumerable type for first argument but found %1%.") % get_type(argument)).str());
         }
 
      private:
-        result_type enumerate(types::integer const& range)
+        result_type enumerate(types::integer const& range) const
         {
             values::array result;
 
@@ -155,10 +160,8 @@ namespace puppet { namespace runtime { namespace functions {
             throw evaluator.create_exception(context.lambda_position(), (boost::format("expected 1 or 2 lambda parameters but %1% were given.") % count).str());
         }
 
-        value argument = mutate(arguments[0]);
-
-        filter_visitor visitor(context);
-        return boost::apply_visitor(visitor, argument);
+        auto argument = mutate(arguments[0]);
+        return boost::apply_visitor(filter_visitor(context), argument);
     }
 
 }}}  // namespace puppet::runtime::functions
