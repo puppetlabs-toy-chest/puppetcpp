@@ -11,6 +11,7 @@
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/versioncmp.hpp>
 #include <puppet/runtime/functions/with.hpp>
+#include <puppet/runtime/functions/shellquote.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
 
@@ -189,6 +190,7 @@ namespace puppet { namespace runtime {
             { "notice",         functions::logging_function(logging::level::notice) },
             { "realize",        functions::realize() },
             { "require",        functions::declare(relationship::require) },
+            { "shellquote",     functions::shellquote() },
             { "split",          functions::split() },
             { "versioncmp",     functions::versioncmp() },
             { "warning",        functions::logging_function(logging::level::warning) },
