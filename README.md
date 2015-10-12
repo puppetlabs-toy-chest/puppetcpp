@@ -130,7 +130,7 @@ Puppet functions implemented:
 * [ ] md5
 * [x] notice
 * [x] realize
-* [ ] reduce
+* [x] reduce
 * [ ] regsubst
 * [x] require
 * [ ] scanf

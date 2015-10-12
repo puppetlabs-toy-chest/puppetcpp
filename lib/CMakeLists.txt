@@ -76,6 +76,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/functions/logging.cc
     src/runtime/functions/map.cc
     src/runtime/functions/realize.cc
+    src/runtime/functions/reduce.cc
     src/runtime/functions/split.cc
     src/runtime/functions/versioncmp.cc
     src/runtime/functions/with.cc

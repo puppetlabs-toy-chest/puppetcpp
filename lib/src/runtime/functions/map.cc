@@ -143,7 +143,7 @@ namespace puppet { namespace runtime { namespace functions {
 
         // Check the lambda
         if (!context.lambda_given()) {
-            throw evaluator.create_exception(context.position(), (boost::format("expected a lambda to '%1' function but one was not given.") % context.name()).str());
+            throw evaluator.create_exception(context.position(), (boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str());
         }
         auto count = context.lambda_parameter_count();
         if (count == 0 || count > 2) {
