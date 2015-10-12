@@ -134,7 +134,6 @@ Puppet functions implemented:
 * [ ] regsubst
 * [x] require
 * [ ] scanf
-* [ ] search
 * [ ] sha1
 * [ ] shellquote
 * [ ] slice
