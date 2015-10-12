@@ -8,6 +8,7 @@
 #include <puppet/runtime/functions/logging.hpp>
 #include <puppet/runtime/functions/map.hpp>
 #include <puppet/runtime/functions/realize.hpp>
+#include <puppet/runtime/functions/reduce.hpp>
 #include <puppet/runtime/functions/split.hpp>
 #include <puppet/runtime/functions/versioncmp.hpp>
 #include <puppet/runtime/functions/with.hpp>
@@ -188,6 +189,7 @@ namespace puppet { namespace runtime {
             { "map",            functions::map() },
             { "notice",         functions::logging_function(logging::level::notice) },
             { "realize",        functions::realize() },
+            { "reduce",         functions::reduce() },
             { "require",        functions::declare(relationship::require) },
             { "split",          functions::split() },
             { "versioncmp",     functions::versioncmp() },

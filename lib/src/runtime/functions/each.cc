@@ -64,7 +64,10 @@ namespace puppet { namespace runtime { namespace functions {
             for (auto const& kvp : argument) {
                 arguments.clear();
                 if (_context.lambda_parameter_count() == 1) {
-                    arguments.emplace_back(values::array { kvp.first, kvp.second });
+                    values::array pair(2);
+                    pair[0] = kvp.first;
+                    pair[1] = kvp.second;
+                    arguments.emplace_back(rvalue_cast(pair));
                 } else {
                     arguments.push_back(kvp.first);
                     arguments.push_back(kvp.second);

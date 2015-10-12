@@ -96,7 +96,7 @@ namespace puppet { namespace compiler {
 
                 // If not all tokens were processed and the iterator points at a valid token, handle unexpected token
                 if (token_begin != token_end && token_is_valid(*token_begin)) {
-                    throw parse_exception(get_position(input, *token_begin), (boost::format("unexpected %1%.") % static_cast<token_id>(token_begin->id())).str());
+                    throw parse_exception(get_position(input, *token_begin), (boost::format("syntax error: unexpected %1%.") % static_cast<token_id>(token_begin->id())).str());
                 }
             } catch (lexer_exception<Iterator> const& ex) {
                 throw parse_exception(ex.location().position(), ex.what());

@@ -74,8 +74,9 @@ namespace puppet { namespace lexer {
         array_start,          // Same as '[', but whitespace delimited to force array expression
         comment,              // Not in token stream
         whitespace,           // Not in token stream
-        unclosed_quote,       // Error token that will not match any grammars
-        unclosed_comment,     // Error token that will not match any grammars
+        unclosed_quote,       // Error token that will not match the grammar
+        unclosed_comment,     // Error token that will not match the grammar
+        invalid_variable,     // Error token that will not match the grammar
     };
 
     /**
