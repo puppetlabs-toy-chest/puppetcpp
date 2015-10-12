@@ -347,6 +347,7 @@ namespace puppet { namespace lexer {
             this->self.add
                 ("['\"]",  static_cast<id_type>(token_id::unclosed_quote))
                 ("\\/\\*", static_cast<id_type>(token_id::unclosed_comment))
+                ("\\$",    static_cast<id_type>(token_id::invalid_variable))
                 (".",      static_cast<id_type>(token_id::unknown));
         }
 
