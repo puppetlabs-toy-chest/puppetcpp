@@ -477,7 +477,9 @@ namespace puppet { namespace compiler {
 
             // Notify the callbacks
             po::notify(vm);
-        } catch (po::error const &ex) {
+        } catch (po::error const& ex) {
+            throw settings_exception(ex.what());
+        } catch (runtime_error const& ex) {
             throw settings_exception(ex.what());
         }
 
