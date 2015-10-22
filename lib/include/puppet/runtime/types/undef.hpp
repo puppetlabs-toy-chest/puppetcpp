@@ -4,9 +4,7 @@
  */
 #pragma once
 
-#include "../values/undef.hpp"
-#include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
+#include "../values/forward.hpp"
 #include <ostream>
 
 namespace puppet { namespace runtime { namespace types {
@@ -20,32 +18,20 @@ namespace puppet { namespace runtime { namespace types {
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Undef).
          */
-        static const char* name();
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            return boost::get<values::undef>(&value);
-        }
-
+        bool is_instance(values::value const& value) const;
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
-         * @tparam Type The type of runtime type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        template <typename Type>
-        bool is_specialization(Type const& other) const
-        {
-            // No specializations of Undef
-            return false;
-        }
+        bool is_specialization(values::type const& other) const;
     };
 
     /**
@@ -61,28 +47,21 @@ namespace puppet { namespace runtime { namespace types {
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    bool operator==(undef const&, undef const&);
+    bool operator==(undef const& right, undef const& left);
 
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-     * Hash specialization for Undef type.
+     * Inequality operator for undef.
+     * @param left The left type to compare.
+     * @param right The right type to compare.
+     * @return Returns true if the two types are not equal or false if they are equal.
      */
-    template <>
-    struct hash<puppet::runtime::types::undef>
-    {
-        /**
-         * Hashes the Undef type.
-         * @return Returns the hash value for the type.
-         */
-        size_t operator()(puppet::runtime::types::undef const&) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::undef::name());
+    bool operator!=(undef const& left, undef const& right);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            return seed;
-        }
-    };
-}
+    /**
+     * Hashes the undef type.
+     * @param type The undef type to hash.
+     * @return Returns the hash value for the type.
+     */
+    size_t hash_value(undef const&);
+
+}}}  // namespace puppet::runtime::types

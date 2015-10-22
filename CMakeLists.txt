@@ -11,7 +11,7 @@ include(cotire)
 
 enable_testing()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra -Werror -Wno-unused-parameter")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -ftemplate-depth=512 -Wall -Wextra -Werror -Wno-unused-parameter")
 
 # Set RPATH if not installing to a system library directory
 list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" INSTALL_IS_SYSTEM_DIR)
@@ -23,7 +23,7 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
-find_package(Boost 1.57.0 REQUIRED COMPONENTS program_options filesystem system)
+find_package(Boost 1.59.0 REQUIRED COMPONENTS program_options filesystem system)
 find_package(Facter REQUIRED)
 find_package(YAMLCPP REQUIRED)
 

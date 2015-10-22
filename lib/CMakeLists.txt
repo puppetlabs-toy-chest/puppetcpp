@@ -12,127 +12,112 @@ include_directories(
 
 # Set common sources
 set(PUPPET_COMMON_SOURCES
-    src/ast/access_expression.cc
-    src/ast/array.cc
-    src/ast/bare_word.cc
-    src/ast/boolean.cc
-    src/ast/case_expression.cc
-    src/ast/class_definition_expression.cc
-    src/ast/collection_expression.cc
-    src/ast/defaulted.cc
-    src/ast/defined_type_expression.cc
-    src/ast/expression.cc
-    src/ast/function_call_expression.cc
-    src/ast/hash.cc
-    src/ast/if_expression.cc
-    src/ast/lambda.cc
-    src/ast/method_call_expression.cc
-    src/ast/name.cc
-    src/ast/node_definition_expression.cc
-    src/ast/number.cc
-    src/ast/parameter.cc
-    src/ast/postfix_expression.cc
-    src/ast/regex.cc
-    src/ast/selector_expression.cc
-    src/ast/syntax_tree.cc
-    src/ast/undef.cc
-    src/ast/resource_defaults_expression.cc
-    src/ast/resource_expression.cc
-    src/ast/resource_override_expression.cc
-    src/ast/string.cc
-    src/ast/type.cc
-    src/ast/unless_expression.cc
-    src/ast/variable.cc
-    src/lexer/lexer.cc
-    src/lexer/number_token.cc
-    src/lexer/position.cc
-    src/lexer/token_id.cc
-    src/logging/logger.cc
-    src/compiler/context.cc
+    src/compiler/ast/ast.cc
+    src/compiler/evaluation/collectors/collector.cc
+    src/compiler/evaluation/collectors/list_collector.cc
+    src/compiler/evaluation/collectors/query_collector.cc
+    src/compiler/evaluation/collectors/query_evaluator.cc
+    src/compiler/evaluation/functions/assert_type.cc
+    src/compiler/evaluation/functions/declare.cc
+    src/compiler/evaluation/functions/defined.cc
+    src/compiler/evaluation/functions/each.cc
+    src/compiler/evaluation/functions/fail.cc
+    src/compiler/evaluation/functions/filter.cc
+    src/compiler/evaluation/functions/function_call_context.cc
+    src/compiler/evaluation/functions/log.cc
+    src/compiler/evaluation/functions/map.cc
+    src/compiler/evaluation/functions/realize.cc
+    src/compiler/evaluation/functions/reduce.cc
+    src/compiler/evaluation/functions/split.cc
+    src/compiler/evaluation/functions/versioncmp.cc
+    src/compiler/evaluation/functions/with.cc
+    src/compiler/evaluation/operators/assignment.cc
+    src/compiler/evaluation/operators/binary_operator_context.cc
+    src/compiler/evaluation/operators/divide.cc
+    src/compiler/evaluation/operators/equals.cc
+    src/compiler/evaluation/operators/greater.cc
+    src/compiler/evaluation/operators/greater_equal.cc
+    src/compiler/evaluation/operators/in.cc
+    src/compiler/evaluation/operators/left_shift.cc
+    src/compiler/evaluation/operators/less.cc
+    src/compiler/evaluation/operators/less_equal.cc
+    src/compiler/evaluation/operators/logical_and.cc
+    src/compiler/evaluation/operators/logical_not.cc
+    src/compiler/evaluation/operators/logical_or.cc
+    src/compiler/evaluation/operators/match.cc
+    src/compiler/evaluation/operators/minus.cc
+    src/compiler/evaluation/operators/modulo.cc
+    src/compiler/evaluation/operators/multiply.cc
+    src/compiler/evaluation/operators/negate.cc
+    src/compiler/evaluation/operators/not_equals.cc
+    src/compiler/evaluation/operators/not_match.cc
+    src/compiler/evaluation/operators/plus.cc
+    src/compiler/evaluation/operators/right_shift.cc
+    src/compiler/evaluation/operators/relationship.cc
+    src/compiler/evaluation/operators/splat.cc
+    src/compiler/evaluation/operators/unary_operator_context.cc
+    src/compiler/evaluation/access_evaluator.cc
+    src/compiler/evaluation/call_evaluator.cc
+    src/compiler/evaluation/context.cc
+    src/compiler/evaluation/dispatcher.cc
+    src/compiler/evaluation/evaluator.cc
+    src/compiler/evaluation/interpolator.cc
+    src/compiler/evaluation/postfix_evaluator.cc
+    src/compiler/evaluation/scope.cc
+    src/compiler/lexer/lexer.cc
+    src/compiler/lexer/number_token.cc
+    src/compiler/lexer/position.cc
+    src/compiler/lexer/token_id.cc
+    src/compiler/parser/parser.cc
+    src/compiler/attribute.cc
+    src/compiler/catalog.cc
     src/compiler/environment.cc
     src/compiler/exceptions.cc
+    src/compiler/finder.cc
     src/compiler/module.cc
     src/compiler/node.cc
-    src/compiler/parser.cc
+    src/compiler/registry.cc
+    src/compiler/resource.cc
+    src/compiler/scanner.cc
     src/compiler/settings.cc
     src/facts/facter.cc
     src/facts/yaml.cc
-    src/runtime/collectors/collector.cc
-    src/runtime/collectors/list_collector.cc
-    src/runtime/collectors/query_collector.cc
-    src/runtime/collectors/query_evaluator.cc
-    src/runtime/evaluators/access.cc
-    src/runtime/evaluators/basic.cc
-    src/runtime/evaluators/catalog.cc
-    src/runtime/evaluators/control_flow.cc
-    src/runtime/evaluators/postfix.cc
-    src/runtime/evaluators/primary.cc
-    src/runtime/functions/assert_type.cc
-    src/runtime/functions/declare.cc
-    src/runtime/functions/defined.cc
-    src/runtime/functions/each.cc
-    src/runtime/functions/fail.cc
-    src/runtime/functions/filter.cc
-    src/runtime/functions/logging.cc
-    src/runtime/functions/map.cc
-    src/runtime/functions/realize.cc
-    src/runtime/functions/reduce.cc
-    src/runtime/functions/split.cc
-    src/runtime/functions/versioncmp.cc
-    src/runtime/functions/with.cc
-    src/runtime/operators/assignment.cc
-    src/runtime/operators/binary_context.cc
-    src/runtime/operators/divide.cc
-    src/runtime/operators/equals.cc
-    src/runtime/operators/greater.cc
-    src/runtime/operators/greater_equal.cc
-    src/runtime/operators/in.cc
-    src/runtime/operators/left_shift.cc
-    src/runtime/operators/less.cc
-    src/runtime/operators/less_equal.cc
-    src/runtime/operators/logical_and.cc
-    src/runtime/operators/logical_not.cc
-    src/runtime/operators/logical_or.cc
-    src/runtime/operators/match.cc
-    src/runtime/operators/minus.cc
-    src/runtime/operators/modulo.cc
-    src/runtime/operators/multiply.cc
-    src/runtime/operators/negate.cc
-    src/runtime/operators/not_equals.cc
-    src/runtime/operators/not_match.cc
-    src/runtime/operators/plus.cc
-    src/runtime/operators/relationship.cc
-    src/runtime/operators/right_shift.cc
-    src/runtime/operators/splat.cc
-    src/runtime/operators/unary_context.cc
+    src/logging/logger.cc
     src/runtime/types/any.cc
+    src/runtime/types/array.cc
     src/runtime/types/boolean.cc
     src/runtime/types/callable.cc
+    src/runtime/types/catalog_entry.cc
+    src/runtime/types/class.cc
     src/runtime/types/collection.cc
     src/runtime/types/data.cc
     src/runtime/types/defaulted.cc
     src/runtime/types/enumeration.cc
     src/runtime/types/floating.cc
+    src/runtime/types/hash.cc
     src/runtime/types/integer.cc
     src/runtime/types/numeric.cc
+    src/runtime/types/optional.cc
     src/runtime/types/pattern.cc
     src/runtime/types/regexp.cc
+    src/runtime/types/resource.cc
+    src/runtime/types/runtime.cc
     src/runtime/types/scalar.cc
     src/runtime/types/string.cc
+    src/runtime/types/struct.cc
+    src/runtime/types/tuple.cc
     src/runtime/types/type.cc
     src/runtime/types/undef.cc
+    src/runtime/types/variant.cc
+    src/runtime/values/array.cc
     src/runtime/values/defaulted.cc
+    src/runtime/values/hash.cc
     src/runtime/values/regex.cc
+    src/runtime/values/type.cc
     src/runtime/values/undef.cc
     src/runtime/values/value.cc
-    src/runtime/catalog.cc
-    src/runtime/context.cc
-    src/runtime/definition_scanner.cc
-    src/runtime/dispatcher.cc
-    src/runtime/executor.cc
-    src/runtime/expression_evaluator.cc
-    src/runtime/scope.cc
-    src/runtime/string_interpolator.cc
+    src/runtime/values/variable.cc
+    src/runtime/values/wrapper.cc
 )
 
 # Set platform-specific sources
@@ -146,12 +131,12 @@ elseif(WIN32)
 endif()
 
 # Add the executable for generating the static lexer
-add_executable(generate_static_lexer src/lexer/generate_static_lexer.cc src/lexer/number_token.cc include/puppet/lexer/token_id.hpp src/lexer/token_id.cc src/lexer/position.cc)
+add_executable(generate_static_lexer src/compiler/lexer/generate_static_lexer.cc src/compiler/lexer/number_token.cc include/puppet/compiler/lexer/token_id.hpp src/compiler/lexer/token_id.cc src/compiler/lexer/position.cc)
 target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
 
 # Add the command to generate the static lexer
-add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
-add_custom_target(generate_files ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/lexer/static_lexer.hpp)
+add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer/static_lexer.hpp)
+add_custom_target(generate_files ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer/static_lexer.hpp)
 
 add_library(puppet SHARED ${PUPPET_COMMON_SOURCES} ${PUPPET_PLATFORM_SOURCES})
 add_dependencies(puppet generate_files)

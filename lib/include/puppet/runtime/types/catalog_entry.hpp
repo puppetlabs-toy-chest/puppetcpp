@@ -4,105 +4,66 @@
  */
 #pragma once
 
-#include "resource.hpp"
-#include "class.hpp"
-#include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
+#include "../values/forward.hpp"
 #include <ostream>
 
 namespace puppet { namespace runtime { namespace types {
 
     /**
      * Represents the Puppet CatalogEntry type.
-     * @tparam Type The type of a runtime type.
      */
-    template <typename Type>
-    struct basic_catalog_entry
+    struct catalog_entry
     {
         /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. CatalogEntry).
          */
-        static const char* name()
-        {
-            return "CatalogEntry";
-        }
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            return basic_resource<Type>().is_instance(value) ||
-                   basic_class<Type>().is_instance(value);
-        }
+        bool is_instance(values::value const& value) const;
 
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        bool is_specialization(Type const& other) const
-        {
-            // Resource and Class types are specializations
-            return boost::get<basic_resource<Type>>(&other) ||
-                   boost::get<basic_class<Type>>(&other);
-        }
+        bool is_specialization(values::type const& other) const;
     };
 
     /**
      * Stream insertion operator for catalog entry type.
-     * @tparam Type The type of a runtime type.
      * @param os The output stream to write the type to.
      * @param type The type to write.
      * @return Returns the given output stream.
      */
-    template <typename Type>
-    std::ostream& operator<<(std::ostream& os, basic_catalog_entry<Type> const& type)
-    {
-        os << basic_catalog_entry<Type>::name();
-        return os;
-    }
+    std::ostream& operator<<(std::ostream& os, catalog_entry const& type);
 
     /**
      * Equality operator for catalog entry type.
-     * @tparam Type The type of a runtime type.
      * @param left The left type to compare.
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    template <typename Type>
-    bool operator==(basic_catalog_entry<Type> const& left, basic_catalog_entry<Type> const& right)
-    {
-        return true;
-    }
+    bool operator==(catalog_entry const& left, catalog_entry const& right);
 
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-    * Hash specialization for CatalogEntry type.
-    * @tparam Type The type of a runtime type.
-    */
-    template <typename Type>
-    struct hash<puppet::runtime::types::basic_catalog_entry<Type>>
-    {
-        /**
-         * Hashes the Class type.
-         * @param type The type to hash.
-         * @return Returns the hash value for the type.
-         */
-        size_t operator()(puppet::runtime::types::basic_catalog_entry<Type> const& type) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::basic_catalog_entry<Type>::name());
+     * Inequality operator for catalog_entry.
+     * @param left The left type to compare.
+     * @param right The right type to compare.
+     * @return Returns true if the two types are not equal or false if they are equal.
+     */
+    bool operator!=(catalog_entry const& left, catalog_entry const& right);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            return seed;
-        }
-    };
-}
+    /**
+     * Hashes the catalog entry type.
+     * @param type The catalog entry type to hash.
+     * @return Returns the hash value for the type.
+     */
+    size_t hash_value(catalog_entry const& type);
+
+}}}  // namespace puppet::runtime::types

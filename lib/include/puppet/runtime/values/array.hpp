@@ -4,61 +4,59 @@
  */
 #pragma once
 
+#include "wrapper.hpp"
 #include <ostream>
 #include <vector>
+#include <memory>
 
 namespace puppet { namespace runtime { namespace values {
 
     /**
      * Represents a runtime array value.
-     * @tparam Value The runtime value type.
      */
-    template <typename Value>
-    using basic_array = std::vector<Value>;
-
-    /**
-     * Equality operator for array.
-     * @tparam Value The runtime value type.
-     * @param left The left array to compare.
-     * @param right The right array to compare.
-     * @return Returns true if all elements of the array are equal or false if not.
-     */
-    template <typename Value>
-    bool operator==(basic_array<Value> const& left, basic_array<Value> const& right)
+    struct array : std::vector<wrapper<value>>
     {
-        if (left.size() != right.size()) {
-            return false;
-        }
-        for (size_t i = 0; i < left.size(); ++i) {
-            if (!equals(left[i], right[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
+        // Use the base constructor and assignment semantics
+        using vector::vector;
+        using vector::operator=;
+
+        /**
+         * Joins the array by converting each element to a string.
+         * @param os The output stream to write to.
+         * @param separator The separator to write between array elements.
+         */
+        void join(std::ostream& os, std::string const& separator = " ");
+    };
 
     /**
      * Stream insertion operator for runtime array.
-     * @tparam Value The runtime value type.
      * @param os The output stream to write the runtime array to.
      * @param array The runtime array to write.
      * @return Returns the given output stream.
      */
-    template <typename Value>
-    std::ostream& operator<<(std::ostream& os, basic_array<Value> const& array)
-    {
-        os << '[';
-        bool first = true;
-        for (auto const& element : array) {
-            if (first) {
-                first = false;
-            } else {
-                os << ", ";
-            }
-            os << element;
-        }
-        os << ']';
-        return os;
-    }
+    std::ostream& operator<<(std::ostream& os, values::array const& array);
 
-}}}  // puppet::runtime::values
+    /**
+     * Equality operator for array.
+     * @param left The left array to compare.
+     * @param right The right array to compare.
+     * @return Returns true if all elements of the array are equal or false if not.
+     */
+    bool operator==(array const& left, array const& right);
+
+    /**
+     * Inequality operator for array.
+     * @param left The left array to compare.
+     * @param right The right array to compare.
+     * @return Returns true if any elements of the arrays are not equal or false if all elements are equal.
+     */
+    bool operator!=(array const& left, array const& right);
+
+    /**
+     * Hashes the array value.
+     * @param array The array value to hash.
+     * @return Returns the hash value for the value.
+     */
+    size_t hash_value(values::array const& array);
+
+}}}  // namespace puppet::runtime::values

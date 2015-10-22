@@ -1,11 +1,10 @@
-#include <puppet/runtime/types/data.hpp>
 #include <puppet/runtime/values/value.hpp>
+#include <boost/functional/hash.hpp>
 
 using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
-    template <>
     bool data::is_instance(values::value const& value) const
     {
         // Data is scalar, array, hash, or undef
@@ -15,7 +14,6 @@ namespace puppet { namespace runtime { namespace types {
                undef().is_instance(value);
     }
 
-    template <>
     bool data::is_specialization(values::type const& other) const
     {
         // Scalar, Array, Hash, and Undef are specializations of Data
@@ -29,7 +27,7 @@ namespace puppet { namespace runtime { namespace types {
                hash().is_specialization(other);
     }
 
-    const char* data::name()
+    char const* data::name()
     {
         return "Data";
     }
@@ -43,6 +41,20 @@ namespace puppet { namespace runtime { namespace types {
     bool operator==(data const&, data const&)
     {
         return true;
+    }
+
+    bool operator!=(data const& left, data const& right)
+    {
+        return !(left == right);
+    }
+
+    size_t hash_value(data const& type)
+    {
+        static const size_t name_hash = boost::hash_value(data::name());
+
+        size_t seed = 0;
+        boost::hash_combine(seed, name_hash);
+        return seed;
     }
 
 }}}  // namespace puppet::runtime::types

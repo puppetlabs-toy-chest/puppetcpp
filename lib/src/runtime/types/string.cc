@@ -1,4 +1,5 @@
-#include <puppet/runtime/types/string.hpp>
+#include <puppet/runtime/values/value.hpp>
+#include <boost/functional/hash.hpp>
 
 using namespace std;
 
@@ -26,9 +27,34 @@ namespace puppet { namespace runtime { namespace types {
         return _to;
     }
 
-    const char* string::name()
+    char const* string::name()
     {
         return "String";
+    }
+
+    bool string::is_instance(values::value const& value) const
+    {
+        auto ptr = value.as<std::string>();
+        if (!ptr) {
+            return false;
+        }
+        auto size = static_cast<int64_t>(ptr->size());
+        return _to < _from ? (size >= _to && size <= _from) : (size >= _from && size <= _to);
+    }
+
+    bool string::is_specialization(values::type const& other) const
+    {
+        // Check for an String with a range inside of this type's range
+        auto ptr = boost::get<types::string>(&other);
+        if (!ptr) {
+            return false;
+        }
+        // Check for equality
+        if (ptr->from() == _from && ptr->to() == _to) {
+            return false;
+        }
+        return std::min(ptr->from(), ptr->to()) >= std::min(_from, _to) &&
+               std::max(ptr->from(), ptr->to()) <= std::max(_from, _to);
     }
 
     ostream& operator<<(ostream& os, string const& type)
@@ -59,6 +85,22 @@ namespace puppet { namespace runtime { namespace types {
     bool operator==(string const& left, string const& right)
     {
         return left.from() == right.from() && left.to() == right.to();
+    }
+
+    bool operator!=(string const& left, string const& right)
+    {
+        return !(left == right);
+    }
+
+    size_t hash_value(string const& type)
+    {
+         static const size_t name_hash = boost::hash_value(string::name());
+
+        size_t seed = 0;
+        boost::hash_combine(seed, name_hash);
+        boost::hash_combine(seed, type.from());
+        boost::hash_combine(seed, type.to());
+        return seed;
     }
 
 }}}  // namespace puppet::runtime::types

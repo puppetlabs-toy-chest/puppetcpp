@@ -4,246 +4,87 @@
  */
 #pragma once
 
-#include "../../cast.hpp"
-#include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/optional.hpp>
+#include "../values/forward.hpp"
 #include <ostream>
 #include <string>
-#include <regex>
-#include <unordered_set>
+#include <boost/optional.hpp>
 
 namespace puppet { namespace runtime { namespace types {
 
     /**
      * Represents the Puppet Resource type.
-     * @tparam Type The type of a runtime type.
      */
-    template <typename Type>
-    struct basic_resource
+    struct resource
     {
         /**
          * Constructs a Resource type.
          * @param type_name The type name of the resource (e.g. File).  If empty, represents all resources.
          * @param title The title of the resource (e.g. '/foo').  If empty, represents all instances of the resource type.
          */
-        explicit basic_resource(std::string type_name = {}, std::string title = {}) :
-            _type_name(rvalue_cast(type_name)),
-            _title(rvalue_cast(title))
-        {
-            // Make the type name lowercase
-            boost::to_lower(_type_name);
-
-            // Now uppercase every start of a type name
-            boost::split_iterator<std::string::iterator> end;
-            for (auto it = boost::make_split_iterator(_type_name, boost::first_finder("::", boost::is_equal())); it != end; ++it) {
-                if (!*it) {
-                    continue;
-                }
-                auto range = boost::make_iterator_range(it->begin(), it->begin() + 1);
-                boost::to_upper(range);
-            }
-        }
+        explicit resource(std::string type_name = {}, std::string title = {});
 
         /**
          * Gets the type name of the resource.
          * @return Returns the type of the resource.
          */
-        std::string const& type_name() const
-        {
-            return _type_name;
-        }
+        std::string const& type_name() const;
 
         /**
          * Gets the title of the resource.
          * @return Returns the title of the resource.
          */
-        std::string const& title() const
-        {
-            return _title;
-        }
+        std::string const& title() const;
 
         /**
          * Determines if the resource type is fully qualified.
          * @return Returns true if the resource type is fully qualified or false if not.
          */
-        bool fully_qualified() const
-        {
-            return !_type_name.empty() && !_title.empty();
-        }
+        bool fully_qualified() const;
 
         /**
          * Determines if the resource is a class.
          * @return Returns true if the resource is a class or false if not.
          */
-        bool is_class() const
-        {
-            return _type_name == "Class";
-        }
+        bool is_class() const;
 
         /**
          * Determines if the resource is a stage.
          * @return Returns true if the resource is a stage or false if not.
          */
-        bool is_stage() const
-        {
-            return _type_name == "Stage";
-        }
+        bool is_stage() const;
 
         /**
          * Determines if the resource is a "built-in" type.
          * @return Returns true if the resource is a "built-in" type or false if not.
          */
-        bool is_builtin() const
-        {
-            // TODO: remove this member once built-in types can be defined
-            static const std::unordered_set<std::string> builtin_types = {
-                "Augeas",
-                "Class",
-                "Computer",
-                "Cron",
-                "Exec",
-                "File",
-                "Filebucket",
-                "Group",
-                "Host",
-                "Interface",
-                "5klogin",
-                "Macauthorization",
-                "Mailalias",
-                "Maillist",
-                "Mcx",
-                "Mount",
-                "Nagios_command",
-                "Nagios_contact",
-                "Nagios_contactgroup",
-                "Nagios_host",
-                "Nagios_hostdependency",
-                "Nagios_hostescalation",
-                "Nagios_hostextinfo",
-                "Nagios_hostgroup",
-                "Nagios_service",
-                "Nagios_servicedependency",
-                "Nagios_serviceescalation",
-                "Nagios_serviceextinfo",
-                "Nagios_servicegroup",
-                "Nagios_timeperiod",
-                "Node",
-                "Notify",
-                "Package",
-                "Resources",
-                "Router",
-                "Schedule",
-                "Scheduled_task",
-                "Selboolean",
-                "Selmodule",
-                "Service",
-                "Ssh_authorized_key",
-                "Sshkey",
-                "Stage",
-                "Tidy",
-                "User",
-                "Vlan",
-                "Yumrepo",
-                "Zfs",
-                "Zone",
-                "Zpool"
-            };
-            return builtin_types.count(_type_name) > 0;
-        }
+        bool is_builtin() const;
 
         /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Resource).
          */
-        static const char* name()
-        {
-            return "Resource";
-        }
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            // Check for type
-            auto ptr = boost::get<Type>(&value);
-            if (!ptr) {
-                return false;
-            }
-            // Check for resource type
-            auto resource_ptr = boost::get<basic_resource<Type>>(ptr);
-            if (!resource_ptr) {
-                return false;
-            }
-            // If no type, the given value is a 'resource'
-            if (_type_name.empty()) {
-                return true;
-            }
-            // Check type name
-            if (_type_name != resource_ptr->type_name()) {
-                return false;
-            }
-            return _title.empty() || _title == resource_ptr->title();
-        }
+        bool is_instance(values::value const& value) const;
 
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        bool is_specialization(Type const& other) const
-        {
-            // Check that the other Resource is specialized
-            auto resource = boost::get<basic_resource<Type>>(&other);
-            if (!resource) {
-                // Not the same type
-                return false;
-            }
-            // If this resource has no type name, the other is specialized if it does have one
-            if (_type_name.empty()) {
-                return !resource->type_name().empty();
-            }
-            // Otherwise, the types need to be the same
-            if (_type_name != resource->type_name()) {
-                return false;
-            }
-            // Otherwise, the other one is a specialization if this does not have a title but the other one does
-            return _title.empty() && !resource->title().empty();
-        }
+        bool is_specialization(values::type const& other) const;
 
         /**
-         * Parses a resource type name as a string.
-         * @param str The string to parse.
-         * @return Returns the resource type if parsing succeeds or boost::none if not.
+         * Parses a resource type specification into a resource.
+         * @param specification The resource type specification to parse (e.g. File[foo]).
+         * @return Returns the resource type if successful or boost::none if parsing was unsuccessful.
          */
-        static boost::optional<basic_resource> parse(std::string const& str)
-        {
-            using namespace std;
-
-            static regex resource_regex("^((?:(?:::)?[A-Z]\\w*)+)\\[([^\\]]+)\\]$");
-
-            smatch matches;
-            if (!regex_match(str, matches, resource_regex) || matches.size() != 3) {
-                return boost::none;
-            }
-
-            string title = matches[2].str();
-            boost::trim(title);
-            // Strip quotes if present in the title
-            if (!title.empty()) {
-                if ((title.front() == '"' && title.back() == '"') ||
-                    (title.front() == '\'' && title.back() == '\'')) {
-                    title = title.substr(1, title.size() - 2);
-                }
-            }
-            return basic_resource(matches[1].str(), rvalue_cast(title));
-        }
+        static boost::optional<resource> parse(std::string const& specification);
 
      private:
         std::string _type_name;
@@ -252,63 +93,33 @@ namespace puppet { namespace runtime { namespace types {
 
     /**
      * Stream insertion operator for resource type.
-     * @tparam Type The type of a runtime type.
      * @param os The output stream to write the type to.
      * @param type The type to write.
      * @return Returns the given output stream.
      */
-    template <typename Type>
-    std::ostream& operator<<(std::ostream& os, basic_resource<Type> const& type)
-    {
-        if (type.type_name().empty()) {
-            os << basic_resource<Type>::name();
-            return os;
-        }
-        os << type.type_name();
-        if (type.title().empty()) {
-            return os;
-        }
-        os << "[" << type.title() << "]";
-        return os;
-    }
+    std::ostream& operator<<(std::ostream& os, resource const& type);\
 
     /**
      * Equality operator for resource type.
-     * @tparam Type The type of a runtime type.
      * @param left The left type to compare.
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    template <typename Type>
-    bool operator==(basic_resource<Type> const& left, basic_resource<Type> const& right)
-    {
-        return left.type_name() == right.type_name() && left.title() == right.title();
-    }
+    bool operator==(resource const& left, resource const& right);
 
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-     * Hash specialization for Resource type.
-     * @tparam Type The type of a runtime type.
+     * Inequality operator for resource type.
+     * @param left The left type to compare.
+     * @param right The right type to compare.
+     * @return Returns true if the two types are not equal or false if they are equal.
      */
-    template <typename Type>
-    struct hash<puppet::runtime::types::basic_resource<Type>>
-    {
-        /**
-         * Hashes the Resource type.
-         * @param type The type to hash.
-         * @return Returns the hash value for the type.
-         */
-        size_t operator()(puppet::runtime::types::basic_resource<Type> const& type) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::basic_resource<Type>::name());
+    bool operator!=(resource const& left, resource const& right);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            hash_combine(seed, type.type_name());
-            hash_combine(seed, type.title());
-            return seed;
-        }
-    };
-}
+    /**
+     * Hashes the resource type.
+     * @param type The resource type to hash.
+     * @return Returns the hash value for the type.
+     */
+    size_t hash_value(resource const& type);
+
+}}}  // namespace puppet::runtime::types

@@ -4,9 +4,7 @@
  */
 #pragma once
 
-#include "../values/defaulted.hpp"
-#include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
+#include "../values/forward.hpp"
 #include <ostream>
 
 namespace puppet { namespace runtime { namespace types {
@@ -20,32 +18,21 @@ namespace puppet { namespace runtime { namespace types {
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Default).
          */
-        static const char* name();
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            return boost::get<values::defaulted>(&value);
-        }
+        bool is_instance(values::value const& value) const;
 
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
-         * @tparam Type The type of runtime type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        template <typename Type>
-        bool is_specialization(Type const& other) const
-        {
-            // No specializations of Default
-            return false;
-        }
+        bool is_specialization(values::type const& other) const;
     };
 
     /**
@@ -61,28 +48,21 @@ namespace puppet { namespace runtime { namespace types {
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    bool operator==(defaulted const&, defaulted const&);
+    bool operator==(defaulted const& left, defaulted const& right);
 
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-     * Hash specialization for Default type.
+     * Inequality operator for defaulted.
+     * @param left The left type to compare.
+     * @param right The right type to compare.
+     * @return Returns true if the two types are not equal or false if they are equal.
      */
-    template <>
-    struct hash<puppet::runtime::types::defaulted>
-    {
-        /**
-         * Hashes the Default type.
-         * @return Returns the hash value for the type.
-         */
-        size_t operator()(puppet::runtime::types::defaulted const&) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::defaulted::name());
+    bool operator!=(defaulted const& left, defaulted const& right);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            return seed;
-        }
-    };
-}
+    /**
+     * Hashes the defaulted type.
+     * @param type The defaulted type to hash.
+     * @return Returns the hash value for the type.
+     */
+    size_t hash_value(defaulted const& type);
+
+}}}  // namespace puppet::runtime::types

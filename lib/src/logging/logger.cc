@@ -166,6 +166,8 @@ namespace puppet { namespace logging {
 
         // Output the offending line's text
         if (!text.empty() && column > 0) {
+            reset(level);
+
             // Ignore leading whitespace in the line
             size_t offset = 0;
             size_t column_offset = 0;
@@ -188,6 +190,7 @@ namespace puppet { namespace logging {
 
             // Write the "pointer" pointing at the column
             fill_n(ostream_iterator<char>(stream), column - column_offset + 3, ' ');
+            colorize(logging::level::info);
             stream << "^\n";
         }
 

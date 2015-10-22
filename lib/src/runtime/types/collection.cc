@@ -1,4 +1,5 @@
-#include <puppet/runtime/types/collection.hpp>
+#include <puppet/runtime/values/value.hpp>
+#include <boost/functional/hash.hpp>
 
 using namespace std;
 
@@ -20,9 +21,40 @@ namespace puppet { namespace runtime { namespace types {
         return _to;
     }
 
-    const char* collection::name()
+    char const* collection::name()
     {
         return "Collection";
+    }
+
+    bool collection::is_instance(values::value const& value) const
+    {
+        // Check for array first
+        int64_t size = 0;
+        auto array = value.as<values::array>();
+        if (array) {
+            size = static_cast<int64_t>(array->size());
+        } else {
+            // Check for hash
+            auto hash = value.as<values::hash>();
+            if (hash) {
+                size = static_cast<int64_t>(hash->size());
+            } else {
+                // Not a collection
+                return false;
+            }
+        }
+        // Check for size is range
+        return _to < _from ? (size >= _to && size <= _from) : (size >= _from && size <= _to);
+    }
+
+    bool collection::is_specialization(values::type const& other) const
+    {
+        // Array and Hash are specializations
+        // So are any specializations of Array and Hash
+        return boost::get<array>(&other)        ||
+               boost::get<hash>(&other)         ||
+               array().is_specialization(other) ||
+               hash().is_specialization(other);
     }
 
     ostream& operator<<(ostream& os, collection const& type)
@@ -53,6 +85,22 @@ namespace puppet { namespace runtime { namespace types {
     bool operator==(collection const& left, collection const& right)
     {
         return left.from() == right.from() && left.to() == right.to();
+    }
+
+    bool operator!=(collection const& left, collection const& right)
+    {
+        return !(left == right);
+    }
+
+    size_t hash_value(collection const& type)
+    {
+        static const size_t name_hash = boost::hash_value(collection::name());
+
+        size_t seed = 0;
+        boost::hash_combine(seed, name_hash);
+        boost::hash_combine(seed, type.from());
+        boost::hash_combine(seed, type.to());
+        return seed;
     }
 
 }}}  // namespace puppet::runtime::types
