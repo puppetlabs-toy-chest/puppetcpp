@@ -3,7 +3,7 @@ Puppet Compiler in C++
 
 [![Build Status](https://travis-ci.org/peterhuene/puppetcpp.svg?branch=master)](https://travis-ci.org/peterhuene/puppetcpp)
 
-This is a (very early) attempt to write a Puppet 4 compiler in C++11.
+This is a (very early) attempt to write a Puppet 4 compiler in C++14.
 
 Parser status:
 
@@ -134,7 +134,6 @@ Puppet functions implemented:
 * [ ] regsubst
 * [x] require
 * [ ] scanf
-* [ ] search
 * [ ] sha1
 * [ ] shellquote
 * [ ] slice
@@ -178,7 +177,7 @@ Build Requirements
 * OSX or Linux
 * GCC >= 5.0 or Clang >= 3.4 (with libc++)
 * CMake >= 3.0
-* Boost Libraries >= 1.57
+* Boost Libraries >= 1.59.0
 * [Facter](https://github.com/puppetlabs/facter) >= 3.0
 * yaml-cpp >= 0.5.1
 

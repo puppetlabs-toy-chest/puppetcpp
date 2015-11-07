@@ -1,11 +1,11 @@
 #include <catch.hpp>
-#include <puppet/lexer/static_lexer.hpp>
-#include <puppet/lexer/lexer.hpp>
+#include <puppet/compiler/lexer/static_lexer.hpp>
+#include <puppet/compiler/lexer/lexer.hpp>
 #include <limits>
 #include <boost/format.hpp>
 
 using namespace std;
-using namespace puppet::lexer;
+using namespace puppet::compiler::lexer;
 
 struct token_value_visitor : boost::static_visitor<string>
 {

@@ -1,13 +1,16 @@
 #include <puppet/compiler/settings.hpp>
 #include <puppet/compiler/node.hpp>
+#include <puppet/compiler/exceptions.hpp>
 #include <puppet/facts/yaml.hpp>
 #include <boost/filesystem.hpp>
 #include <fstream>
 
 using namespace std;
+using namespace puppet;
 using namespace puppet::logging;
 using namespace puppet::facts;
-namespace compiler = puppet::compiler;
+using namespace puppet::runtime;
+using namespace puppet::compiler;
 namespace fs = boost::filesystem;
 
 int main(int argc, char const* argv[])
@@ -18,7 +21,8 @@ int main(int argc, char const* argv[])
         compiler::settings settings{argc, argv};
 
         if (settings.show_version()) {
-            cout << "0.1.0-FIXME" << endl;
+            // TODO: output an actual version
+            cout << "0.1.0" << endl;
             return EXIT_SUCCESS;
         }
         if (settings.show_help()) {
@@ -35,24 +39,24 @@ int main(int argc, char const* argv[])
             LOG(debug, "using directory '%1%' to search for global modules.", directory);
         }
 
-        // Construct an environment
-        compiler::environment environment{logger, settings.environment(), settings.environment_directory()};
+        // Construct an environment and load the modules
+        auto environment = make_shared<compiler::environment>(logger, settings, settings.environment(), settings.environment_directory());
 
         // Construct a node
-        compiler::node node{logger, settings.node_name(), settings.module_directories(), environment};
+        node node{logger, settings.node_name(), rvalue_cast(environment), settings.facts()};
 
         // Open the output file for writing
         auto output_file = (fs::current_path() / settings.output_file()).string();
         ofstream output(output_file);
         if (!output) {
-            throw compiler::settings_exception((boost::format("cannot open '%1%' for writing.") % output_file).str());
+            throw settings_exception((boost::format("cannot open '%1%' for writing.") % output_file).str());
         }
 
         try {
             LOG(notice, "compiling for node '%1%' with environment '%2%'.", settings.node_name(), settings.environment());
 
             // Compile the node
-            auto catalog = node.compile(settings);
+            auto catalog = node.compile();
 
             // Write the graph file if given one
             if (!settings.graph_file().empty()) {
@@ -71,14 +75,16 @@ int main(int argc, char const* argv[])
 
             // Write the catalog
             LOG(notice, "writing catalog to '%1%'.", output_file);
-            catalog.write(node, output);
+            catalog.write(output);
 
-        } catch (compiler::compilation_exception const& ex) {
+        } catch (compilation_exception const& ex) {
             LOG(error, ex.line(), ex.column(), ex.text(), ex.path(), "node '%1%': %2%", node.name(), ex.what());
+        } catch (resource_cycle_exception const& ex) {
+            LOG(error, ex.what());
         }
     } catch (yaml_parse_exception const& ex) {
         LOG(error, ex.line(), ex.column(), ex.text(), ex.path(), ex.what());
-    } catch (compiler::settings_exception const& ex) {
+    } catch (settings_exception const& ex) {
         LOG(error, ex.what());
         LOG(notice, "use 'puppetcpp --help' for help.");
         return EXIT_FAILURE;

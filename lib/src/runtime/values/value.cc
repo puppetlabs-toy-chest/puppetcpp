@@ -1,5 +1,5 @@
 #include <puppet/runtime/values/value.hpp>
-#include <puppet/runtime/expression_evaluator.hpp>
+#include <puppet/compiler/evaluation/collectors/collector.hpp>
 #include <puppet/cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
@@ -9,78 +9,41 @@
 
 using namespace std;
 using namespace rapidjson;
+using namespace puppet::runtime;
+using namespace puppet::compiler::evaluation;
 
 namespace puppet { namespace runtime { namespace values {
 
-    struct value_visitor : boost::static_visitor<ostream&>
+    value::value(values::wrapper<value>&& wrapper) :
+        value_base(rvalue_cast(static_cast<value_base&>(wrapper.get())))
     {
-        explicit value_visitor(ostream& os) :
-            _os(os)
-        {
-        }
-
-        result_type operator()(bool val) const
-        {
-            _os << (val ? "true" : "false");
-            return _os;
-        }
-
-        template <typename T>
-        result_type operator()(T const& t) const
-        {
-            _os << t;
-            return _os;
-        }
-
-    private:
-        ostream& _os;
-    };
-
-    ostream& operator<<(ostream& os, value const& val)
-    {
-        return boost::apply_visitor(value_visitor(os), val);
     }
 
-    value mutate(value& v)
+    value& value::operator=(values::wrapper<value>&& wrapper)
     {
-        // Check for variable first and create a copy
-        if (boost::get<variable>(&v)) {
-            return dereference(v);
-        }
-        // Otherwise, just move the argument
-        return rvalue_cast(v);
+        value_base::operator=(rvalue_cast(static_cast<value_base&>(wrapper.get())));
+        return *this;
     }
 
-    value const& dereference(value const& val)
+    bool value::is_undef() const
     {
-        auto result = &val;
-        auto ptr = boost::get<variable>(result);
-        while (ptr) {
-            result = &ptr->value();
-            ptr = boost::get<variable>(result);
-        }
-        return *result;
+        return static_cast<bool>(as<undef>());
     }
 
-    bool is_undef(value const& val)
+    bool value::is_default() const
     {
-        return as<undef>(val);
+        return static_cast<bool>(as<defaulted>());
     }
 
-    bool is_default(value const& val)
+    bool value::is_true() const
     {
-        return as<defaulted>(val);
-    }
-
-    bool is_true(value const& val)
-    {
-        auto ptr = as<bool>(val);
+        auto ptr = as<bool>();
         return ptr && *ptr;
     }
 
-    bool is_false(value const& val)
+    bool value::is_false() const
     {
-        auto ptr = as<bool>(val);
+        auto ptr = as<bool>();
         return ptr && !*ptr;
     }
 
@@ -98,7 +61,7 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(variable const& var) const
         {
-            return is_truthy(var.value());
+            return var.value().is_truthy();
         }
 
         template <typename T>
@@ -108,9 +71,9 @@ namespace puppet { namespace runtime { namespace values {
         }
     };
 
-    bool is_truthy(value const& val)
+    bool value::is_truthy() const
     {
-        return boost::apply_visitor(truthy_visitor(), val);
+        return boost::apply_visitor(truthy_visitor(), *this);
     }
 
     struct type_visitor : boost::static_visitor<values::type>
@@ -152,7 +115,7 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(type const& t) const
         {
-            return types::type(t);
+            return types::type(make_unique<type>(t));
         }
 
         result_type operator()(variable const& var) const
@@ -162,166 +125,103 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(array const&) const
         {
-            return types::array(types::any());
+            return types::array(make_unique<type>(types::any()));
         }
 
         result_type operator()(hash const&) const
         {
-            return types::hash(types::any(), types::any());
+            return types::hash(make_unique<type>(types::any()), make_unique<type>(types::any()));
         }
     };
 
-    values::type get_type(value const& val)
+    values::type value::get_type() const
     {
-        return boost::apply_visitor(type_visitor(), val);
+        return boost::apply_visitor(type_visitor(), *this);
     }
 
-    struct is_instance_visitor : boost::static_visitor<bool>
+    array value::to_array(bool convert_hash)
     {
-        explicit is_instance_visitor(value const& val) :
-            _value(val)
-        {
-        }
-
-        template <typename Type>
-        result_type operator()(Type const& t) const
-        {
-            return t.is_instance(_value);
-        }
-
-     private:
-        value const& _value;
-    };
-
-    bool is_instance(value const& val, type const& t)
-    {
-        return boost::apply_visitor(is_instance_visitor(dereference(val)), t);
-    }
-
-    struct is_specialization_visitor : boost::static_visitor<bool>
-    {
-        explicit is_specialization_visitor(type const& t) :
-            _type(t)
-        {
-        }
-
-        template <typename Type>
-        result_type operator()(Type const& t) const
-        {
-            return t.is_specialization(_type);
-        }
-
-    private:
-        type const& _type;
-    };
-
-    bool is_specialization(type const& first, type const& second)
-    {
-        return boost::apply_visitor(is_specialization_visitor(second), first);
-    }
-
-    array to_array(value& val, bool convert_hash)
-    {
-        // If already an array, return a copy
-        if (as<values::array>(val)) {
-            return mutate_as<values::array>(val);
+        // If already an array, return it
+        if (as<values::array>()) {
+            return move_as<values::array>();
         }
 
         array result;
 
         // Check for hash
-        auto hash_ptr = as<values::hash>(val);
+        auto hash_ptr = as<values::hash>();
         if (convert_hash && hash_ptr) {
             // Turn the hash into an array of [K,V]
             for (auto& kvp : *hash_ptr) {
                 array element;
-                element.emplace_back(kvp.first);
-                element.emplace_back(kvp.second);
+                element.emplace_back(*kvp.first);
+                element.emplace_back(*kvp.second);
                 result.emplace_back(rvalue_cast(element));
             }
-        } else if (!is_undef(val)) {
+        } else if (!is_undef()) {
             // Otherwise, add the value as the only element
-            result.emplace_back(val);
+            result.emplace_back(rvalue_cast(*this));
         }
         return result;
     }
 
-    void join(ostream& os, array const& arr, std::string const& separator)
+    struct value_printer : boost::static_visitor<ostream&>
     {
-        bool first = true;
-        for (auto const& element : arr) {
-            if (first) {
-                first = false;
-            } else {
-                os << separator;
-            }
-            os << element;
+        explicit value_printer(ostream& os) :
+            _os(os)
+        {
         }
-    }
 
-    bool operator==(undef const&, undef const&)
-    {
-        return true;
-    }
-
-    bool operator==(defaulted const&, defaulted const&)
-    {
-        return true;
-    }
-
-    bool operator==(regex const& left, regex const& right)
-    {
-        return left.pattern() == right.pattern();
-    }
-
-    bool operator==(array const& left, array const& right)
-    {
-        if (left.size() != right.size()) {
-            return false;
+        result_type operator()(bool value) const
+        {
+            _os << (value ? "true" : "false");
+            return _os;
         }
-        for (size_t i = 0; i < left.size(); ++i) {
-            if (!equals(left[i], right[i])) {
-                return false;
-            }
-        }
-        return true;
-    }
 
-    bool operator==(hash const& left, hash const& right)
+        result_type operator()(values::type const& type) const
+        {
+            boost::apply_visitor(*this, type);
+            return _os;
+        }
+
+        template <typename T>
+        result_type operator()(T const& value) const
+        {
+            _os << value;
+            return _os;
+        }
+
+    private:
+        ostream& _os;
+    };
+
+    ostream& operator<<(ostream& os, value const& val)
     {
-        if (left.size() != right.size()) {
-            return false;
-        }
-        for (auto const& element : left) {
-            // Other hash must have the same key
-            auto other = right.find(element.first);
-            if (other == right.end()) {
-                return false;
-            }
-            // Values must be equal
-            if (!equals(element.second, other->second)) {
-                return false;
-            }
-        }
-        return true;
+        return boost::apply_visitor(value_printer(os), val);
     }
 
-    equality_visitor::result_type equality_visitor::operator()(string const& left, string const& right) const
+    bool equality_visitor::operator()(std::string const& left, std::string const& right) const
     {
         return boost::algorithm::iequals(left, right);
     }
 
-    bool equals(value const& left, value const& right)
+    bool operator==(value const& left, value const& right)
     {
         return boost::apply_visitor(equality_visitor(), left, right);
     }
 
-    void each_resource(values::value const& value, function<void(types::resource const&)> const& callback, function<void(string const&)> const& error)
+    bool operator!=(value const& left, value const& right)
     {
+        return !boost::apply_visitor(equality_visitor(), left, right);
+    }
+
+    void value::each_resource(function<void(runtime::types::resource const&)> const& callback, function<void(string const&)> const& error) const
+    {
+        namespace pt = puppet::runtime::types;
+
         // Check for string, type, or array
-        if (auto str = as<string>(value)) {
-            // Parse as resource
-            auto resource = types::resource::parse(*str);
+        if (auto str = as<string>()) {
+            auto resource = pt::resource::parse(*str);
             if (!resource) {
                 if (error) {
                     error((boost::format("expected a resource string but found \"%1%\".") % *str).str());
@@ -330,19 +230,19 @@ namespace puppet { namespace runtime { namespace values {
             }
             callback(*resource);
             return;
-        } else if (auto type = as<values::type>(value)) {
+        } else if (auto type = as<values::type>()) {
             // Check for a resource or klass type
-            if (auto resource = boost::get<types::resource>(type)) {
+            if (auto resource = boost::get<pt::resource>(type)) {
                 if (resource->fully_qualified()) {
                     callback(*resource);
                     return;
                 }
-            } else if (auto klass = boost::get<types::klass>(type)) {
+            } else if (auto klass = boost::get<pt::klass>(type)) {
                 if (!klass->title().empty()) {
-                    callback(types::resource("class", klass->title()));
+                    callback(runtime::types::resource("class", klass->title()));
                     return;
                 }
-            } else if (auto runtime = boost::get<types::runtime>(type)) {
+            } else if (auto runtime = boost::get<pt::runtime>(type)) {
                 // Check for a collector
                 if (runtime->object()) {
                     if (auto collector = boost::get<shared_ptr<collectors::collector>>(*runtime->object())) {
@@ -353,68 +253,68 @@ namespace puppet { namespace runtime { namespace values {
                     }
                 }
             }
-        } else if (auto array = as<values::array>(value)) {
+        } else if (auto array = as<values::array>()) {
             // For arrays, recurse on each element
             for (auto& element : *array) {
-                each_resource(element, callback, error);
+                element->each_resource(callback, error);
             }
             return;
         }
 
         if (error) {
-            error((boost::format("expected %1%, fully qualified %2%, or %3% for relationship but found %4%.") %
-                   types::string::name() %
-                   types::resource::name() %
-                   types::array(types::variant({ values::type(types::string()), values::type(types::resource()) })) %
-                   get_type(value)).str());
+            error((boost::format("expected %1% or fully qualified %2% for relationship but found %3%.") %
+                pt::string::name() %
+                pt::resource::name() %
+                get_type()
+            ).str());
         }
     }
 
-    struct json_visitor : boost::static_visitor<rapidjson::Value>
+    struct json_visitor : boost::static_visitor<json_value>
     {
-        json_visitor(Allocator& allocator) :
+        json_visitor(json_allocator& allocator) :
             _allocator(allocator)
         {
         }
 
         result_type operator()(undef const&) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetNull();
             return value;
         }
 
         result_type operator()(defaulted const&) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetString("default");
             return value;
         }
 
         result_type operator()(int64_t i) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetInt64(i);
             return value;
         }
 
         result_type operator()(long double d) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetDouble(static_cast<double>(d));
             return value;
         }
 
         result_type operator()(bool b) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetBool(b);
             return value;
         }
 
         result_type operator()(string const& s) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetString(StringRef(s.c_str(), s.size()));
             return value;
         }
@@ -422,14 +322,14 @@ namespace puppet { namespace runtime { namespace values {
         result_type operator()(values::regex const& regex) const
         {
             auto const& pattern = regex.pattern();
-            rapidjson::Value value;
+            json_value value;
             value.SetString(StringRef(pattern.c_str(), pattern.size()));
             return value;
         }
 
         result_type operator()(values::type const& type) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetString(boost::lexical_cast<string>(type).c_str(), _allocator);
             return value;
         }
@@ -441,37 +341,37 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(values::array const& array) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetArray();
             value.Reserve(array.size(), _allocator);
 
             for (auto const& element : array) {
-                value.PushBack(boost::apply_visitor(*this, element), _allocator);
+                value.PushBack(boost::apply_visitor(*this, *element), _allocator);
             }
             return value;
         }
 
         result_type operator()(values::hash const& hash) const
         {
-            rapidjson::Value value;
+            json_value value;
             value.SetObject();
 
             for (auto const& element : hash) {
                 value.AddMember(
-                    rapidjson::Value(boost::lexical_cast<string>(element.first).c_str(), _allocator),
-                    boost::apply_visitor(*this, element.second),
+                    json_value(boost::lexical_cast<string>(*element.first).c_str(), _allocator),
+                    boost::apply_visitor(*this, *element.second),
                     _allocator);
             }
             return value;
         }
 
      private:
-        Allocator& _allocator;
+        json_allocator& _allocator;
     };
 
-    rapidjson::Value to_json(values::value const& value, Allocator& allocator)
+    json_value value::to_json(json_allocator& allocator) const
     {
-        return boost::apply_visitor(json_visitor(allocator), value);
+        return boost::apply_visitor(json_visitor(allocator), *this);
     }
 
     void enumerate_string(string const& str, function<bool(string)> const& callback)

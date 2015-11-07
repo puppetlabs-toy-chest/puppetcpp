@@ -1,4 +1,4 @@
-#include <puppet/runtime/values/regex.hpp>
+#include <puppet/runtime/values/value.hpp>
 #include <puppet/cast.hpp>
 
 using namespace std;
@@ -29,6 +29,21 @@ namespace puppet { namespace runtime { namespace values {
     {
         os << '/' << regx.pattern() << '/';
         return os;
+    }
+
+    bool operator==(regex const& left, regex const& right)
+    {
+        return left.pattern() == right.pattern();
+    }
+
+    bool operator!=(regex const& left, regex const& right)
+    {
+        return !(left == right);
+    }
+
+    size_t hash_value(values::regex const& regex)
+    {
+        return boost::hash_value(regex.pattern());
     }
 
 }}}  // namespace puppet::runtime::values

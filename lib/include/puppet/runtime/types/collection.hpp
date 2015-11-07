@@ -4,14 +4,9 @@
  */
 #pragma once
 
-#include "array.hpp"
-#include "hash.hpp"
-#include "tuple.hpp"
-#include "struct.hpp"
-#include "../values/array.hpp"
-#include "../values/hash.hpp"
-#include <boost/functional/hash.hpp>
+#include "../values/forward.hpp"
 #include <ostream>
+#include <limits>
 
 namespace puppet { namespace runtime { namespace types {
 
@@ -43,52 +38,21 @@ namespace puppet { namespace runtime { namespace types {
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Collection).
          */
-        static const char* name();
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            // Check for array first
-            int64_t size = 0;
-            auto array = boost::get<values::basic_array<Value>>(&value);
-            if (array) {
-                size = static_cast<int64_t>(array->size());
-            } else {
-                // Check for hash
-                auto hash = boost::get<values::basic_hash<Value>>(&value);
-                if (hash) {
-                    size = static_cast<int64_t>(hash->size());
-                } else {
-                    // Not a collection
-                    return false;
-                }
-            }
-            // Check for size is range
-            return _to < _from ? (size >= _to && size <= _from) : (size >= _from && size <= _to);
-        }
+        bool is_instance(values::value const& value) const;
 
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
-         * @tparam Type The type of runtime type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        template <typename Type>
-        bool is_specialization(Type const& other) const
-        {
-            // Array and Hash are specializations
-            // So are any specializations of Array and Hash
-            return boost::get<basic_array<Type>>(&other)        ||
-                   boost::get<basic_hash<Type>>(&other)         ||
-                   basic_array<Type>().is_specialization(other) ||
-                   basic_hash<Type>().is_specialization(other);
-        }
+        bool is_specialization(values::type const& other) const;
 
      private:
         int64_t _from;
@@ -111,29 +75,20 @@ namespace puppet { namespace runtime { namespace types {
      */
     bool operator==(collection const& left, collection const& right);
 
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-     * Hash specialization for Collection type.
+     * Inequality operator for collection.
+     * @param left The left type to compare.
+     * @param right The right type to compare.
+     * @return Returns true if the two types are not equal or false if they are equal.
      */
-    template <>
-    struct hash<puppet::runtime::types::collection>
-    {
-        /**
-         * Hashes the Collection type.
-         * @param type The type to hash.
-         * @return Returns the hash value for the type.
-         */
-        size_t operator()(puppet::runtime::types::collection const& type) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::collection::name());
+    bool operator!=(collection const& left, collection const& right);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            hash_combine(seed, type.from());
-            hash_combine(seed, type.to());
-            return seed;
-        }
-    };
-}
+    /**
+     * Hashes the collection type.
+     * @param type The collection type to hash.
+     * @return Returns the hash value for the type.
+     */
+    size_t hash_value(collection const& type);
+
+}}}  // namespace puppet::runtime::types
+

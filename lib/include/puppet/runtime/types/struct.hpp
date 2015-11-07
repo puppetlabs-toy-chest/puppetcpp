@@ -4,216 +4,115 @@
  */
 #pragma once
 
+#include "../values/forward.hpp"
 #include "../values/hash.hpp"
-#include "../values/undef.hpp"
-#include "../../cast.hpp"
-#include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
 #include <ostream>
-#include <unordered_map>
-#include <string>
+#include <memory>
+#include <vector>
 
 namespace puppet { namespace runtime { namespace types {
 
     /**
      * Represents the Puppet Struct type.
-     * @tparam Type The type of a runtime type.
      */
-    template <typename Type>
-    struct basic_struct
+    struct structure
     {
         /**
-         * Constructs a Struct type.
-         * @param types The types that make up the struct.
+         * The type used to define a structure's schema.
          */
-        explicit basic_struct(std::unordered_map<std::string, Type> types = std::unordered_map<std::string, Type>()) :
-            _types(rvalue_cast(types))
-        {
-        }
+        using schema_type = std::vector<std::pair<std::unique_ptr<values::type>, std::unique_ptr<values::type>>>;
 
         /**
-         * Gets the struct types.
-         * @return Returns the struct types.
+         * Constructs a Struct type.
+         * @param schema The struct's schema.
          */
-        std::unordered_map<std::string, Type> const& types() const
-        {
-            return _types;
-        }
+        explicit structure(schema_type schema = schema_type());
+
+        /**
+         * Copy constructor for structure type.
+         * @param other The other structure type to copy from.
+         */
+        structure(structure const& other);
+
+        /**
+         * Move constructor for structure type.
+         * Uses the default implementation.
+         */
+        structure(structure&&) noexcept = default;
+
+        /**
+         * Copy assignment operator for structure type.
+         * @param other The other structure type to copy assign from.
+         * @return Returns this structure type.
+         */
+        structure& operator=(structure const& other);
+
+        /**
+         * Move assignment operator for structure type.
+         * Uses the default implementation.
+         * @return Returns this structure type.
+         */
+        structure& operator=(structure&&) noexcept = default;
+
+        /**
+         * Gets the struct's schema.
+         * @return Returns the struct's schema.
+         */
+        schema_type const& schema() const;
 
         /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Struct).
          */
-        static const char* name()
-        {
-            return "Struct";
-        }
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            // Forward declaration of unsafe_is_instance for recursion
-            bool unsafe_is_instance(void const*, void const*);
-
-            // Check for hash
-            auto ptr = boost::get<values::basic_hash<Value>>(&value);
-            if (!ptr) {
-                return false;
-            }
-
-            // If no types, only empty hashes match
-            if (_types.empty()) {
-                return ptr->empty();
-            }
-
-            // Go through each type and ensure it's in the hash
-            size_t count = 0;
-            values::undef undef;
-            for (auto const& kvp : _types) {
-                auto it = ptr->find(kvp.first);
-                if (it == ptr->end()) {
-                    if (!unsafe_is_instance(&undef, &kvp.second)) {
-                        return false;
-                    }
-                    continue;
-                }
-
-                if (!unsafe_is_instance(&it->second, &kvp.second)) {
-                    return false;
-                }
-
-                ++count;
-            }
-            // Ensure that the hash doesn't contain more keys than what is present in the types
-            return count == ptr->size();
-        }
+        bool is_instance(values::value const& value) const;
 
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        bool is_specialization(Type const& other) const
-        {
-            // Check for another Struct
-            auto ptr = boost::get<basic_struct<Type>>(&other);
-            if (!ptr) {
-                return false;
-            }
-
-            // Check for less types (i.e. this type is more specialized)
-            auto& other_types = ptr->types();
-            if (other_types.size() < _types.size()) {
-                return false;
-            }
-            // All values must match
-            for (auto const& kvp : _types) {
-                auto other_kvp = other_types.find(kvp.first);
-                if (other_kvp == other_types.end()) {
-                    return false;
-                }
-                if (kvp.second != other_kvp->second) {
-                    return false;
-                }
-            }
-            // If the other type has more types, it is more specialized
-            if (other_types.size() > _types.size()) {
-                return true;
-            }
-            return false;
-        }
+        bool is_specialization(values::type const& other) const;
 
      private:
-        std::unordered_map<std::string, Type> _types;
+        schema_type _schema;
     };
 
     /**
      * Stream insertion operator for struct type.
-     * @tparam Type The type of a runtime type.
      * @param os The output stream to write the type to.
      * @param type The type to write.
      * @return Returns the given output stream.
      */
-    template <typename Type>
-    std::ostream& operator<<(std::ostream& os, basic_struct<Type> const& type)
-    {
-        os << basic_struct<Type>::name();
-        if (type.types().empty()) {
-            return os;
-        }
-        os << "[{";
-        bool first = true;
-        for (auto const& kvp : type.types()) {
-            if (first) {
-                first = false;
-            } else {
-                os << ", ";
-            }
-            os << kvp.first << " => " << kvp.second;
-        }
-        os << "}]";
-        return os;
-    }
+    std::ostream& operator<<(std::ostream& os, structure const& type);
 
     /**
      * Equality operator for struct.
-     * @tparam Type The type of a runtime type.
      * @param left The left type to compare.
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    template <typename Type>
-    bool operator==(basic_struct<Type> const& left, basic_struct<Type> const& right)
-    {
-        // Check the types
-        auto const& left_types = left.types();
-        auto const& right_types = right.types();
-        if (left_types.size() != right_types.size()) {
-            return false;
-        }
+    bool operator==(structure const& left, structure const& right);
 
-        // Ensure all types match
-        for (auto const& left_kvp : left_types) {
-            auto right_kvp = right_types.find(left_kvp.first);
-            if (right_kvp == right_types.end()) {
-                return false;
-            }
-            if (left_kvp.second != right_kvp->second) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-     * Hash specialization for Struct type.
-     * @tparam Type The type of a runtime type.
+     * Inequality operator for struct.
+     * @param left The left type to compare.
+     * @param right The right type to compare.
+     * @return Returns true if the two types are not equal or false if they are equal.
      */
-    template <typename Type>
-    struct hash<puppet::runtime::types::basic_struct<Type>>
-    {
-        /**
-         * Hashes the Struct type.
-         * @param type The type to hash.
-         * @return Returns the hash value for the type.
-         */
-        size_t operator()(puppet::runtime::types::basic_struct<Type> const& type) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::basic_struct<Type>::name());
+    bool operator!=(structure const& left, structure const& right);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            hash_range(seed, type.types().begin(), type.types().end());
-            return seed;
-        }
-    };
-}
+    /**
+     * Hashes the structure type.
+     * @param type The structure type to hash.
+     * @return Returns the hash value for the type.
+     */
+    size_t hash_value(structure const& type);
+
+}}}  // namespace puppet::runtime::types

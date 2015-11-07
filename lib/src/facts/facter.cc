@@ -4,6 +4,7 @@
 #include <facter/facts/scalar_value.hpp>
 #include <facter/facts/map_value.hpp>
 #include <facter/facts/array_value.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
@@ -42,7 +43,7 @@ namespace puppet { namespace facts {
 
     void facter::each(bool accessed, function<bool(string const&, shared_ptr<values::value const> const&)> const& callback)
     {
-        // If all facts, enumerate all the facts and store in the cache
+    // If all facts, enumerate all the facts and store in the cache
         if (!accessed) {
             _collection.each([this](string const& name, ::facter::facts::value const* value) {
                 if (_cache.count(name)) {

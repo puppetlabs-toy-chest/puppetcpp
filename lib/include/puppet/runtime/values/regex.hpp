@@ -4,7 +4,6 @@
  */
 #pragma once
 
-#include <boost/functional/hash.hpp>
 #include <regex>
 #include <string>
 #include <ostream>
@@ -45,6 +44,14 @@ namespace puppet { namespace runtime { namespace values {
     };
 
     /**
+     * Stream insertion operator for runtime regex.
+     * @param os The output stream to write the runtime regex to.
+     * @param regx The runtime regex to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, regex const& regx);
+
+    /**
      * Equality operator for regex.
      * @param left The left regex to compare.
      * @param right The right regex to compare.
@@ -53,30 +60,18 @@ namespace puppet { namespace runtime { namespace values {
     bool operator==(regex const& left, regex const& right);
 
     /**
-     * Stream insertion operator for runtime regex.
-     * @param os The output stream to write the runtime regex to.
-     * @param regx The runtime regex to write.
-     * @return Returns the given output stream.
+     * Inequality operator for regex.
+     * @param left The left regex to compare.
+     * @param right The right regex to compare.
+     * @return Returns true if both regexes have different patterns or false if they are the same.
      */
-    std::ostream& operator<<(std::ostream& os, regex const& regx);
+    bool operator!=(regex const& left, regex const& right);
 
-}}}  // puppet::runtime::values
-
-namespace boost {
     /**
-     * Hash specialization for regex.
+     * Hashes the regex value.
+     * @param variable The regex value to hash.
+     * @return Returns the hash value for the value.
      */
-    template <>
-    struct hash<puppet::runtime::values::regex>
-    {
-        /**
-         * Hashes the regex value.
-         * @param regex The regex to hash.
-         * @return Returns the hash value for the regex.
-         */
-        size_t operator()(puppet::runtime::values::regex const& regex) const
-        {
-            return hash_value(regex.pattern());
-        }
-    };
-}
+    size_t hash_value(values::regex const& regex);
+
+}}}  // namespace puppet::runtime::values

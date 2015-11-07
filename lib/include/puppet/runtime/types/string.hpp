@@ -4,9 +4,8 @@
  */
 #pragma once
 
+#include "../values/forward.hpp"
 #include "integer.hpp"
-#include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
 #include <limits>
 #include <ostream>
 
@@ -46,46 +45,20 @@ namespace puppet { namespace runtime { namespace types {
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. String).
          */
-        static const char* name();
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            auto ptr = boost::get<std::string>(&value);
-            if (!ptr) {
-                return false;
-            }
-            auto size = static_cast<int64_t>(ptr->size());
-            return _to < _from ? (size >= _to && size <= _from) : (size >= _from && size <= _to);
-        }
-
+        bool is_instance(values::value const& value) const;
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
-         * @tparam Type The type of runtime type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        template <typename Type>
-        bool is_specialization(Type const& other) const
-        {
-            // Check for an String with a range inside of this type's range
-            auto ptr = boost::get<string>(&other);
-            if (!ptr) {
-                return false;
-            }
-            // Check for equality
-            if (ptr->from() == _from && ptr->to() == _to) {
-                return false;
-            }
-            return std::min(ptr->from(), ptr->to()) >= std::min(_from, _to) &&
-                   std::max(ptr->from(), ptr->to()) <= std::max(_from, _to);
-        }
+        bool is_specialization(values::type const& other) const;
 
      private:
         int64_t _from;
@@ -108,29 +81,19 @@ namespace puppet { namespace runtime { namespace types {
      */
     bool operator==(string const& left, string const& right);
 
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-     * Hash specialization for Numeric type.
+     * Inequality operator for string.
+     * @param left The left type to compare.
+     * @param right The right type to compare.
+     * @return Returns true if the two types are not equal or false if they are equal.
      */
-    template <>
-    struct hash<puppet::runtime::types::string>
-    {
-        /**
-         * Hashes the String type.
-         * @param type The type to hash.
-         * @return Returns the hash value for the type.
-         */
-        size_t operator()(puppet::runtime::types::string const& type) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::string::name());
+    bool operator!=(string const& left, string const& right);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            hash_combine(seed, type.from());
-            hash_combine(seed, type.to());
-            return seed;
-        }
-    };
-}
+    /**
+     * Hashes the string type.
+     * @param type The string type to hash.
+     * @return Returns the hash value for the type.
+     */
+    size_t hash_value(string const& type);
+
+}}}  // namespace puppet::runtime::types

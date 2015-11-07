@@ -4,146 +4,99 @@
  */
 #pragma once
 
-#include "../../cast.hpp"
-#include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
-#include <boost/optional.hpp>
+#include "../values/forward.hpp"
 #include <ostream>
 
 namespace puppet { namespace runtime { namespace types {
 
     /**
      * Represents the Puppet Type type.
-     * @tparam Type The type of a runtime type.
      */
-    template <typename Type>
-    struct basic_type
+    struct type
     {
         /**
          * Constructs an Type type.
-         * @param type The optional type.
+         * @param parameter The optional type parameter.
          */
-        explicit basic_type(boost::optional<Type> type = boost::none) :
-            _type(rvalue_cast(type))
-        {
-        }
+        explicit type(std::unique_ptr<values::type const> parameter = nullptr);
 
         /**
-         * Gets the optional type.
+         * Copy constructor for 'type' type.
+         * @param other The other 'type' type to copy from.
+         */
+        type(type const& other);
+
+        /**
+         * Move constructor for 'type' type.
+         * Uses the default implementation.
+         */
+        type(type&&) noexcept = default;
+
+        /**
+         * Copy assignment operator for 'type' type.
+         * @param other The other type 'type' to copy assign from.
+         * @return Returns this 'type' type.
+         */
+        type& operator=(type const& other);
+
+        /**
+         * Move assignment operator for 'type' type.
+         * Uses the default implementation.
+         * @return Returns this 'type' type.
+         */
+        type& operator=(type&&) noexcept = default;
+
+        /**
+         * Gets the optional type parameter.
          * @return Returns the optional type.
          */
-        boost::optional<Type> const& type() const
-        {
-            return _type;
-        }
+        std::unique_ptr<values::type const> const& parameter() const;
 
         /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Type).
          */
-        static const char* name()
-        {
-            return "Type";
-        }
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            // Check for type
-            auto ptr = boost::get<Type>(&value);
-            if (!ptr) {
-                return false;
-            }
-            // Unparameterized Type matches all types
-            if (!_type) {
-                return true;
-            }
-            // Compare the types
-            return *ptr == *_type;
-        }
+        bool is_instance(values::value const& value) const;
 
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        bool is_specialization(Type const& other) const
-        {
-            // If this Type has a specialization, the other type cannot be a specialization
-            if (_type) {
-                return false;
-            }
-            // Check that the other Type is specialized
-            auto type = boost::get<basic_type<Type>>(&other);
-            return type && type->type();
-        }
+        bool is_specialization(values::type const& other) const;
 
      private:
-        boost::optional<Type> _type;
+        std::unique_ptr<values::type const> _parameter;
     };
 
     /**
      * Stream insertion operator for "type" type.
-     * @tparam Type The type of a runtime type.
      * @param os The output stream to write the type to.
      * @param type The type to write.
      * @return Returns the given output stream.
      */
-    template <typename Type>
-    std::ostream& operator<<(std::ostream& os, basic_type<Type> const& type)
-    {
-        os << basic_type<Type>::name();
-        if (!type.type()) {
-            return os;
-        }
-        os << '[' << *type.type() << ']';
-        return os;
-    }
+    std::ostream& operator<<(std::ostream& os, types::type const& type);
 
     /**
      * Equality operator for type.
-     * @tparam Type The type of a runtime type.
      * @param left The left type to compare.
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    template <typename Type>
-    bool operator==(basic_type<Type> const& left, basic_type<Type> const& right)
-    {
-        return left.type() == right.type();
-    }
+    bool operator==(type const& left, type const& right);
 
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-     * Hash specialization for Type type.
-     * @tparam Type The type of a runtime type.
+     * Hashes the 'type' type.
+     * @param type The 'type' type to hash.
+     * @return Returns the hash value for the type.
      */
-    template <typename Type>
-    struct hash<puppet::runtime::types::basic_type<Type>>
-    {
-        /**
-         * Hashes the Type type.
-         * @param type The type to hash.
-         * @return Returns the type value for the type.
-         */
-        size_t operator()(puppet::runtime::types::basic_type<Type> const& type) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::basic_type<Type>::name());
+    size_t hash_value(types::type const& type);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            if (type.type()) {
-                hash_combine(seed, *type.type());
-            }
-            return seed;
-        }
-    };
-}
+}}}  // namespace puppet::runtime::types

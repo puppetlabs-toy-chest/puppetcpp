@@ -4,150 +4,107 @@
  */
 #pragma once
 
-#include "../values/undef.hpp"
-#include "../../cast.hpp"
-#include <boost/functional/hash.hpp>
-#include <boost/variant.hpp>
-#include <boost/optional.hpp>
+#include "../values/forward.hpp"
 #include <ostream>
+#include <memory>
 
 namespace puppet { namespace runtime { namespace types {
 
     /**
      * Represents the Puppet Optional type.
-     * @tparam Type The type of a runtime type.
      */
-    template <typename Type>
-    struct basic_optional
+    struct optional
     {
         /**
          * Constructs an Optional type.
          * @param type The optional type.
          */
-        explicit basic_optional(boost::optional<Type> type) :
-            _type(rvalue_cast(type))
-        {
-        }
+        explicit optional(std::unique_ptr<values::type> type = nullptr);
+
+        /**
+         * Copy constructor for optional type.
+         * @param other The other optional type to copy from.
+         */
+        optional(optional const& other);
+
+        /**
+         * Move constructor for optional type.
+         * Uses the default implementation.
+         */
+        optional(optional&&) noexcept = default;
+
+        /**
+         * Copy assignment operator for optional type.
+         * @param other The other optional type to copy assign from.
+         * @return Returns this optional type.
+         */
+        optional& operator=(optional const& other);
+
+        /**
+         * Move assignment operator for optional type.
+         * Uses the default implementation.
+         * @return Returns this optional type.
+         */
+        optional& operator=(optional&&) noexcept = default;
 
         /**
          * Gets the optional type.
          * @return Returns the optional type.
          */
-        boost::optional<Type> const& type() const
-        {
-            return _type;
-        }
+        std::unique_ptr<values::type> const& type() const;
 
         /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Optional).
          */
-        static const char* name()
-        {
-            return "Optional";
-        }
+        static char const* name();
 
         /**
          * Determines if the given value is an instance of this type.
-         * @tparam Value The type of the runtime value.
-         * @param value The value to determine if it is an instance of this type. This value will never be a variable.
+         * @param value The value to determine if it is an instance of this type.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        template <typename Value>
-        bool is_instance(Value const& value) const
-        {
-            // Forward declaration of unsafe_is_instance for recursion
-            bool unsafe_is_instance(void const*, void const*);
-
-            // Undef always matches
-            if (boost::get<values::undef>(&value)) {
-                return true;
-            }
-
-            // Unparameterized Optional matches only undef
-            if (!_type) {
-                return false;
-            }
-
-            // Check that the instance is of the given type
-            return unsafe_is_instance(&value, &*_type);
-        }
+        bool is_instance(values::value const& value) const;
 
         /**
          * Determines if the given type is a specialization (i.e. more specific) of this type.
          * @param other The other type to check for specialization.
          * @return Returns true if the other type is a specialization or false if not.
          */
-        bool is_specialization(Type const& other) const
-        {
-            // If this type has a specialization, the other type cannot be a specialization
-            if (_type) {
-                return false;
-            }
-            // Check that the other type is specialized
-            auto optional = boost::get<basic_optional<Type>>(&other);
-            return optional && optional->type();
-        }
+        bool is_specialization(values::type const& other) const;
 
      private:
-        boost::optional<Type> _type;
+        std::unique_ptr<values::type> _type;
     };
 
     /**
      * Stream insertion operator for optional type.
-     * @tparam Value The type of the runtime value.
      * @param os The output stream to write the type to.
      * @return Returns the given output stream.
      */
-    template <typename Type>
-    std::ostream& operator<<(std::ostream& os, basic_optional<Type> const& type)
-    {
-        os << basic_optional<Type>::name();
-        if (!type.type()) {
-            return os;
-        }
-        os << '[' << *type.type() << ']';
-        return os;
-    }
+    std::ostream& operator<<(std::ostream& os, optional const& type);
 
     /**
      * Equality operator for optional.
-     * @tparam Value The type of the runtime value.
      * @param left The left type to compare.
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    template <typename Type>
-    bool operator==(basic_optional<Type> const& left, basic_optional<Type> const& right)
-    {
-        return left.type() == right.type();
-    }
+    bool operator==(optional const& left, optional const& right);
 
-}}}  // puppet::runtime::types
-
-namespace boost {
     /**
-     * Hash specialization for Optional type.
-     * @tparam Value The type of the runtime value.
+     * Inequality operator for optional.
+     * @param left The left type to compare.
+     * @param right The right type to compare.
+     * @return Returns true if the two types are not equal or false if they are equal.
      */
-    template <typename Type>
-    struct hash<puppet::runtime::types::basic_optional<Type>>
-    {
-        /**
-         * Hashes the Optional type.
-         * @param type The type to hash.
-         * @return Returns the hash value for the type.
-         */
-        size_t operator()(puppet::runtime::types::basic_optional<Type> const& type) const
-        {
-            static const size_t name_hash = boost::hash_value(puppet::runtime::types::basic_optional<Type>::name());
+    bool operator!=(optional const& left, optional const& right);
 
-            size_t seed = 0;
-            hash_combine(seed, name_hash);
-            if (type.type()) {
-                hash_combine(seed, *type.type());
-            }
-            return seed;
-        }
-    };
-}
+    /**
+     * Hashes the optional type.
+     * @param type The optional type to hash.
+     * @return Returns the hash value for the type.
+     */
+    size_t hash_value(optional const& type);
+
+}}}  // namespace puppet::runtime::types

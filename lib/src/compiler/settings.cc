@@ -13,6 +13,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace puppet::runtime::values;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 namespace sys = boost::system;
@@ -169,24 +170,24 @@ namespace puppet { namespace compiler {
         // Next try "networking" fact
         auto networking = facts.lookup("networking");
         if (networking) {
-            if (auto ptr = boost::get<runtime::values::hash const>(networking.get())) {
-                auto it = ptr->find(string("fqdn"));
-                if (it != ptr->end()) {
-                    if (auto str = boost::get<string const>(&it->second)) {
+            if (auto hash = networking->as<runtime::values::hash>()) {
+                auto fqdn = hash->find("fqdn");
+                if (fqdn != hash->end()) {
+                    if (auto str = fqdn->second->as<string>()) {
                         name = *str;
                     }
                 }
                 // Fallback to the hostname and domain if present
                 if (name.empty()) {
-                    auto hostname = ptr->find(string("hostname"));
-                    if (hostname != ptr->end()) {
-                        if (auto str = boost::get<string const>(&hostname->second)) {
+                    auto hostname = hash->find("hostname");
+                    if (hostname != hash->end()) {
+                        if (auto str = hostname->second->as<string>()) {
                             name = *str;
                         }
                         if (!name.empty()) {
-                            auto domain = ptr->find(string("domain"));
-                            if (domain != ptr->end()) {
-                                if (auto str = boost::get<string const>(&domain->second)) {
+                            auto domain = hash->find("domain");
+                            if (domain != hash->end()) {
+                                if (auto str = domain->second->as<string>()) {
                                     name += "." + *str;
                                 }
                             }
@@ -200,8 +201,8 @@ namespace puppet { namespace compiler {
         if (name.empty()) {
             auto fqdn = facts.lookup("fqdn");
             if (fqdn) {
-                if (auto ptr = boost::get<string const>(fqdn.get())) {
-                    name = *ptr;
+                if (auto str = fqdn->as<string>()) {
+                    name = *str;
                 }
             }
         }
@@ -210,14 +211,14 @@ namespace puppet { namespace compiler {
         if (name.empty()) {
             auto hostname = facts.lookup("hostname");
             if (hostname) {
-                if (auto ptr = boost::get<string const>(hostname.get())) {
-                    name = *ptr;
+                if (auto str = hostname->as<string>()) {
+                    name = *str;
                 }
                 if (!name.empty()) {
                     auto domain = facts.lookup("domain");
                     if (domain) {
-                        if (auto ptr = boost::get<string const>(domain.get())) {
-                            name += "." + *ptr;
+                        if (auto str = domain->as<string>()) {
+                            name += "." + *str;
                         }
                     }
                 }
@@ -477,7 +478,9 @@ namespace puppet { namespace compiler {
 
             // Notify the callbacks
             po::notify(vm);
-        } catch (po::error const &ex) {
+        } catch (po::error const& ex) {
+            throw settings_exception(ex.what());
+        } catch (runtime_error const& ex) {
             throw settings_exception(ex.what());
         }
 

@@ -1,23 +1,52 @@
-#include <puppet/runtime/types/enumeration.hpp>
+#include <puppet/runtime/values/value.hpp>
 #include <puppet/cast.hpp>
+#include <boost/functional/hash.hpp>
 
 using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
-    enumeration::enumeration(vector<string> strings) :
+    enumeration::enumeration(vector<std::string> strings) :
         _strings(rvalue_cast(strings))
     {
     }
 
-    vector<string> const& enumeration::strings() const
+    vector<std::string> const& enumeration::strings() const
     {
         return _strings;
     }
 
-    const char* enumeration::name()
+    char const* enumeration::name()
     {
         return "Enum";
+    }
+
+    bool enumeration::is_instance(values::value const& value) const
+    {
+        auto ptr = value.as<std::string>();
+        if (!ptr) {
+            return false;
+        }
+        if (_strings.empty()) {
+            return true;
+        }
+        for (auto const& string : _strings) {
+            // Enumerations are case sensative, so just use operator==
+            if (string == *ptr) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool enumeration::is_specialization(values::type const& other) const
+    {
+        // Specializations of Enum have *fewer* strings (i.e. are more restrictive)
+        auto ptr = boost::get<enumeration>(&other);
+        if (!ptr) {
+            return false;
+        }
+        return ptr->strings().size() < _strings.size();
     }
 
     ostream& operator<<(ostream& os, enumeration const& type)
@@ -54,6 +83,21 @@ namespace puppet { namespace runtime { namespace types {
             }
         }
         return true;
+    }
+
+    bool operator!=(enumeration const& left, enumeration const& right)
+    {
+        return !(left == right);
+    }
+
+    size_t hash_value(enumeration const& type)
+    {
+        static const size_t name_hash = boost::hash_value(enumeration::name());
+
+        size_t seed = 0;
+        boost::hash_combine(seed, name_hash);
+        boost::hash_range(seed, type.strings().begin(), type.strings().end());
+        return seed;
     }
 
 }}}  // namespace puppet::runtime::types

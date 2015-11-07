@@ -1,5 +1,5 @@
 #include <puppet/facts/yaml.hpp>
-#include <puppet/lexer/lexer.hpp>
+#include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
 #include <yaml-cpp/yaml.h>
@@ -7,7 +7,7 @@
 #include <fstream>
 
 using namespace std;
-using namespace puppet::lexer;
+using namespace puppet::compiler::lexer;
 using namespace puppet::runtime;
 using namespace YAML;
 
@@ -104,7 +104,9 @@ namespace puppet { namespace facts {
             } else if (convert<double>::decode(node, double_val)) {
                 value = static_cast<long double>(double_val);
             } else {
-                value = node.as<string>();
+                // NOTE: as<T> incorrectly returns const T (bug in yaml-cpp), so make the copy explicit
+                string copy = node.as<string>();
+                value = rvalue_cast(copy);
             }
         } else if (node.IsSequence()) {
             value = values::array();

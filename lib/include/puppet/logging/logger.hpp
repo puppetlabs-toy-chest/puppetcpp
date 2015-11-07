@@ -14,11 +14,11 @@ namespace puppet { namespace logging {
     /**
      * Macro for logging messages.
      * @param lvl The log level name.
-     * @param message The message to log.
+     * @param ... The arguments to the logger.
      */
-    #define LOG(lvl, message, ...) \
+    #define LOG(lvl, ...) \
     if (logger.would_log(puppet::logging::level::lvl)) { \
-        logger.log(puppet::logging::level::lvl, message, ##__VA_ARGS__); \
+        logger.log(puppet::logging::level::lvl, ##__VA_ARGS__); \
     }
 
     /**
