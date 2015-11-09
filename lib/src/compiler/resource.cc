@@ -10,6 +10,11 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace compiler {
 
+    bool indirect_less::operator()(string const* left, string const* right) const
+    {
+        return *left < *right;
+    }
+
     types::resource const& resource::type() const
     {
         return _type;
@@ -85,24 +90,24 @@ namespace puppet { namespace compiler {
         }
 
         // Ensure the existing value is an array
-        if (!it->second->shared_value()->as<values::array>()) {
+        if (!it->second->value().as<values::array>()) {
             return false;
         }
 
         // If the attribute owns the value (is unique), modify it; otherwise copy it as it is shared
         values::array existing;
-        if (it->second->shared_value().unique()) {
-            existing = it->second->shared_value()->move_as<values::array>();
+        if (it->second->unique()) {
+            existing = it->second->value().move_as<values::array>();
         } else {
-            existing = *it->second->shared_value()->as<values::array>();
+            existing = *it->second->value().as<values::array>();
         }
 
         // Append the value to the array
-        auto value = attribute->shared_value()->to_array();
+        auto value = attribute->value().to_array();
         existing.insert(existing.end(), std::make_move_iterator(value.begin()), std::make_move_iterator(value.end()));
 
         // Update the attribute's value and set it
-        *attribute->shared_value() = rvalue_cast(existing);
+        attribute->value() = rvalue_cast(existing);
         set(rvalue_cast(attribute));
         return true;
     }
@@ -118,7 +123,7 @@ namespace puppet { namespace compiler {
                 if (!override) {
                     if (auto previous = get(attribute->name())) {
                         auto const& context = previous->name_context();
-                        if (attribute->shared_value()->is_undef()) {
+                        if (attribute->value().is_undef()) {
                             throw evaluation_exception(
                                 (boost::format("cannot remove attribute '%1%' from resource %2% that was previously set at %3%:%4%.") %
                                  attribute->name() %
@@ -174,6 +179,19 @@ namespace puppet { namespace compiler {
         }
     }
 
+    void resource::tag(string tag)
+    {
+        boost::to_lower(tag);
+        _tags.emplace_back(rvalue_cast(tag));
+    }
+
+    tag_set resource::calculate_tags() const
+    {
+        tag_set tags;
+        populate_tags(tags);
+        return tags;
+    }
+
     bool resource::is_metaparameter(string const& name)
     {
         static const unordered_set<string> metaparameters = {
@@ -220,10 +238,13 @@ namespace puppet { namespace compiler {
         value.AddMember("title", rapidjson::StringRef(title.c_str(), title.size()), allocator);
 
         // Write out the tags
-        // TODO: auto populate the resource's tags
-        json_value tags;
-        tags.SetArray();
-        value.AddMember("tags", rvalue_cast(tags), allocator);
+        auto tags = calculate_tags();
+        json_value tags_array;
+        tags_array.SetArray();
+        for (auto& tag : tags) {
+            tags_array.PushBack(json_value(rapidjson::StringRef(tag->c_str()), tag->size()), allocator);
+        }
+        value.AddMember("tags", rvalue_cast(tags_array), allocator);
 
         // Write out the file and line
         if (_context) {
@@ -239,7 +260,7 @@ namespace puppet { namespace compiler {
         parameters.SetObject();
         for (auto& attribute : _attributes) {
             auto const& name = attribute.first;
-            auto const& value = *attribute.second->shared_value();
+            auto const& value = attribute.second->value();
 
             // Do not write any values set to undef
             if (value.is_undef()) {
@@ -257,16 +278,16 @@ namespace puppet { namespace compiler {
                 allocator);
         }
 
-        write_relationship_parameters(parameters, allocator, catalog);
+        // Add the relationship parameters
+        add_relationship_parameters(parameters, allocator, catalog);
 
         if (parameters.MemberCount() > 0) {
             value.AddMember("parameters", rvalue_cast(parameters), allocator);
         }
-
         return value;
     }
 
-    void resource::write_relationship_parameters(json_value& parameters, json_allocator& allocator, compiler::catalog const& catalog) const
+    void resource::add_relationship_parameters(json_value& parameters, json_allocator& allocator, compiler::catalog const& catalog) const
     {
         json_value require_parameter;
         json_value subscribe_parameter;
@@ -305,14 +326,65 @@ namespace puppet { namespace compiler {
         }
     }
 
-    void resource::vertex_id(size_t id)
+    void resource::realize(size_t vertex_id)
     {
-        _vertex_id = id;
+        _vertex_id = vertex_id;
+
+        // The resource has been realized, create the tags now
+        bool is_class = _type.is_class();
+
+        // Perform auto tagging
+        if (is_class) {
+            _tags.emplace_back("class");
+        }
+
+        auto name = boost::to_lower_copy(is_class ? _type.title() : _type.type_name());
+        boost::split_iterator<std::string::iterator> end;
+        size_t parts = 0;
+        for (auto it = boost::make_split_iterator(name, boost::first_finder("::", boost::is_equal())); it != end; ++it) {
+            if (!*it) {
+                continue;
+            }
+            _tags.emplace_back(it->begin(), it->end());
+            ++parts;
+        }
+
+        // If the name had more than one part, add the entire name too (otherwise it was already added)
+        if (parts > 1) {
+            _tags.emplace_back(rvalue_cast(name));
+        }
     }
 
     size_t resource::vertex_id() const
     {
         return _vertex_id;
+    }
+
+    void resource::populate_tags(tag_set& tags) const
+    {
+        // First add what is in the tags list
+        for (auto const& tag : _tags) {
+            tags.insert(&tag);
+        }
+
+        // Next add what is in the tag metaparameter
+        auto attribute = get("tag");
+        if (attribute) {
+            if (auto array = attribute->value().as<values::array>()) {
+                for (auto const& element : *array) {
+                    if (auto tag = element->as<string>()) {
+                        tags.insert(tag);
+                    }
+                }
+            }
+        }
+
+        // If there's a container, add its tags
+        // REVISIT: it would be far more efficient not to have to duplicate these at every resource, but that
+        //          requires catalog format improvements
+        if (_container) {
+            _container->populate_tags(tags);
+        }
     }
 
 }}  // namespace puppet::compiler

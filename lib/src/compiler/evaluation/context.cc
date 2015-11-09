@@ -451,12 +451,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Validate the stage metaparameter
         compiler::resource const* stage = nullptr;
         if (auto attribute = resource->get("stage")) {
-            auto ptr = attribute->shared_value()->as<string>();
+            auto ptr = attribute->value().as<string>();
             if (!ptr) {
                 throw evaluation_exception(
                     (boost::format("expected %1% for 'stage' metaparameter but found %2%.") %
                      types::string::name() %
-                     attribute->shared_value()->get_type()
+                     attribute->value().get_type()
                     ).str(),
                     attribute->value_context());
             }

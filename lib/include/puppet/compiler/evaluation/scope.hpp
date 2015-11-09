@@ -25,7 +25,7 @@ namespace puppet { namespace compiler { namespace evaluation {
          * @param parent The parent scope.
          * @param resource The resource associated with the scope.
          */
-        explicit scope(std::shared_ptr<scope> parent, compiler::resource const* resource = nullptr);
+        explicit scope(std::shared_ptr<scope> parent, compiler::resource* resource = nullptr);
 
         /**
          * Constructs the top scope.
@@ -43,13 +43,19 @@ namespace puppet { namespace compiler { namespace evaluation {
          * Gets the resource associated with the scope.
          * @return Returns the resource associated with the scope or nullptr if there is no associated resource.
          */
+        compiler::resource* resource();
+
+        /**
+         * Gets the resource associated with the scope.
+         * @return Returns the resource associated with the scope or nullptr if there is no associated resource.
+         */
         compiler::resource const* resource() const;
 
         /**
          * Sets the resource associated with the scope.
          * @param resource The new resource to associate with the scope.
          */
-        void resource(compiler::resource const* resource);
+        void resource(compiler::resource* resource);
 
         /**
          * Qualifies the given name using the scope's name.
@@ -77,7 +83,7 @@ namespace puppet { namespace compiler { namespace evaluation {
      private:
         std::shared_ptr<facts::provider> _facts;
         std::shared_ptr<scope> _parent;
-        compiler::resource const* _resource;
+        compiler::resource* _resource;
         std::unordered_map<std::string, std::pair<std::shared_ptr<runtime::values::value const>, ast::context const*>> _variables;
     };
 

@@ -79,7 +79,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             if (_relationship) {
                 auto* current = context.current_scope()->resource();
                 if (!current) {
-                    throw evaluation_exception("the current scope has no associated resource.", _argument_context);
+                    throw evaluation_exception("the current scope has no associated resource to form a relationship with.", _argument_context);
                 }
                 context.catalog().relate(*_relationship, *current, *resource);
             }

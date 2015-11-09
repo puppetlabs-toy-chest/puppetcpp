@@ -6,7 +6,7 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation {
 
-    scope::scope(shared_ptr<scope> parent, compiler::resource const* resource) :
+    scope::scope(shared_ptr<scope> parent, compiler::resource* resource) :
         _parent(rvalue_cast(parent)),
         _resource(resource)
     {
@@ -26,6 +26,11 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _parent;
     }
 
+    compiler::resource* scope::resource()
+    {
+        return const_cast<compiler::resource*>(static_cast<scope const*>(this)->resource());
+    }
+
     compiler::resource const* scope::resource() const
     {
         if (_resource) {
@@ -34,7 +39,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _parent ? _parent->resource() : nullptr;
     }
 
-    void scope::resource(compiler::resource const* resource)
+    void scope::resource(compiler::resource* resource)
     {
         _resource = resource;
     }

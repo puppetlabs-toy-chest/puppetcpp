@@ -47,33 +47,15 @@ namespace puppet { namespace runtime { namespace values {
         return ptr && !*ptr;
     }
 
-    struct truthy_visitor : boost::static_visitor<bool>
-    {
-        result_type operator()(undef const&) const
-        {
-            return false;
-        }
-
-        result_type operator()(bool val) const
-        {
-            return val;
-        }
-
-        result_type operator()(variable const& var) const
-        {
-            return var.value().is_truthy();
-        }
-
-        template <typename T>
-        result_type operator()(T const&) const
-        {
-            return true;
-        }
-    };
-
     bool value::is_truthy() const
     {
-        return boost::apply_visitor(truthy_visitor(), *this);
+        if (is_undef()) {
+            return false;
+        }
+        if (auto ptr = as<bool>()) {
+            return *ptr;
+        }
+        return true;
     }
 
     struct type_visitor : boost::static_visitor<values::type>

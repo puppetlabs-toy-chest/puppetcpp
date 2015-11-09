@@ -206,8 +206,8 @@ namespace puppet { namespace compiler {
             return;
         }
 
-        // Add a vertex to the graph
-        resource.vertex_id(boost::add_vertex(&resource, _graph));
+        // Realize the resource
+        resource.realize(boost::add_vertex(&resource, _graph));
 
         // Add a relationship from container to this resource
         if (resource.container()) {
@@ -266,29 +266,19 @@ namespace puppet { namespace compiler {
 
         auto& allocator = document.GetAllocator();
 
-        // Write out the tags
-        // TODO: populate top-level tags
-        json_value tags;
-        tags.SetArray();
-        document.AddMember("tags", rvalue_cast(tags), allocator);
-
-        // Write out the catalog attributes
-        document.AddMember("name", rapidjson::StringRef(_node.c_str(), _node.size()), allocator);
-        document.AddMember("version", static_cast<int64_t>(std::time(nullptr)), allocator);
-        document.AddMember("environment", rapidjson::StringRef(_environment.c_str(), _environment.size()), allocator);
-
-        // Create an array to store the edges
-        json_value edges;
-        edges.SetArray();
-
         // Create an array to store the classes
         json_value classes;
         classes.SetArray();
 
-        // Write out the resources
+        // Create an array to store the resources
         json_value resources;
         resources.SetArray();
         resources.Reserve(_resources.size(),allocator);
+
+        // Create an array to store the dependency edges
+        json_value edges;
+        edges.SetArray();
+
         for (auto const& resource : _resources) {
             // Skip virtual resources
             if (resource.virtualized()) {
@@ -324,6 +314,13 @@ namespace puppet { namespace compiler {
                 return true;
             });
         }
+
+        // Write out the catalog attributes
+        document.AddMember("name", rapidjson::StringRef(_node.c_str(), _node.size()), allocator);
+        document.AddMember("version", static_cast<int64_t>(std::time(nullptr)), allocator);
+        document.AddMember("environment", rapidjson::StringRef(_environment.c_str(), _environment.size()), allocator);
+
+        // Write out the resources
         document.AddMember("resources", rvalue_cast(resources), allocator);
 
         // Write out the containment edges
@@ -421,10 +418,10 @@ namespace puppet { namespace compiler {
     void catalog::populate_relationships(resource const& source, string const& name, compiler::relationship relationship)
     {
         auto attribute = source.get(name);
-        if (!attribute || !attribute->shared_value()) {
+        if (!attribute) {
             return;
         }
-        attribute->shared_value()->each_resource([&](types::resource const& target_resource) {
+        attribute->value().each_resource([&](types::resource const& target_resource) {
             // Locate the target in the catalog
             auto target = find(target_resource);
             if (!target) {

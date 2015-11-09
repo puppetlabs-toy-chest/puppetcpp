@@ -149,7 +149,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             // If the attribute is a parameter, validate it
             if (it != _parameters.end()) {
                 // Verify the value matches the parameter type
-                validate_parameter_type(*it, *attribute.shared_value(), [&](string message) {
+                validate_parameter_type(*it, attribute.value(), [&](string message) {
                     throw evaluation_exception(rvalue_cast(message), attribute.value_context());
                 });
             } else if (!resource::is_metaparameter(attribute.name())) {

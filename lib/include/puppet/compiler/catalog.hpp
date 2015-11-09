@@ -106,7 +106,12 @@ namespace puppet { namespace compiler {
          * @param exported True if the resource should be exported or false if not.
          * @return Returns a pointer to the resource that was added to the catalog or nullptr if the resource already exists.
          */
-        resource* add(runtime::types::resource type, resource const* container = nullptr, ast::context const* context = nullptr, bool virtualized = false, bool exported = false);
+        resource* add(
+            runtime::types::resource type,
+            resource const* container = nullptr,
+            ast::context const* context = nullptr,
+            bool virtualized = false,
+            bool exported = false);
 
         /**
          * Finds a resource in the catalog.
