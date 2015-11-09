@@ -140,7 +140,7 @@ Puppet functions implemented:
 * [x] split
 * [ ] sprintf
 * [x] tag
-* [ ] tagged
+* [x] tagged
 * [ ] template
 * [x] versioncmp
 * [x] warning

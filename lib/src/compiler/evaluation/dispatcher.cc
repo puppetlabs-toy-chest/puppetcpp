@@ -12,6 +12,7 @@
 #include <puppet/compiler/evaluation/functions/reduce.hpp>
 #include <puppet/compiler/evaluation/functions/split.hpp>
 #include <puppet/compiler/evaluation/functions/tag.hpp>
+#include <puppet/compiler/evaluation/functions/tagged.hpp>
 #include <puppet/compiler/evaluation/functions/versioncmp.hpp>
 #include <puppet/compiler/evaluation/functions/with.hpp>
 #include <puppet/compiler/exceptions.hpp>
@@ -46,6 +47,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             { "require",        functions::declare(relationship::require) },
             { "split",          functions::split() },
             { "tag",            functions::tag() },
+            { "tagged",         functions::tagged() },
             { "versioncmp",     functions::versioncmp() },
             { "warning",        functions::log(logging::level::warning) },
             { "with",           functions::with() },

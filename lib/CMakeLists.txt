@@ -30,6 +30,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/reduce.cc
     src/compiler/evaluation/functions/split.cc
     src/compiler/evaluation/functions/tag.cc
+    src/compiler/evaluation/functions/tagged.cc
     src/compiler/evaluation/functions/versioncmp.cc
     src/compiler/evaluation/functions/with.cc
     src/compiler/evaluation/operators/assignment.cc
