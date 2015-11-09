@@ -98,6 +98,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/types/floating.cc
     src/runtime/types/hash.cc
     src/runtime/types/integer.cc
+    src/runtime/types/not_undef.cc
     src/runtime/types/numeric.cc
     src/runtime/types/optional.cc
     src/runtime/types/pattern.cc

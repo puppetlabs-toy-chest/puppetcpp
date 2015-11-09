@@ -179,6 +179,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             { types::hash::name(),          types::hash() },
             { types::integer::name(),       types::integer() },
             { types::klass::name(),         types::klass() },
+            { types::not_undef::name(),     types::not_undef() },
             { types::numeric::name(),       types::numeric() },
             { types::optional::name(),      types::optional() },
             { types::pattern::name(),       types::pattern() },
