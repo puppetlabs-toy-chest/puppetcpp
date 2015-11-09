@@ -61,7 +61,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
             }
 
             // If the attribute's value is an array, first check for containment
-            if (auto array = attribute->shared_value()->as<values::array>()) {
+            if (auto array = attribute->value().as<values::array>()) {
                 for (auto const& element : *array) {
                     if (element == expected) {
                         result = true;
@@ -71,7 +71,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
             }
 
             // Otherwise, compare for equality
-            result = result || *attribute->shared_value() == expected;
+            result = result || attribute->value() == expected;
         }
 
         if (query.oper == ast::attribute_query_operator::not_equals) {

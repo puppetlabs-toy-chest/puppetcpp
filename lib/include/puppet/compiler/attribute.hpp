@@ -41,13 +41,31 @@ namespace puppet { namespace compiler {
          * Gets the attribute's value.
          * @return Returns the attribute's value.
          */
-        std::shared_ptr<runtime::values::value> const& shared_value() const;
+        runtime::values::value& value();
+
+        /**
+         * Gets the attribute's value.
+         * @return Returns the attribute's value.
+         */
+        runtime::values::value const& value() const;
+
+        /**
+         * Gets the attribute's shared value.
+         * @return Returns the attribute's shared value.
+         */
+        std::shared_ptr<runtime::values::value const> shared_value() const;
 
         /**
          * Gets the AST context of the value.
          * @return Returns the AST context of the value.
          */
         ast::context const& value_context() const;
+
+        /**
+         * Determines if any other attribute is referring to the same value as this one.
+         * @return Returns true if the value is unique or false if it is shared.
+         */
+        bool unique() const;
 
      private:
         std::shared_ptr<ast::syntax_tree> _tree;

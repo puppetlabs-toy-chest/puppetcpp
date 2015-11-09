@@ -13,6 +13,9 @@ namespace puppet { namespace compiler {
         _value(rvalue_cast(value)),
         _value_context(value_context)
     {
+        if (!_value) {
+            throw runtime_error("expected an attribute value.");
+        }
     }
 
     string const& attribute::name() const
@@ -25,7 +28,17 @@ namespace puppet { namespace compiler {
         return _name_context;
     }
 
-    shared_ptr<values::value> const& attribute::shared_value() const
+    values::value& attribute::value()
+    {
+        return *_value;
+    }
+
+    values::value const& attribute::value() const
+    {
+        return *_value;
+    }
+
+    shared_ptr<values::value const> attribute::shared_value() const
     {
         return _value;
     }
@@ -33,6 +46,11 @@ namespace puppet { namespace compiler {
     ast::context const& attribute::value_context() const
     {
         return _value_context;
+    }
+
+    bool attribute::unique() const
+    {
+        return _value.unique();
     }
 
 }}  // namespace puppet::compiler

@@ -139,7 +139,7 @@ Puppet functions implemented:
 * [ ] slice
 * [x] split
 * [ ] sprintf
-* [ ] tag
+* [x] tag
 * [ ] tagged
 * [ ] template
 * [x] versioncmp
@@ -149,7 +149,7 @@ Puppet functions implemented:
 Catalog compiling status:
 
 * [x] Facts from files and Facter
-* [ ] JSON catalog generation (TODO: populate tags)
+* [x] JSON catalog generation
 
 Building with Docker
 --------------------

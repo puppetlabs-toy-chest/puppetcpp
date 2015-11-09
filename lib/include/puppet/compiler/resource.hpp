@@ -8,11 +8,32 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <set>
+#include <unordered_map>
 
 namespace puppet { namespace compiler {
 
-    // Forward declaration of catalog
+    // Forward declaration of catalog.
     struct catalog;
+
+    /**
+     * Utility class for tag_set.
+     */
+    struct indirect_less
+    {
+        /**
+         * Determines if one indirected string is "less than" another.
+         * @param left The left string to compare.
+         * @param right The right string to compare.
+         * @return Returns true if the left is less than the right or false if not.
+         */
+        bool operator()(std::string const* left, std::string const* right) const;
+    };
+
+    /**
+     * Represents a set of tags (pointers to data stored within each resource).
+     */
+    using tag_set = std::set<std::string const*, indirect_less>;
 
     /**
      * Represents a declared resource in a catalog.
@@ -97,6 +118,18 @@ namespace puppet { namespace compiler {
         void each_attribute(std::function<bool(attribute const&)> const& callback) const;
 
         /**
+         * Tags the resource with the given tag.
+         * @param tag The string to tag the resource with.
+         */
+        void tag(std::string tag);
+
+        /**
+         * Calculates the tags for the resource.
+         * @return Returns the tag set for the resource.
+         */
+        tag_set calculate_tags() const;
+
+        /**
          * Determines if the given name is a metaparameter name.
          * @param name The name to check.
          * @return Returns true if name is the name of a metaparameter or false if not.
@@ -105,11 +138,13 @@ namespace puppet { namespace compiler {
 
      private:
         friend struct catalog;
+
         resource(runtime::types::resource type, resource const* container, ast::context const* context, bool exported);
         runtime::values::json_value to_json(runtime::values::json_allocator& allocator, compiler::catalog const& catalog) const;
-        void write_relationship_parameters(runtime::values::json_value& parameters, runtime::values::json_allocator& allocator, compiler::catalog const& catalog) const;
-        void vertex_id(size_t id);
+        void add_relationship_parameters(runtime::values::json_value& parameters, runtime::values::json_allocator& allocator, compiler::catalog const& catalog) const;
+        void realize(size_t vertex_id);
         size_t vertex_id() const;
+        void populate_tags(tag_set& tags) const;
 
         std::shared_ptr<ast::syntax_tree> _tree;
         runtime::types::resource _type;
@@ -117,6 +152,7 @@ namespace puppet { namespace compiler {
         ast::context const* _context;
         size_t _vertex_id;
         std::unordered_map<std::string, std::shared_ptr<attribute>> _attributes;
+        std::vector<std::string> _tags;
         bool _exported;
     };
 
