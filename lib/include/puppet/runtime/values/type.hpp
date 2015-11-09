@@ -18,6 +18,7 @@
 #include "../types/floating.hpp"
 #include "../types/hash.hpp"
 #include "../types/integer.hpp"
+#include "../types/not_undef.hpp"
 #include "../types/numeric.hpp"
 #include "../types/optional.hpp"
 #include "../types/pattern.hpp"
@@ -63,6 +64,7 @@ namespace puppet { namespace runtime { namespace values {
         types::floating,
         types::hash,
         types::integer,
+        types::not_undef,
         types::numeric,
         types::optional,
         types::pattern,

@@ -3,12 +3,12 @@ Puppet Compiler in C++
 
 [![Build Status](https://travis-ci.org/peterhuene/puppetcpp.svg?branch=master)](https://travis-ci.org/peterhuene/puppetcpp)
 
-This is a (very early) attempt to write a Puppet 4 compiler in C++14.
+This is a (very early) attempt to write a Puppet 4.x compiler in C++14.
 
 Parser status:
 
-* [x] Puppet 4 compliant lexer
-* [x] Puppet 4 compliant parser
+* [x] Puppet 4.x compliant lexer
+* [x] Puppet 4.x compliant parser
 * [x] AST construction
 
 Expression evaluator status:
@@ -83,6 +83,7 @@ Type system implemented:
 * [x] Hash
 * [x] Integer
 * [x] Class
+* [x] NotUndef
 * [x] Numeric
 * [x] Optional
 * [x] Pattern
