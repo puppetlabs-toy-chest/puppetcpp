@@ -376,11 +376,23 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception((boost::format("expected 1 argument for %1% but %2% were given.") % optional::name() % _arguments.size()).str(), _contexts[2]);
             }
 
-            // First argument should be a type
-            if (!_arguments[0]->as<values::type>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+            // Check for type argument
+            if (_arguments[0]->as<values::type>()) {
+                return types::optional(make_unique<values::type>(_arguments[0]->move_as<values::type>()));
             }
-            return types::optional(make_unique<values::type>(_arguments[0]->move_as<values::type>()));
+            // Check for string argument (treat as Optional[Enum[<string>]])
+            if (_arguments[0]->as<std::string>()) {
+                vector<std::string> values;
+                values.emplace_back(_arguments[0]->move_as<std::string>());
+                return types::optional(make_unique<values::type>(types::enumeration(rvalue_cast(values))));
+            }
+            throw evaluation_exception(
+                (boost::format("expected parameter to be %1% or %2% but found %3%.") %
+                 types::type::name() %
+                 types::string::name() %
+                 _arguments[0]->get_type()
+                ).str(),
+                _contexts[0]);
         }
 
         value operator()(not_undef const& target)
@@ -390,11 +402,23 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception((boost::format("expected 1 argument for %1% but %2% were given.") % optional::name() % _arguments.size()).str(), _contexts[2]);
             }
 
-            // First argument should be a type
-            if (!_arguments[0]->as<values::type>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+            // Check for type argument
+            if (_arguments[0]->as<values::type>()) {
+                return types::not_undef(make_unique<values::type>(_arguments[0]->move_as<values::type>()));
             }
-            return types::not_undef(make_unique<values::type>(_arguments[0]->move_as<values::type>()));
+            // Check for string argument (treat as Optional[Enum[<string>]])
+            if (_arguments[0]->as<std::string>()) {
+                vector<std::string> values;
+                values.emplace_back(_arguments[0]->move_as<std::string>());
+                return types::not_undef(make_unique<values::type>(types::enumeration(rvalue_cast(values))));
+            }
+            throw evaluation_exception(
+                (boost::format("expected parameter to be %1% or %2% but found %3%.") %
+                 types::type::name() %
+                 types::string::name() %
+                 _arguments[0]->get_type()
+                ).str(),
+                _contexts[0]);
         }
 
         value operator()(types::type const& target)
