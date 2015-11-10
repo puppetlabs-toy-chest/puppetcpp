@@ -171,23 +171,23 @@ namespace puppet { namespace compiler {
         auto networking = facts.lookup("networking");
         if (networking) {
             if (auto hash = networking->as<runtime::values::hash>()) {
-                auto fqdn = hash->find("fqdn");
-                if (fqdn != hash->end()) {
-                    if (auto str = fqdn->second->as<string>()) {
+                auto fqdn = hash->get("fqdn");
+                if (fqdn) {
+                    if (auto str = fqdn->as<string>()) {
                         name = *str;
                     }
                 }
                 // Fallback to the hostname and domain if present
                 if (name.empty()) {
-                    auto hostname = hash->find("hostname");
-                    if (hostname != hash->end()) {
-                        if (auto str = hostname->second->as<string>()) {
+                    auto hostname = hash->get("hostname");
+                    if (hostname) {
+                        if (auto str = hostname->as<string>()) {
                             name = *str;
                         }
                         if (!name.empty()) {
-                            auto domain = hash->find("domain");
-                            if (domain != hash->end()) {
-                                if (auto str = domain->second->as<string>()) {
+                            auto domain = hash->get("domain");
+                            if (domain) {
+                                if (auto str = domain->as<string>()) {
                                     name += "." + *str;
                                 }
                             }

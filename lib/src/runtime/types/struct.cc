@@ -1,6 +1,7 @@
 #include <puppet/runtime/values/value.hpp>
 #include <puppet/cast.hpp>
 #include <boost/functional/hash.hpp>
+#include <puppet/runtime/types/not_undef.hpp>
 
 using namespace std;
 
@@ -59,15 +60,23 @@ namespace puppet { namespace runtime { namespace types {
         }
 
         // If given an empty schema, only empty hashes match
-        if (!_schema.empty()) {
+        if (_schema.empty()) {
             return ptr->empty();
         }
 
         // Go through the schema and ensure the hash conforms
         size_t count = 0;
         for (auto const& kvp : _schema) {
-            auto it = ptr->find(*kvp.first);
-            if (it == ptr->end()) {
+            auto value = ptr->get(to_key(*kvp.first));
+            if (!value) {
+                // Check to see if the key is entirely optional
+                if (boost::get<types::optional>(kvp.first.get())) {
+                    continue;
+                }
+                // Check to see if the key is required
+                if (boost::get<types::not_undef>(kvp.first.get())) {
+                    return false;
+                }
                 // Key not found, treat as undef
                 if (!kvp.second->is_instance(values::undef())) {
                     return false;
@@ -76,7 +85,7 @@ namespace puppet { namespace runtime { namespace types {
             }
 
             // Check that the value is of the expected type
-            if (!kvp.second->is_instance(it->second)) {
+            if (!kvp.second->is_instance(*value)) {
                 return false;
             }
 
@@ -116,6 +125,32 @@ namespace puppet { namespace runtime { namespace types {
             return true;
         }
         return false;
+    }
+
+    std::string structure::to_key(values::type const& type)
+    {
+        // Check for Enum[string]
+        types::enumeration const* enumeration = boost::get<types::enumeration>(&type);
+
+        if (!enumeration) {
+            // Check for Optional[Enum[string]]
+            if (auto optional = boost::get<types::optional>(&type)) {
+                if (optional->type()) {
+                    enumeration = boost::get<types::enumeration>(optional->type().get());
+                }
+            }
+        }
+
+        if (!enumeration) {
+            // Check for NotUndef[Enum[string]]
+            if (auto not_undef = boost::get<types::not_undef>(&type)) {
+                if (not_undef->type()) {
+                    enumeration = boost::get<types::enumeration>(not_undef->type().get());
+                }
+            }
+        }
+
+        return enumeration && !enumeration->strings().empty() ? enumeration->strings().front() : std::string();
     }
 
     ostream& operator<<(std::ostream& os, structure const& type)

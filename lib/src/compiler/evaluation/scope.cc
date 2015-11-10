@@ -74,7 +74,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 return &no_context;
             }
         }
-        _variables.emplace(make_pair(rvalue_cast(name), make_pair(rvalue_cast(value), context)));
+        _variables.emplace(rvalue_cast(name), make_pair(rvalue_cast(value), context));
         return nullptr;
     }
 

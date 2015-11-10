@@ -152,7 +152,7 @@ namespace puppet { namespace compiler {
         // Add the defined type
         auto name = type.name();
 
-        auto result = _defined_types.emplace(make_pair(rvalue_cast(name), rvalue_cast(type)));
+        auto result = _defined_types.emplace(rvalue_cast(name), rvalue_cast(type));
         if (result.second) {
             return nullptr;
         }
@@ -266,7 +266,7 @@ namespace puppet { namespace compiler {
             }
 
             // Add a named node
-            _named_nodes.emplace(make_pair(boost::to_lower_copy(hostname.to_string()), node_index));
+            _named_nodes.emplace(boost::to_lower_copy(hostname.to_string()), node_index);
         }
 
         // Populate the regexes

@@ -80,15 +80,15 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 arguments.clear();
                 if (_lambda_parameter_count == 1) {
                     values::array pair(2);
-                    pair[0] = kvp.first;
-                    pair[1] = kvp.second;
+                    pair[0] = kvp.key();
+                    pair[1] = kvp.value();
                     arguments.emplace_back(rvalue_cast(pair));
                 } else {
-                    arguments.push_back(kvp.first);
-                    arguments.push_back(kvp.second);
+                    arguments.push_back(kvp.key());
+                    arguments.push_back(kvp.value());
                 }
                 if (_context.yield(arguments).is_true()) {
-                    result[kvp.first] = kvp.second;
+                    result.set(kvp.key(), kvp.value());
                 }
             }
             return result;

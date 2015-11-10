@@ -81,10 +81,10 @@ namespace puppet { namespace runtime { namespace types {
 
         // Check that each key and element is of the appropriate types
         for (auto const& kvp : *ptr) {
-            if (_key_type->is_instance(*kvp.first)) {
+            if (_key_type->is_instance(kvp.key())) {
                 return false;
             }
-            if (_element_type->is_instance(*kvp.second)) {
+            if (_element_type->is_instance(kvp.value())) {
                 return false;
             }
         }

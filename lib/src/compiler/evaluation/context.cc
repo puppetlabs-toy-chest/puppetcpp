@@ -228,7 +228,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         // Add the top scope
         auto top = make_shared<scope>(node.facts());
-        _scopes.emplace(make_pair("", top));
+        _scopes.emplace("", top);
         _scope_stack.emplace_back(rvalue_cast(top));
 
         // Add an empty top match scope
@@ -287,7 +287,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             throw runtime_error("expected a scope with an associated resource.");
         }
         string name = scope->resource()->type().title();
-        return _scopes.emplace(make_pair(rvalue_cast(name), rvalue_cast(scope))).second;
+        return _scopes.emplace(rvalue_cast(name), rvalue_cast(scope)).second;
     }
 
     std::shared_ptr<scope> context::find_scope(string const& name) const

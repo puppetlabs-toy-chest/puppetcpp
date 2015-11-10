@@ -220,17 +220,16 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
             array.emplace_back(rvalue_cast(result));
         }
-        return rvalue_cast(array);
+        return array;
     }
 
     value evaluator::operator()(ast::hash const& expression)
     {
         values::hash hash;
-
         for (auto& element : expression.elements) {
-            hash.emplace(evaluate(element.first), evaluate(element.second));
+            hash.set(evaluate(element.first), evaluate(element.second));
         }
-        return rvalue_cast(hash);
+        return hash;
     }
 
     value evaluator::operator()(ast::expression const& expression)
@@ -582,23 +581,24 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Set each element of the hash as an attribute
         auto hash = value.move_as<values::hash>();
-        for (auto& element : hash) {
-            auto name = element.first->as<std::string>();
+        for (auto& kvp : hash) {
+            auto name = kvp.key().as<std::string>();
             if (!name) {
-                throw evaluation_exception((boost::format("expected all keys in hash to be %1% but found %2%.") % types::string::name() % element.first->get_type()).str(), attribute.value.context());
+                throw evaluation_exception((boost::format("expected all keys in hash to be %1% but found %2%.") % types::string::name() % kvp.key().get_type()).str(), attribute.value.context());
             }
             if (!names.insert(*name).second) {
                 throw evaluation_exception((boost::format("attribute '%1%' already exists in the list.") % name).str(), attribute.value.context());
             }
 
             // Validate the attribute value
-            validate_attribute(*name, element.second, attribute.value.context());
+            auto value = kvp.value();
+            validate_attribute(*name, value, attribute.value.context());
 
             // Add the attribute to the list
             attributes.emplace_back(make_pair(attribute.oper, std::make_shared<compiler::attribute>(
                 *name,
                 attribute.name.context,
-                std::make_shared<values::value>(rvalue_cast(*element.second)),
+                std::make_shared<values::value>(rvalue_cast(value)),
                 attribute.value.context()
             )));
         }

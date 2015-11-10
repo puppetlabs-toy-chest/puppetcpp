@@ -98,10 +98,10 @@ namespace puppet { namespace facts {
             if (auto ptr = boost::get<values::array>(parent)) {
                 ptr->emplace_back(rvalue_cast(converted));
             } else if (auto ptr = boost::get<values::hash>(parent)) {
-                ptr->emplace(make_pair(name, rvalue_cast(converted)));
+                ptr->set(name, rvalue_cast(converted));
             }
         } else {
-            _cache.emplace(make_pair(boost::to_lower_copy(name), std::make_shared<values::value>(rvalue_cast(converted))));
+            _cache.emplace(boost::to_lower_copy(name), std::make_shared<values::value>(rvalue_cast(converted)));
         }
     }
 

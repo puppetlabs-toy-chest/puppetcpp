@@ -123,7 +123,11 @@ namespace puppet { namespace runtime { namespace values {
          */
         template <
             typename U,
-            typename = typename std::enable_if<!std::is_same<typename std::remove_reference<U>::type, wrapper>::value>::type
+            typename = typename std::enable_if<
+                !std::is_const<U>::value &&
+                std::is_rvalue_reference<U&&>::value &&
+                !std::is_same<typename std::remove_reference<U>::type, wrapper>::value
+            >::type
         >
         wrapper& operator=(U&& value)
         {
