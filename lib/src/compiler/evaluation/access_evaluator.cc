@@ -156,22 +156,19 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             if (_arguments.size() == 1) {
                 // Lookup by key
-                auto it = target.find(_arguments[0]);
-                if (it == target.end()) {
-                    return value();
-                }
-                return it->second;
+                auto value = target.get(_arguments[0]);
+                return value ? *value : values::undef();
             }
 
             // Otherwise, build an array of values
             values::array result;
             for (auto const& argument : _arguments) {
                 // Lookup by key
-                auto it = target.find(argument);
-                if (it == target.end()) {
+                auto value = target.get(argument);
+                if (!value) {
                     continue;
                 }
-                result.emplace_back(it->second);
+                result.emplace_back(*value);
             }
             return result;
         }
@@ -451,24 +448,24 @@ namespace puppet { namespace compiler { namespace evaluation {
             auto hash = _arguments[0]->move_as<values::hash>();
 
             // Build a vector of key value pairs for the structure's schema
-            typename structure::schema_type schema;
+            structure::schema_type schema;
             for (auto& kvp : hash) {
                 // If the key is a string, treat as Enum[string]
                 unique_ptr<values::type> key;
-                if (auto ptr = kvp.first->as<std::string>()) {
+                if (auto ptr = kvp.key().as<std::string>()) {
                     key = make_unique<values::type>(enumeration({ *ptr }));
                 }
 
                 // TODO: check for Optional[Enum[string]] and NotUndef[Enum[string]]
                 if (!key) {
-                    throw evaluation_exception((boost::format("expected hash keys to be %1% but found %2%.") % types::string::name() % kvp.first->get_type()).str(), _contexts[0]);
+                    throw evaluation_exception((boost::format("expected hash keys to be %1% but found %2%.") % types::string::name() % kvp.key().get_type()).str(), _contexts[0]);
                 }
 
                 // Ensure the value is a type
-                if (!kvp.second->as<values::type>()) {
-                    throw evaluation_exception((boost::format("expected hash values to be %1% but found %2%.") % types::type::name() % kvp.second->get_type()).str(), _contexts[0]);
+                if (!kvp.value().as<values::type>()) {
+                    throw evaluation_exception((boost::format("expected hash values to be %1% but found %2%.") % types::type::name() % kvp.value().get_type()).str(), _contexts[0]);
                 }
-                schema.emplace_back(rvalue_cast(key), make_unique<values::type>(kvp.second->move_as<values::type>()));
+                schema.emplace_back(rvalue_cast(key), make_unique<values::type>(kvp.value().move_as<values::type>()));
             }
             return structure(rvalue_cast(schema));
         }

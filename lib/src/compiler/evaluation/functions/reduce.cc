@@ -78,8 +78,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             arguments.reserve(2);
             for (auto& kvp : argument) {
                 values::array pair(2);
-                pair[0] = kvp.first;
-                pair[1] = kvp.second;
+                pair[0] = kvp.key();
+                pair[1] = kvp.value();
 
                 if (!_memo) {
                     _memo = rvalue_cast(pair);

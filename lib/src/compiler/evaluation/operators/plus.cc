@@ -74,8 +74,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             for (auto& element : right) {
                 values::array subarray;
                 subarray.reserve(2);
-                subarray.emplace_back(element.first);
-                subarray.emplace_back(element.second);
+                subarray.emplace_back(element.key());
+                subarray.emplace_back(element.value());
                 result.emplace_back(rvalue_cast(subarray));
             }
             return result;
@@ -94,10 +94,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         result_type operator()(values::hash const& left, values::hash const& right) const
         {
             // Create a copy of the left and add key-value pairs
-            values::hash result;
-            result.reserve(left.size() + right.size());
-            result.insert(left.begin(), left.end());
-            result.insert(right.begin(), right.end());
+            auto result = left;
+            result.set(right.begin(), right.end());
             return result;
         }
 
@@ -114,11 +112,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             }
 
             auto result = left;
-
             if (hash) {
                 for (auto& element : right) {
                     if (auto ptr = element->as<values::array>()) {
-                        result[(*ptr)[0]] = (*ptr)[1];
+                        result.set((*ptr)[0], (*ptr)[1]);
                     }
                 }
             } else {
@@ -128,7 +125,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
                 }
 
                 for (size_t i = 0; i < right.size(); i += 2) {
-                    result[right[i]] = right[i + 1];
+                    result.set(right[i], right[i + 1]);
                 }
             }
             return result;

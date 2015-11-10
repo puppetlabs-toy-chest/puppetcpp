@@ -66,8 +66,8 @@ namespace puppet { namespace runtime { namespace types {
         // Go through the schema and ensure the hash conforms
         size_t count = 0;
         for (auto const& kvp : _schema) {
-            auto it = ptr->find(*kvp.first);
-            if (it == ptr->end()) {
+            auto value = ptr->get(*kvp.first);
+            if (!value) {
                 // Key not found, treat as undef
                 if (!kvp.second->is_instance(values::undef())) {
                     return false;
@@ -76,7 +76,7 @@ namespace puppet { namespace runtime { namespace types {
             }
 
             // Check that the value is of the expected type
-            if (!kvp.second->is_instance(it->second)) {
+            if (!kvp.second->is_instance(*value)) {
                 return false;
             }
 

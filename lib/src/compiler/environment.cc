@@ -226,7 +226,7 @@ namespace puppet { namespace compiler {
 
             LOG(debug, "found module '%1%' at '%2%'.", name, module_directory);
             module mod{ *this, module_directory, name };
-            _modules.emplace(make_pair(rvalue_cast(name), rvalue_cast(mod)));
+            _modules.emplace(rvalue_cast(name), rvalue_cast(mod));
         }
     }
 
@@ -247,7 +247,7 @@ namespace puppet { namespace compiler {
                 LOG(debug, "loading '%1%' into environment '%2%'.", path, _name);
                 tree = parser::parse_file(path, module);
                 LOG(debug, "parsed AST for '%1%':\n-----\n%2%\n-----", path, *tree);
-                _parsed.emplace(make_pair(path, tree));
+                _parsed.emplace(path, tree);
             }
             _registry.import(*tree);
             return tree;

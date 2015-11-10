@@ -74,11 +74,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
                 if (!ptr || ptr->size() != 2) {
                     return false;
                 }
-                auto it = right.find((*ptr)[0]);
-                if (it == right.end()) {
-                    return false;
-                }
-                return (*ptr)[1] == it->second;
+                auto value = right.get((*ptr)[0]);
+                return value && (*ptr)[1] == *value;
             }), result.end());
             return result;
         }
@@ -98,8 +95,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             auto result = left;
 
             // Remove any elements in left that have keys in right
-            for (auto const& element : right) {
-                result.erase(element.first);
+            for (auto const& kvp : right) {
+                result.erase(kvp.key());
             }
             return result;
         }

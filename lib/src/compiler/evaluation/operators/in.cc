@@ -62,8 +62,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
         result_type operator()(type const& left, values::hash const& right) const
         {
-            for (auto const& element : right) {
-                if (left.is_instance(element.first)) {
+            for (auto const& kvp : right) {
+                if (left.is_instance(kvp.key())) {
                     return true;
                 }
             }
@@ -73,8 +73,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         template <typename Left>
         result_type operator()(Left const& left, values::hash const& right) const
         {
-            for (auto const& element : right) {
-                if (left == element.first) {
+            for (auto const& kvp : right) {
+                if (left == kvp.key()) {
                     return true;
                 }
             }

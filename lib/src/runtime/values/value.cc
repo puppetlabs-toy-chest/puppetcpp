@@ -136,8 +136,8 @@ namespace puppet { namespace runtime { namespace values {
             // Turn the hash into an array of [K,V]
             for (auto& kvp : *hash_ptr) {
                 array element;
-                element.emplace_back(*kvp.first);
-                element.emplace_back(*kvp.second);
+                element.emplace_back(kvp.key());
+                element.emplace_back(kvp.value());
                 result.emplace_back(rvalue_cast(element));
             }
         } else if (!is_undef()) {
@@ -338,10 +338,10 @@ namespace puppet { namespace runtime { namespace values {
             json_value value;
             value.SetObject();
 
-            for (auto const& element : hash) {
+            for (auto const& kvp : hash) {
                 value.AddMember(
-                    json_value(boost::lexical_cast<string>(*element.first).c_str(), _allocator),
-                    boost::apply_visitor(*this, *element.second),
+                    json_value(boost::lexical_cast<string>(kvp.key()).c_str(), _allocator),
+                    boost::apply_visitor(*this, kvp.value()),
                     _allocator);
             }
             return value;
