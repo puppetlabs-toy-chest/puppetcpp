@@ -81,6 +81,8 @@ namespace puppet { namespace runtime { namespace types {
         bool is_specialization(values::type const& other) const;
 
      private:
+        static std::string to_key(values::type const& type);
+
         schema_type _schema;
     };
 
@@ -114,5 +116,6 @@ namespace puppet { namespace runtime { namespace types {
      * @return Returns the hash value for the type.
      */
     size_t hash_value(structure const& type);
+
 
 }}}  // namespace puppet::runtime::types
