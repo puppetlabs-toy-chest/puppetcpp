@@ -101,11 +101,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
         result_type operator()(values::hash const& left, values::array const& right) const
         {
-            // Check to see if the array is a "hash" (made up of two-element arrays only)
+            // Check to see if the array is a "hash" (made up of one or two element arrays only)
             bool hash = true;
             for (auto const& element : right) {
                 auto subarray = element->as<values::array>();
-                if (!subarray || subarray->size() != 2) {
+                if (!subarray || subarray->empty() || subarray->size() > 2) {
                     hash = false;
                     break;
                 }
@@ -115,7 +115,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             if (hash) {
                 for (auto& element : right) {
                     if (auto ptr = element->as<values::array>()) {
-                        result.set((*ptr)[0], (*ptr)[1]);
+                        result.set((*ptr)[0], ptr->size() == 1 ? values::undef() : (*ptr)[1]);
                     }
                 }
             } else {
