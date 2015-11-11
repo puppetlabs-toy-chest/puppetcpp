@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/context.hpp>
+#include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>

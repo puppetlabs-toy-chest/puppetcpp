@@ -99,6 +99,10 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(primary_expression,            "primary expression",            ast::primary_expression)
     DECLARE_RULE(syntax_tree,                   "syntax tree",                   ast::syntax_tree)
     DECLARE_RULE(interpolated_syntax_tree,      "syntax tree",                   ast::syntax_tree)
+    DECLARE_RULE(epp_render_expression,         "render expression",             ast::epp_render_expression)
+    DECLARE_RULE(epp_render_block,              "render expression",             ast::epp_render_block)
+    DECLARE_RULE(epp_render_string,             "render string",                 ast::epp_render_string)
+    DECLARE_RULE(epp_syntax_tree,               "syntax tree",                   ast::syntax_tree)
 
     // Literal rules
     // Note: the use of `eps` is to assist in populating a single-member fusion structure;
@@ -577,8 +581,12 @@ namespace puppet { namespace compiler { namespace parser {
         current_context >> (binary_operator > postfix_expression)
     )
     // Note: literal expressions must come last because some complex expressions depend on them
+    // Note: parsing of EPP render block must come before EPP render expression
     DEFINE_RULE(
         primary_expression,
+        epp_render_block              |
+        epp_render_expression         |
+        epp_render_string             |
         unary_expression              |
         case_expression               |
         if_expression                 |
@@ -602,11 +610,35 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         syntax_tree,
-        statements > boost::spirit::x3::attr(lexer::position())
+        boost::spirit::x3::attr(boost::none) > statements > boost::spirit::x3::attr(lexer::position())
     )
     DEFINE_RULE(
         interpolated_syntax_tree,
-        raw_token('{') > statements > position('}')
+        boost::spirit::x3::attr(boost::none) > raw_token('{') > statements > position('}')
+    )
+
+    // EPP rules
+    DEFINE_RULE(
+        epp_render_expression,
+        context(lexer::token_id::epp_render_expression) > expression > (raw_token(lexer::token_id::epp_end) | raw_token(lexer::token_id::epp_end_trim))
+    )
+    DEFINE_RULE(
+        epp_render_block,
+        context(lexer::token_id::epp_render_expression) >> (raw_token('{') > statements > raw_token('}') > (raw_token(lexer::token_id::epp_end) | raw_token(lexer::token_id::epp_end_trim)))
+    )
+    DEFINE_RULE(
+        epp_render_string,
+        context(lexer::token_id::epp_render_string, false) > token(lexer::token_id::epp_render_string)
+    )
+    DEFINE_RULE(
+        epp_syntax_tree,
+        -(
+            raw_token('|') >
+            (
+                raw_token('|') |
+                (parameters > raw_token('|'))
+            )
+        ) > statements > boost::spirit::x3::attr(lexer::position())
     )
 
     // These macros associate the above rules with their definitions
@@ -695,6 +727,13 @@ namespace puppet { namespace compiler { namespace parser {
         syntax_tree,
         interpolated_syntax_tree
     );
+
+    BOOST_SPIRIT_DEFINE(
+        epp_render_expression,
+        epp_render_block,
+        epp_render_string,
+        epp_syntax_tree
+    )
 
     /// @endcond
 

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../ast/ast.hpp"
+#include "../lexer/lexer.hpp"
 #include "../module.hpp"
 #include <boost/iterator.hpp>
 #include <string>
@@ -15,18 +16,20 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Parses the given file into a syntax tree.
      * @param path The path to the file to parse.
-     * @param moodule The module where the parsing is taking place.
+     * @param module The module where the parsing is taking place.
+     * @param epp True if the file is in EPP format or false if not.
      * @return Returns the parsed syntax tree.
      */
-    std::shared_ptr<ast::syntax_tree> parse_file(std::string path, compiler::module const* module = nullptr);
+    std::shared_ptr<ast::syntax_tree> parse_file(std::string path, compiler::module const* module = nullptr, bool epp = false);
 
     /**
      * Parses the given string into a syntax tree.
      * @param source The puppet source code to parse.
-     * @param moodule The module where the parsing is taking place.
+     * @param module The module where the parsing is taking place.
+     * @param epp True if the string is in EPP format or false if not.
      * @return Returns the parsed syntax tree.
      */
-    std::shared_ptr<ast::syntax_tree> parse_string(std::string source, compiler::module const* module = nullptr);
+    std::shared_ptr<ast::syntax_tree> parse_string(std::string source, compiler::module const* module = nullptr, bool epp = false);
 
     /**
      * Interpolates a string iterator range into a syntax tree.

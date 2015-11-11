@@ -14,7 +14,7 @@ using namespace boost::spirit;
 namespace puppet { namespace compiler { namespace parser {
 
     template <typename Lexer, typename Input>
-    void parse(Input& input, ast::syntax_tree& tree, bool interpolation = false)
+    void parse(Lexer const& lexer, Input& input, ast::syntax_tree& tree, bool epp = false, bool interpolation = false)
     {
         namespace x3 = boost::spirit::x3;
 
@@ -24,8 +24,7 @@ namespace puppet { namespace compiler { namespace parser {
             auto end = lex_end(input);
 
             // Get the token iterators from the lexer
-            Lexer lexer;
-            auto token_begin = lexer.begin(begin, end);
+            auto token_begin = lexer.begin(begin, end, epp ? Lexer::EPP_STATE : nullptr);
             auto token_end = lexer.end();
 
             // Check for empty input
@@ -37,6 +36,9 @@ namespace puppet { namespace compiler { namespace parser {
             bool success = false;
             if (interpolation) {
                 auto parser = x3::with<tree_context_tag>(&tree)[interpolated_syntax_tree];
+                success = x3::parse(token_begin, token_end, parser, tree);
+            } else if (epp) {
+                auto parser = x3::with<tree_context_tag>(&tree)[epp_syntax_tree];
                 success = x3::parse(token_begin, token_end, parser, tree);
             } else {
                 auto parser = x3::with<tree_context_tag>(&tree)[parser::syntax_tree];
@@ -80,30 +82,36 @@ namespace puppet { namespace compiler { namespace parser {
         }
     }
 
-    shared_ptr<ast::syntax_tree> parse_file(std::string path, compiler::module const* module)
+    shared_ptr<ast::syntax_tree> parse_file(std::string path, compiler::module const* module, bool epp)
     {
+        static file_static_lexer lexer;
+
         ifstream input(path);
         if (!input) {
             throw compilation_exception((boost::format("file '%1%' does not exist or cannot be read.") % path).str());
         }
-
+        
         auto tree = ast::syntax_tree::create(rvalue_cast(path), module);
-        parse<file_static_lexer>(input, *tree);
+        parse(lexer, input, *tree, epp);
         return tree;
     }
 
-    shared_ptr<ast::syntax_tree> parse_string(std::string source, compiler::module const* module)
+    shared_ptr<ast::syntax_tree> parse_string(std::string source, compiler::module const* module, bool epp)
     {
+        static string_static_lexer lexer;
+        
         auto tree = ast::syntax_tree::create("<string>", module);
-        parse<string_static_lexer>(source, *tree);
+        parse(lexer, source, *tree, epp);
         tree->source(rvalue_cast(source));
         return tree;
     }
 
     shared_ptr<ast::syntax_tree> interpolate(boost::iterator_range<lexer_string_iterator> range, compiler::module const* module)
     {
-        auto tree = ast::syntax_tree::create("<string>", module);
-        parse<string_static_lexer>(range, *tree, true);
+        static string_static_lexer lexer;
+
+        auto tree = ast::syntax_tree::create("<string>", module);        
+        parse(lexer, range, *tree, false, true);
         return tree;
     }
 

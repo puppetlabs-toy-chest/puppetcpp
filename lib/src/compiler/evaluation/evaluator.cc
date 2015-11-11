@@ -502,6 +502,21 @@ namespace puppet { namespace compiler { namespace evaluation {
         return it->second(context);
     }
 
+    value evaluator::operator()(epp_render_expression const& expression)
+    {
+        throw evaluation_exception("EPP expressions are not supported.", expression.context);
+    }
+
+    value evaluator::operator()(epp_render_block const& expression)
+    {
+        throw evaluation_exception("EPP expressions are not supported.", expression.context);
+    }
+
+    value evaluator::operator()(epp_render_string const& expression)
+    {
+        throw evaluation_exception("EPP expressions are not supported.", expression.context);
+    }
+
     value evaluator::evaluate_body(vector<ast::expression> const& body)
     {
         value result;

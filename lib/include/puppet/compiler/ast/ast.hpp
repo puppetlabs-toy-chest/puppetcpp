@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/lexer.hpp"
+#include "../lexer/position.hpp"
 #include "../lexer/number_token.hpp"
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
@@ -45,6 +45,9 @@ namespace puppet { namespace compiler { namespace ast {
     struct selector_expression;
     struct method_call_expression;
     struct postfix_expression;
+    struct epp_render_expression;
+    struct epp_render_block;
+    struct epp_render_string;
     struct syntax_tree;
 
     /**
@@ -355,7 +358,10 @@ namespace puppet { namespace compiler { namespace ast {
         boost::spirit::x3::forward_ast<defined_type_expression>,
         boost::spirit::x3::forward_ast<node_expression>,
         boost::spirit::x3::forward_ast<collector_expression>,
-        boost::spirit::x3::forward_ast<unary_expression>
+        boost::spirit::x3::forward_ast<unary_expression>,
+        boost::spirit::x3::forward_ast<epp_render_expression>,
+        boost::spirit::x3::forward_ast<epp_render_block>,
+        boost::spirit::x3::forward_ast<epp_render_string>
         >
     {
         // Use the base's construction and assignment semantics
@@ -1951,10 +1957,88 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, unary_expression const& node);
 
     /**
+     * Represents an EPP render expression.
+     */
+    struct epp_render_expression
+    {
+        /**
+         * Stores the parse context.
+         */
+        ast::context context;
+
+        /**
+         * Stores the expression to render.
+         */
+        ast::expression expression;
+    };
+
+    /**
+     * Stream insertion operator for EPP render expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, epp_render_expression const& node);
+
+    /**
+     * Represents an EPP render block.
+     */
+    struct epp_render_block
+    {
+        /**
+         * Stores the parse context.
+         */
+        ast::context context;
+
+        /**
+         * Stores the block to render.
+         */
+        std::vector<ast::expression> block;
+    };
+
+    /**
+     * Stream insertion operator for EPP render block.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, epp_render_block const& node);
+
+    /**
+     * Represents an EPP render string.
+     */
+    struct epp_render_string
+    {
+        /**
+         * Stores the parse context.
+         */
+        ast::context context;
+
+        /**
+         * Stores the string to render.
+         */
+        std::string string;
+    };
+
+    /**
+     * Stream insertion operator for EPP render string.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, epp_render_string const& node);
+
+    /**
      * Represents a Puppet syntax tree.
      */
     struct syntax_tree : std::enable_shared_from_this<syntax_tree>
     {
+        /**
+         * Gets the optional EPP parameters if parsed using the EPP rules.
+         * @return Returns the optional EPP parameters.
+         */
+        boost::optional<std::vector<parameter>> parameters;
+
         /**
          * Stores the statements that make up the syntax tree.
          */

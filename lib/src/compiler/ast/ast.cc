@@ -1,4 +1,5 @@
 #include <puppet/compiler/ast/ast.hpp>
+#include <puppet/cast.hpp>
 
 using namespace std;
 namespace x3 = boost::spirit::x3;
@@ -91,6 +92,19 @@ namespace puppet { namespace compiler { namespace ast {
             os << element;
         }
     }
+    
+    void print_string(ostream& os, std::string const& s)
+    {
+        for (char c : s) {
+            if (c == '\n') {
+                os << "\\n";
+            } else if (c == '\r') {
+                os << "\\r";
+            } else {
+                os << c;
+            }
+        }
+    }
 
     ostream& operator<<(ostream& os, undef const&)
     {
@@ -118,7 +132,9 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(ostream& os, ast::string const& node)
     {
-        os << (node.interpolated ? '"' : '\'') << node.value << (node.interpolated ? '"' : '\'');
+        os << (node.interpolated ? '"' : '\'');
+        print_string(os, node.value);
+        os << (node.interpolated ? '"' : '\'');
         return os;
     }
 
@@ -174,7 +190,7 @@ namespace puppet { namespace compiler { namespace ast {
             return ptr->get().operand.is_productive();
         }
 
-        // All control flow and catalog expresions are considered to be productive
+        // All control flow, catalog expresions, and EPP expressions are considered to be productive
         if (boost::get<x3::forward_ast<case_expression>>(this) ||
             boost::get<x3::forward_ast<if_expression>>(this) ||
             boost::get<x3::forward_ast<unless_expression>>(this) ||
@@ -185,7 +201,10 @@ namespace puppet { namespace compiler { namespace ast {
             boost::get<x3::forward_ast<class_expression>>(this) ||
             boost::get<x3::forward_ast<defined_type_expression>>(this) ||
             boost::get<x3::forward_ast<node_expression>>(this) ||
-            boost::get<x3::forward_ast<collector_expression>>(this)) {
+            boost::get<x3::forward_ast<collector_expression>>(this) ||
+            boost::get<x3::forward_ast<epp_render_expression>>(this) ||
+            boost::get<x3::forward_ast<epp_render_block>>(this) ||
+            boost::get<x3::forward_ast<epp_render_string>>(this)) {
             return true;
         }
         return false;
@@ -1050,6 +1069,28 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    ostream& operator<<(ostream& os, epp_render_expression const& node)
+    {
+        os << "render(" << node.expression << ")";
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, epp_render_block const& node)
+    {
+        os << "render({";
+        pretty_print(os, node.block, "; ");
+        os << "})";
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, epp_render_string const& node)
+    {
+        os << "render('";
+        print_string(os, node.string);
+        os << "')";
+        return os;
+    }
+
     std::string const& syntax_tree::path() const
     {
         return *_path;
@@ -1096,6 +1137,11 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(ostream& os, syntax_tree const& node)
     {
+        if (node.parameters) {
+            os << "|";
+            pretty_print(os, *node.parameters, ", ");
+            os << "| ";
+        }
         pretty_print(os, node.statements, "; ");
         return os;
     }

@@ -82,7 +82,8 @@ namespace puppet { namespace compiler { namespace lexer {
          * Default constructor for lexer_iterator.
          */
         lexer_iterator() :
-            _position { 0, 0 }
+            _position { 0, 0 },
+            _need_epp_end(false)
         {
         }
 
@@ -92,7 +93,8 @@ namespace puppet { namespace compiler { namespace lexer {
          */
         explicit lexer_iterator(Iterator const& iter) :
             boost::iterator_adaptor<lexer_iterator<Iterator>, Iterator>(iter),
-            _position { 0, 1 }
+            _position { 0, 1 },
+            _need_epp_end(false)
         {
         }
 
@@ -161,6 +163,7 @@ namespace puppet { namespace compiler { namespace lexer {
         lexer::position _position;
         boost::optional<Iterator> _next_iter;
         lexer::position _next_position;
+        bool _need_epp_end = false;
     };
 
     /**
@@ -214,14 +217,25 @@ namespace puppet { namespace compiler { namespace lexer {
         /**
          * Constructs a new lexer.
          */
-        lexer() :
-            single_quoted_string("'([^\\\\']|\\\\.)*'",                 static_cast<id_type>(token_id::single_quoted_string)),
-            double_quoted_string("\\\"([^\\\\\"]|\\\\.)*\\\"",          static_cast<id_type>(token_id::double_quoted_string)),
-            heredoc(HEREDOC_PATTERN,                                    static_cast<id_type>(token_id::heredoc)),
-            number("\\d\\w*(\\.\\d\\w*)?([eE]-?\\w*)?",                 static_cast<id_type>(token_id::number))
+        lexer()
         {
             namespace lex = boost::spirit::lex;
-            using namespace std::placeholders;
+
+            // EPP lexing support
+            // When in the EPP state, a match of an opening tag will transition to the normal lexer state.
+            // When in the normal state, a match of a closing tag will transition to the EPP state.
+            this->self(EPP_STATE) =
+                lex::token_def<>("<%#[^-]*-+([^->]*-+)*%>",      static_cast<id_type>(token_id::comment_trim))          [ ignore ]      |
+                lex::token_def<>("<%#[^%]*%+([^%>]*%+)*>",       static_cast<id_type>(token_id::comment))               [ ignore ]      |
+                lex::token_def<>("<%=",                          static_cast<id_type>(token_id::epp_render_expression)) [ epp_render ]  |
+                lex::token_def<>("\\s*<%-",                      static_cast<id_type>(token_id::epp_start_trim))        [ epp_start ]   |
+                lex::token_def<>("<%",                           static_cast<id_type>(token_id::epp_start))             [ epp_start ]   |
+                lex::token_def<>("<%#",                          static_cast<id_type>(token_id::unclosed_comment))                      |
+                lex::token_def<>("[^<]*",                        static_cast<id_type>(token_id::epp_render_string))     [ string_trim ] |
+                lex::token_def<>(".",                            static_cast<id_type>(token_id::epp_render_string));
+            this->self(base_type::initial_state(), EPP_STATE) =
+                lex::token_def<>("%>",                           static_cast<id_type>(token_id::epp_end))               [ epp_end ] |
+                lex::token_def<>("-%>",                          static_cast<id_type>(token_id::epp_end_trim))          [ epp_end ];
 
             // The following are lexer states that are used to parse regular expressions.
             // This solves the ambiguity between having multiple division operators on a single line (e.g. "1 / 2 / 3")
@@ -329,18 +343,18 @@ namespace puppet { namespace compiler { namespace lexer {
 
             // Comments, variables, types, names, bare words, regexes, and whitespace
             this->self +=
-                lex::token_def<>("(#[^\\n]*)|(\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/)",    static_cast<id_type>(token_id::comment))        [ lex::_pass = lex::pass_flags::pass_ignore ] |
-                lex::token_def<>("\\$(::)?(\\w+::)*\\w+",                               static_cast<id_type>(token_id::variable))       [ no_regex ] |
-                lex::token_def<>("\\s+\\[",                                             static_cast<id_type>(token_id::array_start))    [ use_last ] |
-                lex::token_def<>("((::)?[A-Z][\\w]*)+",                                 static_cast<id_type>(token_id::type))           [ no_regex ] |
-                lex::token_def<>("((::)?[a-z][\\w]*)(::[a-z][\\w]*)*",                  static_cast<id_type>(token_id::name))           [ no_regex ] |
-                lex::token_def<>("[a-z_]([\\w\\-]*[\\w])?",                             static_cast<id_type>(token_id::bare_word))      [ no_regex ] |
-                lex::token_def<>("(\\/\\/)|(\\/[^*]([^\\\\/\\n]|\\\\.)*\\/)",           static_cast<id_type>(token_id::regex))          [ no_regex ] |
-                single_quoted_string                                                                                                    [ bind(&lexer::parse_single_quoted_string, this, _1, _2, _3, _4, _5) ] |
-                double_quoted_string                                                                                                    [ bind(&lexer::parse_double_quoted_string, this, _1, _2, _3, _4, _5) ] |
-                heredoc                                                                                                                 [ bind(&lexer::parse_heredoc, this, _1, _2, _3, _4, _5) ] |
-                number                                                                                                                  [ parse_number ] |
-                lex::token_def<>("\\s+",                                                static_cast<id_type>(token_id::whitespace))     [ lex::_pass = lex::pass_flags::pass_ignore ];
+                lex::token_def<>("(#[^\\n]*)|(\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/)", static_cast<id_type>(token_id::comment))              [ ignore ] |
+                lex::token_def<>("\\$(::)?(\\w+::)*\\w+",                            static_cast<id_type>(token_id::variable))             [ no_regex ] |
+                lex::token_def<>("\\s+\\[",                                          static_cast<id_type>(token_id::array_start))          [ use_last ] |
+                lex::token_def<>("((::)?[A-Z][\\w]*)+",                              static_cast<id_type>(token_id::type))                 [ no_regex ] |
+                lex::token_def<>("((::)?[a-z][\\w]*)(::[a-z][\\w]*)*",               static_cast<id_type>(token_id::name))                 [ no_regex ] |
+                lex::token_def<>("[a-z_]([\\w\\-]*[\\w])?",                          static_cast<id_type>(token_id::bare_word))            [ no_regex ] |
+                lex::token_def<>("(\\/\\/)|(\\/[^*]([^\\\\/\\n]|\\\\.)*\\/)",        static_cast<id_type>(token_id::regex))                [ no_regex ] |
+                lex::token_def<>("'([^\\\\']|\\\\.)*'",                              static_cast<id_type>(token_id::single_quoted_string)) [ parse_single_quoted_string ] |
+                lex::token_def<>("\\\"([^\\\\\"]|\\\\.)*\\\"",                       static_cast<id_type>(token_id::double_quoted_string)) [ parse_double_quoted_string ] |
+                lex::token_def<>(HEREDOC_PATTERN,                                    static_cast<id_type>(token_id::heredoc))              [ parse_heredoc ] |
+                lex::token_def<>("\\d\\w*(\\.\\d\\w*)?([eE]-?\\w*)?",                static_cast<id_type>(token_id::number))               [ parse_number ] |
+                lex::token_def<>("\\s+",                                             static_cast<id_type>(token_id::whitespace))           [ ignore ];
 
             // Lastly, a catch for unclosed quotes and unknown tokens
             this->self.add
@@ -351,29 +365,14 @@ namespace puppet { namespace compiler { namespace lexer {
         }
 
         /**
-         * The token representing single quoted strings.
+         * The state for EPP lexing.
          */
-        boost::spirit::lex::token_def<string_token_type> single_quoted_string;
-
-        /**
-         * The token representing double quoted strings.
-         */
-        boost::spirit::lex::token_def<string_token_type> double_quoted_string;
-
-        /**
-         * The token representing heredocs.
-         */
-        boost::spirit::lex::token_def<string_token_type> heredoc;
-
-        /**
-         * The token representing numbers.
-         */
-        boost::spirit::lex::token_def<number_token> number;
+        static const char* const EPP_STATE;
 
     private:
         using context_type = typename iterator_type::shared_functor_type;
 
-        void parse_heredoc(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void parse_heredoc(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             using namespace std;
 
@@ -516,7 +515,7 @@ namespace puppet { namespace compiler { namespace lexer {
             context.set_value(string_token_type(start.position(), doc_begin, rvalue_cast(doc_end), rvalue_cast(escapes), 0, interpolated, rvalue_cast(format), margin, remove_break));
         }
 
-        void parse_single_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void parse_single_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             auto position = start.position();
 
@@ -531,7 +530,7 @@ namespace puppet { namespace compiler { namespace lexer {
             context.set_value(string_token_type(rvalue_cast(position), rvalue_cast(start), rvalue_cast(last), "\\'", '\'', false));
         }
 
-        void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             auto position = start.position();
 
@@ -635,6 +634,78 @@ namespace puppet { namespace compiler { namespace lexer {
             start = last;
         }
 
+        static void ignore(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            matched = boost::spirit::lex::pass_flags::pass_ignore;
+
+            if (id == static_cast<size_t>(token_id::comment_trim)) {
+                trim_right(start, end, matched, id, context);
+            }
+        }
+
+        static void string_trim(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            // If rendering a string, ensure the next token is an epp start trim token
+            if (!context.lookahead(static_cast<size_t>(token_id::epp_start_trim))) {
+                return;
+            }
+
+            // Because input iterators are forward only, we have to scan all the way from the beginning for the trim
+            auto new_end = start;
+            boost::optional<input_iterator_type> start_space;
+            while (new_end != end) {
+                bool space = ::isspace(*new_end) && *new_end != '\n';
+                if (start_space && !space) {
+                    start_space = boost::none;
+                } else if (!start_space && space) {
+                    start_space = new_end;
+                }
+                ++new_end;
+            }
+            if (start_space) {
+                end = *start_space;
+            }
+        }
+
+        static void trim_right(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            auto const& eoi = context.get_eoi();
+            auto new_end = end;
+
+            // Find the end of line or input provided everything we encounter is whitespace to trim
+            for (; new_end != eoi && *new_end != '\n' && ::isspace(*new_end); ++new_end);
+
+            if (new_end == eoi) {
+                end = new_end;
+            } else if (*new_end == '\n') {
+                end = ++new_end;
+            }
+        }
+
+        static void epp_start(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            matched = boost::spirit::lex::pass_flags::pass_ignore;
+            context.set_state(context.get_state_id("INITIAL"));
+        }
+
+        static void epp_render(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            context.set_state(context.get_state_id("INITIAL"));
+            end._need_epp_end = true;
+        }
+
+        static void epp_end(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            if (!start._need_epp_end) {
+                ignore(start, end, matched, id, context);
+            }
+            end._need_epp_end = false;
+
+            if (id == static_cast<size_t>(token_id::epp_end_trim)) {
+                trim_right(start, end, matched, id, context);
+            }
+        }
+
         static const char* const HEREDOC_PATTERN;
         static const char* const HEREDOC_ESCAPES;
         static const char* const FORCE_SLASH_STATE;
@@ -652,6 +723,8 @@ namespace puppet { namespace compiler { namespace lexer {
     char const* const lexer<Base>::SLASH_CHECK_STATE = "SC";
     template<typename Base>
     char const* const lexer<Base>::SLASH_CHECK_PATTERN = "\\s*\\/\\s+";
+    template<typename Base>
+    char const* const lexer<Base>::EPP_STATE = "EPP";
 
     /**
      * The input iterator for files.
