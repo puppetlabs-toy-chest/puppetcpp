@@ -655,7 +655,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     void context::evaluate_defined_types(size_t& index, vector<declared_defined_type*>& virtualized)
     {
-        resource* current = nullptr;
+        resource const* current = nullptr;
 
         try {
             // Evaluate any previously virtual defined type
@@ -665,6 +665,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     return false;
                 }
                 // Evaluate the defined type
+                current = &declared->resource();
                 declared->evaluate(*this);
                 return true;
             }), virtualized.end());
@@ -681,6 +682,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     virtualized.emplace_back(&declared);
                     continue;
                 }
+                current = &declared.resource();
                 declared.evaluate(*this);
             }
         } catch (evaluation_exception const& ex) {
