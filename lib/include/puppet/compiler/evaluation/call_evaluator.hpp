@@ -54,7 +54,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         /**
          * Evaluates the call.
-         * @param scope The scope to evaluate the call in.
+         * @param scope The scope to evaluate the call in.  If nullptr, the call will be evaluated in an ephemeral scope.
          * @return Returns the result of evaluating the call.
          */
         runtime::values::value evaluate(std::shared_ptr<scope> const& scope = nullptr) const;
@@ -62,15 +62,23 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Evaluates the call.
          * @param arguments The arguments passed to the call.
-         * @param scope The scope to evaluate the call in.
+         * @param scope The scope to evaluate the call in.  If nullptr, the call will be evaluated in an ephemeral scope.
          * @return Returns the result of evaluating the call.
          */
         runtime::values::value evaluate(runtime::values::array& arguments, std::shared_ptr<scope> const& scope = nullptr) const;
 
         /**
          * Evaluates the call.
+         * @param arguments The arguments passed to the call.
+         * @param scope The scope to evaluate the call in.  If nullptr, the call will be evaluated in an ephemeral scope.
+         * @return Returns the result of evaluating the call.
+         */
+        runtime::values::value evaluate(runtime::values::hash& arguments, std::shared_ptr<scope> const& scope = nullptr) const;
+
+        /**
+         * Evaluates the call.
          * @param resource The resource with attributes that become arguments to the function.
-         * @param scope The scope to evaluate the call in.
+         * @param scope The scope to evaluate the call in.  If nullptr, the call will be evaluated in an ephemeral scope.
          * @return Returns the result of evaluating the call.
          */
         runtime::values::value evaluate(compiler::resource& resource, std::shared_ptr<scope> const& scope = nullptr) const;
