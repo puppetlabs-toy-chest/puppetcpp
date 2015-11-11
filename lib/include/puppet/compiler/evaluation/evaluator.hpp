@@ -31,6 +31,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         evaluation::context& context();
 
         /**
+         * Evaluates all statements in a syntax tree.
+         * @param tree The syntax tree to evaluate.
+         * @param arguments The arguments for the tree (EEP syntax trees).
+         */
+        void evaluate(ast::syntax_tree const& tree, runtime::values::hash* arguments = nullptr);
+
+        /**
          * Evaluates the given expression and returns the resulting runtime value.
          * @param expression The expression to evaluate.
          * @param productive True if the expression is required to be productive (i.e. has side effect) or false if not.

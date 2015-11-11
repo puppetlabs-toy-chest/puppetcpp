@@ -66,7 +66,7 @@ Expression evaluator status:
 * [x] node scope
 * [x] string interpolation
 * [ ] external data lookups (i.e. hiera)
-* [ ] EPP support
+* [x] EPP support
 
 Type system implemented:
 
@@ -123,7 +123,7 @@ Puppet functions implemented:
 * [ ] hiera_include
 * [x] include
 * [x] info
-* [ ] inline_epp
+* [x] inline_epp
 * [ ] inline_template
 * [ ] lookup
 * [x] map

@@ -29,7 +29,7 @@ namespace puppet { namespace compiler { namespace parser {
      * @param epp True if the string is in EPP format or false if not.
      * @return Returns the parsed syntax tree.
      */
-    std::shared_ptr<ast::syntax_tree> parse_string(std::string source, compiler::module const* module = nullptr, bool epp = false);
+    std::shared_ptr<ast::syntax_tree> parse_string(std::string source, std::string path = "<string>", compiler::module const* module = nullptr, bool epp = false);
 
     /**
      * Interpolates a string iterator range into a syntax tree.

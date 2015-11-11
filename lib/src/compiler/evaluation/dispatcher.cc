@@ -6,6 +6,7 @@
 #include <puppet/compiler/evaluation/functions/fail.hpp>
 #include <puppet/compiler/evaluation/functions/filter.hpp>
 #include <puppet/compiler/evaluation/functions/function_call_context.hpp>
+#include <puppet/compiler/evaluation/functions/inline_epp.hpp>
 #include <puppet/compiler/evaluation/functions/log.hpp>
 #include <puppet/compiler/evaluation/functions/map.hpp>
 #include <puppet/compiler/evaluation/functions/realize.hpp>
@@ -40,6 +41,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             { "filter",         functions::filter() },
             { "include",        functions::declare() },
             { "info",           functions::log(logging::level::info) },
+            { "inline_epp",     functions::inline_epp() },
             { "map",            functions::map() },
             { "notice",         functions::log(logging::level::notice) },
             { "realize",        functions::realize() },

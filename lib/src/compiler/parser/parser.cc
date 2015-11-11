@@ -90,17 +90,17 @@ namespace puppet { namespace compiler { namespace parser {
         if (!input) {
             throw compilation_exception((boost::format("file '%1%' does not exist or cannot be read.") % path).str());
         }
-        
+
         auto tree = ast::syntax_tree::create(rvalue_cast(path), module);
         parse(lexer, input, *tree, epp);
         return tree;
     }
 
-    shared_ptr<ast::syntax_tree> parse_string(std::string source, compiler::module const* module, bool epp)
+    shared_ptr<ast::syntax_tree> parse_string(std::string source, std::string path, compiler::module const* module, bool epp)
     {
         static string_static_lexer lexer;
-        
-        auto tree = ast::syntax_tree::create("<string>", module);
+
+        auto tree = ast::syntax_tree::create(rvalue_cast(path), module);
         parse(lexer, source, *tree, epp);
         tree->source(rvalue_cast(source));
         return tree;
@@ -110,7 +110,7 @@ namespace puppet { namespace compiler { namespace parser {
     {
         static string_static_lexer lexer;
 
-        auto tree = ast::syntax_tree::create("<string>", module);        
+        auto tree = ast::syntax_tree::create("<string>", module);
         parse(lexer, range, *tree, false, true);
         return tree;
     }

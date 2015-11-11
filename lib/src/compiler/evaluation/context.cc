@@ -51,6 +51,17 @@ namespace puppet { namespace compiler { namespace evaluation {
         _context._node_scope.reset();
     }
 
+    local_epp_stream::local_epp_stream(evaluation::context& context, ostream& stream) :
+        _context(context)
+    {
+        _context._stream_stack.push_back(&stream);
+    }
+
+    local_epp_stream::~local_epp_stream()
+    {
+        _context._stream_stack.pop_back();
+    }
+
     resource_relationship::resource_relationship(
         compiler::relationship relationship,
         values::value source,
@@ -384,6 +395,24 @@ namespace puppet { namespace compiler { namespace evaluation {
     local_scope context::create_local_scope(shared_ptr<evaluation::scope> scope)
     {
         return local_scope { *this, rvalue_cast(scope) };
+    }
+
+    bool context::epp_write(values::value const& value)
+    {
+        if (_stream_stack.empty()) {
+            return false;
+        }
+        *_stream_stack.back() << value;
+        return true;
+    }
+
+    bool context::epp_write(std::string const& string)
+    {
+        if (_stream_stack.empty()) {
+            return false;
+        }
+        *_stream_stack.back() << string;
+        return true;
     }
 
     void context::log(logging::level level, string const& message, ast::context const* context)
