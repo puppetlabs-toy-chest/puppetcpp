@@ -49,7 +49,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         try {
             // Parse the string as an EPP template
             auto tree = parser::parse_string(*input, path, nullptr, true);
-            LOG(debug, "parsed inline EPP AST:\n-----%1%\n-----", *tree);
+            LOG(debug, "parsed inline EPP AST:\n-----\n%1%\n-----", *tree);
 
             // Create a local EPP stream
             ostringstream os;
