@@ -112,9 +112,7 @@ namespace puppet { namespace compiler {
         // Now evaluate the parsed syntax trees
         for (auto const& tree : trees) {
             LOG(debug, "evaluating the syntax tree for '%1%'.", tree->path());
-            for (auto const& expression : tree->statements) {
-                evaluator.evaluate(expression, true /* all top-level statements must be productive */);
-            }
+            evaluator.evaluate(*tree);
         }
 
         // Find and evaluate a node definition

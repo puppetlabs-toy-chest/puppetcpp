@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <regex>
+#include <iostream>
 
 namespace puppet { namespace compiler { namespace evaluation {
 
@@ -52,7 +53,7 @@ namespace puppet { namespace compiler { namespace evaluation {
          * @param context The current evaluation context.
          * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
          */
-        local_scope(evaluation::context& context, std::shared_ptr<evaluation::scope> scope = nullptr);
+        explicit local_scope(evaluation::context& context, std::shared_ptr<evaluation::scope> scope = nullptr);
 
         /**
          * Destructs the local scope.
@@ -79,6 +80,27 @@ namespace puppet { namespace compiler { namespace evaluation {
          * Destructs the node scope.
          */
         ~node_scope();
+
+     private:
+        evaluation::context& _context;
+    };
+
+    /**
+     * Helper for setting a local EPP stream.
+     */
+    struct local_epp_stream
+    {
+        /**
+         * Constructs a local EPP stream.
+         * @param context The current evaluation context.
+         * @param stream The stream to set in the evaluation context.
+         */
+        local_epp_stream(evaluation::context& context, std::ostream& stream);
+
+        /**
+         * Destructs the local EPP stream.
+         */
+        ~local_epp_stream();
 
      private:
         evaluation::context& _context;
@@ -348,10 +370,24 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         /**
          * Creates a local scope.
-         * @param scope The parent scope to inherit from; if null, the current scope will be used.
+         * @param scope The scope to change to.  If nullptr, the scope will be ephemeral.
          * @return Returns the local scope.
          */
         local_scope create_local_scope(std::shared_ptr<evaluation::scope> scope = nullptr);
+
+        /**
+         * Writes the given value to the EPP stream.
+         * @param value The value to write.
+         * @return Returns true if there is a stream to write to or false if not.
+         */
+        bool epp_write(runtime::values::value const& value);
+
+        /**
+         * Writes the given string to the EPP stream.
+         * @param string The string to write.
+         * @return Returns true if there is a stream to write to or false if not.
+         */
+        bool epp_write(std::string const& string);
 
         /**
          * Logs a message.
@@ -438,6 +474,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         friend struct match_scope;
         friend struct local_scope;
         friend struct node_scope;
+        friend struct local_epp_stream;
 
         context(context&) = delete;
         context& operator=(context&) = delete;
@@ -454,6 +491,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         std::unordered_multimap<runtime::types::resource, resource_override, boost::hash<runtime::types::resource>> _overrides;
         std::vector<resource_relationship> _relationships;
         std::vector<std::shared_ptr<collectors::collector>> _collectors;
+        std::vector<std::ostream*> _stream_stack;
     };
 
 }}}  // namespace puppet::compiler::evaluation

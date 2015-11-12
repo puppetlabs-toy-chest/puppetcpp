@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/context.hpp>
+#include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
@@ -48,6 +49,17 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         _context._scope_stack.pop_back();
         _context._node_scope.reset();
+    }
+
+    local_epp_stream::local_epp_stream(evaluation::context& context, ostream& stream) :
+        _context(context)
+    {
+        _context._stream_stack.push_back(&stream);
+    }
+
+    local_epp_stream::~local_epp_stream()
+    {
+        _context._stream_stack.pop_back();
     }
 
     resource_relationship::resource_relationship(
@@ -385,6 +397,24 @@ namespace puppet { namespace compiler { namespace evaluation {
         return local_scope { *this, rvalue_cast(scope) };
     }
 
+    bool context::epp_write(values::value const& value)
+    {
+        if (_stream_stack.empty()) {
+            return false;
+        }
+        *_stream_stack.back() << value;
+        return true;
+    }
+
+    bool context::epp_write(std::string const& string)
+    {
+        if (_stream_stack.empty()) {
+            return false;
+        }
+        *_stream_stack.back() << string;
+        return true;
+    }
+
     void context::log(logging::level level, string const& message, ast::context const* context)
     {
         auto& logger = _node.logger();
@@ -654,7 +684,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     void context::evaluate_defined_types(size_t& index, vector<declared_defined_type*>& virtualized)
     {
-        resource* current = nullptr;
+        resource const* current = nullptr;
 
         try {
             // Evaluate any previously virtual defined type
@@ -664,6 +694,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     return false;
                 }
                 // Evaluate the defined type
+                current = &declared->resource();
                 declared->evaluate(*this);
                 return true;
             }), virtualized.end());
@@ -680,6 +711,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     virtualized.emplace_back(&declared);
                     continue;
                 }
+                current = &declared.resource();
                 declared.evaluate(*this);
             }
         } catch (evaluation_exception const& ex) {

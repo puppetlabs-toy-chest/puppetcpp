@@ -125,7 +125,8 @@ namespace puppet { namespace compiler { namespace lexer {
             ++start;
         }
 
-        string text = input.substr(start, input.find('\n', start));
+        auto end = input.find('\n', start);
+        string text = input.substr(start, end == string::npos ? end : end - start);
 
         // Convert tabs to spaces
         size_t column = (position - start) + 1;

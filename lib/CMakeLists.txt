@@ -24,6 +24,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/fail.cc
     src/compiler/evaluation/functions/filter.cc
     src/compiler/evaluation/functions/function_call_context.cc
+    src/compiler/evaluation/functions/inline_epp.cc
     src/compiler/evaluation/functions/log.cc
     src/compiler/evaluation/functions/map.cc
     src/compiler/evaluation/functions/realize.cc

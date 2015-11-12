@@ -2,6 +2,7 @@
 #include <puppet/compiler/evaluation/collectors/query_collector.hpp>
 #include <puppet/compiler/evaluation/postfix_evaluator.hpp>
 #include <puppet/compiler/evaluation/interpolator.hpp>
+#include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/evaluation/functions/function_call_context.hpp>
 #include <puppet/compiler/evaluation/operators/assignment.hpp>
 #include <puppet/compiler/evaluation/operators/divide.hpp>
@@ -43,6 +44,31 @@ namespace puppet { namespace compiler { namespace evaluation {
     evaluation::context& evaluator::context()
     {
         return _context;
+    }
+
+    void evaluator::evaluate(syntax_tree const& tree, values::hash* arguments)
+    {
+        if (tree.parameters) {
+            // Create an ephemeral scope for evaluation
+            auto local_scope = _context.create_local_scope();
+
+            // "call" an empty function to populate the arguments into the scope
+            vector<expression> body;
+            values::hash empty;
+            call_evaluator evaluator{ _context, *tree.parameters, body };
+            evaluator.evaluate(arguments ? *arguments : empty, _context.current_scope());
+
+            // Evaluate the statements
+            for (auto& statement : tree.statements) {
+                evaluate(statement, true /* all top-level statements must be productive */);
+            }
+            return;
+        }
+
+        // Evaluate the statements
+        for (auto& statement : tree.statements) {
+            evaluate(statement, true /* all top-level statements must be productive */);
+        }
     }
 
     value evaluator::evaluate(expression const& expression, bool productive)
@@ -500,6 +526,30 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto operand = evaluate(expression.operand);
         operators::unary_operator_context context{ _context, operand, expression.operand.context() };
         return it->second(context);
+    }
+
+    value evaluator::operator()(epp_render_expression const& expression)
+    {
+        if (!_context.epp_write(evaluate(expression.expression))) {
+            throw evaluation_exception("EPP expressions are not supported.", expression.context);
+        }
+        return values::undef();
+    }
+
+    value evaluator::operator()(epp_render_block const& expression)
+    {
+        if (!_context.epp_write(evaluate_body(expression.block))) {
+            throw evaluation_exception("EPP expressions are not supported.", expression.context);
+        }
+        return values::undef();
+    }
+
+    value evaluator::operator()(epp_render_string const& expression)
+    {
+        if (!_context.epp_write(expression.string)) {
+            throw evaluation_exception("EPP expressions are not supported.", expression.context);
+        }
+        return values::undef();
     }
 
     value evaluator::evaluate_body(vector<ast::expression> const& body)

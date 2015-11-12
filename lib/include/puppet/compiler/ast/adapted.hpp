@@ -261,7 +261,26 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::epp_render_expression,
+    context,
+    expression
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::epp_render_block,
+    context,
+    block
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::epp_render_string,
+    context,
+    string
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::syntax_tree,
+    parameters,
     statements,
     closing_position
 )

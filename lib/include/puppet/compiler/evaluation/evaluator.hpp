@@ -31,6 +31,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         evaluation::context& context();
 
         /**
+         * Evaluates all statements in a syntax tree.
+         * @param tree The syntax tree to evaluate.
+         * @param arguments The arguments for the tree (EEP syntax trees).
+         */
+        void evaluate(ast::syntax_tree const& tree, runtime::values::hash* arguments = nullptr);
+
+        /**
          * Evaluates the given expression and returns the resulting runtime value.
          * @param expression The expression to evaluate.
          * @param productive True if the expression is required to be productive (i.e. has side effect) or false if not.
@@ -92,7 +99,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::node_expression const& expression);
         runtime::values::value operator()(ast::collector_expression const& expression);
         runtime::values::value operator()(ast::unary_expression const& expression);
-        runtime::values::value operator()(ast::postfix_expression const& expression);
+        runtime::values::value operator()(ast::epp_render_expression const& expression);
+        runtime::values::value operator()(ast::epp_render_block const& expression);
+        runtime::values::value operator()(ast::epp_render_string const& expression);
 
         runtime::values::value evaluate_body(std::vector<ast::expression> const& body);
         ast::resource_body const* find_default_body(ast::resource_expression const& expression);

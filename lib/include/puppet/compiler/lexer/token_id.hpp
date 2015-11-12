@@ -72,7 +72,14 @@ namespace puppet { namespace compiler { namespace lexer {
         heredoc,
         number,
         array_start,          // Same as '[', but whitespace delimited to force array expression
+        epp_start,
+        epp_end,
+        epp_start_trim,
+        epp_end_trim,
+        epp_render_string,
+        epp_render_expression,
         comment,              // Not in token stream
+        comment_trim,         // Not in token stream
         whitespace,           // Not in token stream
         unclosed_quote,       // Error token that will not match the grammar
         unclosed_comment,     // Error token that will not match the grammar

@@ -40,6 +40,13 @@ namespace puppet { namespace compiler {
         _classes.clear();
         _defined_types.clear();
         _nodes.clear();
+        
+        // Check all parameters
+        if (tree.parameters) {
+            for (auto const& parameter : *tree.parameters) {
+                operator()(parameter);
+            }
+        }
 
         // Scan first before registering anything
         // This attempts to make the scan transaction; if the scan throws an exception, nothing will be registered
@@ -467,6 +474,22 @@ namespace puppet { namespace compiler {
     void scanner::operator()(ast::primary_expression const& expression)
     {
         boost::apply_visitor(*this, expression);
+    }
+
+    void scanner::operator()(ast::epp_render_expression const& expression)
+    {
+        operator()(expression.expression);
+    }
+
+    void scanner::operator()(ast::epp_render_block const& expression)
+    {
+        for (auto const& statement : expression.block) {
+            operator()(statement);
+        }
+    }
+
+    void scanner::operator()(ast::epp_render_string const& expression)
+    {
     }
 
     bool scanner::can_define() const

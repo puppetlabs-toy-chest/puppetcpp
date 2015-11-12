@@ -501,13 +501,13 @@ namespace boost { namespace spirit { namespace x3 {
     /**
      * Responsible for getting the info of a token parser.
      */
-    template <typename Parser, typename Attribute>
-    struct get_info<puppet::compiler::parser::token_parser<Parser, Attribute>>
+    template <>
+    struct get_info<puppet::compiler::parser::token>
     {
         /**
          * The parser type.
          */
-        using parser_type = puppet::compiler::parser::token_parser<Parser, Attribute>;
+        using parser_type = puppet::compiler::parser::token;
         /**
          * The result type.
          */
@@ -521,6 +521,58 @@ namespace boost { namespace spirit { namespace x3 {
         result_type operator()(parser_type const& parser) const
         {
             return boost::lexical_cast<result_type>(parser.id());
+        }
+    };
+
+    /**
+     * Responsible for getting the info of a number token parser.
+     */
+    template <>
+    struct get_info<puppet::compiler::parser::number_token>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = puppet::compiler::parser::number_token;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            return "number";
+        }
+    };
+
+    /**
+     * Responsible for getting the info of a string token parser.
+     */
+    template <>
+    struct get_info<puppet::compiler::parser::string_token>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = puppet::compiler::parser::string_token;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            return "string";
         }
     };
 
