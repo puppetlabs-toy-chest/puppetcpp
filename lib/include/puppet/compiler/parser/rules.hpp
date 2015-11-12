@@ -287,7 +287,7 @@ namespace puppet { namespace compiler { namespace parser {
     DEFINE_RULE(
         resource_type,
         ((name | class_name) > boost::spirit::x3::attr(std::vector<ast::postfix_subexpression>())) |
-        type_expression
+        (type >> +access_expression)
     )
     DEFINE_RULE(
         class_name,
