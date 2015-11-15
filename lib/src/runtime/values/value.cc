@@ -19,9 +19,20 @@ namespace puppet { namespace runtime { namespace values {
     {
     }
 
+    value::value(char const* string) :
+        value_base(std::string(string))
+    {
+    }
+
     value& value::operator=(values::wrapper<value>&& wrapper)
     {
         value_base::operator=(rvalue_cast(static_cast<value_base&>(wrapper.get())));
+        return *this;
+    }
+
+    value& value::operator=(char const* string)
+    {
+        value_base::operator=(std::string(string));
         return *this;
     }
 

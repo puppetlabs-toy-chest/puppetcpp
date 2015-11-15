@@ -116,11 +116,29 @@ namespace puppet { namespace runtime { namespace values {
         value(values::wrapper<value>&& wrapper);
 
         /**
+         * Constructs a value given a C string.
+         * @param string The string to construct the value with.
+         */
+        value(char const* string);
+
+        /**
+         * Intentionally undefined constructor to prevent implicit conversion to a boolean value.
+         */
+        value(void const*);
+
+        /**
          * Move assigns the value given a wrapper containing the value to move.
          * @param wrapper The wrapper containing the value to move.
          * @return Returns this value.
          */
         value& operator=(values::wrapper<value>&& wrapper);
+
+        /**
+         * Copy assignment operator given a C-string to set as a string value.
+         * @param string The string to assign to the value.
+         * @return Returns this value.
+         */
+        value& operator=(char const* string);
 
         /**
          * Copy assignment operator for value.
