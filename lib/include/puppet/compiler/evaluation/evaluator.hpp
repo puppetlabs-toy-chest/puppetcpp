@@ -33,7 +33,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Evaluates all statements in a syntax tree.
          * @param tree The syntax tree to evaluate.
-         * @param arguments The arguments for the tree (EEP syntax trees).
+         * @param arguments The arguments for the tree (EPP syntax trees).
          */
         void evaluate(ast::syntax_tree const& tree, runtime::values::hash* arguments = nullptr);
 
