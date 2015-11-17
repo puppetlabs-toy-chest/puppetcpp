@@ -137,7 +137,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return value;
     }
 
-    value evaluator::operator()(long double value)
+    value evaluator::operator()(double value)
     {
         return value;
     }

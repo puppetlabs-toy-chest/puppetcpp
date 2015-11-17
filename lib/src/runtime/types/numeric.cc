@@ -12,7 +12,7 @@ namespace puppet { namespace runtime { namespace types {
 
     bool numeric::is_instance(values::value const& value) const
     {
-        return value.as<int64_t>() || value.as<long double>();
+        return value.as<int64_t>() || value.as<double>();
     }
 
     bool numeric::is_specialization(values::type const& other) const

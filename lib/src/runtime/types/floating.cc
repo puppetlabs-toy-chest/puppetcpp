@@ -5,18 +5,18 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
-    floating::floating(long double from, long double to) :
+    floating::floating(double from, double to) :
         _from(from),
         _to(to)
     {
     }
 
-    long double floating::from() const
+    double floating::from() const
     {
         return _from;
     }
 
-    long double floating::to() const
+    double floating::to() const
     {
         return _to;
     }
@@ -28,7 +28,7 @@ namespace puppet { namespace runtime { namespace types {
 
     bool floating::is_instance(values::value const& value) const
     {
-        auto ptr = value.as<long double>();
+        auto ptr = value.as<double>();
         if (!ptr) {
             return false;
         }
@@ -54,8 +54,8 @@ namespace puppet { namespace runtime { namespace types {
     {
         os << floating::name();
         // BUG: fix direct floating point comparison
-        bool from_default = type.from() == numeric_limits<long double>::min();
-        bool to_default = type.to() == numeric_limits<long double>::max();
+        bool from_default = type.from() == numeric_limits<double>::min();
+        bool to_default = type.to() == numeric_limits<double>::max();
         if (from_default && to_default) {
             // Only output the type name
             return os;

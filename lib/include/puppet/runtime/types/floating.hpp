@@ -20,19 +20,19 @@ namespace puppet { namespace runtime { namespace types {
          * @param from The "from" type parameter.
          * @param to The "to" type parameter.
          */
-        explicit floating(long double from = std::numeric_limits<long double>::min(), long double to = std::numeric_limits<long double>::max());
+        explicit floating(double from = std::numeric_limits<double>::min(), double to = std::numeric_limits<double>::max());
 
         /**
          * Gets the "from" type parameter.
          * @return Returns the "from" type parameter.
          */
-        long double from() const;
+        double from() const;
 
         /**
          * Gets the "to" type parameter.
          * @return Returns the "to" type parameter.
          */
-        long double to() const;
+        double to() const;
 
         /**
          * Gets the name of the type.
@@ -55,8 +55,8 @@ namespace puppet { namespace runtime { namespace types {
         bool is_specialization(values::type const& other) const;
 
      private:
-        long double _from;
-        long double _to;
+        double _from;
+        double _to;
     };
 
     /**

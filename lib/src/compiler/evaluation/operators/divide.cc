@@ -28,20 +28,20 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return left / right;
         }
 
-        result_type operator()(int64_t left, long double right) const
+        result_type operator()(int64_t left, double right) const
         {
-            return operator()(static_cast<long double>(left), right);
+            return operator()(static_cast<double>(left), right);
         }
 
-        result_type operator()(long double left, int64_t right) const
+        result_type operator()(double left, int64_t right) const
         {
-            return operator()(left, static_cast<long double>(right));
+            return operator()(left, static_cast<double>(right));
         }
 
-        result_type operator()(long double left, long double right) const
+        result_type operator()(double left, double right) const
         {
             feclearexcept(FE_OVERFLOW | FE_UNDERFLOW | FE_DIVBYZERO);
-            long double result = left / right;
+            double result = left / right;
             if (fetestexcept(FE_DIVBYZERO)) {
                 throw evaluation_exception("cannot divide by zero.", _context.right_context());
             } else if (fetestexcept(FE_OVERFLOW)) {
@@ -55,7 +55,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         template <
             typename Left,
             typename Right,
-            typename = typename enable_if<(is_same<Left, int64_t>::value || is_same<Left, long double>::value) && !is_same<Right, int64_t>::value && !is_same<Right, long double>::value>::type
+            typename = typename enable_if<(is_same<Left, int64_t>::value || is_same<Left, double>::value) && !is_same<Right, int64_t>::value && !is_same<Right, double>::value>::type
         >
         result_type operator()(int64_t const&, Right const& right) const
         {

@@ -39,7 +39,7 @@ namespace puppet { namespace compiler { namespace lexer {
         /**
          * The type of the numeric value.
          */
-        using value_type = boost::variant<std::int64_t, long double>;
+        using value_type = boost::variant<std::int64_t, double>;
 
         /**
          * The default constructor for number token.
@@ -59,7 +59,7 @@ namespace puppet { namespace compiler { namespace lexer {
          * @param position The position of the token.
          * @param value The floating point value of the token.
          */
-        number_token(lexer::position position, long double value);
+        number_token(lexer::position position, double value);
 
         /**
          * Gets the position of the token.

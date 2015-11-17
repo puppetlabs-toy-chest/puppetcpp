@@ -20,17 +20,17 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return left > right;
         }
 
-        result_type operator()(int64_t left, long double right) const
+        result_type operator()(int64_t left, double right) const
         {
-            return operator()(static_cast<long double>(left), right);
+            return operator()(static_cast<double>(left), right);
         }
 
-        result_type operator()(long double left, int64_t right) const
+        result_type operator()(double left, int64_t right) const
         {
-            return operator()(left, static_cast<long double>(right));
+            return operator()(left, static_cast<double>(right));
         }
 
-        result_type operator()(long double left, long double right) const
+        result_type operator()(double left, double right) const
         {
             return left > right;
         }
@@ -49,7 +49,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         template <
             typename Right,
             typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
-            typename = typename enable_if<!is_same<Right, long double>::value>::type
+            typename = typename enable_if<!is_same<Right, double>::value>::type
         >
         result_type operator()(int64_t const&, Right const& right) const
         {
@@ -59,9 +59,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         template <
             typename Right,
             typename = typename enable_if<!is_same<Right, int64_t>::value>::type,
-            typename = typename enable_if<!is_same<Right, long double>::value>::type
+            typename = typename enable_if<!is_same<Right, double>::value>::type
         >
-        result_type operator()(long double const&, Right const& right) const
+        result_type operator()(double const&, Right const& right) const
         {
             throw evaluation_exception((boost::format("expected %1% for comparison but found %2%.") % types::numeric::name() % value(right).get_type()).str(), _context.right_context());
         }

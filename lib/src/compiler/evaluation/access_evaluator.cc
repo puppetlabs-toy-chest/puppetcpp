@@ -197,8 +197,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception((boost::format("expected at most 2 arguments for %1% but %2% were given.") % floating::name() % _arguments.size()).str(), _contexts[2]);
             }
 
-            long double from, to;
-            tie(from, to) = get_range<long double, floating>();
+            double from, to;
+            tie(from, to) = get_range<double, floating>();
             return floating(from, to);
         }
 

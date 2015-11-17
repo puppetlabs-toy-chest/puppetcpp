@@ -19,7 +19,7 @@ namespace puppet { namespace compiler { namespace lexer {
     {
     }
 
-    number_token::number_token(lexer::position position, long double value) :
+    number_token::number_token(lexer::position position, double value) :
         _position(rvalue_cast(position)),
         _value(value),
         _base(numeric_base::decimal)
@@ -70,7 +70,7 @@ namespace puppet { namespace compiler { namespace lexer {
             return _os;
         }
 
-        result_type operator()(long double value) const
+        result_type operator()(double value) const
         {
             return (_os << value);
         }
