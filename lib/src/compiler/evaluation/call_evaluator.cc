@@ -93,7 +93,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 }
             }
 
-            if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), &parameter.context())) {
+            if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), parameter.context())) {
                 throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % name).str(), parameter.context());
             }
         }
@@ -130,7 +130,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception(rvalue_cast(message), parameter.default_value->context());
             });
 
-            if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), &parameter.context())) {
+            if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), parameter.context())) {
                 throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % name).str(), parameter.context());
             }
         }
@@ -157,7 +157,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw argument_exception(rvalue_cast(message), index);
             });
 
-            if (current_scope->set(*name, std::make_shared<values::value>(rvalue_cast(kvp.value())), &parameter->context())) {
+            if (current_scope->set(*name, std::make_shared<values::value>(rvalue_cast(kvp.value())), parameter->context())) {
                 throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % *name).str(), parameter->context());
             }
         }
@@ -172,14 +172,14 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Set the title in the scope
         shared_ptr<values::value const> title = make_shared<values::value const>(resource.type().title());
-        scope->set("title", title, &resource.context());
+        scope->set("title", title, resource.context());
 
         // Set the name in the scope
         shared_ptr<values::value const> name = rvalue_cast(title);
         if (auto attribute = resource.get("name")) {
             name = attribute->shared_value();
         }
-        scope->set("name", rvalue_cast(name), &resource.context());
+        scope->set("name", rvalue_cast(name), resource.context());
 
         evaluation::evaluator evaluator { _context };
 
@@ -248,7 +248,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                         attribute.name_context());
                 }
             }
-            current_scope->set(attribute.name(), attribute.shared_value(), &attribute.value_context());
+            current_scope->set(attribute.name(), attribute.shared_value(), attribute.value_context());
             return true;
         });
         return evaluate_body();

@@ -6,6 +6,25 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation {
 
+    assignment_context::assignment_context(ast::context const* context) :
+        _line(0)
+    {
+        if (context) {
+            _path = context->tree->shared_path();
+            _line = context->position.line();
+        }
+    }
+
+    shared_ptr<string> const& assignment_context::path() const
+    {
+        return _path;
+    }
+
+    size_t assignment_context::line() const
+    {
+        return _line;
+    }
+
     scope::scope(shared_ptr<scope> parent, compiler::resource* resource) :
         _parent(rvalue_cast(parent)),
         _resource(resource)
@@ -57,14 +76,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _resource->type().title() + "::" + name;
     }
 
-    ast::context const* scope::set(string name, shared_ptr<values::value const> value, ast::context const* context)
+    assignment_context const* scope::set(string name, shared_ptr<values::value const> value, ast::context const& context)
     {
-        static ast::context no_context{ nullptr, lexer::position(0, 0) };
+        static assignment_context no_context(nullptr);
 
         // Check to see if the variable already exists
         auto it = _variables.find(name);
         if (it != _variables.end()) {
-            return it->second.second ? it->second.second : &no_context;
+            return &it->second.second;
         }
 
         // If there's a fact provider, try get a fact of the given name before setting
@@ -74,7 +93,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 return &no_context;
             }
         }
-        _variables.emplace(rvalue_cast(name), make_pair(rvalue_cast(value), context));
+        _variables.emplace(rvalue_cast(name), make_pair(rvalue_cast(value), assignment_context(&context)));
         return nullptr;
     }
 
@@ -94,13 +113,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         if (!_facts) {
             return nullptr;
         }
-        auto value = _facts->lookup(name);
-        if (!value) {
-            return nullptr;
-        }
-
-        // Add the fact as an assigned variable
-        return _variables.emplace(make_pair(name, make_pair(rvalue_cast(value), nullptr))).first->second.first;
+        return _facts->lookup(name);
     }
 
     ostream& operator<<(ostream& os, scope const& s)
