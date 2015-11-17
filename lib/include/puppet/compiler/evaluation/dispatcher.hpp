@@ -45,9 +45,17 @@ namespace puppet { namespace compiler { namespace evaluation {
          */
         runtime::values::value dispatch(functions::function_call_context& context) const;
 
+        /**
+         * Set the fallback callback to use.
+         * @param fallback The fallback callback to use.
+         */
+        void fallback(std::function<boost::optional<runtime::values::value>(functions::function_call_context& context)> fallback);
+
      private:
         dispatcher(dispatcher&) = delete;
         dispatcher& operator=(dispatcher&) = delete;
+
+        std::function<boost::optional<runtime::values::value>(functions::function_call_context& context)> _fallback;
     };
 
 }}}  // namespace puppet::compiler::evaluation

@@ -44,6 +44,11 @@ namespace puppet { namespace compiler {
         return _registry;
     }
 
+    evaluation::dispatcher& environment::dispatcher()
+    {
+        return _dispatcher;
+    }
+
     evaluation::dispatcher const& environment::dispatcher() const
     {
         return _dispatcher;

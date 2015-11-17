@@ -61,6 +61,12 @@ namespace puppet { namespace compiler {
          * Gets the environment's function dispatcher.
          * @return Returns the environment's function dispatcher.
          */
+        evaluation::dispatcher& dispatcher();
+
+        /**
+         * Gets the environment's function dispatcher.
+         * @return Returns the environment's function dispatcher.
+         */
         evaluation::dispatcher const& dispatcher() const;
 
         /**

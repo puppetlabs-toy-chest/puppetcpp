@@ -37,10 +37,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         }
 
         // Set the variable in the current scope
-        auto previous = context.context().current_scope()->set(var->name(), value, &left_context);
+        auto previous = context.context().current_scope()->set(var->name(), value, left_context);
         if (previous) {
-            if (previous->tree) {
-                throw evaluation_exception((boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % previous->tree->path() % previous->position.line()).str(), left_context);
+            if (previous->path()) {
+                throw evaluation_exception((boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % *previous->path() % previous->line()).str(), left_context);
             }
             throw evaluation_exception((boost::format("cannot assign to $%1%: a fact or node parameter exists with the same name.") % var->name()).str(), left_context);
         }
