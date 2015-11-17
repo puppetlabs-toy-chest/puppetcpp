@@ -13,6 +13,14 @@ using namespace boost::spirit;
 
 namespace puppet { namespace compiler { namespace parser {
 
+    template <typename Iterator>
+    void check_missing_epp_end(Iterator const& iterator)
+    {
+        if (!iterator.epp_end()) {
+            throw parse_exception("expected '%>' or '-%>' but found end of input.", iterator.position());
+        }
+    }
+
     template <typename Lexer, typename Input>
     void parse(Lexer const& lexer, Input& input, ast::syntax_tree& tree, bool epp = false, bool interpolation = false)
     {
@@ -27,8 +35,11 @@ namespace puppet { namespace compiler { namespace parser {
             auto token_begin = lexer.begin(begin, end, epp ? Lexer::EPP_STATE : nullptr);
             auto token_end = lexer.end();
 
-            // Check for empty input
+            // Check for "semantically empty" input
             if (token_begin != token_end && token_begin->id() == boost::lexer::npos) {
+                if (epp) {
+                    check_missing_epp_end(begin);
+                }
                 return;
             }
 
@@ -47,6 +58,9 @@ namespace puppet { namespace compiler { namespace parser {
 
             // Check for success; for interpolation, it is not required to exhaust all tokens
             if (success && (token_begin == token_end || token_begin->id() == boost::lexer::npos || interpolation)) {
+                if (epp) {
+                    check_missing_epp_end(begin);
+                }
                 return;
             }
 

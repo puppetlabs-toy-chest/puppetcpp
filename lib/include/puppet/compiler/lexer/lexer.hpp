@@ -82,8 +82,7 @@ namespace puppet { namespace compiler { namespace lexer {
          * Default constructor for lexer_iterator.
          */
         lexer_iterator() :
-            _position { 0, 0 },
-            _need_epp_end(false)
+            _position { 0, 0 }
         {
         }
 
@@ -93,8 +92,7 @@ namespace puppet { namespace compiler { namespace lexer {
          */
         explicit lexer_iterator(Iterator const& iter) :
             boost::iterator_adaptor<lexer_iterator<Iterator>, Iterator>(iter),
-            _position { 0, 1 },
-            _need_epp_end(false)
+            _position { 0, 1 }
         {
         }
 
@@ -114,6 +112,15 @@ namespace puppet { namespace compiler { namespace lexer {
         void position(lexer::position position)
         {
             _position = rvalue_cast(position);
+        }
+
+        /**
+         * Gets whether an EPP end tag was encountered.
+         * @return Returns true if the iterator encountered an EPP end tag or false if the EPP end tag has not yet been encountered.
+         */
+        bool epp_end() const
+        {
+            return _epp_end;
         }
 
     private:
@@ -163,7 +170,8 @@ namespace puppet { namespace compiler { namespace lexer {
         lexer::position _position;
         boost::optional<Iterator> _next_iter;
         lexer::position _next_position;
-        bool _need_epp_end = false;
+        bool _ignore_epp_end = true;
+        bool _epp_end = true;
     };
 
     /**
@@ -686,20 +694,22 @@ namespace puppet { namespace compiler { namespace lexer {
         {
             matched = boost::spirit::lex::pass_flags::pass_ignore;
             context.set_state(context.get_state_id("INITIAL"));
+            end._epp_end = false;
         }
 
         static void epp_render(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             context.set_state(context.get_state_id("INITIAL"));
-            end._need_epp_end = true;
+            end._ignore_epp_end = false;
         }
 
         static void epp_end(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            if (!start._need_epp_end) {
+            if (start._ignore_epp_end) {
                 ignore(start, end, matched, id, context);
             }
-            end._need_epp_end = false;
+            end._ignore_epp_end = true;
+            end._epp_end = true;
 
             if (id == static_cast<size_t>(token_id::epp_end_trim)) {
                 trim_right(start, end, matched, id, context);

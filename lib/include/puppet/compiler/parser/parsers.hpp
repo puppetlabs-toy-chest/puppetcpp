@@ -551,6 +551,32 @@ namespace boost { namespace spirit { namespace x3 {
     };
 
     /**
+     * Responsible for getting the info of a position parser.
+     */
+    template <>
+    struct get_info<puppet::compiler::parser::position>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = puppet::compiler::parser::position;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            return boost::lexical_cast<result_type>(parser.id());
+        }
+    };
+
+    /**
      * Responsible for getting the info of a string token parser.
      */
     template <>
