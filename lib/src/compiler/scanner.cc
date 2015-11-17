@@ -96,7 +96,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::variable const& expression)
     {
-        static const char* valid_variable_pattern = "0|[1-9]\\d*|((::)?[a-z]\\w*)*(::)?[a-z_]\\w*";
+        static const char* valid_variable_pattern = R"(0|[1-9]\d*|((::)?[a-z]\w*)*(::)?[a-z_]\w*)";
         static const regex valid_variable_regex(valid_variable_pattern);
 
         // Ensure the parameter name is valid
