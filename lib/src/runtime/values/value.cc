@@ -86,7 +86,7 @@ namespace puppet { namespace runtime { namespace values {
             return types::integer();
         }
 
-        result_type operator()(long double) const
+        result_type operator()(double) const
         {
             return types::floating();
         }
@@ -291,7 +291,7 @@ namespace puppet { namespace runtime { namespace values {
             return value;
         }
 
-        result_type operator()(long double d) const
+        result_type operator()(double d) const
         {
             json_value value;
             value.SetDouble(static_cast<double>(d));

@@ -76,7 +76,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::defaulted const&);
         runtime::values::value operator()(ast::boolean const& expression);
         runtime::values::value operator()(int64_t value);
-        runtime::values::value operator()(long double value);
+        runtime::values::value operator()(double value);
         runtime::values::value operator()(ast::number const& expression);
         runtime::values::value operator()(ast::string const& expression);
         runtime::values::value operator()(ast::regex const& expression);

@@ -102,7 +102,7 @@ namespace puppet { namespace facts {
             } else if (convert<int64_t>::decode(node, int_val)) {
                 value = int_val;
             } else if (convert<double>::decode(node, double_val)) {
-                value = static_cast<long double>(double_val);
+                value = static_cast<double>(double_val);
             } else {
                 // NOTE: as<T> incorrectly returns const T (bug in yaml-cpp), so make the copy explicit
                 string copy = node.as<string>();

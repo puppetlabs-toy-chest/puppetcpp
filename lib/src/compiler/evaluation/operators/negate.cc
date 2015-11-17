@@ -23,7 +23,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return -operand;
         }
 
-        result_type operator()(long double operand) const
+        result_type operator()(double operand) const
         {
             return -operand;
         }

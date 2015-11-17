@@ -51,7 +51,7 @@ namespace puppet { namespace runtime { namespace values {
         undef,
         defaulted,
         std::int64_t,
-        long double,
+        double,
         bool,
         std::string,
         regex,

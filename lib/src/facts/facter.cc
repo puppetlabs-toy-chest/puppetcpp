@@ -77,7 +77,7 @@ namespace puppet { namespace facts {
         } else if (auto ptr = dynamic_cast<boolean_value const*>(value)) {
             converted = ptr->value();
         } else if (auto ptr = dynamic_cast<double_value const*>(value)) {
-            converted = static_cast<long double>(ptr->value());
+            converted = static_cast<double>(ptr->value());
         } else if (auto ptr = dynamic_cast<array_value const*>(value)) {
             converted = values::array();
             ptr->each([&](::facter::facts::value const* element) {

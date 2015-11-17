@@ -96,7 +96,7 @@ void require_number_token(Iterator& token, Iterator const& end, int64_t expected
 }
 
 template <typename Iterator>
-void require_number_token(Iterator& token, Iterator const& end, long double expected_value, string const& expected_string)
+void require_number_token(Iterator& token, Iterator const& end, double expected_value, string const& expected_string)
 {
     CAPTURE(expected_string);
 
@@ -107,7 +107,7 @@ void require_number_token(Iterator& token, Iterator const& end, long double expe
     auto num_token = boost::get<number_token>(&token->value());
     REQUIRE(num_token);
     REQUIRE(num_token->value().which() == 1);
-    REQUIRE(boost::get<long double>(num_token->value()) == Approx(expected_value));
+    REQUIRE(boost::get<double>(num_token->value()) == Approx(expected_value));
     REQUIRE(num_token->base() == numeric_base::decimal);
 
     ostringstream ss;
@@ -408,5 +408,5 @@ SCENARIO("lexing numbers")
     lex_bad_string("123.0e-", 0, 1, "'123.0e-' is not a valid number.");
     lex_bad_string("123.0ebad", 0, 1, "'123.0ebad' is not a valid number.");
     lex_bad_string("123bad.2bad2e-bad", 0, 1, "'123bad.2bad2e-bad' is not a valid number.");
-    lex_bad_string("1e100000", 0, 1, (boost::format("'1e100000' is not in the range of %1% to %2%.") % numeric_limits<long double>::min() % numeric_limits<long double>::max()).str());
+    lex_bad_string("1e100000", 0, 1, (boost::format("'1e100000' is not in the range of %1% to %2%.") % numeric_limits<double>::min() % numeric_limits<double>::max()).str());
 }
