@@ -60,9 +60,20 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Find a builtin function
         auto it = builtin_functions.find(context.name());
         if (it == builtin_functions.end()) {
+            if (_fallback) {
+                auto result = _fallback(context);
+                if (result) {
+                    return rvalue_cast(*result);
+                }
+            }
             throw evaluation_exception((boost::format("unknown function '%1%'.") % context.name()).str(), context.call_site());
         }
         return it->second(context);
+    }
+
+    void dispatcher::fallback(function<boost::optional<values::value>(functions::function_call_context& context)> fallback)
+    {
+        _fallback = rvalue_cast(fallback);
     }
 
 }}}  // namespace puppet::compiler::evaluation
