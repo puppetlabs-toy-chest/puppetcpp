@@ -233,17 +233,17 @@ namespace puppet { namespace compiler { namespace lexer {
             // When in the EPP state, a match of an opening tag will transition to the normal lexer state.
             // When in the normal state, a match of a closing tag will transition to the EPP state.
             this->self(EPP_STATE) =
-                lex::token_def<>("<%#[^-]*-+([^->]*-+)*%>",      static_cast<id_type>(token_id::comment_trim))          [ ignore ]      |
-                lex::token_def<>("<%#[^%]*%+([^%>]*%+)*>",       static_cast<id_type>(token_id::comment))               [ ignore ]      |
-                lex::token_def<>("<%=",                          static_cast<id_type>(token_id::epp_render_expression)) [ epp_render ]  |
-                lex::token_def<>("\\s*<%-",                      static_cast<id_type>(token_id::epp_start_trim))        [ epp_start ]   |
-                lex::token_def<>("<%",                           static_cast<id_type>(token_id::epp_start))             [ epp_start ]   |
-                lex::token_def<>("<%#",                          static_cast<id_type>(token_id::unclosed_comment))                      |
-                lex::token_def<>("[^<]*",                        static_cast<id_type>(token_id::epp_render_string))     [ string_trim ] |
-                lex::token_def<>(".",                            static_cast<id_type>(token_id::epp_render_string));
+                lex::token_def<>(R"(<%#[^-]*-+([^->]*-+)*%>)",   static_cast<id_type>(token_id::comment_trim))          [ ignore ]      |
+                lex::token_def<>(R"(<%#[^%]*%+([^%>]*%+)*>)",    static_cast<id_type>(token_id::comment))               [ ignore ]      |
+                lex::token_def<>(R"(<%=)",                       static_cast<id_type>(token_id::epp_render_expression)) [ epp_render ]  |
+                lex::token_def<>(R"(\s*<%-)",                    static_cast<id_type>(token_id::epp_start_trim))        [ epp_start ]   |
+                lex::token_def<>(R"(<%)",                        static_cast<id_type>(token_id::epp_start))             [ epp_start ]   |
+                lex::token_def<>(R"(<%#)",                       static_cast<id_type>(token_id::unclosed_comment))                      |
+                lex::token_def<>(R"([^<]*)",                     static_cast<id_type>(token_id::epp_render_string))     [ string_trim ] |
+                lex::token_def<>(R"(.)",                         static_cast<id_type>(token_id::epp_render_string));
             this->self(base_type::initial_state(), EPP_STATE) =
-                lex::token_def<>("%>",                           static_cast<id_type>(token_id::epp_end))               [ epp_end ] |
-                lex::token_def<>("-%>",                          static_cast<id_type>(token_id::epp_end_trim))          [ epp_end ];
+                lex::token_def<>(R"(%>)",                        static_cast<id_type>(token_id::epp_end))               [ epp_end ] |
+                lex::token_def<>(R"(-%>)",                       static_cast<id_type>(token_id::epp_end_trim))          [ epp_end ];
 
             // The following are lexer states that are used to parse regular expressions.
             // This solves the ambiguity between having multiple division operators on a single line (e.g. "1 / 2 / 3")
@@ -257,30 +257,30 @@ namespace puppet { namespace compiler { namespace lexer {
             // The following are in match order
             // Add the three-character operators
             this->self.add
-                ("<<\\|", static_cast<id_type>(token_id::left_double_collect));
+                (R"(<<\|)",                 static_cast<id_type>(token_id::left_double_collect));
             this->self +=
-                lex::token_def<>("\\|>>", static_cast<id_type>(token_id::right_double_collect)) [ no_regex ];
+                lex::token_def<>(R"(\|>>)", static_cast<id_type>(token_id::right_double_collect)) [ no_regex ];
 
             // Add the two-character operators
             this->self.add
-                ("\\+=", static_cast<id_type>(token_id::append))
-                ("-=",   static_cast<id_type>(token_id::remove))
-                ("==",   static_cast<id_type>(token_id::equals))
-                ("!=",   static_cast<id_type>(token_id::not_equals))
-                ("=~",   static_cast<id_type>(token_id::match))
-                ("!~",   static_cast<id_type>(token_id::not_match))
-                (">=",   static_cast<id_type>(token_id::greater_equals))
-                ("<=",   static_cast<id_type>(token_id::less_equals))
-                ("=>",   static_cast<id_type>(token_id::fat_arrow))
-                ("\\+>", static_cast<id_type>(token_id::plus_arrow))
-                ("<<",   static_cast<id_type>(token_id::left_shift))
-                ("<\\|", static_cast<id_type>(token_id::left_collect))
-                (">>",   static_cast<id_type>(token_id::right_shift))
-                ("@@",   static_cast<id_type>(token_id::atat))
-                ("->",   static_cast<id_type>(token_id::in_edge))
-                ("~>",   static_cast<id_type>(token_id::in_edge_sub))
-                ("<-",   static_cast<id_type>(token_id::out_edge))
-                ("<~",   static_cast<id_type>(token_id::out_edge_sub));
+                (R"(\+=)", static_cast<id_type>(token_id::append))
+                (R"(-=)",  static_cast<id_type>(token_id::remove))
+                (R"(==)",  static_cast<id_type>(token_id::equals))
+                (R"(!=)",  static_cast<id_type>(token_id::not_equals))
+                (R"(=~)",  static_cast<id_type>(token_id::match))
+                (R"(!~)",  static_cast<id_type>(token_id::not_match))
+                (R"(>=)",  static_cast<id_type>(token_id::greater_equals))
+                (R"(<=)",  static_cast<id_type>(token_id::less_equals))
+                (R"(=>)",  static_cast<id_type>(token_id::fat_arrow))
+                (R"(\+>)", static_cast<id_type>(token_id::plus_arrow))
+                (R"(<<)",  static_cast<id_type>(token_id::left_shift))
+                (R"(<\|)", static_cast<id_type>(token_id::left_collect))
+                (R"(>>)",  static_cast<id_type>(token_id::right_shift))
+                (R"(@@)",  static_cast<id_type>(token_id::atat))
+                (R"(->)",  static_cast<id_type>(token_id::in_edge))
+                (R"(~>)",  static_cast<id_type>(token_id::in_edge_sub))
+                (R"(<-)",  static_cast<id_type>(token_id::out_edge))
+                (R"(<~)",  static_cast<id_type>(token_id::out_edge_sub));
             this->self +=
                 lex::token_def<>("\\|>", static_cast<id_type>(token_id::right_collect)) [ no_regex ];
 
@@ -351,25 +351,25 @@ namespace puppet { namespace compiler { namespace lexer {
 
             // Comments, variables, types, names, bare words, regexes, and whitespace
             this->self +=
-                lex::token_def<>("(#[^\\n]*)|(\\/\\*[^*]*\\*+([^/*][^*]*\\*+)*\\/)", static_cast<id_type>(token_id::comment))              [ ignore ] |
-                lex::token_def<>("\\$(::)?(\\w+::)*\\w+",                            static_cast<id_type>(token_id::variable))             [ no_regex ] |
-                lex::token_def<>("\\s+\\[",                                          static_cast<id_type>(token_id::array_start))          [ use_last ] |
-                lex::token_def<>("((::)?[A-Z][\\w]*)+",                              static_cast<id_type>(token_id::type))                 [ no_regex ] |
-                lex::token_def<>("((::)?[a-z][\\w]*)(::[a-z][\\w]*)*",               static_cast<id_type>(token_id::name))                 [ no_regex ] |
-                lex::token_def<>("[a-z_]([\\w\\-]*[\\w])?",                          static_cast<id_type>(token_id::bare_word))            [ no_regex ] |
-                lex::token_def<>("(\\/\\/)|(\\/[^*]([^\\\\/\\n]|\\\\.)*\\/)",        static_cast<id_type>(token_id::regex))                [ no_regex ] |
-                lex::token_def<>("'([^\\\\']|\\\\.)*'",                              static_cast<id_type>(token_id::single_quoted_string)) [ parse_single_quoted_string ] |
-                lex::token_def<>("\\\"([^\\\\\"]|\\\\.)*\\\"",                       static_cast<id_type>(token_id::double_quoted_string)) [ parse_double_quoted_string ] |
-                lex::token_def<>(HEREDOC_PATTERN,                                    static_cast<id_type>(token_id::heredoc))              [ parse_heredoc ] |
-                lex::token_def<>("\\d\\w*(\\.\\d\\w*)?([eE]-?\\w*)?",                static_cast<id_type>(token_id::number))               [ parse_number ] |
-                lex::token_def<>("\\s+",                                             static_cast<id_type>(token_id::whitespace))           [ ignore ];
+                lex::token_def<>(R"((#[^\n]*)|(\/\*[^*]*\*+([^/*][^*]*\*+)*\/))", static_cast<id_type>(token_id::comment))              [ ignore ] |
+                lex::token_def<>(R"(\$(::)?(\w+::)*\w+)",                         static_cast<id_type>(token_id::variable))             [ no_regex ] |
+                lex::token_def<>(R"(\s+\[)",                                      static_cast<id_type>(token_id::array_start))          [ use_last ] |
+                lex::token_def<>(R"(((::)?[A-Z][\w]*)+)",                         static_cast<id_type>(token_id::type))                 [ no_regex ] |
+                lex::token_def<>(R"(((::)?[a-z][\w]*)(::[a-z][\w]*)*)",           static_cast<id_type>(token_id::name))                 [ no_regex ] |
+                lex::token_def<>(R"([a-z_]([\w\-]*[\w])?)",                       static_cast<id_type>(token_id::bare_word))            [ no_regex ] |
+                lex::token_def<>(R"((\/\/)|(\/[^*]([^\\/\n]|\\.)*\/))",           static_cast<id_type>(token_id::regex))                [ no_regex ] |
+                lex::token_def<>(R"('([^\\']|\\.)*')",                            static_cast<id_type>(token_id::single_quoted_string)) [ parse_single_quoted_string ] |
+                lex::token_def<>(R"(\"([^\\"]|\\.)*\")",                          static_cast<id_type>(token_id::double_quoted_string)) [ parse_double_quoted_string ] |
+                lex::token_def<>(HEREDOC_PATTERN,                                 static_cast<id_type>(token_id::heredoc))              [ parse_heredoc ] |
+                lex::token_def<>(R"(\d\w*(\.\d\w*)?([eE]-?\w*)?)",                static_cast<id_type>(token_id::number))               [ parse_number ] |
+                lex::token_def<>(R"(\s+)",                                        static_cast<id_type>(token_id::whitespace))           [ ignore ];
 
             // Lastly, a catch for unclosed quotes and unknown tokens
             this->self.add
-                ("['\"]",  static_cast<id_type>(token_id::unclosed_quote))
-                ("\\/\\*", static_cast<id_type>(token_id::unclosed_comment))
-                ("\\$",    static_cast<id_type>(token_id::invalid_variable))
-                (".",      static_cast<id_type>(token_id::unknown));
+                (R"(['"])", static_cast<id_type>(token_id::unclosed_quote))
+                (R"(\/\*)", static_cast<id_type>(token_id::unclosed_comment))
+                (R"(\$)",   static_cast<id_type>(token_id::invalid_variable))
+                (R"(.)",    static_cast<id_type>(token_id::unknown));
         }
 
         /**
@@ -557,11 +557,11 @@ namespace puppet { namespace compiler { namespace lexer {
         {
             using namespace std;
 
-            static const regex hex_pattern("0[xX][0-9A-Fa-f]+");
-            static const regex octal_pattern("0\\d+");
-            static const regex valid_octal_pattern("0[0-7]+");
-            static const regex decimal_pattern("0|([1-9]\\d*)");
-            static const regex double_pattern("[0-9]\\d*(\\.\\d+)?([eE]-?\\d+)?");
+            static const regex hex_pattern(R"(0[xX][0-9A-Fa-f]+)");
+            static const regex octal_pattern(R"(0\d+)");
+            static const regex valid_octal_pattern(R"(0[0-7]+)");
+            static const regex decimal_pattern(R"(0|([1-9]\d*))");
+            static const regex double_pattern(R"([0-9]\d*(\.\d+)?([eE]-?\d+)?)");
 
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
@@ -724,7 +724,7 @@ namespace puppet { namespace compiler { namespace lexer {
     };
 
     template<typename Base>
-    char const* const lexer<Base>::HEREDOC_PATTERN = "@\\(\\s*([^):/\\r\\n]+)\\s*(:\\s*([a-z][a-zA-Z0-9_+]+))?\\s*(\\/\\s*([\\w|$]*)\\s*)?\\)";
+    char const* const lexer<Base>::HEREDOC_PATTERN = R"(@\(\s*([^):/\r\n]+)\s*(:\s*([a-z][a-zA-Z0-9_+]+))?\s*(\/\s*([\w|$]*)\s*)?\))";
     template<typename Base>
     char const* const lexer<Base>::HEREDOC_ESCAPES = "trnsuL$";
     template<typename Base>
@@ -732,7 +732,7 @@ namespace puppet { namespace compiler { namespace lexer {
     template<typename Base>
     char const* const lexer<Base>::SLASH_CHECK_STATE = "SC";
     template<typename Base>
-    char const* const lexer<Base>::SLASH_CHECK_PATTERN = "\\s*\\/\\s+";
+    char const* const lexer<Base>::SLASH_CHECK_PATTERN = R"(\s*\/\s+)";
     template<typename Base>
     char const* const lexer<Base>::EPP_STATE = "EPP";
 

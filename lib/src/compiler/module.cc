@@ -30,7 +30,7 @@ namespace puppet { namespace compiler {
 
     bool module::is_valid_name(string const& name)
     {
-        static const regex valid_name{"^[a-z][a-z0-9_]*$"};
+        static const regex valid_name{R"(^[a-z][a-z0-9_]*$)"};
         static const vector<string> invalid_names = {
             "and",
             "attr",
