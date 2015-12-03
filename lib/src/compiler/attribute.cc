@@ -6,15 +6,19 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler {
 
-    attribute::attribute(string name, ast::context const& name_context, shared_ptr<values::value> value, ast::context const& value_context) :
-        _tree(name_context.tree->shared_from_this()),
+    attribute::attribute(string name, ast::context name_context, shared_ptr<values::value> value, ast::context value_context) :
         _name(rvalue_cast(name)),
-        _name_context(name_context),
+        _name_context(rvalue_cast(name_context)),
         _value(rvalue_cast(value)),
-        _value_context(value_context)
+        _value_context(rvalue_cast(value_context))
     {
         if (!_value) {
             throw runtime_error("expected an attribute value.");
+        }
+        if (_name_context.tree) {
+            _tree = _name_context.tree->shared_from_this();
+        } else if (_value_context.tree) {
+            _tree = _value_context.tree->shared_from_this();
         }
     }
 

@@ -48,24 +48,24 @@ namespace puppet { namespace compiler { namespace lexer {
 
         /**
          * Constructs a number token with the given position and integral value.
-         * @param position The position of the token.
+         * @param range The range of the token.
          * @param value The integral value of the token.
          * @param base The numeric base of the token.
          */
-        number_token(lexer::position position, std::int64_t value, numeric_base base);
+        number_token(lexer::range range, std::int64_t value, numeric_base base);
 
         /**
          * Constructs a number token with the given position and floating point value.
-         * @param position The position of the token.
+         * @param range The range of the token.
          * @param value The floating point value of the token.
          */
-        number_token(lexer::position position, double value);
+        number_token(lexer::range range, double value);
 
         /**
-         * Gets the position of the token.
-         * @return Returns the position of the token.
+         * Gets the range of the token.
+         * @return Returns the range of the token.
          */
-        lexer::position const& position() const;
+        lexer::range const& range() const;
 
         /**
          * Gets the value of the token.
@@ -80,7 +80,7 @@ namespace puppet { namespace compiler { namespace lexer {
         numeric_base base() const;
 
      private:
-        lexer::position _position;
+        lexer::range _range;
         value_type _value;
         numeric_base _base;
     };

@@ -15,7 +15,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             ss << ": ";
             context.arguments().join(ss, " ");
         }
-        throw evaluation_exception(ss.str(), context.call_site());
+        throw evaluation_exception(ss.str(), context.name());
     }
 
 }}}}  // namespace puppet::compiler::evaluation::functions

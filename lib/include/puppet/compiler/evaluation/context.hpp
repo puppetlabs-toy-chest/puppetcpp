@@ -123,9 +123,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         resource_relationship(
             compiler::relationship relationship,
             runtime::values::value source,
-            ast::context const& source_context,
+            ast::context source_context,
             runtime::values::value target,
-            ast::context const& target_context);
+            ast::context target_context);
 
         /**
          * Gets the relationship between the source and the target.
@@ -164,9 +164,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         std::shared_ptr<ast::syntax_tree> _tree;
         compiler::relationship _relationship;
         runtime::values::value _source;
-        ast::context const& _source_context;
+        ast::context _source_context;
         runtime::values::value _target;
-        ast::context const& _target_context;
+        ast::context _target_context;
     };
 
     /**
@@ -184,7 +184,7 @@ namespace puppet { namespace compiler { namespace evaluation {
          */
         resource_override(
             runtime::types::resource type,
-            ast::context const& context,
+            ast::context context,
             compiler::attributes attributes = compiler::attributes(),
             std::shared_ptr<evaluation::scope> scope = nullptr);
 
@@ -218,7 +218,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         std::shared_ptr<ast::syntax_tree> _tree;
         runtime::types::resource _type;
-        ast::context const& _context;
+        ast::context _context;
         compiler::attributes _attributes;
         std::shared_ptr<evaluation::scope> _scope;
     };

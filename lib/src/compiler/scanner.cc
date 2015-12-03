@@ -101,7 +101,12 @@ namespace puppet { namespace compiler {
 
         // Ensure the parameter name is valid
         if (!regex_match(expression.name, valid_variable_regex)) {
-            throw parse_exception((boost::format("variable name '%1%' is not a valid variable name: the name must conform to /%2%/.") % expression.name % valid_variable_pattern).str(), expression.context.position);
+            throw parse_exception(
+                (boost::format("variable name '%1%' is not a valid variable name: the name must conform to /%2%/.") %
+                 expression.name %
+                 valid_variable_pattern
+                ).str(),
+                lexer::range(expression.begin, expression.end));
         }
     }
 
@@ -142,8 +147,8 @@ namespace puppet { namespace compiler {
     {
         operator()(expression.postfix);
 
-        for (auto const& binary : expression.remainder) {
-            operator()(binary.operand);
+        for (auto const& operation : expression.operations) {
+            operator()(operation.operand);
         }
     }
 
@@ -225,8 +230,8 @@ namespace puppet { namespace compiler {
 
         for (auto const& body : expression.bodies) {
             operator()(body.title);
-            for (auto const& attribute : body.attributes) {
-                operator()(attribute.value);
+            for (auto const& operation : body.operations) {
+                operator()(operation.value);
             }
         }
     }
@@ -238,8 +243,8 @@ namespace puppet { namespace compiler {
 
         operator()(expression.reference);
 
-        for (auto const& attribute : expression.attributes) {
-            operator()(attribute.value);
+        for (auto const& operation : expression.operations) {
+            operator()(operation.value);
         }
     }
 
@@ -248,8 +253,8 @@ namespace puppet { namespace compiler {
         // Resource expressions have no class scope
         class_scope scope(_scopes);
 
-        for (auto const& attribute : expression.attributes) {
-            operator()(attribute.value);
+        for (auto const& operation : expression.operations) {
+            operator()(operation.value);
         }
     }
 
@@ -272,16 +277,15 @@ namespace puppet { namespace compiler {
                         // No parent or parents match
                         continue;
                     }
-                    auto& context = existing.context;
                     throw parse_exception(
                         (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%.") %
                          name %
                          expression.parent->value %
                          parent->value %
-                         context.tree->path() %
-                         context.position.line()
+                         existing.tree->path() %
+                         existing.begin.line()
                         ).str(),
-                        expression.parent->context.position
+                        lexer::range(expression.parent->begin, expression.parent->end)
                     );
                 }
             }
@@ -324,10 +328,10 @@ namespace puppet { namespace compiler {
             throw parse_exception(
                 (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
                  existing->name() %
-                 existing->expression().context.tree->path() %
-                 existing->expression().context.position.line()
+                 existing->expression().tree->path() %
+                 existing->expression().begin.line()
                 ).str(),
-                expression.context.position);
+                lexer::range(expression.begin, expression.end));
         }
 
         // Add the defined type for later registration
@@ -350,16 +354,17 @@ namespace puppet { namespace compiler {
     void scanner::operator()(ast::node_expression const& expression)
     {
         if (!can_define()) {
-            throw parse_exception("node definitions can only be defined at top-level or inside a class.", expression.context.position);
+            throw parse_exception("node definitions can only be defined at top-level or inside a class.", lexer::range(expression.begin, expression.end));
         }
 
         // Check for existing conflicting node definition
         if (auto existing = _registry.find_node(expression)) {
             throw parse_exception(
                 (boost::format("a conflicting node definition was previously defined at %1%:%2%.") %
-                    existing->expression().context.tree->path() %
-                    existing->expression().context.position.line()
-                ).str(), expression.context.position);
+                    existing->expression().tree->path() %
+                    existing->expression().begin.line()
+                ).str(),
+                lexer::range(expression.begin, expression.end));
         }
 
         // Add it for later registration
@@ -385,19 +390,19 @@ namespace puppet { namespace compiler {
         }
     }
 
-    void scanner::operator()(ast::collector_query_expression const& expression)
+    void scanner::operator()(ast::query_expression const& expression)
     {
         // Queries have no class scope
         class_scope scope(_scopes, {});
 
         operator()(expression.primary);
 
-        for (auto const& binary : expression.remainder) {
-            operator()(binary.operand);
+        for (auto const& operation : expression.operations) {
+            operator()(operation.operand);
         }
     }
 
-    void scanner::operator()(ast::attribute_query_expression const& expression)
+    void scanner::operator()(ast::primary_query_expression const& expression)
     {
         boost::apply_visitor(*this, expression);
     }
@@ -517,22 +522,22 @@ namespace puppet { namespace compiler {
     string scanner::validate_name(bool is_class, ast::name const& name) const
     {
         if (!can_define()) {
-            throw parse_exception((boost::format("%1% can only be defined at top-level or inside a class.") % (is_class ? "classes" : "defined types")).str(), name.context.position);
+            throw parse_exception((boost::format("%1% can only be defined at top-level or inside a class.") % (is_class ? "classes" : "defined types")).str(), lexer::range(name.begin, name.end));
         }
 
         if (name.value.empty()) {
-            throw parse_exception((boost::format("a %1% cannot have an empty name.") % (is_class ? "class" : "defined type")).str(), name.context.position);
+            throw parse_exception((boost::format("a %1% cannot have an empty name.") % (is_class ? "class" : "defined type")).str(), lexer::range(name.begin, name.end));
         }
 
         // Ensure the name is valid
         if (boost::starts_with(name.value, "::")) {
-            throw parse_exception((boost::format("'%1%' is not a valid %2% name.") % name % (is_class ? "class" : "defined type")).str(), name.context.position);
+            throw parse_exception((boost::format("'%1%' is not a valid %2% name.") % name % (is_class ? "class" : "defined type")).str(), lexer::range(name.begin, name.end));
         }
 
         // Cannot define a class called "main" or "settings" because they are built-in objects
         auto qualified_name = qualify(name.value);
         if (qualified_name == "main" || qualified_name == "settings") {
-            throw parse_exception((boost::format("'%1%' is the name of a built-in class and cannot be used.") % qualified_name).str(), name.context.position);
+            throw parse_exception((boost::format("'%1%' is the name of a built-in class and cannot be used.") % qualified_name).str(), lexer::range(name.begin, name.end));
         }
 
         // Check for conflicts between defined types and classes
@@ -542,10 +547,10 @@ namespace puppet { namespace compiler {
                 throw parse_exception(
                     (boost::format("'%1%' was previously defined as a defined type at %2%:%3%.") %
                      qualified_name %
-                     type->expression().context.tree->path() %
-                     type->expression().context.position.line()
+                     type->expression().tree->path() %
+                     type->expression().begin.line()
                     ).str(),
-                    name.context.position);
+                    lexer::range(name.begin, name.end));
             }
         } else {
             auto definitions = _registry.find_class(qualified_name);
@@ -554,10 +559,10 @@ namespace puppet { namespace compiler {
                 throw parse_exception(
                     (boost::format("'%1%' was previously defined as a class at %2%:%3%.") %
                      qualified_name %
-                     first.expression().context.tree->path() %
-                     first.expression().context.position.line()
+                     first.expression().tree->path() %
+                     first.expression().begin.line()
                     ).str(),
-                    name.context.position);
+                    lexer::range(name.begin, name.end));
             }
         }
         return qualified_name;
@@ -573,17 +578,17 @@ namespace puppet { namespace compiler {
 
             // Check for reserved names for classes and defined types
             if (name == "title" || name == "name") {
-                throw parse_exception((boost::format("parameter $%1% is reserved and cannot be used.") % name).str(), parameter.context().position);
+                throw parse_exception((boost::format("parameter $%1% is reserved and cannot be used.") % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
             }
 
             // Check for capture parameters
             if (parameter.captures) {
-                throw parse_exception((boost::format("%1% parameter $%2% cannot \"captures rest\".") % (is_class ? "class" : "defined type") % name).str(), parameter.context().position);
+                throw parse_exception((boost::format("%1% parameter $%2% cannot \"captures rest\".") % (is_class ? "class" : "defined type") % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
             }
 
             // Check for metaparameter names
             if (resource::is_metaparameter(name)) {
-                throw parse_exception((boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str(), parameter.context().position);
+                throw parse_exception((boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
             }
         }
     }
@@ -599,7 +604,8 @@ namespace puppet { namespace compiler {
                  parameter.variable.name %
                  valid_name_pattern
                 ).str(),
-                parameter.variable.context.position);
+                lexer::range(parameter.variable.begin, parameter.variable.end)
+            );
         }
     }
 

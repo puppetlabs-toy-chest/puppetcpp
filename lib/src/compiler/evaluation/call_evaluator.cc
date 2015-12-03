@@ -52,7 +52,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     throw evaluation_exception((boost::format("parameter $%1% \"captures rest\" but is not the last parameter.") % name).str(), parameter.context());
                 }
                 if (parameter.type) {
-                    throw evaluation_exception((boost::format("parameter $%1% \"captures rest\" and cannot have a type specifier.") % name).str(), parameter.context());
+                    throw evaluation_exception((boost::format("parameter $%1% \"captures rest\" and cannot have a type specifier.") % name).str(), parameter.type->context());
                 }
                 values::array captured;
                 if (i < arguments.size()) {
@@ -81,7 +81,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 } else {
                     // Check for not present and without a default value
                     if (!parameter.default_value) {
-                        throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.context());
+                        throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.variable);
                     }
 
                     value = evaluator.evaluate(*parameter.default_value);
@@ -93,7 +93,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 }
             }
 
-            if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), parameter.context())) {
+            if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), parameter.variable)) {
                 throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % name).str(), parameter.context());
             }
         }
@@ -119,7 +119,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // If there's no default value, the parameter is required
             if (!parameter.default_value) {
-                throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.context());
+                throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.variable);
             }
 
             // Evaluate the default value
@@ -130,8 +130,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception(rvalue_cast(message), parameter.default_value->context());
             });
 
-            if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), parameter.context())) {
-                throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % name).str(), parameter.context());
+            if (current_scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), parameter.variable)) {
+                throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % name).str(), parameter.variable);
             }
         }
 
@@ -149,7 +149,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Check for illegal "captures rest"
             if (parameter->captures) {
-                throw evaluation_exception((boost::format("parameter $%1% cannot \"captures rest\".") % *name).str(), parameter->context());
+                throw evaluation_exception((boost::format("parameter $%1% cannot \"captures rest\".") % *name).str(), parameter->variable);
             }
 
             // Verify the value matches the parameter type
@@ -157,8 +157,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw argument_exception(rvalue_cast(message), index);
             });
 
-            if (current_scope->set(*name, std::make_shared<values::value>(rvalue_cast(kvp.value())), parameter->context())) {
-                throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % *name).str(), parameter->context());
+            if (current_scope->set(*name, std::make_shared<values::value>(rvalue_cast(kvp.value())), parameter->variable)) {
+                throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % *name).str(), parameter->variable);
             }
         }
         return evaluate_body();
@@ -194,7 +194,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // If there's no default value, the parameter is required
             if (!parameter.default_value) {
-                throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.context());
+                throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.variable);
             }
 
             // Evaluate the default value
@@ -208,7 +208,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Set the parameter as an attribute on the resource
             resource.set(std::make_shared<attribute>(
                 parameter.variable.name,
-                parameter.context(),
+                parameter.variable,
                 std::make_shared<values::value>(rvalue_cast(value)),
                 parameter.default_value->context()
             ));

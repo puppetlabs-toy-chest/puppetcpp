@@ -99,7 +99,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     {
         auto& arguments = context.arguments();
         if (arguments.empty()) {
-            throw evaluation_exception((boost::format("expected at least one argument to '%1%' function.") % context.name()).str(), context.call_site());
+            throw evaluation_exception((boost::format("expected at least one argument to '%1%' function.") % context.name()).str(), context.name());
         }
         for (size_t i = 0; i < arguments.size(); ++i) {
             boost::apply_visitor(declare_visitor(context, context.argument_context(i), _relationship), arguments[i]);

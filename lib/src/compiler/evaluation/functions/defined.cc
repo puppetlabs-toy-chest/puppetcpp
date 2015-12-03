@@ -22,7 +22,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
             // Check for variable lookup
             if (boost::starts_with(argument, "$")) {
-                ast::variable variable{ _argument_context, argument };
+                ast::variable variable;
+                variable.begin = _argument_context.begin;
+                variable.end = _argument_context.end;
+                variable.tree = _argument_context.tree;
+                variable.name = argument.substr(1);
                 return context.lookup(variable, false).get();
             }
 
@@ -125,7 +129,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         // Ensure there is at least one argument
         auto& arguments = context.arguments();
         if (arguments.empty()) {
-            throw evaluation_exception((boost::format("expected at least one argument to '%1%' function.") % context.name()).str(), context.call_site());
+            throw evaluation_exception((boost::format("expected at least one argument to '%1%' function.") % context.name()).str(), context.name());
         }
 
         // Return true if any argument is defined

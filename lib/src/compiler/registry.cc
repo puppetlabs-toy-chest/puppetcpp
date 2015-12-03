@@ -14,7 +14,7 @@ namespace puppet { namespace compiler {
 
     klass::klass(string name, ast::class_expression const& expression) :
         _name(rvalue_cast(name)),
-        _tree(expression.context.tree->shared_from_this()),
+        _tree(expression.tree->shared_from_this()),
         _expression(expression)
     {
     }
@@ -52,13 +52,13 @@ namespace puppet { namespace compiler {
             return context.node_or_top();
         }
 
-        context.declare_class(parent->value, parent->context);
+        context.declare_class(parent->value, *parent);
         return context.find_scope(parent->value);
     }
 
     defined_type::defined_type(string name, ast::defined_type_expression const& expression) :
         _name(rvalue_cast(name)),
-        _tree(expression.context.tree->shared_from_this()),
+        _tree(expression.tree->shared_from_this()),
         _expression(expression)
     {
     }
@@ -86,7 +86,7 @@ namespace puppet { namespace compiler {
     }
 
     node_definition::node_definition(ast::node_expression const& expression) :
-        _tree(expression.context.tree->shared_from_this()),
+        _tree(expression.tree->shared_from_this()),
         _expression(expression)
     {
     }

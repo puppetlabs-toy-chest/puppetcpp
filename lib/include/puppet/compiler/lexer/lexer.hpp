@@ -46,10 +46,10 @@ namespace puppet { namespace compiler { namespace lexer {
     {
         /**
          * Constructs a lexer exception.
-         * @param location The location where lexing failed.
          * @param message The lexer exception message.
+         * @param location The location where lexing failed.
          */
-        lexer_exception(Iterator location, std::string const& message) :
+        lexer_exception(std::string const& message, Iterator location) :
             std::runtime_error(message),
             _location(location)
         {
@@ -392,7 +392,7 @@ namespace puppet { namespace compiler { namespace lexer {
             // Helper functions
             static auto is_space = [](char c) { return c == ' ' || c == '\t'; };
             static auto throw_not_found = [](input_iterator_type const& location, std::string const& tag) {
-                throw lexer_exception<input_iterator_type>(location, (boost::format("unexpected end of input while looking for heredoc end tag '%1%'.") % tag).str());
+                throw lexer_exception<input_iterator_type>((boost::format("unexpected end of input while looking for heredoc end tag '%1%'.") % tag).str(), location);
             };
             static auto move_next_line = [](input_iterator_type& begin, input_iterator_type const& end) -> bool {
                 for (; begin != end && *begin != '\n'; ++begin);
@@ -411,7 +411,7 @@ namespace puppet { namespace compiler { namespace lexer {
             // Extract the tag, format, and escapes from the token
             match_results<typename string_type::const_iterator> match;
             if (!regex_match(token, match, pattern) || match.size() != 6) {
-                throw lexer_exception<input_iterator_type>(start, "unexpected heredoc format.");
+                throw lexer_exception<input_iterator_type>("unexpected heredoc format.", start);
             }
 
             // Trim the tag
@@ -441,7 +441,7 @@ namespace puppet { namespace compiler { namespace lexer {
                 } else {
                     // Verify the escapes
                     if (!boost::all(escapes, boost::is_any_of(HEREDOC_ESCAPES))) {
-                        throw lexer_exception<input_iterator_type>(start, (boost::format("invalid heredoc escapes '%1%': only t, r, n, s, u, L, and $ are allowed.") % escapes).str());
+                        throw lexer_exception<input_iterator_type>((boost::format("invalid heredoc escapes '%1%': only t, r, n, s, u, L, and $ are allowed.") % escapes).str(), start);
                     }
                     // TODO: verify uniqueness of each character (i.e. is this really important)?
                 }
@@ -456,21 +456,21 @@ namespace puppet { namespace compiler { namespace lexer {
             auto& eoi = context.get_eoi();
 
             // Move to the next line to process, skipping over any previous heredoc on the token's line
-            input_iterator_type doc_begin;
-            if (!start.get_next(doc_begin)) {
-                doc_begin = end;
-                if (!move_next_line(doc_begin, eoi)) {
+            input_iterator_type value_begin;
+            if (!start.get_next(value_begin)) {
+                value_begin = end;
+                if (!move_next_line(value_begin, eoi)) {
                     throw_not_found(start, tag);
                 }
             }
 
             bool remove_break = false;
             int margin = 0;
-            auto doc_end = doc_begin;
+            auto value_end = value_begin;
 
             // Search for the end tag
-            while (doc_end != eoi) {
-                auto line_end = doc_end;
+            while (value_end != eoi) {
+                auto line_end = value_end;
                 for (; line_end != end && is_space(*line_end); ++line_end) {
                     margin += (*line_end == ' ') ? 1 : LEXER_TAB_WIDTH;
                 }
@@ -509,48 +509,74 @@ namespace puppet { namespace compiler { namespace lexer {
 
                 // Move to the next line
                 move_next_line(line_end, eoi);
-                doc_end = line_end;
+                value_end = line_end;
                 margin = 0;
             }
 
-            if (doc_end == eoi) {
+            if (value_end == eoi) {
                 throw_not_found(start, tag);
             }
 
-            auto next = doc_end;
+            auto next = value_end;
             move_next_line(next, eoi);
             end.set_next(next);
-            context.set_value(string_token_type(start.position(), doc_begin, rvalue_cast(doc_end), rvalue_cast(escapes), 0, interpolated, rvalue_cast(format), margin, remove_break));
+            context.set_value(
+                string_token_type(
+                    range{ start.position(), end.position() },
+                    boost::make_iterator_range(rvalue_cast(value_begin), rvalue_cast(value_end)),
+                    rvalue_cast(escapes),
+                    0,
+                    interpolated,
+                    rvalue_cast(format),
+                    margin,
+                    remove_break
+                )
+            );
         }
 
-        static void parse_single_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void parse_single_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            auto position = start.position();
-
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
 
             // Find the end of the string, not including the quote
-            auto last = ++start;
-            for (auto current = start; current != end; ++current) {
-                last = current;
+            auto value_start = start;
+            ++value_start;
+            input_iterator_type value_end;
+            for (auto current = value_start; current != end; ++current) {
+                value_end = current;
             }
-            context.set_value(string_token_type(rvalue_cast(position), rvalue_cast(start), rvalue_cast(last), "\\'", '\'', false));
+            context.set_value(
+                string_token_type(
+                    range{ start.position(), end.position() },
+                    boost::make_iterator_range(rvalue_cast(value_start), rvalue_cast(value_end)),
+                    "\\'",
+                    '\'',
+                    false
+                )
+            );
         }
 
-        static void parse_double_quoted_string(input_iterator_type start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void parse_double_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            auto position = start.position();
-
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
 
-            // Find the end of the string, not including the quote
-            auto last = ++start;
-            for (auto current = start; current != end; ++current) {
-                last = current;
+            /// Find the end of the string, not including the quote
+            auto value_start = start;
+            ++value_start;
+            input_iterator_type value_end;
+            for (auto current = value_start; current != end; ++current) {
+                value_end = current;
             }
-            context.set_value(string_token_type(rvalue_cast(position), rvalue_cast(start), rvalue_cast(last), "\\\"'nrtsu$", '"'));
+            context.set_value(
+                string_token_type(
+                    range{ start.position(), end.position() },
+                    boost::make_iterator_range(rvalue_cast(value_start), rvalue_cast(value_end)),
+                    "\\\"'nrtsu$",
+                    '"'
+                )
+            );
         }
 
         static void parse_number(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -576,7 +602,7 @@ namespace puppet { namespace compiler { namespace lexer {
             } else if (regex_match(token, octal_pattern)) {
                 // Make sure the number is valid for an octal
                 if (!regex_match(token, valid_octal_pattern)) {
-                    throw lexer_exception<input_iterator_type>(start, (boost::format("'%1%' is not a valid number.") % token).str());
+                    throw lexer_exception<input_iterator_type>((boost::format("'%1%' is not a valid number.") % token).str(), start);
                 }
                 base = 8;
             } else if (regex_match(token, decimal_pattern)) {
@@ -585,14 +611,21 @@ namespace puppet { namespace compiler { namespace lexer {
 
             if (base != 0) {
                 try {
-                    context.set_value(number_token(start.position(), stoll(token, 0, base), base == 16 ? numeric_base::hexadecimal : (base == 8 ? numeric_base::octal : numeric_base::decimal)));
+                    context.set_value(
+                        number_token(
+                            range{ start.position(), end.position() },
+                            stoll(token, 0, base),
+                            base == 16 ? numeric_base::hexadecimal : (base == 8 ? numeric_base::octal : numeric_base::decimal)
+                        )
+                    );
                 } catch (out_of_range const& ex) {
-                    throw lexer_exception<input_iterator_type>(start,
+                    throw lexer_exception<input_iterator_type>(
                         (boost::format("'%1%' is not in the range of %2% to %3%.") %
                             token %
                             numeric_limits<int64_t>::min() %
                             numeric_limits<int64_t>::max()
-                        ).str());
+                        ).str(),
+                        start);
                 }
                 return;
             }
@@ -600,20 +633,26 @@ namespace puppet { namespace compiler { namespace lexer {
             // Match double
             if (regex_match(token, double_pattern)) {
                 try {
-                    context.set_value(number_token(start.position(), stold(token, 0)));
+                    context.set_value(
+                        number_token(
+                            range{ start.position(), end.position() },
+                            stold(token, 0)
+                        )
+                    );
                 } catch (out_of_range const& ex) {
-                    throw lexer_exception<input_iterator_type>(start,
+                    throw lexer_exception<input_iterator_type>(
                         (boost::format("'%1%' is not in the range of %2% to %3%.") %
                             token %
                             numeric_limits<double>::min() %
                             numeric_limits<double>::max()
-                        ).str());
+                        ).str(),
+                        start);
                 }
                 return;
             }
 
             // Not a valid number
-            throw lexer_exception<input_iterator_type>(start, (boost::format("'%1%' is not a valid number.") % token).str());
+            throw lexer_exception<input_iterator_type>((boost::format("'%1%' is not a valid number.") % token).str(), start);
         }
 
         static void no_regex(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
@@ -853,49 +892,50 @@ namespace puppet { namespace compiler { namespace lexer {
     position get_last_position(boost::iterator_range<lexer_string_iterator> const& range);
 
     /**
-     * Utility type for visiting tokens for position and line information.
+     * Utility visitor for obtaining token range information.
      */
-    struct token_position_visitor : boost::static_visitor<position>
+    struct token_range_visitor : boost::static_visitor<range>
     {
         /**
-         * Called for tokens that contain iterator ranges.
-         * @param range The iterator range of the token.
-         * @return Returns the token position.
+         * Gets the beginning position and length of a token.
+         * @tparam Token The type of token.
+         * @param token The token to get the position and length of.
+         * @return Returns the token range.
          */
         template <typename Iterator>
-        result_type operator()(boost::iterator_range<Iterator> const& range) const
+        result_type operator()(boost::iterator_range<Iterator> const& token) const
         {
-            return range.begin().position();
+            return range{ token.begin().position(), token.end().position() };
         }
 
         /**
-         * Called for custom tokens.
+         * Gets the beginning position and length of a token.
          * @tparam Token The type of token.
-         * @param token The custom token.
-         * @return Returns the token position.
+         * @param token The token to get the position and length of.
+         * @return Returns the token range.
          */
         template <typename Token>
         result_type operator()(Token const& token) const
         {
-            return token.position();
+            return token.range();
         }
     };
 
     /**
-     * Gets the given token's position.
+     * Gets the given token's range.
      * @tparam Input The input type.
      * @tparam Token The type of token.
      * @param input The input to use when calculating the last token position.
      * @param token The token to get the position for.
-     * @return Returns the token's position.
+     * @return Returns the token's range (pair of position and length).
      */
     template <typename Input, typename Token>
-    position get_position(Input& input, Token const& token)
+    range get_range(Input& input, Token const& token)
     {
         if (token == Token()) {
-            return get_last_position(input);
+            return range{ get_last_position(input), 1 };
         }
-        return boost::apply_visitor(token_position_visitor(), token.value());
+        return boost::apply_visitor(token_range_visitor(), token.value());
     }
 
 }}}  // namespace puppet::compiler::lexer

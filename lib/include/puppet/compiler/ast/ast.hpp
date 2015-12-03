@@ -39,7 +39,7 @@ namespace puppet { namespace compiler { namespace ast {
     struct class_expression;
     struct defined_type_expression;
     struct node_expression;
-    struct collector_query_expression;
+    struct query_expression;
     struct collector_expression;
     struct unary_expression;
     struct selector_expression;
@@ -51,30 +51,33 @@ namespace puppet { namespace compiler { namespace ast {
     struct syntax_tree;
 
     /**
-     * Represents the parse context.
+     * Represents AST context.
+     * This is primarily used for error reporting.
+     * AST nodes either derive from context or provide a context() member function to return their context.
      */
     struct context
     {
         /**
-         * Stores the back pointer to the syntax tree.
+         * Stores the beginning position.
          */
-        syntax_tree* tree = nullptr;
+        lexer::position begin;
 
         /**
-         * Stores the position of a node in the tree.
+         * Stores the ending position.
          */
-        lexer::position position;
+        lexer::position end;
+
+        /**
+         * Stores the back pointer to the root of the tree.
+         */
+        syntax_tree* tree = nullptr;
     };
 
     /**
-     * Represents undef.
+     * Represents a literal undef.
      */
-    struct undef
+    struct undef : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
     };
 
     /**
@@ -85,14 +88,10 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, undef const&);
 
     /**
-     * Represents default.
+     * Represents a literal default.
      */
-    struct defaulted
+    struct defaulted : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
     };
 
     /**
@@ -105,13 +104,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a literal boolean.
      */
-    struct boolean
+    struct boolean : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the value of the literal boolean.
          */
@@ -129,17 +123,12 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a literal number.
      */
-    struct number
+    struct number : context
     {
         /**
          * The number value type.
          */
         using value_type = lexer::number_token::value_type;
-
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
 
         /**
          * Stores the value of the literal number.
@@ -158,12 +147,12 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a literal string.
      */
-    struct string
+    struct string : context
     {
         /**
-         * Stores the parse context.
+         * Stores the range of the value.
          */
-        ast::context context;
+        lexer::range value_range;
 
         /**
          * Stores the value of the literal string.
@@ -176,6 +165,16 @@ namespace puppet { namespace compiler { namespace ast {
         std::string escapes;
 
         /**
+         * Stores the data format of the string (heredocs only).
+         */
+        std::string format;
+
+        /**
+         * Stores the margin of the string (heredoc only).
+         */
+        int margin = 0;
+
+        /**
          * Stores the opening quote character for the string.
          * For heredoc strings, this will be a null character.
          */
@@ -185,16 +184,6 @@ namespace puppet { namespace compiler { namespace ast {
          * Stores whether or not the string is interpolated.
          */
         bool interpolated = false;
-
-        /**
-         * Stores the data format of the string (heredocs only).
-         */
-        std::string format;
-
-        /**
-         * Stores the margin of the string (heredoc only).
-         */
-        int margin = 0;
 
         /**
          * Stores whether or not a trailing break should be removed (heredoc only).
@@ -213,13 +202,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a literal regex.
      */
-    struct regex
+    struct regex : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the value of the literal regex.
          */
@@ -237,13 +221,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a variable.
      */
-    struct variable
+    struct variable : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the name of the variable.
          */
@@ -261,13 +240,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a name.
      */
-    struct name
+    struct name : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the value of the name.
          */
@@ -285,13 +259,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a bare word.
      */
-    struct bare_word
+    struct bare_word : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the value of the bare word.
          */
@@ -309,13 +278,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a type.
      */
-    struct type
+    struct type : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the name of the type.
          */
@@ -396,16 +360,10 @@ namespace puppet { namespace compiler { namespace ast {
         primary_expression& operator=(primary_expression&&) = default;
 
         /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
+         * Get the context of the primary expression.
+         * @return Returns the context of the primary expression.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
 
         /**
          * Determines if the expression is productive (i.e. has side effect).
@@ -475,16 +433,10 @@ namespace puppet { namespace compiler { namespace ast {
         postfix_subexpression& operator=(postfix_subexpression&&) = default;
 
         /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
+         * Get the context of the postfix subexpression.
+         * @return Returns the context of the postfix subexpression.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
@@ -511,16 +463,10 @@ namespace puppet { namespace compiler { namespace ast {
         std::vector<postfix_subexpression> subexpressions;
 
         /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
+         * Get the context of the postfix expression.
+         * @return Returns the context of the postfix expression.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
 
         /**
          * Determines if the expression is productive (i.e. has side effect).
@@ -658,39 +604,45 @@ namespace puppet { namespace compiler { namespace ast {
 
     /**
      * Hashes a binary operator.
-     * @param oper The operator to hash.
+     * @param operator_ The operator to hash.
      * @return Returns the hash value for the binary operator.
      */
     size_t hash_value(binary_operator const& oper);
 
     /**
-     * Represents a binary expression.
+     * Represents a binary operation.
      */
-    struct binary_expression
+    struct binary_operation
     {
         /**
-         * Stores the parse context.
+         * Stores the position of the operator.
          */
-        ast::context context;
+        lexer::position operator_position;
 
         /**
          * Stores the binary operator.
          */
-        binary_operator oper = static_cast<binary_operator>(0);
+        binary_operator operator_ = static_cast<binary_operator>(0);
 
         /**
          * Stores the operand expression.
          */
         postfix_expression operand;
+
+        /**
+         * Get the context of the binary operation.
+         * @return Returns the context of the binary operation.
+         */
+        ast::context context() const;
     };
 
     /**
-     * Stream insertion operator for binary expression.
+     * Stream insertion operator for binary operation.
      * @param os The output stream to write to.
-     * @param node The node to write.
+     * @param operation The operation to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, binary_expression const& node);
+    std::ostream& operator<<(std::ostream& os, binary_operation const& operation);
 
     /**
      * Represents an expression.
@@ -703,21 +655,15 @@ namespace puppet { namespace compiler { namespace ast {
         postfix_expression postfix;
 
         /**
-         * Stores the remainder binary expressions of the expression.
+         * Stores the binary operations of the expression.
          */
-        std::vector<binary_expression> remainder;
+        std::vector<binary_operation> operations;
 
         /**
          * Get the context of the expression.
          * @return Returns the context of the expression.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
 
         /**
          * Determines if the expression is productive (i.e. has side effect).
@@ -739,7 +685,7 @@ namespace puppet { namespace compiler { namespace ast {
     };
 
     /**
-     * Stream insertion operator for expresion.
+     * Stream insertion operator for expression.
      * @param os The output stream to write to.
      * @param node The node to write.
      * @return Returns the given output stream.
@@ -749,13 +695,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents an array literal.
      */
-    struct array
+    struct array : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the array elements.
          */
@@ -776,28 +717,23 @@ namespace puppet { namespace compiler { namespace ast {
     using pair = std::pair<expression, expression>;
 
     /**
-     * Stream insertion operator for hash pair type.
-     * @param os The output stream to write to.
-     * @param node The node to write.
-     * @return Returns the given output stream.
-     */
-    std::ostream& operator<<(std::ostream& os, pair const& node);
-
-    /**
      * Represents a hash literal.
      */
-    struct hash
+    struct hash : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the hash elements.
          */
-        std::vector<ast::pair> elements;
+        std::vector<pair> elements;
     };
+
+    /**
+     * Stream insertion operator for pair.
+     * @param os The output stream to write to.
+     * @param pair The pair to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, ast::pair const& pair);
 
     /**
      * Stream insertion operator for hash.
@@ -810,13 +746,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a selector expression.
      */
-    struct selector_expression
+    struct selector_expression : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the selector cases.
          */
@@ -834,7 +765,7 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a case proposition.
      */
-    struct case_proposition
+    struct proposition
     {
         /**
          * Stores the options.
@@ -847,36 +778,24 @@ namespace puppet { namespace compiler { namespace ast {
         std::vector<expression> body;
 
         /**
-         * Get the context of the case proposition.
-         * @return Returns the context of the case proposition.
+         * Stores the ending position.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the case proposition.
-         * @return Returns the context of the case proposition.
-         */
-        ast::context const& context() const;
+        lexer::position end;
     };
 
     /**
-     * Stream insertion operator for case proposition.
+     * Stream insertion operator for proposition.
      * @param os The output stream to write to.
-     * @param node The node to write.
+     * @param proposition The node to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, case_proposition const& node);
+    std::ostream& operator<<(std::ostream& os, ast::proposition const& proposition);
 
     /**
      * Represents a case expression.
      */
-    struct case_expression
+    struct case_expression : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the conditional expression.
          */
@@ -885,7 +804,7 @@ namespace puppet { namespace compiler { namespace ast {
         /**
          * Stores the case propositions.
          */
-        std::vector<case_proposition> propositions;
+        std::vector<proposition> propositions;
     };
 
     /**
@@ -897,38 +816,43 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, case_expression const& node);
 
     /**
-     * Represents an else expression.
+     * Represents an else.
      */
-    struct else_expression
+    struct else_
     {
         /**
-         * Stores the parse context.
+         * Stores the beginning position.
          */
-        ast::context context;
+        lexer::position begin;
 
         /**
          * Stores the body.
          */
         std::vector<expression> body;
+
+        /**
+         * Stores the ending position.
+         */
+        lexer::position end;
     };
 
     /**
-     * Stream insertion operator for else expression.
+     * Stream insertion operator for an else.
      * @param os The output stream to write to.
-     * @param node The node to write.
+     * @param else_ The else to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, else_expression const& node);
+    std::ostream& operator<<(std::ostream& os, ast::else_ const& else_);
 
     /**
-     * Represents an else-if expression.
+     * Represents an else-if.
      */
-    struct elsif_expression
+    struct elsif
     {
         /**
-         * Stores the parse context.
+         * Stores the beginning position.
          */
-        ast::context context;
+        lexer::position begin;
 
         /**
          * Stores the conditional.
@@ -939,15 +863,20 @@ namespace puppet { namespace compiler { namespace ast {
          * Stores the body.
          */
         std::vector<expression> body;
+
+        /**
+         * Stores the ending position.
+         */
+        lexer::position end;
     };
 
     /**
-     * Stream insertion operator for elsif expression.
+     * Stream insertion operator for an elsif.
      * @param os The output stream to write to.
-     * @param node The node to write.
+     * @param elsif The elsif to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, elsif_expression const& node);
+    std::ostream& operator<<(std::ostream& os, ast::elsif const& elsif);
 
     /**
      * Represents an if expression.
@@ -955,9 +884,9 @@ namespace puppet { namespace compiler { namespace ast {
     struct if_expression
     {
         /**
-         * Stores the parse context.
+         * Stores the beginning position.
          */
-        ast::context context;
+        lexer::position begin;
 
         /**
          * Stores the conditional.
@@ -970,14 +899,25 @@ namespace puppet { namespace compiler { namespace ast {
         std::vector<expression> body;
 
         /**
-         * Stores the "else ifs".
+         * Stores the ending position.
          */
-        std::vector<elsif_expression> elsifs;
+        lexer::position end;
+
+        /**
+         * Stores the "else-ifs".
+         */
+        std::vector<elsif> elsifs;
 
         /**
          * Stores the optional "else".
          */
-        boost::optional<else_expression> else_;
+        boost::optional<ast::else_> else_;
+
+        /**
+         * Get the context of the if expression.
+         * @return Returns the context of the if expression.
+         */
+        ast::context context() const;
     };
 
     /**
@@ -994,9 +934,9 @@ namespace puppet { namespace compiler { namespace ast {
     struct unless_expression
     {
         /**
-         * Stores the parse context.
+         * Stores the beginning position.
          */
-        ast::context context;
+        lexer::position begin;
 
         /**
          * Stores the conditional.
@@ -1009,9 +949,20 @@ namespace puppet { namespace compiler { namespace ast {
         std::vector<expression> body;
 
         /**
+         * Stores the ending position.
+         */
+        lexer::position end;
+
+        /**
          * Stores the optional else.
          */
-        boost::optional<else_expression> else_;
+        boost::optional<ast::else_> else_;
+
+        /**
+         * Get the context of the unless expression.
+         * @return Returns the context of the unless expression.
+         */
+        ast::context context() const;
     };
 
     /**
@@ -1025,13 +976,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents an access expression.
      */
-    struct access_expression
+    struct access_expression : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the argument expressions.
          */
@@ -1057,12 +1003,12 @@ namespace puppet { namespace compiler { namespace ast {
         boost::optional<postfix_expression> type;
 
         /**
-         * Stores whether or not the parameter captures.
+         * Stores the optional position of the "captures all" specifier.
          */
-        bool captures = false;
+        boost::optional<lexer::position> captures;
 
         /**
-         * Stores the parameter variable.
+         * Stores the parameter's variable.
          */
         ast::variable variable;
 
@@ -1075,13 +1021,7 @@ namespace puppet { namespace compiler { namespace ast {
          * Get the context of the parameter.
          * @return Returns the context of the parameter.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the parameter.
-         * @return Returns the context of the parameter.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
@@ -1095,13 +1035,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a lambda expression.
      */
-    struct lambda_expression
+    struct lambda_expression : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the parameters.
          */
@@ -1127,9 +1062,9 @@ namespace puppet { namespace compiler { namespace ast {
     struct method_call_expression
     {
         /**
-         * Stores the parse context.
+         * Stores the beginning position.
          */
-        ast::context context;
+        lexer::position begin;
 
         /**
          * Stores the name of the method.
@@ -1142,9 +1077,20 @@ namespace puppet { namespace compiler { namespace ast {
         std::vector<expression> arguments;
 
         /**
+         * Stores the optional ending position.
+         */
+        boost::optional<lexer::position> end;
+
+        /**
          * Stores the optional lambda.
          */
         boost::optional<lambda_expression> lambda;
+
+        /**
+         * Get the context of the method call expression.
+         * @return Returns the context of the method call expression.
+         */
+        ast::context context() const;
     };
 
     /**
@@ -1176,16 +1122,15 @@ namespace puppet { namespace compiler { namespace ast {
         boost::optional<lambda_expression> lambda;
 
         /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
+         * Stores the optional ending position.
          */
-        ast::context& context();
+        boost::optional<lexer::position> end;
 
         /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
+         * Get the context of the function call expression.
+         * @return Returns the context of the function call expression.
          */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
@@ -1220,9 +1165,9 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, attribute_operator const& node);
 
     /**
-     * Represents a resource attribute.
+     * Represents a resource attribute operation.
      */
-    struct attribute
+    struct attribute_operation
     {
         /**
          * Stores the attribute name.
@@ -1230,9 +1175,14 @@ namespace puppet { namespace compiler { namespace ast {
         ast::name name;
 
         /**
+         * Stores the position of the operator.
+         */
+        lexer::position operator_position;
+
+        /**
          * Stores the attribute operator.
          */
-        attribute_operator oper = static_cast<attribute_operator>(0);
+        attribute_operator operator_ = static_cast<attribute_operator>(0);
 
         /**
          * Stores the value expression.
@@ -1240,25 +1190,19 @@ namespace puppet { namespace compiler { namespace ast {
         expression value;
 
         /**
-         * Get the context of the attribute.
-         * @return Returns the context of the attribute.
+         * Get the context of the attribute operation.
+         * @return Returns the context of the attribute operation .
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the attribute.
-         * @return Returns the context of the attribute.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
-     * Stream insertion operator for attribute.
+     * Stream insertion operator for attribute operation.
      * @param os The output stream to write to.
-     * @param node The node to write.
+     * @param operation The operation to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, attribute const& node);
+    std::ostream& operator<<(std::ostream& os, attribute_operation const& operation);
 
     /**
      * Represents the status of a resource.
@@ -1298,21 +1242,15 @@ namespace puppet { namespace compiler { namespace ast {
         primary_expression title;
 
         /**
-         * Stores the resource attributes.
+         * Stores the resource attribute operations.
          */
-        std::vector<attribute> attributes;
+        std::vector<attribute_operation> operations;
 
         /**
          * Get the context of the resource body.
          * @return Returns the context of the resource body.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the resource body.
-         * @return Returns the context of the resource body.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
@@ -1326,7 +1264,7 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a resource expression.
      */
-    struct resource_expression
+    struct resource_expression : context
     {
         /**
          * Stores the resource status.
@@ -1342,18 +1280,6 @@ namespace puppet { namespace compiler { namespace ast {
          * Stores the resource bodies.
          */
         std::vector<resource_body> bodies;
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
     };
 
     /**
@@ -1367,7 +1293,7 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a resource override expression.
      */
-    struct resource_override_expression
+    struct resource_override_expression : context
     {
         /**
          * Stores the resource reference.
@@ -1375,21 +1301,9 @@ namespace puppet { namespace compiler { namespace ast {
         postfix_expression reference;
 
         /**
-         * Stores the attributes.
+         * Stores the attribute operations.
          */
-        std::vector<attribute> attributes;
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
+        std::vector<attribute_operation> operations;
     };
 
     /**
@@ -1403,7 +1317,7 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a resource defaults expression.
      */
-    struct resource_defaults_expression
+    struct resource_defaults_expression : context
     {
         /**
          * Stores the resource type.
@@ -1411,21 +1325,9 @@ namespace puppet { namespace compiler { namespace ast {
         ast::type type;
 
         /**
-         * Stores the attributes.
+         * Stores the attribute operations.
          */
-        std::vector<attribute> attributes;
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
+        std::vector<attribute_operation> operations;
     };
 
     /**
@@ -1439,13 +1341,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a class expression.
      */
-    struct class_expression
+    struct class_expression : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the class name.
          */
@@ -1478,13 +1375,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a defined type expression.
      */
-    struct defined_type_expression
+    struct defined_type_expression : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the defined type name.
          */
@@ -1556,6 +1448,12 @@ namespace puppet { namespace compiler { namespace ast {
         hostname& operator=(hostname&&) = default;
 
         /**
+         * Get the context of the hostname.
+         * @return Returns the context of the hostname.
+         */
+        ast::context context() const;
+
+        /**
          * Determines if the hostname is the default keyword.
          * @return Returns true if the hostname is defaulted or false if not.
          */
@@ -1572,18 +1470,6 @@ namespace puppet { namespace compiler { namespace ast {
          * @return Returns the hostname as a string.
          */
         std::string to_string() const;
-
-        /**
-         * Get the context of the hostname.
-         * @return Returns the context of the hostname.
-         */
-        ast::context& context();
-
-        /**
-         * Get the context of the hostname.
-         * @return Returns the context of the hostname.
-         */
-        ast::context const& context() const;
     };
 
     /**
@@ -1597,13 +1483,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents a node expression.
      */
-    struct node_expression
+    struct node_expression : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the hostnames.
          */
@@ -1624,9 +1505,9 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, node_expression const& node);
 
     /**
-     * Represents the possible attribute query operators.
+     * Represents the possible query operators.
      */
-    enum class attribute_query_operator
+    enum class query_operator
     {
         /**
          * The equals (==) operator.
@@ -1640,12 +1521,12 @@ namespace puppet { namespace compiler { namespace ast {
     };
 
     /**
-     * Stream insertion operator for attribute query operator.
+     * Stream insertion operator for query operator.
      * @param os The output stream to write to.
      * @param node The node to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, attribute_query_operator const& node);
+    std::ostream& operator<<(std::ostream& os, query_operator const& node);
 
     /**
      * Represents an collector attribute query.
@@ -1658,9 +1539,14 @@ namespace puppet { namespace compiler { namespace ast {
         name attribute;
 
         /**
-         * Stores the attribute query operator.
+         * Stores the position of the operator.
          */
-        attribute_query_operator oper = static_cast<attribute_query_operator>(0);
+        lexer::position operator_position;
+
+        /**
+         * Stores the query operator.
+         */
+        query_operator operator_ = static_cast<query_operator>(0);
 
         /**
          * Stores the attribute value.
@@ -1668,16 +1554,10 @@ namespace puppet { namespace compiler { namespace ast {
         primary_expression value;
 
         /**
-         * Get the context of the query.
-         * @return Returns the context of the query.
+         * Get the context of the attribute query.
+         * @return Returns the context of the attribute query.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the query.
-         * @return Returns the context of the query.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
@@ -1689,11 +1569,11 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, attribute_query const& node);
 
     /**
-     * Represents an attribute query expression.
+     * Represents a primary query expression.
      */
-    struct attribute_query_expression : boost::spirit::x3::variant<
+    struct primary_query_expression : boost::spirit::x3::variant<
         attribute_query,
-        boost::spirit::x3::forward_ast<collector_query_expression>
+        boost::spirit::x3::forward_ast<query_expression>
         >
     {
         // Use the base's construction and assignment semantics
@@ -1701,52 +1581,46 @@ namespace puppet { namespace compiler { namespace ast {
         using base_type::operator=;
 
         /**
-         * Default constructor for attribute query expression.
+         * Default constructor for primary query expression.
          */
-        attribute_query_expression() = default;
+        primary_query_expression() = default;
 
         /**
-         * Default copy constructor for attribute query expression.
+         * Default copy constructor for primary query expression.
          */
-        attribute_query_expression(attribute_query_expression const&) = default;
+        primary_query_expression(primary_query_expression const&) = default;
 
         /**
-         * Default move constructor for attribute query expression.
+         * Default move constructor for primary query expression.
          */
-        attribute_query_expression(attribute_query_expression&&) = default;
+        primary_query_expression(primary_query_expression&&) = default;
 
         /**
-         * Default copy assignment operator for attribute query expression.
-         * @return Returns this attribute query expression.
+         * Default copy assignment operator for primary query expression.
+         * @return Returns this primary query expression.
          */
-        attribute_query_expression& operator=(attribute_query_expression const&) = default;
+        primary_query_expression& operator=(primary_query_expression const&) = default;
 
         /**
-         * Default move assignment operator for attribute query expression.
-         * @return Returns this attribute query expression.
+         * Default move assignment operator for primary query expression.
+         * @return Returns this primary query expression.
          */
-        attribute_query_expression& operator=(attribute_query_expression&&) = default;
+        primary_query_expression& operator=(primary_query_expression&&) = default;
 
         /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
+         * Get the context of the primary query expression.
+         * @return Returns the context of the primary query expression.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
-     * Stream insertion operator for attribute query expression.
+     * Stream insertion operator for primary query expression.
      * @param os The output stream to write to.
      * @param node The node to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, attribute_query_expression const& node);
+    std::ostream& operator<<(std::ostream& os, primary_query_expression const& node);
 
     /**
      * Represents the possible binary query operators.
@@ -1778,69 +1652,69 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, binary_query_operator const& node);
 
     /**
-     * Represents a binary attribute query.
+     * Represents a binary query operation.
      */
-    struct binary_attribute_query
+    struct binary_query_operation
     {
         /**
-         * Stores the parse context.
+         * Stores the position of the operator.
          */
-        ast::context context;
+        lexer::position operator_position;
 
         /**
          * Stores the binary query operator.
          */
-        binary_query_operator oper = static_cast<binary_query_operator>(0);
+        binary_query_operator operator_ = static_cast<binary_query_operator>(0);
 
         /**
-         * Stores the RHS operand expression.
+         * Stores the right-hand side operand.
          */
-        attribute_query_expression operand;
+        primary_query_expression operand;
+
+        /**
+         * Get the context of the binary query operation.
+         * @return Returns the context of the binary query operation.
+         */
+        ast::context context() const;
     };
 
     /**
-     * Stream insertion operator for binary attribute query.
+     * Stream insertion operator for binary query operation.
      * @param os The output stream to write to.
-     * @param node The node to write.
+     * @param operation The operation to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, binary_attribute_query const& node);
+    std::ostream& operator<<(std::ostream& os, binary_query_operation const& operation);
 
     /**
-     * Represents a collector query expression.
+     * Represents a query expression.
      */
-    struct collector_query_expression
+    struct query_expression
     {
         /**
-         * Stores the primary attribute query expression.
+         * Stores the primary query expression.
          */
-        attribute_query_expression primary;
+        primary_query_expression primary;
 
         /**
-         * Stores the remainder of the collector query expression.
+         * Stores the binary operations of the query expression.
          */
-        std::vector<binary_attribute_query> remainder;
+        std::vector<binary_query_operation> operations;
 
         /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
+         * Get the context of the query expression.
+         * @return Returns the context of the query expression.
          */
-        ast::context& context();
-
-        /**
-         * Get the context of the expression.
-         * @return Returns the context of the expression.
-         */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
-     * Stream insertion operator for collector query expression.
+     * Stream insertion operator for query expression.
      * @param os The output stream to write to.
      * @param node The node to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, collector_query_expression const& node);
+    std::ostream& operator<<(std::ostream& os, query_expression const& node);
 
     /**
      * Represents a collector expression.
@@ -1858,21 +1732,20 @@ namespace puppet { namespace compiler { namespace ast {
         bool exported = false;
 
         /**
-         * Stores the optional collector query expression.
+         * Stores the optional query expression.
          */
-        boost::optional<collector_query_expression> query;
+        boost::optional<query_expression> query;
 
         /**
-         * Get the context of the collector.
-         * @return Returns the context of the collector.
+         * The ending position of the expression.
          */
-        ast::context& context();
+        lexer::position end;
 
         /**
-         * Get the context of the collector.
-         * @return Returns the context of the collector.
+         * Get the context of the query expression.
+         * @return Returns the context of the query expression.
          */
-        ast::context const& context() const;
+        ast::context context() const;
     };
 
     /**
@@ -1916,7 +1789,7 @@ namespace puppet { namespace compiler { namespace ast {
 
     /**
      * Hashes a unary operator.
-     * @param oper The operator to hash.
+     * @param operator_ The operator to hash.
      * @return Returns the hash value for the unary operator.
      */
     size_t hash_value(unary_operator const& oper);
@@ -1927,19 +1800,25 @@ namespace puppet { namespace compiler { namespace ast {
     struct unary_expression
     {
         /**
-         * Stores the parse context.
+         * Stores the position of the operator.
          */
-        ast::context context;
+        lexer::position operator_position;
 
         /**
          * Stores the unary operator.
          */
-        unary_operator oper = static_cast<unary_operator>(0);
+        unary_operator operator_ = static_cast<unary_operator>(0);
 
         /**
          * Stores the operand expression.
          */
         postfix_expression operand;
+
+        /**
+          * Get the context of the unary expression.
+          * @return Returns the context of the unary expression.
+          */
+        ast::context context() const;
 
         /**
          * Determines if the expression is a splat.
@@ -1959,13 +1838,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents an EPP render expression.
      */
-    struct epp_render_expression
+    struct epp_render_expression : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the expression to render.
          */
@@ -1981,15 +1855,10 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, epp_render_expression const& node);
 
     /**
-     * Represents an EPP render block.
+     * Represents an EPP render block expression.
      */
-    struct epp_render_block
+    struct epp_render_block : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the block to render.
          */
@@ -2007,13 +1876,8 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Represents an EPP render string.
      */
-    struct epp_render_string
+    struct epp_render_string : context
     {
-        /**
-         * Stores the parse context.
-         */
-        ast::context context;
-
         /**
          * Stores the string to render.
          */
@@ -2045,10 +1909,10 @@ namespace puppet { namespace compiler { namespace ast {
         std::vector<expression> statements;
 
         /**
-         * Stores the closing position for string interpolation.
+         * Stores the ending position for string interpolation.
          * This member will be default constructed if not parsed for string interpolation.
          */
-        lexer::position closing_position;
+        lexer::position end;
 
         /**
          * Gets the path to the file represented by the syntax tree.

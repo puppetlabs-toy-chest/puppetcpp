@@ -28,7 +28,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
          * @param context The current evaluation context.
          * @param expression The method call expression.
          * @param instance The value the method is being called on.
-         * @param instance_context The AST context of the instance.
+         * @param instance_context The AST context for the instance.
          * @param splat True if splatting of the instance value is supported or false if not.
          */
         explicit function_call_context(evaluation::context& context, ast::method_call_expression const& expression, runtime::values::value& instance, ast::context const& instance_context, bool splat);
@@ -40,16 +40,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         evaluation::context& context() const;
 
         /**
-         * Gets the name of the function being called.
-         * @return Returns the name of the function being called.
+         * Gets the AST name of the function being called.
+         * @return Returns the AST name of the function being called.
          */
-        std::string const& name() const;
-
-        /**
-         * Gets the AST context of the call site.
-         * @return Returns the AST context of the call site.
-         */
-        ast::context const& call_site() const;
+        ast::name const& name() const;
 
         /**
          * Gets the arguments to the function.
@@ -95,12 +89,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         void evaluate_arguments(std::vector<ast::expression> const& arguments);
 
         evaluation::context& _context;
-        std::string const& _name;
-        ast::context const& _call_site;
+        ast::name const& _name;
         runtime::values::array _arguments;
-        std::vector<ast::context const*> _argument_contexts;
+        std::vector<ast::context> _argument_contexts;
         boost::optional<ast::lambda_expression> const& _lambda;
     };
-
 
 }}}}  // namespace puppet::compiler::evaluation::functions

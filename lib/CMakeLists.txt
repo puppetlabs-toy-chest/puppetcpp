@@ -135,7 +135,13 @@ elseif(WIN32)
 endif()
 
 # Add the executable for generating the static lexer
-add_executable(generate_static_lexer src/compiler/lexer/generate_static_lexer.cc src/compiler/lexer/number_token.cc include/puppet/compiler/lexer/token_id.hpp src/compiler/lexer/token_id.cc src/compiler/lexer/position.cc)
+add_executable(
+    generate_static_lexer
+    src/compiler/lexer/generate_static_lexer.cc
+    src/compiler/lexer/number_token.cc
+    src/compiler/lexer/position.cc
+    src/compiler/lexer/token_id.cc
+)
 target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
 
 # Add the command to generate the static lexer

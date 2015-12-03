@@ -15,7 +15,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         auto& arguments = context.arguments();
         auto count = arguments.size();
         if (count != 2) {
-            throw evaluation_exception((boost::format("expected 2 arguments to '%1%' function but %2% were given.") % context.name() % count).str(), count > 2 ? context.argument_context(2) : context.call_site());
+            throw evaluation_exception((boost::format("expected 2 arguments to '%1%' function but %2% were given.") % context.name() % count).str(), count > 2 ? context.argument_context(2) : context.name());
         }
 
         // Both arguments should be Strings

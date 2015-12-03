@@ -78,12 +78,12 @@ int main(int argc, char const* argv[])
             catalog.write(output);
 
         } catch (compilation_exception const& ex) {
-            LOG(error, ex.line(), ex.column(), ex.text(), ex.path(), "node '%1%': %2%", node.name(), ex.what());
+            LOG(error, ex.line(), ex.column(), ex.length(), ex.text(), ex.path(), "node '%1%': %2%", node.name(), ex.what());
         } catch (resource_cycle_exception const& ex) {
             LOG(error, ex.what());
         }
     } catch (yaml_parse_exception const& ex) {
-        LOG(error, ex.line(), ex.column(), ex.text(), ex.path(), ex.what());
+        LOG(error, ex.line(), 1, ex.column(), ex.text(), ex.path(), ex.what());
     } catch (settings_exception const& ex) {
         LOG(error, ex.what());
         LOG(notice, "use 'puppetcpp --help' for help.");

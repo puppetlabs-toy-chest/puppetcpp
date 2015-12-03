@@ -204,9 +204,9 @@ namespace puppet { namespace runtime { namespace values {
          * Creates a type from a Puppet type expression.
          * @param context The current evaluation context.
          * @param expression The expression to parse for the type.
-         * @return Returns the type if the parse was successful or throws puppet::compiler::parse_exception.
+         * @return Returns the type if the parse was successful or boost::none if the parsing failed.
          */
-        static type parse(compiler::evaluation::context& context, std::string const& expression);
+        static boost::optional<type> parse(compiler::evaluation::context& context, std::string const& expression);
 
      private:
         type_variant _value;

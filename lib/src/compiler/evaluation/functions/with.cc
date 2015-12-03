@@ -11,7 +11,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     value with::operator()(function_call_context& context) const
     {
         if (!context.lambda()) {
-            throw evaluation_exception((boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str(), context.call_site());
+            throw evaluation_exception((boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str(), context.name());
         }
 
         try {

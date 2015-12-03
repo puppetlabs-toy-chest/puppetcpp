@@ -64,7 +64,7 @@ namespace puppet { namespace compiler {
         return _environment;
     }
 
-    resource* catalog::add(types::resource type, resource const* container, ast::context const* context, bool virtualized, bool exported)
+    resource* catalog::add(types::resource type, resource const* container, boost::optional<ast::context> context, bool virtualized, bool exported)
     {
         // Ensure the resource name is fully qualified
         if (!type.fully_qualified()) {
@@ -81,7 +81,7 @@ namespace puppet { namespace compiler {
             return nullptr;
         }
 
-        _resources.emplace_back(resource(rvalue_cast(type), container, context, exported));
+        _resources.emplace_back(resource(rvalue_cast(type), container, rvalue_cast(context), exported));
 
         auto resource = &_resources.back();
 

@@ -26,20 +26,14 @@ namespace puppet { namespace compiler { namespace lexer {
         using iterator_type = Iterator;
 
         /**
-         * Constructs an empty string token.
+         * The string value type.
          */
-        string_token() :
-            _interpolated(true),
-            _margin(0),
-            _remove_break(false)
-        {
-        }
+        using value_type = boost::iterator_range<Iterator>;
 
         /**
          * Constructs a string token.
-         * @param position The position in the input source for the token.
-         * @param begin The begin iterator for the string text.
-         * @param end The end iterator for the string text.
+         * @param range The token's range.
+         * @param value The iterator range for the string's value.
          * @param escapes The valid escape characters for the string token.
          * @param quote The quoting character for the string; null character for heredocs.
          * @param interpolated True if the string should be interpolated or false if not.
@@ -47,10 +41,9 @@ namespace puppet { namespace compiler { namespace lexer {
          * @param margin The margin for the string (heredoc only).
          * @param remove_break Remove a trailing line break from the string (heredoc only).
          */
-        string_token(lexer::position position, iterator_type begin, iterator_type end, std::string escapes, char quote, bool interpolated = true, std::string format = std::string(), int margin = 0, bool remove_break = false) :
-            _position(rvalue_cast(position)),
-            _begin(rvalue_cast(begin)),
-            _end(rvalue_cast(end)),
+        string_token(lexer::range range, value_type value, std::string escapes, char quote, bool interpolated = true, std::string format = std::string(), int margin = 0, bool remove_break = false) :
+            _range(rvalue_cast(range)),
+            _value(rvalue_cast(value)),
             _escapes(rvalue_cast(escapes)),
             _quote(quote),
             _interpolated(interpolated),
@@ -61,30 +54,21 @@ namespace puppet { namespace compiler { namespace lexer {
         }
 
         /**
-         * Gets the position of the token.
-         * @return Returns the position of the token.
+         * Gets the range of the token.
+         * @return Returns the range of the token.
          */
-        lexer::position const& position() const
+        lexer::range const& range() const
         {
-            return _position;
+            return _range;
         }
 
         /**
-         * Gets the begin iterator for the string text.
-         * @return Returns the begin iterator for the string text.
+         * Gets the iterator range representing the string value.
+         * @return Returns the iterator range representing the string value.
          */
-        iterator_type const& begin() const
+        value_type const& value() const
         {
-            return _begin;
-        }
-
-        /**
-         * Gets the end iterator for the string text.
-         * @return Returns the end iterator for the string text.
-         */
-        iterator_type const& end() const
-        {
-            return _end;
+            return _value;
         }
 
         /**
@@ -143,9 +127,8 @@ namespace puppet { namespace compiler { namespace lexer {
         }
 
      private:
-        lexer::position _position;
-        iterator_type _begin;
-        iterator_type _end;
+        lexer::range _range;
+        value_type _value;
         std::string _escapes;
         char _quote;
         bool _interpolated;
@@ -164,7 +147,7 @@ namespace puppet { namespace compiler { namespace lexer {
     template <typename Iterator>
     std::ostream& operator<<(std::ostream& os, string_token<Iterator> const& token)
     {
-        os << (token.interpolated() ? '"' : '\'') << boost::make_iterator_range(token.begin(), token.end()) << (token.interpolated() ? '"' : '\'');
+        os << (token.interpolated() ? '"' : '\'') << token.value() << (token.interpolated() ? '"' : '\'');
         return os;
     }
 

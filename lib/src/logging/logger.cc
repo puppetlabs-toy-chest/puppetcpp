@@ -84,10 +84,10 @@ namespace puppet { namespace logging {
         if (!would_log(level)) {
            return;
         }
-        log(level, 0, 0, {}, {}, message);
+        log(level, 0, 0, 0, {}, {}, message);
     }
 
-    void logger::log(logging::level level, size_t line, size_t column, string const& text, string const& path, string const& message)
+    void logger::log(logging::level level, size_t line, size_t column, size_t length, string const& text, string const& path, string const& message)
     {
         if (!would_log(level)) {
             return;
@@ -97,7 +97,7 @@ namespace puppet { namespace logging {
         } else if (level >= logging::level::error) {
             ++_errors;
         }
-        log_message(level, line, column, text, path, message);
+        log_message(level, line, column, length, text, path, message);
     }
 
     size_t logger::warnings() const
@@ -130,12 +130,12 @@ namespace puppet { namespace logging {
         return static_cast<size_t>(level) >= static_cast<size_t>(_level);
     }
 
-    void logger::log(logging::level level, size_t line, size_t column, string const& text, string const& path, boost::format& message)
+    void logger::log(logging::level level, size_t line, size_t column, size_t length, string const& text, string const& path, boost::format& message)
     {
-        log(level, line, column, text, path, message.str());
+        log(level, line, column, length, text, path, message.str());
     }
 
-    void stream_logger::log_message(logging::level level, size_t line, size_t column, string const& text, string const& path, string const& message)
+    void stream_logger::log_message(logging::level level, size_t line, size_t column, size_t length, string const& text, string const& path, string const& message)
     {
         ostream& stream = get_stream(level);
 
@@ -191,7 +191,15 @@ namespace puppet { namespace logging {
             // Write the "pointer" pointing at the column
             fill_n(ostream_iterator<char>(stream), column - column_offset + 3, ' ');
             colorize(logging::level::info);
-            stream << "^\n";
+            stream << "^";
+            if (length > 0) {
+                length -= 1; // need to offset as the caret indicator counts as a length of 1
+                if (length > (text.size() - column)) {
+                    length = text.size() - column;
+                }
+                fill_n(ostream_iterator<char>(stream), length, '~');
+            }
+            stream << "\n";
         }
 
         // Reset the colorization
