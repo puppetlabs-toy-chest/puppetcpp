@@ -16,6 +16,12 @@ struct token_value_visitor : boost::static_visitor<string>
         return os.str();
     }
 
+    template <typename Iterator>
+    result_type operator()(string_token<Iterator> const& token) const
+    {
+        return string(token.value().begin(), token.value().end());
+    }
+
     template <typename T>
     result_type operator()(T const& token) const
     {
@@ -61,8 +67,7 @@ void require_string_token(
 
     auto value = boost::get<string_token<typename Iterator::value_type::iterator_type>>(&token->value());
     REQUIRE(value);
-    string text(value->begin(), value->end());
-    REQUIRE(text == expected_value);
+    REQUIRE(value->value() == expected_value);
     REQUIRE(value->escapes() == expected_escapes);
     REQUIRE(value->quote() == expected_quote);
     REQUIRE(value->interpolated() == expected_interpolated);

@@ -139,7 +139,7 @@ namespace puppet { namespace compiler {
      private:
         friend struct catalog;
 
-        resource(runtime::types::resource type, resource const* container, ast::context const* context, bool exported);
+        resource(runtime::types::resource type, resource const* container, boost::optional<ast::context> context, bool exported);
         runtime::values::json_value to_json(runtime::values::json_allocator& allocator, compiler::catalog const& catalog) const;
         void add_relationship_parameters(runtime::values::json_value& parameters, runtime::values::json_allocator& allocator, compiler::catalog const& catalog) const;
         void realize(size_t vertex_id);
@@ -149,7 +149,7 @@ namespace puppet { namespace compiler {
         std::shared_ptr<ast::syntax_tree> _tree;
         runtime::types::resource _type;
         resource const* _container;
-        ast::context const* _context;
+        boost::optional<ast::context> _context;
         size_t _vertex_id;
         std::unordered_map<std::string, std::shared_ptr<attribute>> _attributes;
         std::vector<std::string> _tags;

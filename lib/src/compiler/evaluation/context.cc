@@ -65,17 +65,19 @@ namespace puppet { namespace compiler { namespace evaluation {
     resource_relationship::resource_relationship(
         compiler::relationship relationship,
         values::value source,
-        ast::context const& source_context,
+        ast::context source_context,
         values::value target,
-        ast::context const& target_context) :
+        ast::context target_context) :
             _relationship(relationship),
             _source(rvalue_cast(source)),
-            _source_context(source_context),
+            _source_context(rvalue_cast(source_context)),
             _target(rvalue_cast(target)),
-            _target_context(target_context)
+            _target_context(rvalue_cast(target_context))
     {
-        if (_source_context.tree) {
-            _tree = _source_context.tree->shared_from_this();
+        if (source_context.tree) {
+            _tree = source_context.tree->shared_from_this();
+        } else if (target_context.tree) {
+            _tree = target_context.tree->shared_from_this();
         }
     }
 
@@ -146,11 +148,11 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     resource_override::resource_override(
         types::resource type,
-        ast::context const& context,
+        ast::context context,
         compiler::attributes attributes,
         std::shared_ptr<evaluation::scope> scope) :
             _type(rvalue_cast(type)),
-            _context(context),
+            _context(rvalue_cast(context)),
             _attributes(rvalue_cast(attributes)),
             _scope(rvalue_cast(scope))
     {
@@ -187,7 +189,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 (boost::format("resource %1% does not exist in the catalog.") %
                  _type
                 ).str(),
-                _context);
+                _context
+            );
         }
 
         // No attributes? Nothing to do once we've checked existence
@@ -366,7 +369,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
 
             if (!message.empty()) {
-                log(logging::level::warning, message, &expression.context);
+                log(logging::level::warning, message, &expression);
             }
         }
         return nullptr;
@@ -430,21 +433,22 @@ namespace puppet { namespace compiler { namespace evaluation {
             return;
         }
 
-        size_t offset = context->position.offset();
         auto& path = context->tree->path();
-        size_t line = context->position.line();
+        size_t offset = context->begin.offset();
+        size_t line = context->begin.line();
         size_t column = 0;
+        size_t length = context->end.offset() - context->begin.offset();
         string text;
 
         if (context->tree->source().empty()) {
-            ifstream input{path};
+            ifstream input{ path };
             if (input) {
                 tie(text, column) = lexer::get_text_and_column(input, offset);
             }
         } else {
             tie(text, column) = lexer::get_text_and_column(context->tree->source(), offset);
         }
-        logger.log(level, line, column, text, path, message);
+        logger.log(level, line, column, length, text, path, message);
     }
 
     resource* context::declare_class(string name, ast::context const& context)
@@ -470,7 +474,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto resource = _catalog.find(type);
         if (!resource) {
             // Create the class resource
-            resource = _catalog.add(rvalue_cast(type), nullptr, &context);
+            resource = _catalog.add(rvalue_cast(type), nullptr, context);
         }
 
         // If the class was already declared, return it without evaluating

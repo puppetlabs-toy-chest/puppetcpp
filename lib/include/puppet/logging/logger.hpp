@@ -99,11 +99,12 @@ namespace puppet { namespace logging {
          * @param level The log level.
          * @param line The line of the source context.
          * @param column The column of the source context.
+         * @param length The length of the source to highlight.
          * @param text The context text.
          * @param path The path of the source file.
          * @param message The message to log.
          */
-        void log(logging::level level, size_t line, size_t column, std::string const& text, std::string const& path, std::string const& message);
+        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message);
 
         /**
          * Logs a message.
@@ -119,7 +120,7 @@ namespace puppet { namespace logging {
                 return;
             }
             boost::format message(format);
-            log(level, 0, 0, {}, {}, message, std::forward<TArgs>(args)...);
+            log(level, 0, 0, 0, {}, {}, message, std::forward<TArgs>(args)...);
         }
 
         /**
@@ -128,19 +129,20 @@ namespace puppet { namespace logging {
          * @param level The log level.
          * @param line The line of the source context.
          * @param column The column of the source context.
+         * @param length The length of the source to highlight.
          * @param text The context text.
          * @param path The path of the source file.
          * @param format The format of the message to log.
          * @param args The format arguments.
          */
         template <typename... TArgs>
-        void log(logging::level level, size_t line, size_t column, std::string const& text, std::string const& path, std::string const& format, TArgs... args)
+        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& format, TArgs... args)
         {
             if (!would_log(level)) {
                 return;
             }
             boost::format message(format);
-            log(level, line, column, text, path, message, std::forward<TArgs>(args)...);
+            log(level, line, column, length, text, path, message, std::forward<TArgs>(args)...);
         }
 
         /**
@@ -185,20 +187,21 @@ namespace puppet { namespace logging {
          * @param level The log level.
          * @param line The line of the source context.
          * @param column The column of the source context.
+         * @param length The length of the source to highlight.
          * @param text The context text.
          * @param path The path of the source file.
          * @param message The message to log.
          */
-        virtual void log_message(logging::level level, size_t line, size_t column, std::string const& text, std::string const& path, std::string const& message) = 0;
+        virtual void log_message(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message) = 0;
 
      private:
-        void log(logging::level level, size_t line, size_t column, std::string const& text, std::string const& path, boost::format& message);
+        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, boost::format& message);
 
         template <typename T, typename... TArgs>
-        void log(logging::level level, size_t line, size_t column, std::string const& text, std::string const& path, boost::format& message, T arg, TArgs... args)
+        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, boost::format& message, T arg, TArgs... args)
         {
             message % std::forward<T>(arg);
-            log(level, line, column, text, path, message, std::forward<TArgs>(args)...);
+            log(level, line, column, length, text, path, message, std::forward<TArgs>(args)...);
         }
 
         size_t _warnings;
@@ -217,11 +220,12 @@ namespace puppet { namespace logging {
          * @param level The log level.
          * @param line The line of the source context.
          * @param column The column of the source context.
+         * @param length The length of the source to highlight.
          * @param text The context text.
          * @param path The path of the source file.
          * @param message The message to log.
          */
-        virtual void log_message(logging::level level, size_t line, size_t column, std::string const& text, std::string const& path, std::string const& message) override;
+        virtual void log_message(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message) override;
 
         /**
          * Gets the stream to log to based on the message's log level.

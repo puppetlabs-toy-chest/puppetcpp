@@ -67,7 +67,6 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     value match::operator()(binary_operator_context const& context) const
     {
-        match_visitor visitor(context);
         return boost::apply_visitor(match_visitor(context), context.left(), context.right());
     }
 

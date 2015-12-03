@@ -10,8 +10,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
     function_call_context::function_call_context(evaluation::context& context, ast::function_call_expression const& expression) :
         _context(context),
-        _name(expression.function.value),
-        _call_site(expression.function.context),
+        _name(expression.function),
         _lambda(expression.lambda)
     {
         _arguments.reserve(expression.arguments.size());
@@ -22,8 +21,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
     function_call_context::function_call_context(evaluation::context& context, ast::method_call_expression const& expression, values::value& instance, ast::context const& instance_context, bool splat) :
         _context(context),
-        _name(expression.method.value),
-        _call_site(expression.method.context),
+        _name(expression.method),
         _lambda(expression.lambda)
     {
         _arguments.reserve(expression.arguments.size() + 1);
@@ -31,11 +29,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         // Check if the instance itself is being splatted
         if (splat && instance.as<values::array>()) {
             auto unfolded = instance.move_as<values::array>();
-            _argument_contexts.insert(_argument_contexts.end(), unfolded.size(), &instance_context);
+            _argument_contexts.insert(_argument_contexts.end(), unfolded.size(), instance_context);
             _arguments.reserve(_arguments.size() + unfolded.size());
             _arguments.insert(_arguments.end(), std::make_move_iterator(unfolded.begin()), std::make_move_iterator(unfolded.end()));
         } else {
-            _argument_contexts.push_back(&instance_context);
+            _argument_contexts.push_back(instance_context);
             _arguments.emplace_back(rvalue_cast(instance));
         }
 
@@ -48,14 +46,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         return _context;
     }
 
-    string const& function_call_context::name() const
+    ast::name const& function_call_context::name() const
     {
         return _name;
-    }
-
-    ast::context const& function_call_context::call_site() const
-    {
-        return _call_site;
     }
 
     values::array& function_call_context::arguments()
@@ -70,7 +63,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
     ast::context const& function_call_context::argument_context(size_t index) const
     {
-        return *_argument_contexts.at(index);
+        return _argument_contexts.at(index);
     }
 
     boost::optional<ast::lambda_expression> const& function_call_context::lambda() const
@@ -84,7 +77,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         try {
             return yield_without_catch(arguments);
         } catch (argument_exception const& ex) {
-            throw evaluation_exception(ex.what(), _lambda->parameters[ex.index()].variable.context);
+            throw evaluation_exception(ex.what(), _lambda->parameters[ex.index()].context());
         }
     }
 
@@ -107,13 +100,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             // If the argument is being splatted, move its elements
             if (argument.is_splat() && value.as<values::array>()) {
                 auto unfolded = value.move_as<values::array>();
-                _argument_contexts.insert(_argument_contexts.end(), unfolded.size(), &argument.context());
+                _argument_contexts.insert(_argument_contexts.end(), unfolded.size(), argument.context());
                 _arguments.reserve(_arguments.size() + unfolded.size());
                 _arguments.insert(_arguments.end(), std::make_move_iterator(unfolded.begin()), std::make_move_iterator(unfolded.end()));
                 continue;
             }
 
-            _argument_contexts.push_back(&argument.context());
+            _argument_contexts.push_back(argument.context());
             _arguments.emplace_back(rvalue_cast(value));
         }
     }

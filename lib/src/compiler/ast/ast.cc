@@ -29,53 +29,24 @@ namespace puppet { namespace compiler { namespace ast {
         ostream& _os;
     };
 
-    template <typename Result>
-    struct context_visitor : boost::static_visitor<Result>
+    struct context_visitor : boost::static_visitor<ast::context>
     {
         template <typename T>
-        auto operator()(T&& node) const -> decltype(node.context())
+        auto operator()(T const& node) const -> decltype(node.context())
         {
             return node.context();
         }
 
         template <typename T>
-        auto operator()(T&& node) const -> decltype(node.get().context())
+        auto operator()(T const& node) const -> decltype(node.get().context())
         {
             return node.get().context();
         }
 
         template <typename T>
-        auto operator()(T const& node) const -> decltype(node.get().context) const&
+        auto operator()(T const& node) const -> decltype(static_cast<ast::context const&>(node))
         {
-            return node.get().context;
-        }
-
-        template <typename T>
-        auto operator()(T& node) const -> decltype(node.get().context)&
-        {
-            return node.get().context;
-        }
-
-        template <typename T>
-        auto operator()(T const& node) const -> decltype(node.context) const&
-        {
-            return node.context;
-        }
-
-        template <typename T>
-        auto operator()(T& node) const -> decltype(node.context)&
-        {
-            return node.context;
-        }
-
-        Result operator()(hostname_parts& parts) const
-        {
-            return boost::apply_visitor(*this, parts.at(0));
-        }
-
-        Result operator()(hostname_parts const& parts) const
-        {
-            return boost::apply_visitor(*this, parts.at(0));
+            return node;
         }
     };
 
@@ -92,7 +63,7 @@ namespace puppet { namespace compiler { namespace ast {
             os << element;
         }
     }
-    
+
     void print_string(ostream& os, std::string const& s)
     {
         for (char c : s) {
@@ -168,14 +139,9 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& primary_expression::context()
+    ast::context primary_expression::context() const
     {
-        return boost::apply_visitor(context_visitor<ast::context&>(), *this);
-    }
-
-    ast::context const& primary_expression::context() const
-    {
-        return boost::apply_visitor(context_visitor<ast::context const&>(), *this);
+        return boost::apply_visitor(context_visitor(), *this);
     }
 
     bool primary_expression::is_productive() const
@@ -190,7 +156,7 @@ namespace puppet { namespace compiler { namespace ast {
             return ptr->get().operand.is_productive();
         }
 
-        // All control flow, catalog expresions, and EPP expressions are considered to be productive
+        // All control flow, catalog expressions, and EPP expressions are considered to be productive
         if (boost::get<x3::forward_ast<case_expression>>(this) ||
             boost::get<x3::forward_ast<if_expression>>(this) ||
             boost::get<x3::forward_ast<unless_expression>>(this) ||
@@ -243,24 +209,18 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& postfix_subexpression::context()
+    ast::context postfix_subexpression::context() const
     {
-        return boost::apply_visitor(context_visitor<ast::context&>(), *this);
+        return boost::apply_visitor(context_visitor(), *this);
     }
 
-    ast::context const& postfix_subexpression::context() const
+    ast::context postfix_expression::context() const
     {
-        return boost::apply_visitor(context_visitor<ast::context const&>(), *this);
-    }
-
-    ast::context& postfix_expression::context()
-    {
-        return primary.context();
-    }
-
-    ast::context const& postfix_expression::context() const
-    {
-        return primary.context();
+        auto context = primary.context();
+        if (!subexpressions.empty()) {
+            context.end = subexpressions.back().context().end;
+        }
+        return context;
     }
 
     bool postfix_expression::is_productive() const
@@ -395,20 +355,26 @@ namespace puppet { namespace compiler { namespace ast {
         return hasher(static_cast<type>(oper));
     }
 
-    ostream& operator<<(ostream& os, binary_expression const& node)
+    ast::context binary_operation::context() const
     {
-        os << " " << node.oper << " " << node.operand;
+        auto context = operand.context();
+        context.begin = operator_position;
+        return context;
+    }
+
+    ostream& operator<<(ostream& os, binary_operation const& operation)
+    {
+        os << " " << operation.operator_ << " " << operation.operand;
         return os;
     }
 
-    ast::context& expression::context()
+    ast::context expression::context() const
     {
-        return postfix.context();
-    }
-
-    ast::context const& expression::context() const
-    {
-        return postfix.context();
+        auto context = postfix.context();
+        if (!operations.empty()) {
+            context.end = operations.back().context().end;
+        }
+        return context;
     }
 
     bool expression::is_productive() const
@@ -419,12 +385,12 @@ namespace puppet { namespace compiler { namespace ast {
         }
 
         // Expressions followed by an assignment or relationship operator are productive
-        for (auto const& binary : remainder) {
-            if (binary.oper == binary_operator::assignment ||
-                binary.oper == binary_operator::in_edge ||
-                binary.oper == binary_operator::in_edge_subscribe ||
-                binary.oper == binary_operator::out_edge ||
-                binary.oper == binary_operator::out_edge_subscribe) {
+        for (auto const& operation : operations) {
+            if (operation.operator_ == binary_operator::assignment ||
+                operation.operator_ == binary_operator::in_edge ||
+                operation.operator_ == binary_operator::in_edge_subscribe ||
+                operation.operator_ == binary_operator::out_edge ||
+                operation.operator_ == binary_operator::out_edge_subscribe) {
                 return true;
             }
         }
@@ -433,8 +399,8 @@ namespace puppet { namespace compiler { namespace ast {
 
     bool expression::is_splat() const
     {
-        // A splat expression is never binary
-        if (!remainder.empty()) {
+        // A splat expression never has binary operations
+        if (!operations.empty()) {
             return false;
         }
         // Check the postfix expression
@@ -443,8 +409,8 @@ namespace puppet { namespace compiler { namespace ast {
 
     bool expression::is_default() const
     {
-        // A default expression is never binary
-        if (!remainder.empty()) {
+        // A default expression never has binary operations
+        if (!operations.empty()) {
             return false;
         }
         // Check the postfix expression
@@ -453,14 +419,14 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(ostream& os, expression const& node)
     {
-        if (!node.remainder.empty()) {
+        if (!node.operations.empty()) {
             os << '(';
         }
         os << node.postfix;
-        for (auto const& binary : node.remainder) {
-            os << binary;
+        for (auto const& operation : node.operations) {
+            os << operation;
         }
-        if (!node.remainder.empty()) {
+        if (!node.operations.empty()) {
             os << ')';
         }
         return os;
@@ -496,25 +462,15 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& case_proposition::context()
+    ostream& operator<<(ostream& os, ast::proposition const& proposition)
     {
-        return options.at(0).context();
-    }
-
-    ast::context const& case_proposition::context() const
-    {
-        return options.at(0).context();
-    }
-
-    ostream& operator<<(ostream& os, case_proposition const& node)
-    {
-        pretty_print(os, node.options, ", ");
+        pretty_print(os, proposition.options, ", ");
         os << ": ";
-        if (node.body.empty()) {
+        if (proposition.body.empty()) {
             os << "{ }";
         } else {
             os << " { ";
-            pretty_print(os, node.body, "; ");
+            pretty_print(os, proposition.body, "; ");
             os << " }";
         }
         return os;
@@ -528,30 +484,44 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ostream& operator<<(ostream& os, else_expression const& node)
+    ostream& operator<<(ostream& os, ast::else_ const& else_)
     {
         os << "else";
-        if (node.body.empty()) {
+        if (else_.body.empty()) {
             os << " { }";
         } else {
             os << " { ";
-            pretty_print(os, node.body, "; ");
+            pretty_print(os, else_.body, "; ");
             os << " }";
         }
         return os;
     }
 
-    ostream& operator<<(ostream& os, elsif_expression const& node)
+    ostream& operator<<(ostream& os, ast::elsif const& elsif)
     {
-        os << "elsif " << node.conditional;
-        if (node.body.empty()) {
+        os << "elsif " << elsif.conditional;
+        if (elsif.body.empty()) {
             os << " { }";
         } else {
             os << " { ";
-            pretty_print(os, node.body, "; ");
+            pretty_print(os, elsif.body, "; ");
             os << " }";
         }
         return os;
+    }
+
+    ast::context if_expression::context() const
+    {
+        auto context = conditional.context();
+        context.begin = begin;
+        context.end = end;
+
+        if (else_) {
+            context.end = else_->end;
+        } else if (!elsifs.empty()) {
+            context.end = elsifs.back().end;
+        }
+        return context;
     }
 
     ostream& operator<<(ostream& os, if_expression const& node)
@@ -572,6 +542,14 @@ namespace puppet { namespace compiler { namespace ast {
             os << " " << *node.else_;
         }
         return os;
+    }
+
+    ast::context unless_expression::context() const
+    {
+        auto context = conditional.context();
+        context.begin = begin;
+        context.end = else_ ? else_->end : end;
+        return context;
     }
 
     ostream& operator<<(ostream& os, unless_expression const& node)
@@ -598,14 +576,25 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& parameter::context()
+    ast::context parameter::context() const
     {
-        return variable.context;
-    }
+        ast::context context;
+        if (type) {
+            context.begin = type->context().begin;
+        } else if (captures) {
+            context.begin = *captures;
+        } else {
+            context.begin = variable.begin;
+        }
 
-    ast::context const& parameter::context() const
-    {
-        return variable.context;
+        if (default_value) {
+            context.end = default_value->context().end;
+        } else {
+            context.end = variable.end;
+        }
+
+        context.tree = variable.tree;
+        return context;
     }
 
     ostream& operator<<(ostream& os, parameter const& node)
@@ -638,6 +627,19 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    ast::context method_call_expression::context() const
+    {
+        ast::context context = method;
+        context.begin = begin;
+
+        if (lambda) {
+            context.end = lambda->end;
+        } else if (end) {
+            context.end = *end;
+        }
+        return context;
+    }
+
     ostream& operator<<(ostream& os, method_call_expression const& node)
     {
         os << "." << node.method << "(";
@@ -649,14 +651,19 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& function_call_expression::context()
+    ast::context function_call_expression::context() const
     {
-        return function.context;
-    }
+        ast::context context = function;
 
-    ast::context const& function_call_expression::context() const
-    {
-        return function.context;
+        if (lambda) {
+            context.end = lambda->end;
+        } else if (end) {
+            context.end = *end;
+        } else {
+            // Call vector::at to bounds check
+            context.end = arguments.at(arguments.size() - 1).context().end;
+        }
+        return context;
     }
 
     ostream& operator<<(ostream& os, function_call_expression const& node)
@@ -687,19 +694,16 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& attribute::context()
+    ast::context attribute_operation::context() const
     {
-        return name.context;
+        ast::context context = name;
+        context.end = value.context().end;
+        return context;
     }
 
-    ast::context const& attribute::context() const
+    ostream& operator<<(ostream& os, ast::attribute_operation const& operation)
     {
-        return name.context;
-    }
-
-    ostream& operator<<(ostream& os, attribute const& node)
-    {
-        os << node.name << " " << node.oper << " " << node.value;
+        os << operation.name << " " << operation.operator_ << " " << operation.value;
         return os;
     }
 
@@ -723,31 +727,20 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& resource_body::context()
+    ast::context resource_body::context() const
     {
-        return title.context();
-    }
-
-    ast::context const& resource_body::context() const
-    {
-        return title.context();
+        auto context = title.context();
+        if (!operations.empty()) {
+            context.end = operations.back().context().end;
+        }
+        return context;
     }
 
     ostream& operator<<(ostream& os, resource_body const& node)
     {
         os << node.title << ": ";
-        pretty_print(os, node.attributes, ", ");
+        pretty_print(os, node.operations, ", ");
         return os;
-    }
-
-    ast::context& resource_expression::context()
-    {
-        return type.context();
-    }
-
-    ast::context const& resource_expression::context() const
-    {
-        return type.context();
     }
 
     ostream& operator<<(ostream& os, resource_expression const& node)
@@ -758,38 +751,18 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& resource_override_expression::context()
-    {
-        return reference.context();
-    }
-
-    ast::context const& resource_override_expression::context() const
-    {
-        return reference.context();
-    }
-
     ostream& operator<<(ostream& os, resource_override_expression const& node)
     {
         os << node.reference << " { ";
-        pretty_print(os, node.attributes, ", ");
+        pretty_print(os, node.operations, ", ");
         os << " }";
         return os;
-    }
-
-    ast::context& resource_defaults_expression::context()
-    {
-        return type.context;
-    }
-
-    ast::context const& resource_defaults_expression::context() const
-    {
-        return type.context;
     }
 
     ostream& operator<<(ostream& os, resource_defaults_expression const& node)
     {
         os << node.type << " { ";
-        pretty_print(os, node.attributes, ", ");
+        pretty_print(os, node.operations, ", ");
         os << " }";
         return os;
     }
@@ -831,6 +804,23 @@ namespace puppet { namespace compiler { namespace ast {
             os << " }";
         }
         return os;
+    }
+
+    ast::context hostname::context() const
+    {
+        if (auto ptr = boost::get<defaulted>(this)) {
+            return *ptr;
+        }
+        if (auto ptr = boost::get<string>(this)) {
+            return *ptr;
+        }
+        if (auto ptr = boost::get<regex>(this)) {
+            return *ptr;
+        }
+        auto& parts = boost::get<hostname_parts>(*this);
+        auto context = boost::apply_visitor(context_visitor(), parts.at(0));
+        context.end = boost::apply_visitor(context_visitor(), parts.back()).end;
+        return context;
     }
 
     bool hostname::is_default() const
@@ -882,16 +872,6 @@ namespace puppet { namespace compiler { namespace ast {
         return ss.str();
     }
 
-    ast::context& hostname::context()
-    {
-        return boost::apply_visitor(context_visitor<ast::context&>(), *this);
-    }
-
-    ast::context const& hostname::context() const
-    {
-        return boost::apply_visitor(context_visitor<ast::context const&>(), *this);
-    }
-
     ostream& operator<<(ostream& os, hostname const& node)
     {
         os << node.to_string();
@@ -912,14 +892,14 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ostream& operator<<(ostream& os, attribute_query_operator const& node)
+    ostream& operator<<(ostream& os, query_operator const& node)
     {
         switch (node) {
-            case attribute_query_operator::equals:
+            case query_operator::equals:
                 os << "==";
                 break;
 
-            case attribute_query_operator::not_equals:
+            case query_operator::not_equals:
                 os << "!=";
                 break;
 
@@ -929,33 +909,25 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ast::context& attribute_query::context()
+    ast::context attribute_query::context() const
     {
-        return attribute.context;
-    }
-
-    ast::context const& attribute_query::context() const
-    {
-        return attribute.context;
+        ast::context context = attribute;
+        context.end = value.context().end;
+        return context;
     }
 
     ostream& operator<<(ostream& os, attribute_query const& node)
     {
-        os << node.attribute << " " << node.oper << " " << node.value;
+        os << node.attribute << " " << node.operator_ << " " << node.value;
         return os;
     }
 
-    ast::context& attribute_query_expression::context()
+    ast::context primary_query_expression::context() const
     {
-        return boost::apply_visitor(context_visitor<ast::context&>(), *this);
+        return boost::apply_visitor(context_visitor(), *this);
     }
 
-    ast::context const& attribute_query_expression::context() const
-    {
-        return boost::apply_visitor(context_visitor<ast::context const&>(), *this);
-    }
-
-    ostream& operator<<(std::ostream& os, attribute_query_expression const& node)
+    ostream& operator<<(std::ostream& os, primary_query_expression const& node)
     {
         printer visitor{os};
         boost::apply_visitor(visitor, node.get());
@@ -979,45 +951,48 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ostream& operator<<(std::ostream& os, binary_attribute_query const& node)
+    ast::context binary_query_operation::context() const
     {
-        os << " " << node.oper << " " << node.operand;
+        auto context = operand.context();
+        context.begin = operator_position;
+        return context;
+    }
+
+    ostream& operator<<(std::ostream& os, binary_query_operation const& operation)
+    {
+        os << " " << operation.operator_ << " " << operation.operand;
         return os;
     }
 
-    ast::context& collector_query_expression::context()
+    ast::context query_expression::context() const
     {
-        return primary.context();
+        auto context = primary.context();
+        if (!operations.empty()) {
+            context.end = operations.back().context().end;
+        }
+        return context;
     }
 
-    ast::context const& collector_query_expression::context() const
+    ostream& operator<<(std::ostream& os, query_expression const& node)
     {
-        return primary.context();
-    }
-
-    ostream& operator<<(std::ostream& os, collector_query_expression const& node)
-    {
-        if (!node.remainder.empty()) {
+        if (!node.operations.empty()) {
             os << '(';
         }
         os << node.primary;
-        for (auto const& binary : node.remainder) {
-            os << binary;
+        for (auto const& operation : node.operations) {
+            os << operation;
         }
-        if (!node.remainder.empty()) {
+        if (!node.operations.empty()) {
             os << ')';
         }
         return os;
     }
 
-    ast::context& collector_expression::context()
+    ast::context collector_expression::context() const
     {
-        return type.context;
-    }
-
-    ast::context const& collector_expression::context() const
-    {
-        return type.context;
+        ast::context context = type;
+        context.end = end;
+        return context;
     }
 
     ostream& operator<<(ostream& os, collector_expression const& node)
@@ -1058,14 +1033,21 @@ namespace puppet { namespace compiler { namespace ast {
         return hasher(static_cast<type>(oper));
     }
 
+    ast::context unary_expression::context() const
+    {
+        ast::context context = operand.context();
+        context.begin = operator_position;
+        return context;
+    }
+
     bool unary_expression::is_splat() const
     {
-        return oper == unary_operator::splat;
+        return operator_ == unary_operator::splat;
     }
 
     ostream& operator<<(ostream& os, unary_expression const& node)
     {
-        os << node.oper << node.operand;
+        os << node.operator_ << node.operand;
         return os;
     }
 

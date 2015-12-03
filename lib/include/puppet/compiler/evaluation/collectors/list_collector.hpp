@@ -17,10 +17,15 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
     struct list_collector : collector
     {
         /**
+         * The type of the list used by the collector.
+         */
+        using list_type = std::list<std::pair<runtime::types::resource, ast::context>>;
+
+        /**
          * Constructs a list collector.
          * @param list The list of types to collect.
          */
-        list_collector(std::list<std::pair<runtime::types::resource, ast::context>> list);
+        explicit list_collector(list_type list);
 
         /**
          * Collects the resources.
@@ -35,7 +40,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
         void detect_uncollected() const override;
 
      private:
-        std::list<std::pair<runtime::types::resource, ast::context>> _list;
+        std::shared_ptr<ast::syntax_tree> _tree;
+        list_type _list;
     };
 
 }}}}  // namespace puppet::compiler::evaluation::collectors

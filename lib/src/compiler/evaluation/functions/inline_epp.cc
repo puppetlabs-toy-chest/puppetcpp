@@ -18,7 +18,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         auto& arguments = context.arguments();
         auto count = arguments.size();
         if (count == 0 || count > 2) {
-            throw evaluation_exception((boost::format("expected 1 or 2 arguments to '%1%' function but %2% were given.") % context.name() % count).str(), count > 2 ? context.argument_context(2) : context.call_site());
+            throw evaluation_exception((boost::format("expected 1 or 2 arguments to '%1%' function but %2% were given.") % context.name() % count).str(), count > 2 ? context.argument_context(2) : context.name());
         }
         // First argument should be a string
         auto input = arguments[0]->as<string>();
@@ -63,8 +63,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             // Log the underlying problem and then throw an error pointing at the argument
             size_t column;
             string text;
-            tie(text, column) = lexer::get_text_and_column(*input, ex.position().offset());
-            evaluation_context.node().logger().log(logging::level::error, ex.position().line(), column, text, path, ex.what());
+            auto& begin = ex.range().begin();
+            tie(text, column) = lexer::get_text_and_column(*input, begin.offset());
+            evaluation_context.node().logger().log(logging::level::error, begin.line(), column, ex.range().length(), text, path, ex.what());
             throw evaluation_exception("parsing of EPP template failed.", context.argument_context(0));
         } catch (argument_exception const& ex) {
             throw evaluation_exception((boost::format("EPP template argument error: %1%") % ex.what()).str(), context.argument_context(1));

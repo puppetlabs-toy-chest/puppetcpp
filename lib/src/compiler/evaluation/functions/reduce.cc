@@ -149,16 +149,16 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         auto& arguments = context.arguments();
         auto count = arguments.size();
         if (arguments.size() == 0 || arguments.size() > 2) {
-            throw evaluation_exception((boost::format("expected 1 or 2 arguments to '%1%' function but %2% were given.") % context.name() % count).str(), count > 2 ? context.argument_context(2) : context.call_site());
+            throw evaluation_exception((boost::format("expected 1 or 2 arguments to '%1%' function but %2% were given.") % context.name() % count).str(), count > 2 ? context.argument_context(2) : context.name());
         }
 
         // Check the lambda
         if (!context.lambda()) {
-            throw evaluation_exception((boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str(), context.call_site());
+            throw evaluation_exception((boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str(), context.name());
         }
         count = context.lambda()->parameters.size();
         if (count != 2) {
-            throw evaluation_exception((boost::format("expected 2 lambda parameters but %1% were given.") % count).str(), context.lambda()->context);
+            throw evaluation_exception((boost::format("expected 2 lambda parameters but %1% were specified.") % count).str(), *context.lambda());
         }
 
         // Use the provided memo if there is one

@@ -57,8 +57,8 @@ namespace puppet { namespace compiler {
         void operator()(ast::defined_type_expression const& expression);
         void operator()(ast::node_expression const& expression);
         void operator()(ast::collector_expression const& expression);
-        void operator()(ast::collector_query_expression const& expression);
-        void operator()(ast::attribute_query_expression const& expression);
+        void operator()(ast::query_expression const& expression);
+        void operator()(ast::primary_query_expression const& expression);
         void operator()(ast::attribute_query const& expression);
         void operator()(ast::unary_expression const& expression);
         void operator()(ast::postfix_expression const& expression);

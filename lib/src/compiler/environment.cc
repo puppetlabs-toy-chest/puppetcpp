@@ -127,7 +127,7 @@ namespace puppet { namespace compiler {
             auto resource = catalog.add(
                 types::resource("node", result.second),
                 catalog.find(types::resource("class", "main")),
-                &result.first->expression().context);
+                result.first->expression());
             if (!resource) {
                 throw evaluation_exception("failed to add node resource.");
             }

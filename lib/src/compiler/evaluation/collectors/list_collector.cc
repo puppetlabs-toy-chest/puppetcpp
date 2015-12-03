@@ -9,9 +9,13 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace collectors {
 
-    list_collector::list_collector(list<pair<types::resource, ast::context>> list) :
+    list_collector::list_collector(list_type list) :
         _list(rvalue_cast(list))
     {
+        // Take a shared reference on the AST (assumes all entries in the list come from the same AST)
+        if (!_list.empty()) {
+            _tree = _list.front().second.tree->shared_from_this();
+        }
     }
 
     void list_collector::detect_uncollected() const

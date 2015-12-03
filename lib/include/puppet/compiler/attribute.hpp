@@ -23,7 +23,7 @@ namespace puppet { namespace compiler {
          * @param value The attribute's value.
          * @param value_context The AST context of the value.
          */
-        attribute(std::string name, ast::context const& name_context, std::shared_ptr<runtime::values::value> value, ast::context const& value_context);
+        attribute(std::string name, ast::context name_context, std::shared_ptr<runtime::values::value> value, ast::context value_context);
 
         /**
          * Gets the name of the attribute.
@@ -70,9 +70,9 @@ namespace puppet { namespace compiler {
      private:
         std::shared_ptr<ast::syntax_tree> _tree;
         std::string _name;
-        ast::context const& _name_context;
+        ast::context _name_context;
         std::shared_ptr<runtime::values::value> _value;
-        ast::context const& _value_context;
+        ast::context _value_context;
     };
 
     /**

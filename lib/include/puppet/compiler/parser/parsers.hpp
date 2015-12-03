@@ -9,6 +9,8 @@
 #include "../lexer/number_token.hpp"
 #include "../lexer/string_token.hpp"
 #include <boost/spirit/home/x3.hpp>
+#include <boost/spirit/home/x3/nonterminal/simple_trace.hpp>
+#include <tuple>
 
 namespace puppet { namespace compiler { namespace parser {
 
@@ -18,40 +20,48 @@ namespace puppet { namespace compiler { namespace parser {
     struct tree_context_tag;
 
     /**
-     * Responsible for parsing AST context.
+     * Base type responsible for parsing tokens.
+     * @tparam Parser The derived parser type.
+     * @tparam Attribute The output attribute type.
      */
-    struct context : boost::spirit::x3::parser<context>
+    template <typename Parser, typename Attribute>
+    struct token_parser : boost::spirit::x3::parser<token_parser<Parser, Attribute>>
     {
         /**
-         * The resulting attribute type.
+         * The parser base type.
          */
-        using attribute_type = ast::context;
+        using base_type = token_parser<Parser, Attribute>;
 
         /**
-         * Constructs a context parser that will match any token.
+         * The parser attribute type.
+         */
+        using attribute_type = Attribute;
+
+        /**
+         * Constructs a token parser that will match any token.
          * @param consume True to consume the token or false if not.
          */
-        explicit context(bool consume = true) :
-            context(static_cast<lexer::token_id>(0), consume)
+        explicit token_parser(bool consume = true) :
+            token_parser(static_cast<lexer::token_id>(0), consume)
         {
         }
 
         /**
-         * Constructs a context parser that will match the given character token.
-         * @param id The token identifier, as a character.
+         * Constructs a token parser that will match the given token identifier.
+         * @param id The token identifier to match, as a character.
          * @param consume True to consume the token or false if not.
          */
-        explicit context(char id, bool consume = true) :
-            context(static_cast<lexer::token_id>(id), consume)
+        explicit token_parser(char id, bool consume = true) :
+            token_parser(static_cast<lexer::token_id>(id), consume)
         {
         }
 
         /**
-         * Constructs a context parser that will match the given token identifier.
-         * @param id The token identifier.
+         * Constructs a token parser that will match the given token identifier.
+         * @param id The token identifier to match.
          * @param consume True to consume the token or false if not.
          */
-        explicit context(lexer::token_id id, bool consume = true) :
+        explicit token_parser(lexer::token_id id, bool consume = true) :
             _id(id),
             _consume(consume)
         {
@@ -70,21 +80,21 @@ namespace puppet { namespace compiler { namespace parser {
          * Parses the input.
          * @tparam Iterator The iterator type.
          * @tparam Context The context type.
+         * @tparam Parsed The parsed attribute type.
          * @param first The first iterator.
          * @param last The last iterator.
          * @param context The parse context.
          * @param attr The output attribute resulting from the parse.
          * @return Returns true if the parse is successful or false if it is not.
          */
-        template <typename Iterator, typename Context>
-        bool parse(Iterator& first, Iterator const& last, Context const& context, boost::spirit::x3::unused_type, attribute_type& attr) const
+        template <typename Iterator, typename Context, typename Parsed>
+        bool parse(Iterator& first, Iterator const& last, Context const& context, boost::spirit::x3::unused_type, Parsed& attr) const
         {
             namespace x3 = boost::spirit::x3;
 
             x3::skip_over(first, last, context);
-            if (first != last && (static_cast<size_t>(_id) == 0 || static_cast<lexer::token_id>(first->id()) == _id)) {
-                attr.tree = x3::get<tree_context_tag>(context);
-                attr.position = boost::apply_visitor(lexer::token_position_visitor(), first->value());
+            if (static_cast<size_t>(_id) == 0 || (first != last && static_cast<lexer::token_id>(first->id()) == _id)) {
+                static_cast<Parser const*>(this)->assign(first, context, attr);
                 if (_consume) {
                     ++first;
                 }
@@ -99,249 +109,133 @@ namespace puppet { namespace compiler { namespace parser {
     };
 
     /**
-     * Represents a parser that returns the current context without consuming a token.
+     * Responsible for parsing the beginning position of a token.
+     * Does not consume the token by default.
      */
-    auto const current_context = context(false);
-
-    /**
-     * Responsible for parsing lexer positions (used in string interpolation).
-     */
-    struct position : boost::spirit::x3::parser<position>
+    struct begin_parser : token_parser<begin_parser, lexer::position>
     {
-        /**
-         * The resulting attribute type.
-         */
-        using attribute_type = lexer::position;
-
-        /**
-         * Constructs a position parser that will match the given character token.
-         * @param id The token identifier, as a character.
-         */
-        explicit position(char id) :
-            position(static_cast<lexer::token_id>(id))
-        {
-        }
-
-        /**
-         * Constructs a position parser that will match the given token identifier.
-         * @param id The token identifier.
-         */
-        explicit position(lexer::token_id id) :
-            _id(id)
-        {
-        }
-
-        /**
-         * Gets the token identifier for the parser.
-         * @return Returns the token identifier for the parser.
-         */
-        lexer::token_id id() const
-        {
-            return _id;
-        }
-
-        /**
-         * Parses the input.
-         * @tparam Iterator The iterator type.
-         * @tparam Context The context type.
-         * @param first The first iterator.
-         * @param last The last iterator.
-         * @param context The parse context.
-         * @param attr The output attribute resulting from the parse.
-         * @return Returns true if the parse is successful or false if it is not.
-         */
-        template <typename Iterator, typename Context>
-        bool parse(Iterator& first, Iterator const& last, Context const& context, boost::spirit::x3::unused_type, attribute_type& attr) const
-        {
-            namespace x3 = boost::spirit::x3;
-
-            x3::skip_over(first, last, context);
-            if (first != last && (static_cast<size_t>(_id) == 0 || static_cast<lexer::token_id>(first->id()) == _id)) {
-                attr = boost::apply_visitor(lexer::token_position_visitor(), first->value());
-                ++first;
-                return true;
-            }
-            return false;
-        }
+        // Use the base constructors.
+        using base_type::base_type;
 
      private:
-        lexer::token_id _id;
+        friend struct token_parser<begin_parser, lexer::position>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
+        {
+            attr = boost::apply_visitor(lexer::token_range_visitor(), iterator->value()).begin();
+        }
     };
 
     /**
-     * Responsible for parsing a token without ouputting an attribute.
+     * Alias for begin parser.
      */
-    struct raw_token : boost::spirit::x3::parser<raw_token>
+    using begin = begin_parser;
+
+    /**
+     * Responsible for parsing the ending position (not inclusive) of a token.
+     */
+    struct end_parser : token_parser<end_parser, lexer::position>
     {
-        /**
-         * The resulting attribute type.
-         */
-        using attribute_type = boost::spirit::x3::unused_type;
-
-        /**
-         * Constructs a raw token parser that will match the given token identifier.
-         * @param id The token identifier to match, as a character.
-         */
-        explicit raw_token(char id) :
-            raw_token(static_cast<lexer::token_id>(id))
-        {
-        }
-
-         /**
-         * Constructs a raw token parser that will match the given token identifier.
-         * @param id The token identifier to match.
-         */
-        explicit raw_token(lexer::token_id id) :
-            _id(id)
-        {
-        }
-
-        /**
-         * Gets the token identifier for the parser.
-         * @return Returns the token identifier for the parser.
-         */
-        lexer::token_id id() const
-        {
-            return _id;
-        }
-
-        /**
-         * Parses the input.
-         * @tparam Iterator The iterator type.
-         * @tparam Context The context type.
-         * @param first The first iterator.
-         * @param last The last iterator.
-         * @param context The parse context.
-         * @return Returns true if the parse is successful or false if it is not.
-         */
-        template <typename Iterator, typename Context>
-        bool parse(Iterator& first, Iterator const& last, Context const& context, boost::spirit::x3::unused_type, boost::spirit::x3::unused_type) const
-        {
-            namespace x3 = boost::spirit::x3;
-
-            x3::skip_over(first, last, context);
-            if (first != last && static_cast<lexer::token_id>(first->id()) == _id) {
-                ++first;
-                return true;
-            }
-            return false;
-        }
+        // Use the base constructors.
+        using base_type::base_type;
 
      private:
-        lexer::token_id _id;
+        friend struct token_parser<end_parser, lexer::position>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
+        {
+            attr = boost::apply_visitor(lexer::token_range_visitor(), iterator->value()).end();
+        }
     };
 
     /**
-     * Base type responsible for parsing tokens.
-     * @tparam Parser The derived parser type.
-     * @tparam Attribute The output attribute type.
+     * Alias for end parser.
      */
-    template <typename Parser, typename Attribute>
-    struct token_parser : boost::spirit::x3::parser<token_parser<Parser, Attribute>>
+    using end = end_parser;
+
+    /**
+     * Responsible for extracting the base syntax tree pointer from the parse context.
+     * This parser never consumes a token.
+     */
+    struct tree_parser : boost::spirit::x3::parser<tree_parser>
     {
-        /**
-         * The parser base type.
-         */
-        using base_type = token_parser<Parser, Attribute>;
         /**
          * The parser attribute type.
          */
-        using attribute_type = Attribute;
-
-        /**
-         * Constructs a token parser that will match the given token identifier.
-         * @param id The token identifier to match, as a character.
-         */
-        explicit token_parser(char id) :
-            token_parser(static_cast<lexer::token_id>(id))
-        {
-        }
-
-        /**
-         * Constructs a token parser that will match the given token identifier.
-         * @param id The token identifier to match.
-         */
-        explicit token_parser(lexer::token_id id) :
-            _id(id)
-        {
-        }
-
-        /**
-         * Gets the token identifier for the parser.
-         * @return Returns the token identifier for the parser.
-         */
-        lexer::token_id id() const
-        {
-            return _id;
-        }
+        using attribute_type = ast::syntax_tree*;
 
         /**
          * Parses the input.
          * @tparam Iterator The iterator type.
          * @tparam Context The context type.
+         * @tparam Parsed The parsed attribute type.
          * @param first The first iterator.
          * @param last The last iterator.
          * @param context The parse context.
          * @param attr The output attribute resulting from the parse.
          * @return Returns true if the parse is successful or false if it is not.
          */
-        template <typename Iterator, typename Context>
-        bool parse(Iterator& first, Iterator const& last, Context const& context, boost::spirit::x3::unused_type, attribute_type& attr) const
+        template <typename Iterator, typename Context, typename Parsed>
+        bool parse(Iterator& first, Iterator const& last, Context const& context, boost::spirit::x3::unused_type, Parsed& attr) const
         {
-            namespace x3 = boost::spirit::x3;
-
-            x3::skip_over(first, last, context);
-            if (first != last && static_cast<lexer::token_id>(first->id()) == _id) {
-                static_cast<Parser const*>(this)->assign(first, context, attr);
-                ++first;
-                return true;
-            }
-            return false;
+            attr = boost::spirit::x3::get<tree_context_tag>(context);
+            return true;
         }
-
-     private:
-        lexer::token_id _id;
     };
 
     /**
-     * Responsible for parsing a token and outputting a string.
+     * Represents a parser that returns the base syntax tree from the parser context.
      */
-    struct token : token_parser<token, std::string>
+    auto const tree = tree_parser();
+
+    /**
+     * Responsible for consuming a token without outputting an attribute.
+     */
+    struct raw_parser : token_parser<raw_parser, boost::spirit::x3::unused_type>
+    {
+        // Use the base constructors.
+        using base_type::base_type;
+
+     private:
+        friend struct token_parser<raw_parser, boost::spirit::x3::unused_type>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
+        {
+            // Do nothing
+        }
+    };
+
+    /**
+     * Alias for raw parser.
+     */
+    using raw = raw_parser;
+
+    /**
+     * Responsible for parsing the current token's value.
+     * This parser does not consume the token.
+     */
+    struct value_parser : token_parser<value_parser, std::string>
     {
         /**
-         * Constructs a token parser that will match the given token identifier.
-         * @param id The token identifier to match, as a character.
+         * Constructs a value parser that will match the given token identifier.
          * @param remove_front True to remove the first character of the string or false if not.
          * @param remove_back True to remove the last character of the string or false if not.
          */
-        explicit token(char id, bool remove_front = false, bool remove_back = false) :
-            token(static_cast<lexer::token_id>(id), remove_front, remove_back)
-        {
-        }
-
-        /**
-         * Constructs a token parser that will match the given token identifier.
-         * @param id The token identifier to match.
-         * @param remove_front True to remove the first character of the string or false if not.
-         * @param remove_back True to remove the last character of the string or false if not.
-         */
-        explicit token(lexer::token_id id, bool remove_front = false, bool remove_back = false) :
-            base_type(id),
+        explicit value_parser(bool remove_front, bool remove_back) :
+            base_type(false),
             _remove_front(remove_front),
             _remove_back(remove_back)
         {
         }
 
-        /**
-         * Assigns an attribute from a matched input.
-         * @tparam Iterator The iterator type.
-         * @tparam Context The context type.
-         * @param iterator The iterator that matched.
-         * @param context The parser context.
-         * @param attr The output attribute.
-         */
-        template <typename Iterator, typename Context>
-        void assign(Iterator const& iterator, Context& context, attribute_type& attr) const
+     private:
+        friend struct token_parser<value_parser, std::string>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
         {
             // Get the range and copy the entire thing if not removing any characters
             auto& range = boost::get<boost::iterator_range<typename Iterator::value_type::iterator_type>>(iterator->value());
@@ -370,92 +264,117 @@ namespace puppet { namespace compiler { namespace parser {
             attr.assign(start, end);
         }
 
-     private:
         bool _remove_front;
         bool _remove_back;
     };
 
     /**
+     * Responsible for parsing the current token's value and trimming the first and last characters.
+     */
+    auto const trim_value = value_parser(true, true);
+
+    /**
+     * Responsible for parsing the current token's value and trimming the first character.
+     */
+    auto const ltrim_value = value_parser(true, false);
+
+    /**
+     * Responsible for parsing the current token's value and trimming the first character.
+     */
+    auto const rtrim_value = value_parser(false, true);
+
+    /**
+     * Responsible for parsing the current token's value.
+     */
+    auto const value = value_parser(false, false);
+
+    /**
      * Responsible for parsing a number token.
      */
-    struct number_token : token_parser<number_token, ast::number>
+    struct number_parser : token_parser<number_parser, ast::number>
     {
         /**
-         * Default constructor for number token.
+         * Default constructor for number parser.
          */
-        number_token() :
+        number_parser() :
             base_type(lexer::token_id::number)
         {
         }
 
-        /**
-         * Assigns an attribute from a matched input.
-         * @tparam Iterator The iterator type.
-         * @tparam Context The context type.
-         * @param iterator The iterator that matched.
-         * @param context The parser context.
-         * @param attr The output attribute.
-         */
-        template <typename Iterator, typename Context>
-        void assign(Iterator const& iterator, Context& context, attribute_type& attr) const
+     private:
+        friend struct token_parser<number_parser, ast::number>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
         {
             namespace x3 = boost::spirit::x3;
 
-            attr.context.tree = x3::get<tree_context_tag>(context);
-            auto& number_token = boost::get<lexer::number_token>(iterator->value());
-            attr.context.position = number_token.position();
-            attr.value = number_token.value();
+            auto& token = boost::get<lexer::number_token>(iterator->value());
+            attr.begin = token.range().begin();
+            attr.end = token.range().end();
+            attr.tree = x3::get<tree_context_tag>(context);
+            attr.value = token.value();
         }
     };
 
     /**
+     * Responsible for parsing number tokens.
+     */
+    auto const number_token = number_parser();
+
+    /**
      * Responsible for parsing a string token.
      */
-    struct string_token : token_parser<string_token, ast::string>
+    struct string_parser : token_parser<string_parser, ast::string>
     {
         // Use base constructors
         using base_type::base_type;
 
-        /**
-         * Assigns an attribute from a matched input.
-         * @tparam Iterator The iterator type.
-         * @tparam Context The context type.
-         * @param iterator The iterator that matched.
-         * @param context The parser context.
-         * @param attr The output attribute.
-         */
-        template <typename Iterator, typename Context>
-        void assign(Iterator const& iterator, Context& context, attribute_type& attr) const
+     private:
+        friend struct token_parser<string_parser, ast::string>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
         {
             namespace x3 = boost::spirit::x3;
 
-            attr.context.tree = x3::get<tree_context_tag>(context);
-            auto& string_token = boost::get<lexer::string_token<typename Iterator::value_type::iterator_type>>(iterator->value());
-            attr.context.position = string_token.position();
-            attr.value.assign(string_token.begin(), string_token.end());
-            attr.escapes = string_token.escapes();
-            attr.quote = string_token.quote();
-            attr.interpolated = string_token.interpolated();
-            attr.format = string_token.format();
-            attr.margin = string_token.margin();
-            attr.remove_break = string_token.remove_break();
+            auto& token = boost::get<lexer::string_token<typename Iterator::value_type::iterator_type>>(iterator->value());
+            auto& value = token.value();
+            attr.tree = x3::get<tree_context_tag>(context);
+            attr.begin = token.range().begin();
+            attr.end = token.range().end();
+            attr.value_range = lexer::range(value.begin().position(), value.end().position());
+            attr.value = std::string(value.begin(), value.end());
+            attr.escapes = token.escapes();
+            attr.quote = token.quote();
+            attr.interpolated = token.interpolated();
+            attr.format = token.format();
+            attr.margin = token.margin();
+            attr.remove_break = token.remove_break();
         }
     };
+
+    /**
+     * Responsible for parsing string tokens.
+     */
+    auto const string_token = string_parser(lexer::token_id::single_quoted_string) |
+                              string_parser(lexer::token_id::double_quoted_string) |
+                              string_parser(lexer::token_id::heredoc);
 
 }}} // namespace puppet::compiler::parser
 
 namespace boost { namespace spirit { namespace x3 {
 
     /**
-     * Responsible for getting the info of a context parser.
+     * Responsible for getting the info of a begin parser.
      */
     template <>
-    struct get_info<puppet::compiler::parser::context>
+    struct get_info<puppet::compiler::parser::begin_parser>
     {
         /**
          * The parser type.
          */
-        using parser_type = puppet::compiler::parser::context;
+        using parser_type = puppet::compiler::parser::begin_parser;
         /**
          * The result type.
          */
@@ -473,15 +392,15 @@ namespace boost { namespace spirit { namespace x3 {
     };
 
     /**
-     * Responsible for getting the info of a raw token parser.
+     * Responsible for getting the info of an end parser.
      */
     template <>
-    struct get_info<puppet::compiler::parser::raw_token>
+    struct get_info<puppet::compiler::parser::end_parser>
     {
         /**
          * The parser type.
          */
-        using parser_type = puppet::compiler::parser::raw_token;
+        using parser_type = puppet::compiler::parser::end_parser;
         /**
          * The result type.
          */
@@ -499,15 +418,41 @@ namespace boost { namespace spirit { namespace x3 {
     };
 
     /**
-     * Responsible for getting the info of a token parser.
+     * Responsible for getting the info of a tree parser.
      */
     template <>
-    struct get_info<puppet::compiler::parser::token>
+    struct get_info<puppet::compiler::parser::tree_parser>
     {
         /**
          * The parser type.
          */
-        using parser_type = puppet::compiler::parser::token;
+        using parser_type = puppet::compiler::parser::tree_parser;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            return "tree";
+        }
+    };
+
+    /**
+     * Responsible for getting the info of a raw parser.
+     */
+    template <>
+    struct get_info<puppet::compiler::parser::raw_parser>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = puppet::compiler::parser::raw_parser;
         /**
          * The result type.
          */
@@ -525,15 +470,41 @@ namespace boost { namespace spirit { namespace x3 {
     };
 
     /**
-     * Responsible for getting the info of a number token parser.
+     * Responsible for getting the info of a value parser.
      */
     template <>
-    struct get_info<puppet::compiler::parser::number_token>
+    struct get_info<puppet::compiler::parser::value_parser>
     {
         /**
          * The parser type.
          */
-        using parser_type = puppet::compiler::parser::number_token;
+        using parser_type = puppet::compiler::parser::value_parser;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            return boost::lexical_cast<result_type>(parser.id());
+        }
+    };
+
+    /**
+     * Responsible for getting the info of a number parser.
+     */
+    template <>
+    struct get_info<puppet::compiler::parser::number_parser>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = puppet::compiler::parser::number_parser;
         /**
          * The result type.
          */
@@ -551,41 +522,15 @@ namespace boost { namespace spirit { namespace x3 {
     };
 
     /**
-     * Responsible for getting the info of a position parser.
+     * Responsible for getting the info of a string parser.
      */
     template <>
-    struct get_info<puppet::compiler::parser::position>
+    struct get_info<puppet::compiler::parser::string_parser>
     {
         /**
          * The parser type.
          */
-        using parser_type = puppet::compiler::parser::position;
-        /**
-         * The result type.
-         */
-        using result_type = std::string;
-
-        /**
-         * Gets the info for a parser.
-         * @param parser The parser to get the info for.
-         * @return Returns the info for the parser.
-         */
-        result_type operator()(parser_type const& parser) const
-        {
-            return boost::lexical_cast<result_type>(parser.id());
-        }
-    };
-
-    /**
-     * Responsible for getting the info of a string token parser.
-     */
-    template <>
-    struct get_info<puppet::compiler::parser::string_token>
-    {
-        /**
-         * The parser type.
-         */
-        using parser_type = puppet::compiler::parser::string_token;
+        using parser_type = puppet::compiler::parser::string_parser;
         /**
          * The result type.
          */

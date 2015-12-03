@@ -58,7 +58,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         // TODO: check a local collection of "registered" functions first
 
         // Find a builtin function
-        auto it = builtin_functions.find(context.name());
+        auto it = builtin_functions.find(context.name().value);
         if (it == builtin_functions.end()) {
             if (_fallback) {
                 auto result = _fallback(context);
@@ -66,7 +66,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     return rvalue_cast(*result);
                 }
             }
-            throw evaluation_exception((boost::format("unknown function '%1%'.") % context.name()).str(), context.call_site());
+            throw evaluation_exception((boost::format("unknown function '%1%'.") % context.name()).str(), context.name());
         }
         return it->second(context);
     }

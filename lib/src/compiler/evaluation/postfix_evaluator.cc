@@ -18,7 +18,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             _evaluator(context)
         {
             _value = _evaluator.evaluate(expression.primary);
-            _value_context = expression.context();
+            _value_context = expression.primary.context();
             _splat = expression.is_splat();
 
             for (auto const& subexpression : expression.subexpressions) {
@@ -65,7 +65,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Handle no matching case
             if (!default_index) {
-                throw evaluation_exception((boost::format("no matching selector case for value '%1%'.") % _value).str(), expression.context);
+                throw evaluation_exception((boost::format("no matching selector case for value '%1%'.") % _value).str(), expression);
             }
 
             // Evaluate the default case
@@ -78,14 +78,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             access_evaluator evaluator(_evaluator.context());
             _value = evaluator.evaluate(_value, expression);
-            _value_context = expression.context;
+            _value_context = expression;
         }
 
         void operator()(method_call_expression const& expression)
         {
             functions::function_call_context context { _evaluator.context(), expression, _value, _value_context, _splat };
             _value = _evaluator.context().dispatcher().dispatch(context);
-            _value_context = expression.context;
+            _value_context = expression.context();
         }
 
         value& result()

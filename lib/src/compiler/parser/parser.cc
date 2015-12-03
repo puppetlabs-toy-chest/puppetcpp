@@ -17,7 +17,16 @@ namespace puppet { namespace compiler { namespace parser {
     void check_missing_epp_end(Iterator const& iterator)
     {
         if (!iterator.epp_end()) {
-            throw parse_exception("expected '%>' or '-%>' but found end of input.", iterator.position());
+            throw parse_exception(
+                "expected '%>' or '-%>' but found end of input.",
+                lexer::range{
+                    iterator.position(),
+                    lexer::position{
+                        iterator.position().offset() + 1,
+                        iterator.position().line()
+                    }
+                }
+            );
         }
     }
 
@@ -66,10 +75,7 @@ namespace puppet { namespace compiler { namespace parser {
 
             // If not all tokens were processed and the iterator points at a valid token, handle unexpected token
             if (token_begin != token_end && token_is_valid(*token_begin)) {
-                throw parse_exception(
-                    (boost::format("syntax error: unexpected %1%.") % static_cast<token_id>(token_begin->id())).str(),
-                    get_position(input, *token_begin)
-                );
+                throw parse_exception((boost::format("syntax error: unexpected %1%.") % static_cast<token_id>(token_begin->id())).str(), get_range(input, *token_begin));
             }
 
             // Unexpected character in the input
@@ -85,14 +91,35 @@ namespace puppet { namespace compiler { namespace parser {
             } else {
                 message << "unexpected end of input.";
             }
-            throw parse_exception(message.str(), begin.position());
+            throw parse_exception(
+                message.str(),
+                lexer::range{
+                    begin.position(),
+                    lexer::position{
+                        begin.position().offset() + 1,
+                        begin.position().line()
+                    }
+                }
+            );
         } catch (lexer_exception<typename Lexer::input_iterator_type> const& ex) {
-            throw parse_exception(ex.what(), ex.location().position());
+            auto& location = ex.location().position();
+            throw parse_exception(
+                ex.what(),
+                lexer::range{
+                    location,
+                    lexer::position{
+                        location.offset() + 1,
+                        location.line()
+                    }
+                }
+            );
         } catch (x3::expectation_failure<typename Lexer::iterator_type> const& ex) {
             throw parse_exception(
-                (boost::format("expected %1% but found %2%.") % ex.which() % static_cast<token_id>(ex.where()->id())).str(),
-                get_position(input, *ex.where())
-            );
+                (boost::format("expected %1% but found %2%.") %
+                 ex.which() %
+                 static_cast<token_id>(ex.where()->id())
+                ).str(),
+                get_range(input, *ex.where()));
         }
     }
 

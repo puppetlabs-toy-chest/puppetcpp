@@ -40,81 +40,75 @@ namespace puppet { namespace compiler { namespace evaluation {
     static bool tokenize_interpolation(
         string& result,
         evaluation::context& context,
-        ast::context const& expression_context,
         lexer_string_iterator& begin,
-        lexer_string_iterator const& end,
-        function<lexer::position(lexer::position const&)> const& calculate_position)
+        lexer_string_iterator const& end)
     {
-        try {
-            bool bracket = begin != end && *begin == '{';
-            string_static_lexer lexer;
+        bool bracket = begin != end && *begin == '{';
+        string_static_lexer lexer;
 
-            auto current = begin;
-            auto token_begin = lexer.begin(current, end);
-            auto token_end = lexer.end();
+        auto current = begin;
+        auto token_begin = lexer.begin(current, end);
+        auto token_end = lexer.end();
 
-            // Check for the following forms:
-            // {keyword}, {name/bare_word}, {decimal}
-            // name, decimal
+        // Check for the following forms:
+        // {keyword}, {name/bare_word}, {decimal}
+        // name, decimal
 
-            // Skip past the opening bracket
-            if (bracket && token_begin != token_end && token_begin->id() == '{') {
-                ++token_begin;
-            }
+        // Skip past the opening bracket
+        if (bracket && token_begin != token_end && token_begin->id() == '{') {
+            ++token_begin;
+        }
 
-            shared_ptr<values::value const> value;
-            if (token_begin != token_end &&
-                (
-                    is_keyword(static_cast<token_id>(token_begin->id())) ||
-                    token_begin->id() == static_cast<size_t>(token_id::name) ||
-                    token_begin->id() == static_cast<size_t>(token_id::bare_word)
-                )) {
-                auto token = get<boost::iterator_range<lexer_string_iterator>>(&token_begin->value());
-                if (!token) {
-                    return false;
-                }
-                // Lookup as a variable expression
-                ast::variable expression{ expression_context, string(token->begin(), token->end()) };
-                value = context.lookup(expression);
-            } else if (token_begin != token_end && token_begin->id() == static_cast<size_t>(token_id::number)) {
-                auto token = get<number_token>(&token_begin->value());
-                if (!token) {
-                    return false;
-                }
-                if (token->base() != numeric_base::decimal || token->value().which() != 0) {
-                    throw evaluation_exception((boost::format("'%1%' is not a valid match variable name.") % *token).str(), expression_context);
-                }
-                value = context.lookup(get<int64_t>(token->value()));
-            } else {
+        shared_ptr<values::value const> value;
+        if (token_begin != token_end &&
+            (
+                is_keyword(static_cast<token_id>(token_begin->id())) ||
+                token_begin->id() == static_cast<size_t>(token_id::name) ||
+                token_begin->id() == static_cast<size_t>(token_id::bare_word)
+            )) {
+            auto token = get<boost::iterator_range<lexer_string_iterator>>(&token_begin->value());
+            if (!token) {
                 return false;
             }
-
-            // If bracketed, look for the closing bracket
-            if (bracket) {
-                ++token_begin;
-
-                // Check for not parsed or missing a closing } token
-                if (bracket && (token_begin == token_end || token_begin->id() != '}')) {
-                    return false;
-                }
+            // Lookup as a variable expression
+            ast::variable variable;
+            variable.begin = token->begin().position();
+            variable.end = token->end().position();
+            variable.name = string(token->begin(), token->end());
+            value = context.lookup(variable);
+        } else if (token_begin != token_end && token_begin->id() == static_cast<size_t>(token_id::number)) {
+            auto token = get<number_token>(&token_begin->value());
+            if (!token) {
+                return false;
             }
-
-            // Output the variable
-            if (value) {
-                ostringstream ss;
-                ss << *value;
-                result += ss.str();
+            if (token->base() != numeric_base::decimal || token->value().which() != 0) {
+                throw parse_exception((boost::format("'%1%' is not a valid match variable name.") % *token).str(), token->range());
             }
-
-            // Update to where we stopped lexing
-            begin = current;
-            return true;
-        } catch (lexer_exception<lexer_string_iterator> const& ex) {
-            // Offset the context again to point at where lexing failed
-            auto expression_context_offset = expression_context;
-            expression_context_offset.position = calculate_position(ex.location().position());
-            throw evaluation_exception(ex.what(), expression_context_offset);
+            value = context.lookup(get<int64_t>(token->value()));
+        } else {
+            return false;
         }
+
+        // If bracketed, look for the closing bracket
+        if (bracket) {
+            ++token_begin;
+
+            // Check for not parsed or missing a closing } token
+            if (bracket && (token_begin == token_end || token_begin->id() != '}')) {
+                return false;
+            }
+        }
+
+        // Output the variable
+        if (value) {
+            ostringstream ss;
+            ss << *value;
+            result += ss.str();
+        }
+
+        // Update to where we stopped lexing
+        begin = current;
+        return true;
     }
 
     static values::value transform(evaluation::evaluator& evaluator, ast::expression const& expression)
@@ -148,9 +142,18 @@ namespace puppet { namespace compiler { namespace evaluation {
             return evaluator.evaluate(expression);
         }
 
-        // Copy the expression and replace the primary expression with a variable expression
+        auto context = expression.postfix.primary.context();
+
+        // Create a variable expression
+        ast::variable variable;
+        variable.begin = rvalue_cast(context.begin);
+        variable.end = rvalue_cast(context.end);
+        variable.tree = context.tree;
+        variable.name = *name;
+
+        // Copy the expression and replace the primary expression with the variable expression
         auto transformed = expression;
-        transformed.postfix.primary = ast::variable{ expression.postfix.primary.context(), *name };
+        transformed.postfix.primary = rvalue_cast(variable);
         return evaluator.evaluate(transformed);
     }
 
@@ -216,9 +219,15 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     std::string interpolator::interpolate(ast::string const& expression)
     {
-        // Helper function for calculating a position inside the string being interpolated
-        auto calculate_position = [&](position const& other) {
-            return position(expression.context.position.offset() + other.offset() + (expression.quote ? 1 : 0), expression.context.position.line() + other.line() - 1);
+        auto& value_begin = expression.value_range.begin();
+
+        // Helper function for calculating a new AST context inside of the interpolated string
+        auto current_context = [&](lexer::position const& begin, boost::optional<lexer::position> const& end = boost::none) {
+            ast::context context;
+            context.begin = position(value_begin.offset() + begin.offset(), value_begin.line() + begin.line() - 1);
+            context.end = position(value_begin.offset() + (end ? end->offset() : 1), value_begin.line() + (end ? end->line() : 1) - 1);
+            context.tree = expression.tree;
+            return context;
         };
 
         lexer_string_iterator begin(expression.value.begin());
@@ -277,9 +286,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
                         case 'u':
                             {
-                                auto current_context = expression.context;
-                                current_context.position = calculate_position(begin.position());
-                                success = write_unicode_escape_sequence(_context, current_context, ++next, end, result);
+                                success = write_unicode_escape_sequence(_context, current_context(begin.position()), ++next, end, result);
                             }
                             break;
 
@@ -303,9 +310,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 } else if (next != end) {
                     // Emit a warning for invalid escape sequence (unless single quoted string)
                     if (expression.quote != '\'') {
-                        auto current_context = expression.context;
-                        current_context.position = calculate_position(begin.position());
-                        _context.log(logging::level::warning, (boost::format("invalid escape sequence '\\%1%'.") % *next).str(), &current_context);
+                        auto context = current_context(begin.position());
+                        _context.log(logging::level::warning, (boost::format("invalid escape sequence '\\%1%'.") % *next).str(), &context);
                     }
                 }
             } else if (*begin == '\n') {
@@ -316,19 +322,17 @@ namespace puppet { namespace compiler { namespace evaluation {
                 ++next;
 
                 if (next != end && !isspace(*next)) {
-                    // First attempt to interpolate using the lexer
-                    auto current_context = expression.context;
-                    current_context.position = calculate_position(begin.position());
-                    if (tokenize_interpolation(result, _context, current_context, next, end, calculate_position)) {
-                        begin = next;
-                        continue;
-                    }
-                    // Otherwise, check for expression form
-                    if (*next == '{') {
-                        try {
+                    try {
+                        // First attempt to interpolate using the lexer
+                        if (tokenize_interpolation(result, _context, next, end)) {
+                            begin = next;
+                            continue;
+                        }
+                        // Otherwise, check for expression form
+                        if (*next == '{') {
                             // Parse the rest of the string
                             // The parsing will stop at the first unmatched } token
-                            auto tree = parser::interpolate(boost::make_iterator_range<lexer_string_iterator>(next, end), expression.context.tree->module());
+                            auto tree = parser::interpolate(boost::make_iterator_range<lexer_string_iterator>(next, end), expression.tree->module());
                             evaluation::evaluator evaluator { _context };
 
                             // Evaluate the body and add the result to the string
@@ -347,20 +351,16 @@ namespace puppet { namespace compiler { namespace evaluation {
                             ss << value;
                             result += ss.str();
 
-                            // Move past where parsing stopped (must have been at the closing })
-                            begin = lexer_string_iterator(expression.value.begin() + tree->closing_position.offset());
-                            begin.position(tree->closing_position);
-                            ++begin;
+                            // Move to the end of parsed the syntax tree
+                            begin = lexer_string_iterator(expression.value.begin() + tree->end.offset());
+                            begin.position(tree->end);
                             continue;
-                        } catch (compiler::parse_exception const& ex) {
-                            auto calculated_context = expression.context;
-                            calculated_context.position = calculate_position(ex.position());
-                            throw evaluation_exception(ex.what(), calculated_context);
-                        } catch (evaluation_exception const& ex) {
-                            auto calculated_context = expression.context;
-                            calculated_context.position = calculate_position(ex.context().position);
-                            throw evaluation_exception(ex.what(), calculated_context);
                         }
+                    } catch (compiler::parse_exception const& ex) {
+                        auto& range = ex.range();
+                        throw evaluation_exception(ex.what(), current_context(range.begin(), range.end()));
+                    } catch (evaluation_exception const& ex) {
+                        throw evaluation_exception(ex.what(),  current_context(ex.context().begin, ex.context().end));
                     }
                 }
             }
@@ -381,7 +381,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Ensure the string is valid UTF8
         auto invalid = utf8::find_invalid(result.begin(), result.end());
         if (invalid != result.end()) {
-            throw evaluation_exception("invalid UTF8 sequence in string.", expression.context);
+            throw evaluation_exception("invalid UTF8 sequence in string.", expression);
         }
         return result;
     }

@@ -63,7 +63,7 @@ namespace puppet { namespace runtime { namespace values {
         return boost::apply_visitor(is_specialization_visitor(type), _value);
     }
 
-    type type::parse(evaluation::context& context, string const& expression)
+    boost::optional<type> type::parse(evaluation::context& context, string const& expression)
     {
         try {
             auto ast = parser::parse_string(expression);
@@ -77,7 +77,7 @@ namespace puppet { namespace runtime { namespace values {
         } catch (parse_exception const&) {
         } catch (evaluation_exception const&) {
         }
-        throw parse_exception((boost::format("the expression '%1%' is not a valid type specification.") % expression).str(), compiler::lexer::position(0, 1));
+        return boost::none;
     }
 
     bool operator==(type const& left, type const& right)

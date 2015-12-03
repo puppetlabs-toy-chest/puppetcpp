@@ -73,18 +73,13 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::evaluate(expression const& expression, bool productive)
     {
-        auto& context = expression.context();
         if (productive && !expression.is_productive()) {
-            throw evaluation_exception("unproductive expressions may only appear last in a block.", context);
+            throw evaluation_exception("unproductive expressions may only appear last in a block.", expression.context());
         }
 
-        // Evaluate the postfix expression
-        auto result = evaluate(expression.postfix);
-
-        // Climb the remainder of the expression
-        auto begin = expression.remainder.begin();
-        climb_expression(result, context, 0, begin, expression.remainder.end());
-        return result;
+        // Climb the expression
+        auto begin = expression.operations.begin();
+        return climb_expression(expression.postfix, 0, begin, expression.operations.end());
     }
 
     value evaluator::evaluate(postfix_expression const& expression)
@@ -158,14 +153,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         try {
             return values::regex(expression.value);
         } catch (regex_error const& ex) {
-            throw evaluation_exception((boost::format("invalid regular expression: %1%") % ex.what()).str(), expression.context);
+            throw evaluation_exception((boost::format("invalid regular expression: %1%") % ex.what()).str(), expression);
         }
     }
 
     value evaluator::operator()(ast::variable const& expression)
     {
         if (expression.name.empty()) {
-            throw evaluation_exception("variable name cannot be empty.", expression.context);
+            throw evaluation_exception("variable name cannot be empty.", expression);
         }
 
         shared_ptr<values::value const> value;
@@ -291,14 +286,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                 if (option_value.as<values::array>() && option.is_splat()) {
                     auto array = option_value.move_as<values::array>();
                     for (auto& element : array) {
-                        if (is_match(result, expression.conditional.context(), element, option.context())) {
+                        if (is_match(result, expression, element, option.context())) {
                             return evaluate_body(proposition.body);
                         }
                     }
                 }
 
                 // Otherwise, match against the value
-                if (is_match(result, expression.conditional.context(), option_value, option.context())) {
+                if (is_match(result, expression, option_value, option.context())) {
                     return evaluate_body(proposition.body);
                 }
             }
@@ -383,15 +378,15 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
 
         if (is_class && expression.status == ast::resource_status::virtualized) {
-            throw evaluation_exception("classes cannot be virtual resources.", expression.context());
+            throw evaluation_exception("classes cannot be virtual resources.", expression.type.context());
         } else if (is_class && expression.status == ast::resource_status::exported) {
-            throw evaluation_exception("classes cannot be exported resources.", expression.context());
+            throw evaluation_exception("classes cannot be exported resources.", expression.type.context());
         }
 
         // Get the default body attributes
         attributes default_attributes;
         if (auto default_body = find_default_body(expression)) {
-            default_attributes = evaluate_attributes(is_class, default_body->attributes);
+            default_attributes = evaluate_attributes(is_class, default_body->operations);
         }
 
         // Create the resources in the expression
@@ -438,8 +433,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto reference = evaluate(expression.reference);
 
         // Evaluate the attributes
-        compiler::attributes attributes = evaluate_attributes(false, expression.attributes);
-        auto const& context = expression.context();
+        compiler::attributes attributes = evaluate_attributes(false, expression.operations);
+        auto context = expression.reference.context();
 
         if (auto array = reference.as<values::array>()) {
             for (auto const& element : *array) {
@@ -449,7 +444,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                         // TODO: support resource defaults expression
                         throw evaluation_exception("resource defaults expressions are not yet implemented.", context);
                     }
-                    _context.add(resource_override(*resource, expression.context(), attributes, _context.current_scope()));
+                    _context.add(resource_override(*resource, expression, attributes, _context.current_scope()));
                 } else {
                     throw evaluation_exception((boost::format("expected qualified %1% for array element but found %2%.") % types::resource::name() % element->get_type()).str(), context);
                 }
@@ -471,7 +466,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 // TODO: support resource defaults expression
                 throw evaluation_exception("resource defaults expressions are not yet implemented.", context);
             }
-            _context.add(resource_override(*resource, expression.context(), rvalue_cast(attributes), _context.current_scope()));
+            _context.add(resource_override(*resource, expression, rvalue_cast(attributes), _context.current_scope()));
         } else {
             throw evaluation_exception((boost::format("expected qualified %1% for resource reference but found %2%.") % types::resource::name() % reference.get_type()).str(), context);
         }
@@ -481,7 +476,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(resource_defaults_expression const& expression)
     {
         // TODO: implement
-        throw evaluation_exception("resource defaults expressions are not yet implemented.", expression.context());
+        throw evaluation_exception("resource defaults expressions are not yet implemented.", expression);
     }
 
     value evaluator::operator()(class_expression const& expression)
@@ -518,9 +513,17 @@ namespace puppet { namespace compiler { namespace evaluation {
             { ast::unary_operator::splat,       operators::splat() }
         };
 
-        auto it = unary_operators.find(expression.oper);
+        auto it = unary_operators.find(expression.operator_);
         if (it == unary_operators.end()) {
-            throw evaluation_exception((boost::format("unspported unary operator '%1%'.") % expression.oper).str(), expression.context);
+            throw evaluation_exception(
+                (boost::format("unspported unary operator '%1%'.") %
+                 expression.operator_
+                ).str(),
+                ast::context{
+                    expression.operator_position,
+                    lexer::position{expression.operator_position.offset() + 1, expression.operator_position.line()},
+                    expression.context().tree
+                });
         }
 
         auto operand = evaluate(expression.operand);
@@ -531,7 +534,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(epp_render_expression const& expression)
     {
         if (!_context.epp_write(evaluate(expression.expression))) {
-            throw evaluation_exception("EPP expressions are not supported.", expression.context);
+            throw evaluation_exception("EPP expressions are not supported.", expression);
         }
         return values::undef();
     }
@@ -539,7 +542,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(epp_render_block const& expression)
     {
         if (!_context.epp_write(evaluate_body(expression.block))) {
-            throw evaluation_exception("EPP expressions are not supported.", expression.context);
+            throw evaluation_exception("EPP expressions are not supported.", expression);
         }
         return values::undef();
     }
@@ -547,7 +550,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(epp_render_string const& expression)
     {
         if (!_context.epp_write(expression.string)) {
-            throw evaluation_exception("EPP expressions are not supported.", expression.context);
+            throw evaluation_exception("EPP expressions are not supported.", expression);
         }
         return values::undef();
     }
@@ -578,55 +581,57 @@ namespace puppet { namespace compiler { namespace evaluation {
         return default_body;
     }
 
-    attributes evaluator::evaluate_attributes(bool is_class, vector<ast::attribute> const& expressions)
+    attributes evaluator::evaluate_attributes(bool is_class, vector<ast::attribute_operation> const& operations)
     {
         compiler::attributes attributes;
 
         unordered_set<std::string> names;
-        for (auto& expression : expressions) {
-            auto& name = expression.name.value;
+        for (auto& operation : operations) {
+            auto& name = operation.name.value;
 
             // Check for setting the title via an attribute
             if (name == "title") {
-                throw evaluation_exception("title is not a valid parameter name.", expression.name.context);
+                throw evaluation_exception("title is not a valid parameter name.", operation.name);
             }
 
             // Splat the attribute if named '*'
             if (name == "*") {
-                splat_attribute(attributes, names, expression);
+                splat_attribute(attributes, names, operation);
                 continue;
             }
 
             // Check for the "stage" attribute for non-classes
             if (!is_class && name == "stage") {
-                throw evaluation_exception("attribute 'stage' is only valid for classes.", expression.name.context);
+                throw evaluation_exception("attribute 'stage' is only valid for classes.", operation.name);
             }
 
             if (!names.insert(name).second) {
-                throw evaluation_exception((boost::format("attribute '%1%' already exists in the list.") % name).str(), expression.name.context);
+                throw evaluation_exception((boost::format("attribute '%1%' already exists in the list.") % name).str(), operation.name);
             }
 
             // Evaluate and validate the attribute value
-            auto value = evaluate(expression.value);
-            validate_attribute(name, value, expression.value.context());
+            auto value = evaluate(operation.value);
+            validate_attribute(name, value, operation.value.context());
 
             // Add an attribute to the list
-            attributes.emplace_back(make_pair(expression.oper, std::make_shared<attribute>(
+            attributes.emplace_back(make_pair(operation.operator_, std::make_shared<attribute>(
                 name,
-                expression.name.context,
+                operation.name,
                 std::make_shared<values::value>(rvalue_cast(value)),
-                expression.value.context()
+                operation.value.context()
             )));
         }
         return attributes;
     }
 
-    void evaluator::splat_attribute(compiler::attributes& attributes, unordered_set<std::string>& names, ast::attribute const& attribute)
+    void evaluator::splat_attribute(compiler::attributes& attributes, unordered_set<std::string>& names, ast::attribute_operation const& operation)
     {
+        auto context = operation.value.context();
+
         // Evaluate what must be a hash
-        auto value = evaluate(attribute.value);
+        auto value = evaluate(operation.value);
         if (!value.as<values::hash>()) {
-            throw evaluation_exception((boost::format("expected a %1% but found %2%.") % types::hash::name() % value.get_type()).str(), attribute.value.context());
+            throw evaluation_exception((boost::format("expected a %1% but found %2%.") % types::hash::name() % value.get_type()).str(), context);
         }
 
         // Set each element of the hash as an attribute
@@ -634,22 +639,22 @@ namespace puppet { namespace compiler { namespace evaluation {
         for (auto& kvp : hash) {
             auto name = kvp.key().as<std::string>();
             if (!name) {
-                throw evaluation_exception((boost::format("expected all keys in hash to be %1% but found %2%.") % types::string::name() % kvp.key().get_type()).str(), attribute.value.context());
+                throw evaluation_exception((boost::format("expected all keys in hash to be %1% but found %2%.") % types::string::name() % kvp.key().get_type()).str(), context);
             }
             if (!names.insert(*name).second) {
-                throw evaluation_exception((boost::format("attribute '%1%' already exists in the list.") % name).str(), attribute.value.context());
+                throw evaluation_exception((boost::format("attribute '%1%' already exists in the list.") % name).str(), context);
             }
 
             // Validate the attribute value
             auto value = kvp.value();
-            validate_attribute(*name, value, attribute.value.context());
+            validate_attribute(*name, value, context);
 
             // Add the attribute to the list
-            attributes.emplace_back(make_pair(attribute.oper, std::make_shared<compiler::attribute>(
+            attributes.emplace_back(make_pair(operation.operator_, std::make_shared<compiler::attribute>(
                 *name,
-                attribute.name.context,
+                operation.name,
                 std::make_shared<values::value>(rvalue_cast(value)),
-                attribute.value.context()
+                rvalue_cast(context)
             )));
         }
     }
@@ -742,7 +747,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
 
             // Evaluate the attributes
-            auto attributes = evaluate_attributes(is_class, body.attributes);
+            auto attributes = evaluate_attributes(is_class, body.operations);
 
             // Add each resource to the catalog
             if (!title.move_as<std::string>([&](std::string resource_title) {
@@ -759,7 +764,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 auto resource = catalog.add(
                     types::resource(type_name, rvalue_cast(resource_title)),
                     container,
-                    &body.context(),
+                    body.context(),
                     is_virtual,
                     is_exported);
                 if (!resource) {
@@ -829,48 +834,45 @@ namespace puppet { namespace compiler { namespace evaluation {
         return types::variant(rvalue_cast(types));
     }
 
-    void evaluator::climb_expression(
-        value& left,
-        ast::context const& context,
+    values::value evaluator::climb_expression(
+        ast::postfix_expression const& expression,
         unsigned int min_precedence,
-        vector<binary_expression>::const_iterator& begin,
-        vector<binary_expression>::const_iterator const& end)
+        vector<binary_operation>::const_iterator& begin,
+        vector<binary_operation>::const_iterator const& end)
     {
-        // This member implements precedence climbing for binary expressions
+        // Evaluate the left-hand side
+        auto left = evaluate(expression);
+
+        // Climb the binary operations based on operator precedence
         unsigned int precedence = 0;
-        while (begin != end && (precedence = get_precedence(begin->oper)) >= min_precedence)
+        while (begin != end && (precedence = get_precedence(begin->operator_)) >= min_precedence)
         {
-            auto const& expression = *begin;
-            auto const& operand_context = expression.operand.context();
+            auto const& operation = *begin;
             ++begin;
 
             // If the operator is a logical and/or operator, attempt short circuiting
-            if ((expression.oper == binary_operator::logical_and && !left.is_truthy()) ||
-                (expression.oper == binary_operator::logical_or && left.is_truthy())) {
-                left = expression.oper == binary_operator::logical_or;
+            if ((operation.operator_ == binary_operator::logical_and && !left.is_truthy()) ||
+                (operation.operator_ == binary_operator::logical_or && left.is_truthy())) {
+                left = operation.operator_ == binary_operator::logical_or;
                 begin = end;
-                return;
+                return left;
             }
 
-            // Evaluate the right side
-            value right = evaluate(expression.operand);
-
             // Recurse and climb the expression
-            unsigned int next_precedence = precedence + (is_right_associative(expression.oper) ? 0 : 1);
-            climb_expression(right, operand_context, next_precedence, begin, end);
+            unsigned int next_precedence = precedence + (is_right_associative(operation.operator_) ? 0 : 1);
+            auto right = climb_expression(operation.operand, next_precedence, begin, end);
 
-            // Evaluate this part of the expression
-            evaluate(left, context, expression.oper, expression.context, right, operand_context);
+            // Evaluate the binary expression
+            evaluate(left, expression.context(), right, operation);
         }
+        return left;
     }
 
     void evaluator::evaluate(
         value& left,
         ast::context const& left_context,
-        binary_operator oper,
-        ast::context const& operator_context,
         value& right,
-        ast::context const& right_context)
+        ast::binary_operation const& operation)
     {
         static const unordered_map<binary_operator, function<value(operators::binary_operator_context const&)>, boost::hash<binary_operator>> binary_operators = {
             { ast::binary_operator::assignment,         operators::assignment() },
@@ -898,12 +900,20 @@ namespace puppet { namespace compiler { namespace evaluation {
             { ast::binary_operator::right_shift,        operators::right_shift() }
         };
 
-        auto it = binary_operators.find(oper);
+        auto it = binary_operators.find(operation.operator_);
         if (it == binary_operators.end()) {
-            throw evaluation_exception((boost::format("unspported binary operator '%1%' in binary expression.") % oper).str(), operator_context);
+            throw evaluation_exception(
+                (boost::format("unspported binary operator '%1%' in binary expression.") %
+                 operation.operator_
+                ).str(),
+                ast::context{
+                    operation.operator_position,
+                    lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
+                    left_context.tree
+                });
         }
 
-        operators::binary_operator_context context{ _context, left, left_context, right, right_context };
+        operators::binary_operator_context context{ _context, left, left_context, right, operation.operand.context() };
         left = it->second(context);
     }
 

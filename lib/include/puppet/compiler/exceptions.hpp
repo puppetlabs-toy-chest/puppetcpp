@@ -29,18 +29,18 @@ namespace puppet { namespace compiler {
         /**
          * Constructs a parse exception.
          * @param message The exception message.
-         * @param position The token position where parsing failed.
+         * @param range The range where parsing failed.
          */
-        parse_exception(std::string const& message, lexer::position position);
+        parse_exception(std::string const& message, lexer::range range);
 
         /**
-         * Gets the token position where parsing failed.
-         * @return Returns the token position where parsing failed.
+         * Gets the range where parsing failed.
+         * @return Returns the range where parsing failed.
          */
-        lexer::position const& position() const;
+        lexer::range const& range() const;
 
     private:
-        lexer::position _position;
+        lexer::range _range;
     };
 
     /**
@@ -57,13 +57,13 @@ namespace puppet { namespace compiler {
         /**
          * Constructs an evaluation exception.
          * @param message The exception message.
-         * @param context The AST context when evaluation failed.
+         * @param context The AST context where evaluation failed.
          */
-        evaluation_exception(std::string const& message, ast::context const& context);
+        evaluation_exception(std::string const& message, ast::context context);
 
         /**
-         * Gets the context where the evaluation failed.
-         * @return Returns the context where evaluation failed.
+         * Gets the AST context where evaluation failed.
+         * @return Returns the AST context where evaluation failed.
          */
         ast::context const& context() const;
 
@@ -83,9 +83,10 @@ namespace puppet { namespace compiler {
          * @param path The path to the input file.
          * @param line The line containing the compilation error.
          * @param column The column containing the compilation error.
+         * @param length The length of the compilation error.
          * @param text The line of text containing the compilation error.
          */
-        explicit compilation_exception(std::string const& message, std::string path = std::string(), size_t line = 0, size_t column = 0, std::string text = std::string());
+        explicit compilation_exception(std::string const& message, std::string path = std::string(), size_t line = 0, size_t column = 0, size_t length = 0, std::string text = std::string());
 
         /**
          * Constructs a compilation exception from a parse exception.
@@ -119,6 +120,12 @@ namespace puppet { namespace compiler {
         size_t column() const;
 
         /**
+         * Gets the length of the compilation error.
+         * @return Returns the length of the compilation error.
+         */
+        size_t length() const;
+
+        /**
          * Gets the line of text containing the compilation error.
          * @return Returns the line of text containing the compilation error.
          */
@@ -128,6 +135,7 @@ namespace puppet { namespace compiler {
         std::string _path;
         size_t _line;
         size_t _column;
+        size_t _length;
         std::string _text;
     };
 

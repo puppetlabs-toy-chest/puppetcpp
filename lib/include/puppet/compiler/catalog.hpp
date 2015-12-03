@@ -101,7 +101,7 @@ namespace puppet { namespace compiler {
          * Adds a resource to the catalog.
          * @param type The resource type to add.
          * @param container The container of the resource.
-         * @param context The AST context where the resource was declared.
+         * @param context The optional AST context where the resource was declared.
          * @param virtualized True if the resource is virtualized or false if the resource should be realized.
          * @param exported True if the resource should be exported or false if not.
          * @return Returns a pointer to the resource that was added to the catalog or nullptr if the resource already exists.
@@ -109,7 +109,7 @@ namespace puppet { namespace compiler {
         resource* add(
             runtime::types::resource type,
             resource const* container = nullptr,
-            ast::context const* context = nullptr,
+            boost::optional<ast::context> context = boost::none,
             bool virtualized = false,
             bool exported = false);
 

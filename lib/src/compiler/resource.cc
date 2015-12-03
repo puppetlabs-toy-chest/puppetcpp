@@ -27,14 +27,14 @@ namespace puppet { namespace compiler {
 
     ast::context const& resource::context() const
     {
-        static ast::context no_context{ nullptr, lexer::position(0, 0) };
-        return _context ? *_context : no_context;
+        static ast::context empty;
+        return _context ? *_context : empty;
     }
 
     string const& resource::path() const
     {
         static string main = "<main>";
-        if (!_context) {
+        if (!_context || !_context->tree) {
             return main;
         }
         return _context->tree->path();
@@ -42,10 +42,10 @@ namespace puppet { namespace compiler {
 
     size_t resource::line() const
     {
-        if (!_context) {
+        if (!_context || !_context->tree) {
             return 0;
         }
-        return _context->position.line();
+        return _context->begin.line();
     }
 
     bool resource::virtualized() const
@@ -129,7 +129,7 @@ namespace puppet { namespace compiler {
                                  attribute->name() %
                                  _type %
                                  context.tree->path() %
-                                 context.position.line()
+                                 context.begin.line()
                                 ).str(),
                                 attribute->name_context());
                         }
@@ -137,8 +137,8 @@ namespace puppet { namespace compiler {
                             (boost::format("cannot override attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
                              attribute->name() %
                              _type %
-                                context.tree->path() %
-                                context.position.line()
+                             context.tree->path() %
+                             context.begin.line()
                             ).str(),
                             attribute->name_context());
                     }
@@ -154,7 +154,7 @@ namespace puppet { namespace compiler {
                              attribute->name() %
                              this->type() %
                              context.tree->path() %
-                             context.position.line()
+                             context.begin.line()
                             ).str(),
                             attribute->name_context());
                     }
@@ -210,10 +210,10 @@ namespace puppet { namespace compiler {
         return metaparameters.count(name) > 0;
     }
 
-    resource::resource(types::resource type, resource const* container, ast::context const* context, bool exported) :
+    resource::resource(types::resource type, resource const* container, boost::optional<ast::context> context, bool exported) :
         _type(rvalue_cast(type)),
         _container(container),
-        _context(context),
+        _context(rvalue_cast(context)),
         _vertex_id(numeric_limits<size_t>::max()),
         _exported(exported)
     {
@@ -248,7 +248,8 @@ namespace puppet { namespace compiler {
 
         // Write out the file and line
         if (_context) {
-            value.AddMember("file", rapidjson::StringRef(_context->tree->path().c_str(), _context->tree->path().size()), allocator);
+            auto const& path = this->path();
+            value.AddMember("file", rapidjson::StringRef(path.c_str(), path.size()), allocator);
             value.AddMember("line", static_cast<uint64_t>(line()), allocator);
         }
 

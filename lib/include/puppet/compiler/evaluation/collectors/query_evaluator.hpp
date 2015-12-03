@@ -27,7 +27,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
          * @param context The current evaluation context.
          * @param expression The query expression to evaluate.
          */
-        query_evaluator(evaluation::context& context, boost::optional<ast::collector_query_expression> const& expression);
+        query_evaluator(evaluation::context& context, boost::optional<ast::query_expression> const& expression);
 
         /**
          * Evaluates the query against the given resource.
@@ -37,18 +37,18 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
         bool evaluate(compiler::resource const& resource) const;
 
      private:
-        bool evaluate(ast::attribute_query_expression const& expression, compiler::resource const& resource) const;
-        void climb_expression(
-            bool& result,
+        bool evaluate(ast::primary_query_expression const& expression, compiler::resource const& resource) const;
+        bool climb_expression(
+            ast::primary_query_expression const& expression,
             std::uint8_t min_precedence,
-            std::vector<ast::binary_attribute_query>::const_iterator& begin,
-            std::vector<ast::binary_attribute_query>::const_iterator const& end,
+            std::vector<ast::binary_query_operation>::const_iterator& begin,
+            std::vector<ast::binary_query_operation>::const_iterator const& end,
             compiler::resource const& resource) const;
         static uint8_t get_precedence(ast::binary_query_operator op);
         static bool is_right_associative(ast::binary_query_operator op);
 
         evaluation::context& _context;
-        boost::optional<ast::collector_query_expression> const& _expression;
+        boost::optional<ast::query_expression> const& _expression;
     };
 
 }}}}  // namespace puppet::compiler::evaluation::collectors

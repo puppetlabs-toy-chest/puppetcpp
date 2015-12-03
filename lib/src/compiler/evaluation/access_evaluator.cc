@@ -317,7 +317,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // At least 2 and at most 4 arguments to Hash
             if (_arguments.size() < 2) {
-                throw evaluation_exception((boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str(), _expression.context);
+                throw evaluation_exception((boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str(), _expression);
             }
             if (_arguments.size() > 4) {
                 throw evaluation_exception((boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str(), _contexts[4]);
@@ -593,7 +593,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         template <typename T>
         value operator()(T const& target)
         {
-            throw evaluation_exception((boost::format("access expression is not supported for %1%.") % value(target).get_type()).str(), _expression.context);
+            throw evaluation_exception((boost::format("access expression is not supported for %1%.") % value(target).get_type()).str(), _expression);
         }
 
         template <typename Value, typename Type>
@@ -678,7 +678,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Find the resource
             auto resource = catalog.find(target);
             if (!resource) {
-                throw evaluation_exception((boost::format("resource %1% does not exist in the catalog.") % target).str(), _expression.context);
+                throw evaluation_exception((boost::format("resource %1% does not exist in the catalog.") % target).str(), _expression);
             }
 
             // Check for single access

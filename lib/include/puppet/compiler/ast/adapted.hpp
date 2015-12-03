@@ -10,115 +10,146 @@
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::undef,
-    context
+    begin,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::defaulted,
-    context
+    begin,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::boolean,
-    context,
-    value
+    begin,
+    value,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::regex,
-    context,
-    value
+    begin,
+    value,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::variable,
-    context,
-    name
+    begin,
+    name,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::name,
-    context,
-    value
+    begin,
+    value,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::bare_word,
-    context,
-    value
+    begin,
+    value,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::type,
-    context,
-    name
+    begin,
+    name,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::array,
-    context,
-    elements
+    begin,
+    elements,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::hash,
-    context,
-    elements
+    begin,
+    elements,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::selector_expression,
-    context,
-    cases
+    begin,
+    cases,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    puppet::compiler::ast::case_proposition,
+    puppet::compiler::ast::proposition,
     options,
-    body
+    body,
+    end
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::case_expression,
-    context,
+    begin,
     conditional,
-    propositions
+    propositions,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    puppet::compiler::ast::else_expression,
-    context,
-    body
+    puppet::compiler::ast::else_,
+    begin,
+    body,
+    end
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    puppet::compiler::ast::elsif_expression,
-    context,
+    puppet::compiler::ast::elsif,
+    begin,
     conditional,
-    body
+    body,
+    end
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::if_expression,
-    context,
+    begin,
     conditional,
     body,
+    end,
     elsifs,
     else_
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::unless_expression,
-    context,
+    begin,
     conditional,
     body,
+    end,
     else_
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::access_expression,
-    context,
-    arguments
+    begin,
+    arguments,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
@@ -131,16 +162,19 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::lambda_expression,
-    context,
+    begin,
     parameters,
-    body
+    body,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::method_call_expression,
-    context,
+    begin,
     method,
     arguments,
+    end,
     lambda
 )
 
@@ -148,90 +182,109 @@ BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::function_call_expression,
     function,
     arguments,
-    lambda
+    end,
+    lambda,
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    puppet::compiler::ast::attribute,
+    puppet::compiler::ast::attribute_operation,
     name,
-    oper,
+    operator_position,
+    operator_,
     value
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::resource_body,
     title,
-    attributes
+    operations
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::resource_expression,
+    begin,
     status,
     type,
-    bodies
+    bodies,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::resource_override_expression,
+    begin,
     reference,
-    attributes
+    operations,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::resource_defaults_expression,
+    begin,
     type,
-    attributes
+    operations,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::class_expression,
-    context,
+    begin,
     name,
     parameters,
     parent,
-    body
+    body,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::defined_type_expression,
-    context,
+    begin,
     name,
     parameters,
-    body
+    body,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::node_expression,
-    context,
+    begin,
     hostnames,
-    body
+    body,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::attribute_query,
     attribute,
-    oper,
+    operator_position,
+    operator_,
     value
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    puppet::compiler::ast::binary_attribute_query,
-    context,
-    oper,
+    puppet::compiler::ast::binary_query_operation,
+    operator_position,
+    operator_,
     operand
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    puppet::compiler::ast::collector_query_expression,
+    puppet::compiler::ast::query_expression,
     primary,
-    remainder
+    operations
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::collector_expression,
     type,
     exported,
-    query
+    query,
+    end
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
@@ -242,45 +295,51 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::unary_expression,
-    context,
-    oper,
+    operator_position,
+    operator_,
     operand
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
-    puppet::compiler::ast::binary_expression,
-    context,
-    oper,
+    puppet::compiler::ast::binary_operation,
+    operator_position,
+    operator_,
     operand
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::expression,
     postfix,
-    remainder
+    operations
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::epp_render_expression,
-    context,
-    expression
+    begin,
+    expression,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::epp_render_block,
-    context,
-    block
+    begin,
+    block,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::epp_render_string,
-    context,
-    string
+    begin,
+    string,
+    end,
+    tree
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::syntax_tree,
     parameters,
     statements,
-    closing_position
+    end
 )

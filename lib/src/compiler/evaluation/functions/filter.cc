@@ -151,17 +151,17 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                     context.name() %
                     arguments.size()
                 ).str(),
-                arguments.size() > 1 ? context.argument_context(1) : context.call_site()
+                arguments.size() > 1 ? context.argument_context(1) : context.name()
             );
         }
 
         // Check the lambda
         if (!context.lambda()) {
-            throw evaluation_exception((boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str(), context.call_site());
+            throw evaluation_exception((boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str(), context.name());
         }
         auto count = context.lambda()->parameters.size();
         if (count == 0 || count > 2) {
-            throw evaluation_exception((boost::format("expected 1 or 2 lambda parameters but %1% were given.") % count).str(), context.lambda()->context);
+            throw evaluation_exception((boost::format("expected 1 or 2 lambda parameters but %1% were specified.") % count).str(), *context.lambda());
         }
         return boost::apply_visitor(filter_visitor(context), arguments[0]);
     }

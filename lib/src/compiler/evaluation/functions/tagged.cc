@@ -15,7 +15,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         // Check the empty arguments count
         auto& arguments = context.arguments();
         if (arguments.empty()) {
-            throw evaluation_exception((boost::format("expected at least one argument to '%1%' function.") % context.name()).str(), context.call_site());
+            throw evaluation_exception((boost::format("expected at least one argument to '%1%' function.") % context.name()).str(), context.name());
         }
 
         // Get the current scope's resource

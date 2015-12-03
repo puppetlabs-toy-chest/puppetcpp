@@ -105,28 +105,25 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         runtime::values::value evaluate_body(std::vector<ast::expression> const& body);
         ast::resource_body const* find_default_body(ast::resource_expression const& expression);
-        attributes evaluate_attributes(bool is_class, std::vector<ast::attribute> const& expressions);
-        void splat_attribute(compiler::attributes& attributes, std::unordered_set<std::string>& names, ast::attribute const& expression);
+        attributes evaluate_attributes(bool is_class, std::vector<ast::attribute_operation> const& operations);
+        void splat_attribute(compiler::attributes& attributes, std::unordered_set<std::string>& names, ast::attribute_operation const& operations);
         void validate_attribute(std::string const& name, runtime::values::value& value, ast::context const& context);
         std::vector<resource*> create_resources(bool is_class, std::string const& type_name, ast::resource_expression const& expression, attributes const& defaults);
         void set_attributes(compiler::resource& resource, compiler::attributes const& attributes);
         static runtime::values::type create_relationship_type();
         static runtime::values::type create_audit_type();
 
-        void climb_expression(
-            runtime::values::value& left,
-            ast::context const& context,
+        runtime::values::value climb_expression(
+            ast::postfix_expression const& expression,
             unsigned int min_precedence,
-            std::vector<ast::binary_expression>::const_iterator& begin,
-            std::vector<ast::binary_expression>::const_iterator const& end);
+            std::vector<ast::binary_operation>::const_iterator& begin,
+            std::vector<ast::binary_operation>::const_iterator const& end);
 
         void evaluate(
             runtime::values::value& left,
             ast::context const& left_context,
-            ast::binary_operator op,
-            ast::context const& operator_context,
             runtime::values::value& right,
-            ast::context const& right_context);
+            ast::binary_operation const& operation);
 
         static unsigned int get_precedence(ast::binary_operator op);
         static bool is_right_associative(ast::binary_operator op);

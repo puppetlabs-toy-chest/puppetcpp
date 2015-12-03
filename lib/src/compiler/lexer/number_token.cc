@@ -6,29 +6,23 @@ using namespace std;
 
 namespace puppet { namespace compiler { namespace lexer {
 
-    number_token::number_token() :
-        _base(numeric_base::decimal)
-    {
-    }
-
-
-    number_token::number_token(lexer::position position, int64_t value, numeric_base base) :
-        _position(rvalue_cast(position)),
+    number_token::number_token(lexer::range range, int64_t value, numeric_base base) :
+        _range(rvalue_cast(range)),
         _value(value),
         _base(base)
     {
     }
 
-    number_token::number_token(lexer::position position, double value) :
-        _position(rvalue_cast(position)),
+    number_token::number_token(lexer::range range, double value) :
+        _range(rvalue_cast(range)),
         _value(value),
         _base(numeric_base::decimal)
     {
     }
 
-    lexer::position const& number_token::position() const
+    lexer::range const& number_token::range() const
     {
-        return _position;
+        return _range;
     }
 
     number_token::value_type const& number_token::value() const
