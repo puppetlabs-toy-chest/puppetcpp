@@ -5,4 +5,16 @@ services:
 before_install:
   - docker pull peterhuene/puppetcpp
 script:
-  - docker run -v `pwd`:/puppetcpp peterhuene/puppetcpp /bin/sh -c "cd /puppetcpp && cmake . && make -j 2 && bin/puppetcpp --help && ctest -V"
+  - >
+    docker run -v `pwd`:/puppetcpp peterhuene/puppetcpp /bin/sh -c "
+    cd /puppetcpp &&
+    cmake . -DTEST_COVERAGE=$TEST_COVERAGE -DCMAKE_BUILD_TYPE=$BUILD &&
+    make -j 2 &&
+    bin/puppetcpp --help &&
+    ctest -V &&
+    CI=true TRAVIS=true TRAVIS_BRANCH=$TRAVIS_BRANCH TRAVIS_COMMIT=$TRAVIS_COMMIT TRAVIS_JOB_NUMBER=$TRAVIS_JOB_NUMBER TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST TRAVIS_JOB_ID=$TRAVIS_JOB_ID TRAVIS_REPO_SLUG=$TRAVIS_REPO_SLUG $COVERAGE_TOOL
+    "
+env:
+  matrix:
+    - BUILD=RELEASE TEST_COVERAGE=OFF COVERAGE_TOOL=true
+    - BUILD=DEBUG   TEST_COVERAGE=ON  COVERAGE_TOOL=/root/.local/bin/codecov

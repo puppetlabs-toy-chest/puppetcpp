@@ -1,7 +1,8 @@
 FROM l3iggs/archlinux
 MAINTAINER Peter Huene <peterhuene@gmail.com>
-RUN pacman -Sy --noconfirm gcc git make cmake boost yaml-cpp && \
+RUN pacman -Sy --noconfirm gcc git make cmake boost yaml-cpp python-pip && \
     yes | pacman -Scc && \
+    pip install --user codecov && \
     git clone --recursive https://github.com/puppetlabs/facter.git /tmp/facter && \
     pushd /tmp/facter && \
     cmake . && \
@@ -9,4 +10,3 @@ RUN pacman -Sy --noconfirm gcc git make cmake boost yaml-cpp && \
     make install && \
     popd && \
     rm -rf /tmp/facter
-
