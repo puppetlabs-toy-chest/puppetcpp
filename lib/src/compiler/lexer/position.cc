@@ -36,6 +36,22 @@ namespace puppet { namespace compiler { namespace lexer {
         ++_offset;
     }
 
+    ostream& operator<<(ostream& os, lexer::position const& position)
+    {
+        os << "(" << position.offset() << ", " << position.line() << ")";
+        return os;
+    }
+
+    bool operator==(position const& left, position const& right)
+    {
+        return left.offset() == right.offset() && left.line() == right.line();
+    }
+
+    bool operator!=(position const& left, position const& right)
+    {
+        return !(left == right);
+    }
+
     range::range(position begin, position end) :
         _begin(rvalue_cast(begin)),
         _end(rvalue_cast(end))
@@ -73,10 +89,20 @@ namespace puppet { namespace compiler { namespace lexer {
         return _end.offset() - _begin.offset();
     }
 
-    ostream& operator<<(ostream& os, lexer::position const& position)
+    ostream& operator<<(ostream& os, lexer::range const& range)
     {
-        os << "(" << position.offset() << ", " << position.line() << ")";
+        os << range.begin() << " -> " << range.end();
         return os;
+    }
+
+    bool operator==(range const& left, range const& right)
+    {
+        return left.begin() == right.begin() && left.end() == right.end();
+    }
+
+    bool operator!=(range const& left, range const& right)
+    {
+        return !(left == right);
     }
 
 }}}  // namespace puppet::compiler::lexer

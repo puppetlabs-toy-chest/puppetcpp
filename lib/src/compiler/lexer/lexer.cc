@@ -118,7 +118,11 @@ namespace puppet { namespace compiler { namespace lexer {
 
     tuple<string, size_t> get_text_and_column(string const& input, size_t position, size_t tab_width)
     {
-        auto start = input.rfind('\n', position);
+        if (position > input.size()) {
+            position = input.size() - 1;
+        }
+
+        auto start = input.rfind('\n', position == 0 ? 0 : position - 1);
         if (start == string::npos) {
             start = 0;
         } else {

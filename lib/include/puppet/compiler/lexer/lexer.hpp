@@ -233,12 +233,12 @@ namespace puppet { namespace compiler { namespace lexer {
             // When in the EPP state, a match of an opening tag will transition to the normal lexer state.
             // When in the normal state, a match of a closing tag will transition to the EPP state.
             this->self(EPP_STATE) =
-                lex::token_def<>(R"(<%#[^-]*-+([^->]*-+)*%>)",   static_cast<id_type>(token_id::comment_trim))          [ ignore ]      |
-                lex::token_def<>(R"(<%#[^%]*%+([^%>]*%+)*>)",    static_cast<id_type>(token_id::comment))               [ ignore ]      |
-                lex::token_def<>(R"(<%=)",                       static_cast<id_type>(token_id::epp_render_expression)) [ epp_render ]  |
-                lex::token_def<>(R"(\s*<%-)",                    static_cast<id_type>(token_id::epp_start_trim))        [ epp_start ]   |
-                lex::token_def<>(R"(<%)",                        static_cast<id_type>(token_id::epp_start))             [ epp_start ]   |
+                lex::token_def<>(R"(<%#[^%]*%+([^%>]*%+)*>)",    static_cast<id_type>(token_id::comment))               [ epp_comment ] |
                 lex::token_def<>(R"(<%#)",                       static_cast<id_type>(token_id::unclosed_comment))                      |
+                lex::token_def<>(R"(<%=)",                       static_cast<id_type>(token_id::epp_render_expression)) [ epp_render ]  |
+                lex::token_def<>(R"([\t ]*<%-)",                 static_cast<id_type>(token_id::epp_start_trim))        [ epp_start ]   |
+                lex::token_def<>(R"(<%%)",                       static_cast<id_type>(token_id::epp_render_string))     [ escape_epp ]  |
+                lex::token_def<>(R"(<%)",                        static_cast<id_type>(token_id::epp_start))             [ epp_start ]   |
                 lex::token_def<>(R"([^<]*)",                     static_cast<id_type>(token_id::epp_render_string))     [ string_trim ] |
                 lex::token_def<>(R"(.)",                         static_cast<id_type>(token_id::epp_render_string));
             this->self(base_type::initial_state(), EPP_STATE) =
@@ -351,7 +351,7 @@ namespace puppet { namespace compiler { namespace lexer {
 
             // Comments, variables, types, names, bare words, regexes, and whitespace
             this->self +=
-                lex::token_def<>(R"((#[^\n]*)|(\/\*[^*]*\*+([^/*][^*]*\*+)*\/))", static_cast<id_type>(token_id::comment))              [ ignore ] |
+                lex::token_def<>(R"((#[^\n]*)|(\/\*[^*]*\*+([^/*][^*]*\*+)*\/))", static_cast<id_type>(token_id::comment))              [ lex::_pass = lex::pass_flags::pass_ignore ] |
                 lex::token_def<>(R"(\$(::)?(\w+::)*\w+)",                         static_cast<id_type>(token_id::variable))             [ no_regex ] |
                 lex::token_def<>(R"(\s+\[)",                                      static_cast<id_type>(token_id::array_start))          [ use_last ] |
                 lex::token_def<>(R"(((::)?[A-Z][\w]*)+)",                         static_cast<id_type>(token_id::type))                 [ no_regex ] |
@@ -362,7 +362,7 @@ namespace puppet { namespace compiler { namespace lexer {
                 lex::token_def<>(R"(\"([^\\"]|\\.)*\")",                          static_cast<id_type>(token_id::double_quoted_string)) [ parse_double_quoted_string ] |
                 lex::token_def<>(HEREDOC_PATTERN,                                 static_cast<id_type>(token_id::heredoc))              [ parse_heredoc ] |
                 lex::token_def<>(R"(\d\w*(\.\d\w*)?([eE]-?\w*)?)",                static_cast<id_type>(token_id::number))               [ parse_number ] |
-                lex::token_def<>(R"(\s+)",                                        static_cast<id_type>(token_id::whitespace))           [ ignore ];
+                lex::token_def<>(R"(\s+)",                                        static_cast<id_type>(token_id::whitespace))           [ lex::_pass = lex::pass_flags::pass_ignore ];
 
             // Lastly, a catch for unclosed quotes and unknown tokens
             this->self.add
@@ -681,11 +681,12 @@ namespace puppet { namespace compiler { namespace lexer {
             start = last;
         }
 
-        static void ignore(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void epp_comment(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             matched = boost::spirit::lex::pass_flags::pass_ignore;
 
-            if (id == static_cast<size_t>(token_id::comment_trim)) {
+            // Check if the comment ends with a trim specifier
+            if (boost::ends_with(boost::make_iterator_range(start, end), "-%>")) {
                 trim_right(start, end, matched, id, context);
             }
         }
@@ -729,6 +730,14 @@ namespace puppet { namespace compiler { namespace lexer {
             }
         }
 
+        static void escape_epp(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            auto value_end = start;
+            ++value_end;
+            ++value_end;
+            context.set_value(boost::make_iterator_range(start, value_end));
+        }
+
         static void epp_start(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             matched = boost::spirit::lex::pass_flags::pass_ignore;
@@ -745,7 +754,7 @@ namespace puppet { namespace compiler { namespace lexer {
         static void epp_end(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             if (start._ignore_epp_end) {
-                ignore(start, end, matched, id, context);
+                matched = boost::spirit::lex::pass_flags::pass_ignore;
             }
             end._ignore_epp_end = true;
             end._epp_end = true;
