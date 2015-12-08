@@ -77,6 +77,18 @@ namespace puppet { namespace compiler { namespace ast {
         }
     }
 
+    bool operator==(context const& left, context const& right)
+    {
+        return left.tree == right.tree &&
+               left.begin == right.begin &&
+               left.end == right.end;
+    }
+
+    bool operator!=(context const& left, context const& right)
+    {
+        return !(left == right);
+    }
+
     ostream& operator<<(ostream& os, undef const&)
     {
         os << "undef";
@@ -95,18 +107,58 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    bool operator==(boolean const& left, boolean const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.value == right.value;
+    }
+
+    bool operator!=(boolean const& left, boolean const& right)
+    {
+        return !(left == right);
+    }
+
     ostream& operator<<(ostream& os, number const& node)
     {
         os << node.value;
         return os;
     }
 
+    bool operator==(number const& left, number const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.value == right.value;
+    }
+
+    bool operator!=(number const& left, number const& right)
+    {
+        return !(left == right);
+    }
+
     ostream& operator<<(ostream& os, ast::string const& node)
     {
-        os << (node.interpolated ? '"' : '\'');
+        os << (node.quote ? node.quote : (node.interpolated ? '"' : '\''));
         print_string(os, node.value);
-        os << (node.interpolated ? '"' : '\'');
+        os << (node.quote ? node.quote : (node.interpolated ? '"' : '\''));
         return os;
+    }
+
+    bool operator==(string const& left, string const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.value_range == right.value_range &&
+               left.value == right.value &&
+               left.escapes == right.escapes &&
+               left.format == right.format &&
+               left.margin == right.margin &&
+               left.quote == right.quote &&
+               left.interpolated == right.interpolated &&
+               left.remove_break == right.remove_break;
+    }
+
+    bool operator!=(string const& left, string const& right)
+    {
+        return !(left == right);
     }
 
     ostream& operator<<(ostream& os, regex const& node)
@@ -115,10 +167,32 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    bool operator==(regex const& left, regex const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.value == right.value;
+    }
+
+    bool operator!=(regex const& left, regex const& right)
+    {
+        return !(left == right);
+    }
+
     ostream& operator<<(ostream& os, variable const& node)
     {
         os << "$" << node.name;
         return os;
+    }
+
+    bool operator==(variable const& left, variable const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.name == right.name;
+    }
+
+    bool operator!=(variable const& left, variable const& right)
+    {
+        return !(left == right);
     }
 
     ostream& operator<<(ostream& os, name const& node)
@@ -127,16 +201,49 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    bool operator==(name const& left, name const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.value == right.value;
+    }
+
+    bool operator!=(name const& left, name const& right)
+    {
+        return !(left == right);
+    }
+
     ostream& operator<<(ostream& os, bare_word const& node)
     {
         os << node.value;
         return os;
     }
 
+    bool operator==(bare_word const& left, bare_word const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.value == right.value;
+    }
+
+    bool operator!=(bare_word const& left, bare_word const& right)
+    {
+        return !(left == right);
+    }
+
     ostream& operator<<(ostream& os, type const& node)
     {
         os << node.name;
         return os;
+    }
+
+    bool operator==(type const& left, type const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.name == right.name;
+    }
+
+    bool operator!=(type const& left, type const& right)
+    {
+        return !(left == right);
     }
 
     ast::context primary_expression::context() const
@@ -555,7 +662,7 @@ namespace puppet { namespace compiler { namespace ast {
         if (proposition.body.empty()) {
             os << "{ }";
         } else {
-            os << " { ";
+            os << "{ ";
             pretty_print(os, proposition.body, "; ");
             os << " }";
         }
@@ -722,6 +829,8 @@ namespace puppet { namespace compiler { namespace ast {
             context.end = lambda->end;
         } else if (end) {
             context.end = *end;
+        } else if (!arguments.empty()) {
+            context.end = arguments.back().context().end;
         }
         return context;
     }
@@ -745,9 +854,8 @@ namespace puppet { namespace compiler { namespace ast {
             context.end = lambda->end;
         } else if (end) {
             context.end = *end;
-        } else {
-            // Call vector::at to bounds check
-            context.end = arguments.at(arguments.size() - 1).context().end;
+        } else if (!arguments.empty()) {
+            context.end = arguments.back().context().end;
         }
         return context;
     }
@@ -1145,9 +1253,9 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(ostream& os, epp_render_block const& node)
     {
-        os << "render({";
+        os << "render({ ";
         pretty_print(os, node.block, "; ");
-        os << "})";
+        os << " })";
         return os;
     }
 

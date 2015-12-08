@@ -903,7 +903,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto it = binary_operators.find(operation.operator_);
         if (it == binary_operators.end()) {
             throw evaluation_exception(
-                (boost::format("unspported binary operator '%1%' in binary expression.") %
+                (boost::format("unsupported binary operator '%1%' in binary expression.") %
                  operation.operator_
                 ).str(),
                 ast::context{

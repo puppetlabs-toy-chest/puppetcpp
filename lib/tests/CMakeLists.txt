@@ -5,6 +5,7 @@ include_directories(
 )
 
 add_executable(puppet_test
+    compiler/ast/ast.cc
     compiler/lexer/lexer.cc
     main.cc
 )

@@ -74,6 +74,22 @@ namespace puppet { namespace compiler { namespace ast {
     };
 
     /**
+     * Equality operator for context.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two contexts are equal or false if not.
+     */
+    bool operator==(context const& left, context const& right);
+
+    /**
+     * Inequality operator for context.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two contexts are not equal or false if they are equal.
+     */
+    bool operator!=(context const& left, context const& right);
+
+    /**
      * Represents a literal undef.
      */
     struct undef : context
@@ -113,12 +129,44 @@ namespace puppet { namespace compiler { namespace ast {
     };
 
     /**
+     * Equality operator for boolean.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two booleans are equal or false if not.
+     */
+    bool operator==(boolean const& left, boolean const& right);
+
+    /**
+     * Inequality operator for boolean.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two booleans are not equal or false if they are equal.
+     */
+    bool operator!=(boolean const& left, boolean const& right);
+
+    /**
      * Stream insertion operator for boolean.
      * @param os The output stream to write to.
      * @param node The node to write.
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, boolean const& node);
+
+    /**
+     * Equality operator for boolean.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two booleans are equal or false if not.
+     */
+    bool operator==(boolean const& left, boolean const& right);
+
+    /**
+     * Inequality operator for boolean.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two booleans are not equal or false if they are equal.
+     */
+    bool operator!=(boolean const& left, boolean const& right);
 
     /**
      * Represents a literal number.
@@ -143,6 +191,22 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, number const& node);
+
+    /**
+     * Equality operator for number.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two numbers are equal or false if not.
+     */
+    bool operator==(number const& left, number const& right);
+
+    /**
+     * Inequality operator for number.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two numbers are not equal or false if they are equal.
+     */
+    bool operator!=(number const& left, number const& right);
 
     /**
      * Represents a literal string.
@@ -200,6 +264,22 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, string const& node);
 
     /**
+     * Equality operator for string.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two strings are equal or false if not.
+     */
+    bool operator==(string const& left, string const& right);
+
+    /**
+     * Inequality operator for string.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two strings are not equal or false if they are equal.
+     */
+    bool operator!=(string const& left, string const& right);
+
+    /**
      * Represents a literal regex.
      */
     struct regex : context
@@ -217,6 +297,22 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, regex const& node);
+
+    /**
+     * Equality operator for regex.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two regexes are equal or false if not.
+     */
+    bool operator==(regex const& left, regex const& right);
+
+    /**
+     * Inequality operator for regex.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two regexes are not equal or false if they are equal.
+     */
+    bool operator!=(regex const& left, regex const& right);
 
     /**
      * Represents a variable.
@@ -238,6 +334,22 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, variable const& node);
 
     /**
+     * Equality operator for variable.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two variables are equal or false if not.
+     */
+    bool operator==(variable const& left, variable const& right);
+
+    /**
+     * Inequality operator for variable.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two variables are not equal or false if they are equal.
+     */
+    bool operator!=(variable const& left, variable const& right);
+
+    /**
      * Represents a name.
      */
     struct name : context
@@ -257,6 +369,22 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, name const& node);
 
     /**
+     * Equality operator for name.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two names are equal or false if not.
+     */
+    bool operator==(name const& left, name const& right);
+
+    /**
+     * Inequality operator for name.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two names are not equal or false if they are equal.
+     */
+    bool operator!=(name const& left, name const& right);
+
+    /**
      * Represents a bare word.
      */
     struct bare_word : context
@@ -266,6 +394,22 @@ namespace puppet { namespace compiler { namespace ast {
          */
         std::string value;
     };
+
+    /**
+     * Equality operator for bare word.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two bare words are equal or false if not.
+     */
+    bool operator==(bare_word const& left, bare_word const& right);
+
+    /**
+     * Inequality operator for bare word.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two bare words are not equal or false if they are equal.
+     */
+    bool operator!=(bare_word const& left, bare_word const& right);
 
     /**
      * Stream insertion operator for bare word.
@@ -293,6 +437,22 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, type const& node);
+
+    /**
+     * Equality operator for type.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two types are equal or false if not.
+     */
+    bool operator==(type const& left, type const& right);
+
+    /**
+     * Inequality operator for type.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two types are not equal or false if they are equal.
+     */
+    bool operator!=(type const& left, type const& right);
 
     /**
      * Represents a Puppet primary expression.
@@ -1668,15 +1828,9 @@ namespace puppet { namespace compiler { namespace ast {
     enum class binary_query_operator
     {
         /**
-         * No operator.
-         */
-        none,
-
-        /**
          * Logical "and" of queries.
          */
         logical_and,
-
         /**
          * Logical "or" of queries.
          */
@@ -1820,11 +1974,7 @@ namespace puppet { namespace compiler { namespace ast {
      */
     enum class unary_operator
     {
-        /**
-         * No operator.
-         */
-        none,
-        /**
+       /**
          * The logical not (!) operator.
          */
         logical_not,
