@@ -125,9 +125,6 @@ namespace puppet { namespace compiler { namespace evaluation {
             runtime::values::value& right,
             ast::binary_operation const& operation);
 
-        static unsigned int get_precedence(ast::binary_operator op);
-        static bool is_right_associative(ast::binary_operator op);
-
         evaluation::context& _context;
     };
 

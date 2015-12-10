@@ -844,8 +844,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto left = evaluate(expression);
 
         // Climb the binary operations based on operator precedence
-        unsigned int precedence = 0;
-        while (begin != end && (precedence = get_precedence(begin->operator_)) >= min_precedence)
+        unsigned int current = 0;
+        while (begin != end && (current = precedence(begin->operator_)) >= min_precedence)
         {
             auto const& operation = *begin;
             ++begin;
@@ -859,8 +859,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
 
             // Recurse and climb the expression
-            unsigned int next_precedence = precedence + (is_right_associative(operation.operator_) ? 0 : 1);
-            auto right = climb_expression(operation.operand, next_precedence, begin, end);
+            unsigned int next = current + (is_right_associative(operation.operator_) ? 0 : 1);
+            auto right = climb_expression(operation.operand, next, begin, end);
 
             // Evaluate the binary expression
             evaluate(left, expression.context(), right, operation);
@@ -915,67 +915,6 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         operators::binary_operator_context context{ _context, left, left_context, right, operation.operand.context() };
         left = it->second(context);
-    }
-
-    unsigned int evaluator::get_precedence(binary_operator op)
-    {
-        // Return the precedence (low to high)
-        switch (op) {
-            case binary_operator::in_edge:
-            case binary_operator::in_edge_subscribe:
-            case binary_operator::out_edge:
-            case binary_operator::out_edge_subscribe:
-                return 1;
-
-            case binary_operator::assignment:
-                return 2;
-
-            case binary_operator::logical_or:
-                return 3;
-
-            case binary_operator::logical_and:
-                return 4;
-
-            case binary_operator::greater_than:
-            case binary_operator::greater_equals:
-            case binary_operator::less_than:
-            case binary_operator::less_equals:
-                return 5;
-
-            case binary_operator::equals:
-            case binary_operator::not_equals:
-                return 6;
-
-            case binary_operator::left_shift:
-            case binary_operator::right_shift:
-                return 7;
-
-            case binary_operator::plus:
-            case binary_operator::minus:
-                return 8;
-
-            case binary_operator::multiply:
-            case binary_operator::divide:
-            case binary_operator::modulo:
-                return 9;
-
-            case binary_operator::match:
-            case binary_operator::not_match:
-                return 10;
-
-            case binary_operator::in:
-                return 11;
-
-            default:
-                break;
-        }
-
-        throw runtime_error("invalid binary operator.");
-    }
-
-    bool evaluator::is_right_associative(binary_operator op)
-    {
-        return op == binary_operator::assignment;
     }
 
 }}}  // namespace puppet::compiler::evaluation

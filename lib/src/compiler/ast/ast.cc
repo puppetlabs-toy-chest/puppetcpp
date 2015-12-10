@@ -348,11 +348,81 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    size_t hash_value(binary_operator const& oper)
+    unsigned int precedence(binary_operator op)
+    {
+        // Return the precedence, 1-based and low to high
+        switch (op) {
+            case binary_operator::in_edge:
+            case binary_operator::in_edge_subscribe:
+            case binary_operator::out_edge:
+            case binary_operator::out_edge_subscribe:
+                return 1;
+
+            case binary_operator::assignment:
+                return 2;
+
+            case binary_operator::logical_or:
+                return 3;
+
+            case binary_operator::logical_and:
+                return 4;
+
+            case binary_operator::greater_than:
+            case binary_operator::greater_equals:
+            case binary_operator::less_than:
+            case binary_operator::less_equals:
+                return 5;
+
+            case binary_operator::equals:
+            case binary_operator::not_equals:
+                return 6;
+
+            case binary_operator::left_shift:
+            case binary_operator::right_shift:
+                return 7;
+
+            case binary_operator::plus:
+            case binary_operator::minus:
+                return 8;
+
+            case binary_operator::multiply:
+            case binary_operator::divide:
+            case binary_operator::modulo:
+                return 9;
+
+            case binary_operator::match:
+            case binary_operator::not_match:
+                return 10;
+
+            case binary_operator::in:
+                return 11;
+
+            default:
+                break;
+        }
+
+        throw runtime_error("invalid binary operator.");
+    }
+
+    bool is_right_associative(binary_operator op)
+    {
+        return op == binary_operator::assignment;
+    }
+
+    bool is_productive(binary_operator op)
+    {
+        return op == binary_operator::assignment        ||
+               op == binary_operator::in_edge           ||
+               op == binary_operator::in_edge_subscribe ||
+               op == binary_operator::out_edge          ||
+               op == binary_operator::out_edge_subscribe;
+    }
+
+    size_t hash_value(binary_operator op)
     {
         using type = typename underlying_type<binary_operator>::type;
         std::hash<type> hasher;
-        return hasher(static_cast<type>(oper));
+        return hasher(static_cast<type>(op));
     }
 
     ast::context binary_operation::context() const
@@ -377,24 +447,40 @@ namespace puppet { namespace compiler { namespace ast {
         return context;
     }
 
+    static void climb(
+        bool& productive,
+        unsigned int min_precedence,
+        vector<binary_operation>::const_iterator& begin,
+        vector<binary_operation>::const_iterator const& end)
+    {
+        // Climb the binary operations based on operator precedence
+        unsigned int current = 0;
+        while (begin != end && (current = precedence(begin->operator_)) >= min_precedence)
+        {
+            auto const& operation = *begin;
+            ++begin;
+
+            // Recurse and climb the expression
+            unsigned int next = current + (is_right_associative(operation.operator_) ? 0 : 1);
+            climb(productive, next, begin, end);
+
+            // Check for productive operator
+            productive = is_productive(operation.operator_);
+        }
+    }
+
     bool expression::is_productive() const
     {
-        // Check if the postfix expression is productive
-        if (postfix.is_productive()) {
-            return true;
+        // If it's not a binary expression, check the postfix expression
+        if (operations.empty()) {
+            return postfix.is_productive();
         }
 
-        // Expressions followed by an assignment or relationship operator are productive
-        for (auto const& operation : operations) {
-            if (operation.operator_ == binary_operator::assignment ||
-                operation.operator_ == binary_operator::in_edge ||
-                operation.operator_ == binary_operator::in_edge_subscribe ||
-                operation.operator_ == binary_operator::out_edge ||
-                operation.operator_ == binary_operator::out_edge_subscribe) {
-                return true;
-            }
-        }
-        return false;
+        // Climb the binary operations
+        bool productive = false;
+        auto begin = operations.begin();
+        climb(productive, 0, begin, operations.end());
+        return productive;
     }
 
     bool expression::is_splat() const

@@ -603,11 +603,32 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, binary_operator const& node);
 
     /**
+     * Gets the low-to-high operator precedence of the given binary operator.
+     * @param op The operator to get the precedence for.
+     * @return Returns the low-to-high operator precedence of the given binary operator.
+     */
+    unsigned int precedence(binary_operator op);
+
+    /**
+     * Determines if the given binary operator is right-associative.
+     * @param op The operator to check for right-associativity.
+     * @return Returns true if the operator is right-associative or false if not.
+     */
+    bool is_right_associative(binary_operator op);
+
+    /**
+     * Determines if the given binary operator is productive.
+     * @param op The operator to check for being productive.
+     * @return Returns true if the operator is productive or false if not.
+     */
+    bool is_productive(binary_operator op);
+
+    /**
      * Hashes a binary operator.
-     * @param operator_ The operator to hash.
+     * @param op The operator to hash.
      * @return Returns the hash value for the binary operator.
      */
-    size_t hash_value(binary_operator const& oper);
+    size_t hash_value(binary_operator op);
 
     /**
      * Represents a binary operation.
