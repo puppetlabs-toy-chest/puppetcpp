@@ -146,9 +146,9 @@ namespace puppet { namespace compiler { namespace ast {
 
     bool primary_expression::is_productive() const
     {
-        // Check for recursive primary expression
-        if (auto ptr = boost::get<x3::forward_ast<expression>>(this)) {
-            return ptr->get().is_productive();
+        // Check for nested expression
+        if (auto ptr = boost::get<x3::forward_ast<nested_expression>>(this)) {
+            return ptr->get().expression.is_productive();
         }
 
         // Check for unary expression
@@ -185,9 +185,9 @@ namespace puppet { namespace compiler { namespace ast {
         }
 
         // Try for nested expression
-        auto nested = boost::get<x3::forward_ast<expression>>(this);
+        auto nested = boost::get<x3::forward_ast<nested_expression>>(this);
         if (nested) {
-            return nested->get().is_splat();
+            return nested->get().expression.is_splat();
         }
         return false;
     }
@@ -195,9 +195,9 @@ namespace puppet { namespace compiler { namespace ast {
     bool primary_expression::is_default() const
     {
         // Try for nested expression
-        auto nested = boost::get<x3::forward_ast<expression>>(this);
+        auto nested = boost::get<x3::forward_ast<nested_expression>>(this);
         if (nested) {
-            return nested->get().is_default();
+            return nested->get().expression.is_default();
         }
         return static_cast<bool>(boost::get<defaulted>(this));
     }
@@ -505,16 +505,16 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(ostream& os, expression const& node)
     {
-        if (!node.operations.empty()) {
-            os << '(';
-        }
         os << node.postfix;
         for (auto const& operation : node.operations) {
             os << operation;
         }
-        if (!node.operations.empty()) {
-            os << ')';
-        }
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, nested_expression const& node)
+    {
+        os << '(' << node.expression << ')';
         return os;
     }
 

@@ -25,7 +25,7 @@ namespace puppet { namespace compiler { namespace ast {
 
     // Forward declarations of recursive expressions
     // These expressions hold expressions themselves
-    struct expression;
+    struct nested_expression;
     struct array;
     struct hash;
     struct case_expression;
@@ -308,7 +308,7 @@ namespace puppet { namespace compiler { namespace ast {
         name,
         bare_word,
         type,
-        boost::spirit::x3::forward_ast<expression>,
+        boost::spirit::x3::forward_ast<nested_expression>,
         boost::spirit::x3::forward_ast<array>,
         boost::spirit::x3::forward_ast<hash>,
         boost::spirit::x3::forward_ast<case_expression>,
@@ -712,6 +712,25 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, expression const& node);
+
+    /**
+     * Represents a nested expression.
+     */
+    struct nested_expression : context
+    {
+        /**
+         * Stores the expression that was nested.
+         */
+        ast::expression expression;
+    };
+
+    /**
+     * Stream insertion operator for nested expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, nested_expression const& node);
 
     /**
      * Represents an array literal.

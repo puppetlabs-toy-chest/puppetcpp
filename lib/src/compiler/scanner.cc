@@ -40,7 +40,7 @@ namespace puppet { namespace compiler {
         _classes.clear();
         _defined_types.clear();
         _nodes.clear();
-        
+
         // Check all parameters
         if (tree.parameters) {
             for (auto const& parameter : *tree.parameters) {
@@ -150,6 +150,11 @@ namespace puppet { namespace compiler {
         for (auto const& operation : expression.operations) {
             operator()(operation.operand);
         }
+    }
+
+    void scanner::operator()(ast::nested_expression const& expression)
+    {
+        operator()(expression.expression);
     }
 
     void scanner::operator()(ast::case_expression const& expression)

@@ -86,7 +86,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::type const& expression);
         runtime::values::value operator()(ast::array const& expression);
         runtime::values::value operator()(ast::hash const& expression);
-        runtime::values::value operator()(ast::expression const& expression);
+        runtime::values::value operator()(ast::nested_expression const& expression);
         runtime::values::value operator()(ast::case_expression const& expression);
         runtime::values::value operator()(ast::if_expression const& expression);
         runtime::values::value operator()(ast::unless_expression const& expression);

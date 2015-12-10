@@ -253,9 +253,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         return hash;
     }
 
-    value evaluator::operator()(ast::expression const& expression)
+    value evaluator::operator()(ast::nested_expression const& expression)
     {
-        return evaluate(expression);
+        return evaluate(expression.expression);
     }
 
     value evaluator::operator()(case_expression const& expression)

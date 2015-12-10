@@ -101,6 +101,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(expression,                    "expression",                    ast::expression)
     DECLARE_RULE(binary_expression,             "binary expression",             ast::binary_operation)
     DECLARE_RULE(primary_expression,            "primary expression",            ast::primary_expression)
+    DECLARE_RULE(nested_expression,             "nested expression",             ast::nested_expression)
     DECLARE_RULE(syntax_tree,                   "syntax tree",                   ast::syntax_tree)
     DECLARE_RULE(interpolated_syntax_tree,      "syntax tree",                   ast::syntax_tree)
     DECLARE_RULE(epp_render_expression,         "render expression",             ast::epp_render_expression)
@@ -505,6 +506,7 @@ namespace puppet { namespace compiler { namespace parser {
     // Note: parsing of EPP render block must come before EPP render expression
     DEFINE_RULE(
         primary_expression,
+        nested_expression             |
         epp_render_block              |
         epp_render_expression         |
         epp_render_string             |
@@ -526,8 +528,11 @@ namespace puppet { namespace compiler { namespace parser {
         bare_word                     |
         type                          |
         array                         |
-        hash                          |
-        (raw('(') > expression > raw(')'))
+        hash;
+    )
+    DEFINE_RULE(
+        nested_expression,
+        begin('(') > expression > end(')') > tree
     )
     DEFINE_RULE(
         syntax_tree,
@@ -643,6 +648,7 @@ namespace puppet { namespace compiler { namespace parser {
         expression,
         binary_expression,
         primary_expression,
+        nested_expression,
         syntax_tree,
         interpolated_syntax_tree
     );

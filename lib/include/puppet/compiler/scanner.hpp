@@ -46,6 +46,7 @@ namespace puppet { namespace compiler {
         void operator()(ast::array const& expression);
         void operator()(ast::hash const& expression);
         void operator()(ast::expression const& expression);
+        void operator()(ast::nested_expression const& expression);
         void operator()(ast::case_expression const& expression);
         void operator()(ast::if_expression const& expression);
         void operator()(ast::unless_expression const& expression);
