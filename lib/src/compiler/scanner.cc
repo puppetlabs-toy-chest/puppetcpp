@@ -407,6 +407,11 @@ namespace puppet { namespace compiler {
         }
     }
 
+    void scanner::operator()(ast::nested_query_expression const& expression)
+    {
+        operator()(expression.expression);
+    }
+
     void scanner::operator()(ast::primary_query_expression const& expression)
     {
         boost::apply_visitor(*this, expression);

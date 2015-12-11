@@ -39,7 +39,7 @@ namespace puppet { namespace compiler { namespace ast {
     struct class_expression;
     struct defined_type_expression;
     struct node_expression;
-    struct query_expression;
+    struct nested_query_expression;
     struct collector_expression;
     struct unary_expression;
     struct selector_expression;
@@ -1613,7 +1613,7 @@ namespace puppet { namespace compiler { namespace ast {
      */
     struct primary_query_expression : boost::spirit::x3::variant<
         attribute_query,
-        boost::spirit::x3::forward_ast<query_expression>
+        boost::spirit::x3::forward_ast<nested_query_expression>
         >
     {
         // Use the base's construction and assignment semantics
@@ -1755,6 +1755,25 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, query_expression const& node);
+
+    /**
+     * Represents a nested query expression.
+     */
+    struct nested_query_expression : context
+    {
+        /**
+         * Stores the nested query expression.
+         */
+        query_expression expression;
+    };
+
+    /**
+     * Stream insertion operator for nested query expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, nested_query_expression const& node);
 
     /**
      * Represents a collector expression.

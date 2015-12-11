@@ -1061,16 +1061,16 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(std::ostream& os, query_expression const& node)
     {
-        if (!node.operations.empty()) {
-            os << '(';
-        }
         os << node.primary;
         for (auto const& operation : node.operations) {
             os << operation;
         }
-        if (!node.operations.empty()) {
-            os << ')';
-        }
+        return os;
+    }
+
+    ostream& operator<<(std::ostream& os, nested_query_expression const& node)
+    {
+        os << '(' << node.expression << ')';
         return os;
     }
 

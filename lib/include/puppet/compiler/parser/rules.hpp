@@ -79,6 +79,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(exported_collector_expression, "exported resource collector",   ast::collector_expression)
     DECLARE_RULE(query_expression,              "query expression",              ast::query_expression)
     DECLARE_RULE(primary_query_expression,      "primary query expression",      ast::primary_query_expression)
+    DECLARE_RULE(nested_query_expression,       "nested query expression",       ast::nested_query_expression)
     DECLARE_RULE(attribute_query,               "attribute query",               ast::attribute_query)
     DECLARE_RULE(query_operator,                "query operator",                ast::query_operator)
     DECLARE_RULE(attribute_query_value,         "attribute value",               ast::primary_expression)
@@ -363,8 +364,11 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         primary_query_expression,
-        attribute_query |
-        (raw('(') > query_expression > raw(')'))
+        nested_query_expression | attribute_query
+    )
+    DEFINE_RULE(
+        nested_query_expression,
+        begin('(') > query_expression > end(')') > tree
     )
     DEFINE_RULE(
         attribute_query,
@@ -623,6 +627,7 @@ namespace puppet { namespace compiler { namespace parser {
         exported_collector_expression,
         query_expression,
         primary_query_expression,
+        nested_query_expression,
         attribute_query,
         query_operator,
         attribute_query_value,
