@@ -1,0 +1,218 @@
+statements:
+  - kind: resource defaults
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 8
+      line: 2
+    type:
+      kind: type
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 4
+        line: 1
+      name: File
+  - kind: resource defaults
+    begin:
+      offset: 10
+      line: 4
+    end:
+      offset: 50
+      line: 7
+    type:
+      kind: type
+      begin:
+        offset: 10
+        line: 4
+      end:
+        offset: 14
+        line: 4
+      name: File
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 21
+            line: 5
+          end:
+            offset: 24
+            line: 5
+          value: bar
+        operator_position:
+          offset: 25
+          line: 5
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 28
+            line: 5
+          end:
+            offset: 31
+            line: 5
+          value: baz
+      - name:
+          kind: name
+          begin:
+            offset: 37
+            line: 6
+          end:
+            offset: 40
+            line: 6
+          value: jam
+        operator_position:
+          offset: 41
+          line: 6
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 44
+            line: 6
+          end:
+            offset: 48
+            line: 6
+          value: cake
+  - kind: resource defaults
+    begin:
+      offset: 52
+      line: 9
+    end:
+      offset: 146
+      line: 14
+    type:
+      kind: type
+      begin:
+        offset: 52
+        line: 9
+      end:
+        offset: 65
+        line: 9
+      name: Foo::Bar::Baz
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 72
+            line: 10
+          end:
+            offset: 75
+            line: 10
+          value: jam
+        operator_position:
+          offset: 76
+          line: 10
+        operator: =>
+        value:
+          kind: array
+          begin:
+            offset: 79
+            line: 10
+          end:
+            offset: 90
+            line: 10
+          elements:
+            - kind: number
+              begin:
+                offset: 80
+                line: 10
+              end:
+                offset: 81
+                line: 10
+              base: decimal
+              value: 1
+            - kind: array
+              begin:
+                offset: 83
+                line: 10
+              end:
+                offset: 86
+                line: 10
+              elements:
+                - kind: number
+                  begin:
+                    offset: 84
+                    line: 10
+                  end:
+                    offset: 85
+                    line: 10
+                  base: decimal
+                  value: 2
+            - kind: number
+              begin:
+                offset: 88
+                line: 10
+              end:
+                offset: 89
+                line: 10
+              base: decimal
+              value: 3
+      - name:
+          kind: name
+          begin:
+            offset: 96
+            line: 11
+          end:
+            offset: 98
+            line: 11
+          value: if
+        operator_position:
+          offset: 99
+          line: 11
+        operator: =>
+        value:
+          kind: variable
+          begin:
+            offset: 102
+            line: 11
+          end:
+            offset: 106
+            line: 11
+          name: foo
+      - name:
+          kind: name
+          begin:
+            offset: 112
+            line: 12
+          end:
+            offset: 118
+            line: 12
+          value: notice
+        operator_position:
+          offset: 119
+          line: 12
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 122
+            line: 12
+          end:
+            offset: 125
+            line: 12
+          value: bar
+      - name:
+          kind: name
+          begin:
+            offset: 131
+            line: 13
+          end:
+            offset: 136
+            line: 13
+          value: class
+        operator_position:
+          offset: 137
+          line: 13
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 140
+            line: 13
+          end:
+            offset: 144
+            line: 13
+          value: okay

@@ -1,0 +1,235 @@
+statements:
+  - kind: function call
+    function:
+      kind: name
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 3
+        line: 1
+      value: foo
+    end:
+      offset: 5
+      line: 1
+  - kind: function call
+    function:
+      kind: name
+      begin:
+        offset: 7
+        line: 3
+      end:
+        offset: 10
+        line: 3
+      value: bar
+    arguments:
+      - kind: number
+        begin:
+          offset: 11
+          line: 3
+        end:
+          offset: 12
+          line: 3
+        base: decimal
+        value: 1
+      - kind: number
+        begin:
+          offset: 14
+          line: 3
+        end:
+          offset: 15
+          line: 3
+        base: decimal
+        value: 2
+      - kind: number
+        begin:
+          offset: 17
+          line: 3
+        end:
+          offset: 18
+          line: 3
+        base: decimal
+        value: 3
+    end:
+      offset: 19
+      line: 3
+  - kind: function call
+    function:
+      kind: name
+      begin:
+        offset: 21
+        line: 5
+      end:
+        offset: 27
+        line: 5
+      value: notice
+    arguments:
+      - kind: name
+        begin:
+          offset: 28
+          line: 5
+        end:
+          offset: 31
+          line: 5
+        value: foo
+      - kind: name
+        begin:
+          offset: 33
+          line: 5
+        end:
+          offset: 36
+          line: 5
+        value: bar
+      - kind: name
+        begin:
+          offset: 38
+          line: 5
+        end:
+          offset: 41
+          line: 5
+        value: baz
+  - kind: function call
+    function:
+      kind: name
+      begin:
+        offset: 43
+        line: 7
+      end:
+        offset: 46
+        line: 7
+      value: baz
+    arguments:
+      - kind: number
+        begin:
+          offset: 47
+          line: 7
+        end:
+          offset: 48
+          line: 7
+        base: decimal
+        value: 1
+    lambda:
+      begin:
+        offset: 50
+        line: 7
+      end:
+        offset: 103
+        line: 7
+      parameters:
+        - variable:
+            kind: variable
+            begin:
+              offset: 51
+              line: 7
+            end:
+              offset: 53
+              line: 7
+            name: x
+        - type:
+            kind: postfix
+            primary:
+              kind: type
+              begin:
+                offset: 55
+                line: 7
+              end:
+                offset: 62
+                line: 7
+              name: Integer
+            subexpressions:
+              - kind: access
+                begin:
+                  offset: 62
+                  line: 7
+                end:
+                  offset: 68
+                  line: 7
+                arguments:
+                  - kind: number
+                    begin:
+                      offset: 63
+                      line: 7
+                    end:
+                      offset: 64
+                      line: 7
+                    base: decimal
+                    value: 0
+                  - kind: number
+                    begin:
+                      offset: 66
+                      line: 7
+                    end:
+                      offset: 67
+                      line: 7
+                    base: decimal
+                    value: 1
+          variable:
+            kind: variable
+            begin:
+              offset: 69
+              line: 7
+            end:
+              offset: 71
+              line: 7
+            name: y
+          default_value:
+            kind: number
+            begin:
+              offset: 74
+              line: 7
+            end:
+              offset: 75
+              line: 7
+            base: decimal
+            value: 1
+        - captures:
+            offset: 77
+            line: 7
+          variable:
+            kind: variable
+            begin:
+              offset: 78
+              line: 7
+            end:
+              offset: 80
+              line: 7
+            name: z
+      body:
+        - kind: function call
+          function:
+            kind: name
+            begin:
+              offset: 84
+              line: 7
+            end:
+              offset: 90
+              line: 7
+            value: notice
+          arguments:
+            - kind: variable
+              begin:
+                offset: 91
+                line: 7
+              end:
+                offset: 93
+                line: 7
+              name: x
+            - kind: variable
+              begin:
+                offset: 95
+                line: 7
+              end:
+                offset: 97
+                line: 7
+              name: y
+            - kind: variable
+              begin:
+                offset: 99
+                line: 7
+              end:
+                offset: 101
+                line: 7
+              name: z
+    end:
+      offset: 49
+      line: 7

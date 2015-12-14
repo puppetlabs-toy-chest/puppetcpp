@@ -145,7 +145,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::expression const& expression)
     {
-        operator()(expression.postfix);
+        operator()(expression.first);
 
         for (auto const& operation : expression.operations) {
             operator()(operation.operand);

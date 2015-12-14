@@ -325,7 +325,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::expression,
-    postfix,
+    first,
     operations
 )
 

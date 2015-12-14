@@ -32,6 +32,14 @@ namespace puppet { namespace compiler { namespace lexer {
     };
 
     /**
+     * Stream insertion operator for numberic base.
+     * @param os The output stream to write the token.
+     * @param base The base to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, numeric_base base);
+
+    /**
      * Represents a number token.
      */
     struct number_token

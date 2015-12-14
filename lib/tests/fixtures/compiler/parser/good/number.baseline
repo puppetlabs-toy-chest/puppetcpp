@@ -1,0 +1,55 @@
+statements:
+  - kind: number
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 4
+      line: 1
+    base: decimal
+    value: 1234
+  - kind: number
+    begin:
+      offset: 5
+      line: 2
+    end:
+      offset: 11
+      line: 2
+    base: hexadecimal
+    value: 43981
+  - kind: number
+    begin:
+      offset: 12
+      line: 3
+    end:
+      offset: 19
+      line: 3
+    base: decimal
+    value: 123.123
+  - kind: number
+    begin:
+      offset: 20
+      line: 4
+    end:
+      offset: 24
+      line: 4
+    base: octal
+    value: 511
+  - kind: number
+    begin:
+      offset: 25
+      line: 5
+    end:
+      offset: 30
+      line: 5
+    base: decimal
+    value: 0.123
+  - kind: number
+    begin:
+      offset: 31
+      line: 6
+    end:
+      offset: 37
+      line: 6
+    base: decimal
+    value: 1e+101

@@ -179,6 +179,11 @@ namespace puppet { namespace compiler { namespace ast {
         using value_type = lexer::number_token::value_type;
 
         /**
+         * Stores the base of the number.
+         */
+        lexer::numeric_base base = lexer::numeric_base::decimal;
+
+        /**
          * Stores the value of the literal number.
          */
         value_type value = value_type();
@@ -831,9 +836,9 @@ namespace puppet { namespace compiler { namespace ast {
     struct expression
     {
         /**
-         * Stores the postfix expression.
+         * Stores the first expression.
          */
-        postfix_expression postfix;
+        postfix_expression first;
 
         /**
          * Stores the binary operations of the expression.
@@ -1426,10 +1431,10 @@ namespace puppet { namespace compiler { namespace ast {
     /**
      * Stream insertion operator for resource status.
      * @param os The output stream to write to.
-     * @param node The node to write.
+     * @param status The status to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, resource_status const& node);
+    std::ostream& operator<<(std::ostream& os, resource_status status);
 
     /**
      * Represents a resource body.
@@ -2102,6 +2107,17 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, epp_render_string const& node);
 
     /**
+     * Represents a supported serialization format for the syntax tree.
+     */
+    enum class format
+    {
+        /**
+         * YAML format.
+         */
+        yaml
+    };
+
+    /**
      * Represents a Puppet syntax tree.
      */
     struct syntax_tree : std::enable_shared_from_this<syntax_tree>
@@ -2152,6 +2168,14 @@ namespace puppet { namespace compiler { namespace ast {
          * @return Returns the module that owns this AST.
          */
         compiler::module const* module() const;
+
+        /**
+         * Writes the syntax tree to a given stream.
+         * @param format The format to serialize the syntax tree as.
+         * @param stream The stream to write the syntax tree to.
+         * @param include_path Specifies whether or not the serialized data should include the parsed file's path.
+         */
+        void write(ast::format format, std::ostream& stream, bool include_path = true) const;
 
         /**
          * Creates a syntax tree.

@@ -235,15 +235,15 @@ namespace puppet { namespace compiler { namespace parser {
         resource_expression,
         virtualized_resource |
         exported_resource |
-        (begin(false) >> boost::spirit::x3::attr(ast::resource_status::realized) >> resource_type >> (raw('{') > (raw('}', false) | resource_bodies) > end('}') > tree))
+        (begin(false) >> boost::spirit::x3::attr(ast::resource_status::realized) >> resource_type >> raw('{') >> (resource_bodies > end('}') > tree))
     )
     DEFINE_RULE(
         virtualized_resource,
-        begin('@') > boost::spirit::x3::attr(ast::resource_status::virtualized) > resource_type > raw('{') > (raw('}', false) | resource_bodies) > end('}') > tree
+        begin('@') > boost::spirit::x3::attr(ast::resource_status::virtualized) > resource_type > raw('{') > resource_bodies > end('}') > tree
     )
     DEFINE_RULE(
         exported_resource,
-        begin(lexer::token_id::atat) > boost::spirit::x3::attr(ast::resource_status::exported) > resource_type > raw('{') > (raw('}', false) | resource_bodies) > end('}') > tree
+        begin(lexer::token_id::atat) > boost::spirit::x3::attr(ast::resource_status::exported) > resource_type > raw('{') > resource_bodies > end('}') > tree
     )
     DEFINE_RULE(
         resource_type,
@@ -260,7 +260,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         resource_body,
-        primary_expression > raw(':') > (attributes | boost::spirit::x3::eps)
+        (primary_expression >> raw(':')) > (attributes | boost::spirit::x3::eps)
     )
     DEFINE_RULE(
         attributes,
@@ -314,7 +314,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         resource_reference_expression,
-        (type | variable) > *access_expression
+        (type >> +access_expression) | (variable > *access_expression)
     )
     DEFINE_RULE(
         resource_defaults_expression,

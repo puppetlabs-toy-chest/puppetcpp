@@ -1,0 +1,9 @@
+statements:
+  - kind: variable
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 14
+      line: 1
+    name: foo::bar::baz

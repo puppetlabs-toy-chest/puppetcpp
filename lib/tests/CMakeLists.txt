@@ -2,11 +2,13 @@ include_directories(
     ../include/
     ${Boost_INCLUDE_DIRS}
     ${CATCH_INCLUDE_DIRS}
+    ${DTL_INCLUDE_DIRS}
 )
 
 add_executable(puppet_test
     compiler/ast/ast.cc
     compiler/lexer/lexer.cc
+    compiler/parser/parser.cc
     main.cc
 )
 

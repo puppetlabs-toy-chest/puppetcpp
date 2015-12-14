@@ -1,5 +1,7 @@
 #include <puppet/compiler/ast/ast.hpp>
 #include <puppet/cast.hpp>
+#include <boost/lexical_cast.hpp>
+#include <yaml-cpp/yaml.h>
 
 using namespace std;
 namespace x3 = boost::spirit::x3;
@@ -547,7 +549,7 @@ namespace puppet { namespace compiler { namespace ast {
 
     ast::context expression::context() const
     {
-        auto context = postfix.context();
+        auto context = first.context();
         if (!operations.empty()) {
             context.end = operations.back().context().end;
         }
@@ -578,9 +580,9 @@ namespace puppet { namespace compiler { namespace ast {
 
     bool expression::is_productive() const
     {
-        // If it's not a binary expression, check the postfix expression
+        // If it's not a binary expression, check the first expression
         if (operations.empty()) {
-            return postfix.is_productive();
+            return first.is_productive();
         }
 
         // Climb the binary operations
@@ -596,8 +598,8 @@ namespace puppet { namespace compiler { namespace ast {
         if (!operations.empty()) {
             return false;
         }
-        // Check the postfix expression
-        return postfix.is_splat();
+        // Check the first expression
+        return first.is_splat();
     }
 
     bool expression::is_default() const
@@ -606,13 +608,13 @@ namespace puppet { namespace compiler { namespace ast {
         if (!operations.empty()) {
             return false;
         }
-        // Check the postfix expression
-        return postfix.is_default();
+        // Check the first expression
+        return first.is_default();
     }
 
     ostream& operator<<(ostream& os, expression const& node)
     {
-        os << node.postfix;
+        os << node.first;
         for (auto const& operation : node.operations) {
             os << operation;
         }
@@ -901,22 +903,23 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
-    ostream& operator<<(ostream& os, resource_status const& node)
+    ostream& operator<<(ostream& os, resource_status status)
     {
-        switch (node) {
+        switch (status) {
             case resource_status::realized:
+                os << "realized";
                 break;
 
             case resource_status::virtualized:
-                os << "@";
+                os << "virtual";
                 break;
 
             case resource_status::exported:
-                os << "@@";
+                os << "exported";
                 break;
 
             default:
-                throw runtime_error("invalid resource status.");
+                throw runtime_error("unexpected resource status.");
         }
         return os;
     }
@@ -939,7 +942,22 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(ostream& os, resource_expression const& node)
     {
-        os << node.status << node.type << " { ";
+        switch (node.status) {
+            case resource_status::realized:
+                break;
+
+            case resource_status::virtualized:
+                os << "@";
+                break;
+
+            case resource_status::exported:
+                os << "@@";
+                break;
+
+            default:
+                throw runtime_error("invalid resource status.");
+        }
+        os << node.type << " { ";
         pretty_print(os, node.bodies, "; ");
         os << " }";
         return os;
@@ -1290,6 +1308,625 @@ namespace puppet { namespace compiler { namespace ast {
     compiler::module const* syntax_tree::module() const
     {
         return _module;
+    }
+
+    struct yaml_writer
+    {
+        explicit yaml_writer(ostream& stream, bool include_path = true) :
+            _emitter(stream),
+            _include_path(include_path)
+        {
+        }
+
+        void write(syntax_tree const& tree)
+        {
+            _emitter << YAML::BeginMap;
+            write("parameters", tree.parameters);
+            write("statements", tree.statements);
+            if (tree.end.line() != 0) {
+                write("end", tree.end);
+            }
+            if (_include_path) {
+                write("path", tree.path());
+            }
+            _emitter << YAML::EndMap;
+        }
+
+     private:
+        void write(lexer::position const& position)
+        {
+            _emitter << YAML::BeginMap;
+            write("offset", position.offset());
+            write("line", position.line());
+            _emitter << YAML::EndMap;
+        }
+
+        void write(lexer::range const& range)
+        {
+            _emitter << YAML::BeginMap;
+            write("begin", range.begin());
+            write("end", range.end());
+            _emitter << YAML::EndMap;
+        }
+
+        void write(expression const& node)
+        {
+            // If the expression has no binary operations, write the first expression
+            if (node.operations.empty()) {
+                write(node.first);
+            } else {
+                _emitter << YAML::BeginMap;
+                write("kind", "binary");
+                write("first", node.first);
+                write("operations", node.operations);
+                _emitter << YAML::EndMap;
+            }
+        }
+
+        void write(postfix_expression const& node)
+        {
+            // If the postfix has no subexpressions, write the primary expression
+            if (node.subexpressions.empty()) {
+                write(node.primary);
+            } else {
+                _emitter << YAML::BeginMap;
+                write("kind", "postfix");
+                write("primary", node.primary);
+                write("subexpressions", node.subexpressions);
+                _emitter << YAML::EndMap;
+            }
+        }
+
+        void write(binary_operation const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("operator_position", node.operator_position);
+            write("operator", boost::lexical_cast<std::string>(node.operator_));
+            write("operand", node.operand);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(primary_expression const& node)
+        {
+            boost::apply_visitor([this](auto const& node) {
+                this->write(node);
+            }, node);
+        }
+
+        void write(postfix_subexpression const& node)
+        {
+            boost::apply_visitor([this](auto const& node) {
+                this->write(node);
+            }, node);
+        }
+
+        void write(undef const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "undef");
+            write(static_cast<context const&>(node));
+            _emitter << YAML::EndMap;
+        }
+
+        void write(defaulted const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "default");
+            write(static_cast<context const&>(node));
+            _emitter << YAML::EndMap;
+        }
+
+        void write(boolean const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "boolean");
+            write(static_cast<context const&>(node));
+            write("value", node.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(number const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "number");
+            write(static_cast<context const&>(node));
+            write("base", boost::lexical_cast<std::string>(node.base));
+            boost::apply_visitor([this](auto const& node) {
+                this->write("value", node);
+            }, node.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(string const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "string");
+            write(static_cast<context const&>(node));
+            write("value_range", node.value_range);
+            write("value", node.value);
+            write("escapes", node.escapes);
+            write("format", node.format);
+            write("margin", node.margin);
+            write("quote", std::string(1, node.quote));
+            write("interpolated", node.interpolated);
+            write("remove_break", node.remove_break);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(regex const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "regex");
+            write(static_cast<context const&>(node));
+            write("value", node.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(variable const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "variable");
+            write(static_cast<context const&>(node));
+            write("name", node.name);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(name const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "name");
+            write(static_cast<context const&>(node));
+            write("value", node.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(bare_word const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "bare word");
+            write(static_cast<context const&>(node));
+            write("value", node.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(type const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "type");
+            write(static_cast<context const&>(node));
+            write("name", node.name);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(nested_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "nested expression");
+            write(static_cast<context const&>(node));
+            write("expression", node.expression);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(array const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "array");
+            write(static_cast<context const&>(node));
+            write("elements", node.elements);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(hash const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "hash");
+            write(static_cast<context const&>(node));
+            write("elements", node.elements);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(ast::proposition const& proposition)
+        {
+            _emitter << YAML::BeginMap;
+            write("options", proposition.options);
+            write("body", proposition.body);
+            write("end", proposition.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(case_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "case");
+            write(static_cast<context const&>(node));
+            write("conditional", node.conditional);
+            write("propositions", node.propositions);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(ast::else_ const& else_)
+        {
+            _emitter << YAML::BeginMap;
+            write("begin", else_.begin);
+            write("body", else_.body);
+            write("end", else_.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(ast::elsif const& elsif)
+        {
+            _emitter << YAML::BeginMap;
+            write("begin", elsif.begin);
+            write("conditional", elsif.conditional);
+            write("body", elsif.body);
+            write("end", elsif.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(if_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "if");
+            write("begin", node.begin);
+            write("end", node.end);
+            write("conditional", node.conditional);
+            write("body", node.body);
+            write("elsifs", node.elsifs);
+            write("else", node.else_);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(unless_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "unless");
+            write("begin", node.begin);
+            write("end", node.end);
+            write("conditional", node.conditional);
+            write("body", node.body);
+            write("else", node.else_);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(ast::parameter const& parameter)
+        {
+            _emitter << YAML::BeginMap;
+            write("type", parameter.type);
+            write("captures", parameter.captures);
+            write("variable", parameter.variable);
+            write("default_value", parameter.default_value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(lambda_expression const& lambda)
+        {
+            _emitter << YAML::BeginMap;
+            write(static_cast<context const&>(lambda));
+            write("parameters", lambda.parameters);
+            write("body", lambda.body);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(function_call_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "function call");
+            write("function", node.function);
+            write("arguments", node.arguments);
+            write("lambda", node.lambda);
+            write("end", node.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(attribute_operation const& operation)
+        {
+            _emitter << YAML::BeginMap;
+            write("name", operation.name);
+            write("operator_position", operation.operator_position);
+            write("operator", boost::lexical_cast<std::string>(operation.operator_));
+            write("value", operation.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(resource_body const& body)
+        {
+            _emitter << YAML::BeginMap;
+            write("title", body.title);
+            write("operations", body.operations);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(resource_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "resource");
+            write(static_cast<context const&>(node));
+            std::string status;
+            switch (node.status) {
+                case resource_status::realized:
+                    status = "realized";
+                    break;
+
+                case resource_status::virtualized:
+                    status = "virtual";
+                    break;
+
+                case resource_status::exported:
+                    status = "exported";
+                    break;
+
+                default:
+                    throw runtime_error("unexpected resource status.");
+            }
+            write("status", status);
+            write("type", node.type);
+            write("bodies", node.bodies);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(resource_override_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "resource override");
+            write(static_cast<context const&>(node));
+            write("reference", node.reference);
+            write("operations", node.operations);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(resource_defaults_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "resource defaults");
+            write(static_cast<context const&>(node));
+            write("type", node.type);
+            write("operations", node.operations);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(class_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "class");
+            write(static_cast<context const&>(node));
+            write("name", node.name);
+            write("parameters", node.parameters);
+            write("parent", node.parent);
+            write("body", node.body);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(defined_type_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "defined type");
+            write(static_cast<context const&>(node));
+            write("name", node.name);
+            write("parameters", node.parameters);
+            write("body", node.body);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(ast::hostname const& hostname)
+        {
+            _emitter << YAML::BeginMap;
+            if (hostname.is_default()) {
+                write("default", true);
+            } else {
+                write("regex", hostname.is_regex());
+                write("value", hostname.to_string());
+            }
+            _emitter << YAML::EndMap;
+        }
+
+        void write(node_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write(static_cast<context const&>(node));
+            write("kind", "node");
+            write("hostnames", node.hostnames);
+            write("body", node.body);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(primary_query_expression const& node)
+        {
+            boost::apply_visitor([this](auto const& node) {
+                this->write(node);
+            }, node);
+        }
+
+        void write(attribute_query const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "attribute query");
+            write("attribute", node.attribute);
+            write("operator_position", node.operator_position);
+            write("operator", boost::lexical_cast<std::string>(node.operator_));
+            write("value", node.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(nested_query_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "nested query");
+            write("expression", node.expression);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(binary_query_operation const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("operator_position", node.operator_position);
+            write("operator", boost::lexical_cast<std::string>(node.operator_));
+            write("operand", node.operand);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(query_expression const& query)
+        {
+            // If the query has no binary operations, write the primary expression only
+            if (query.operations.empty()) {
+                write(query.primary);
+            } else {
+                _emitter << YAML::BeginMap;
+                write("kind", "binary query");
+                write("primary", query.primary);
+                write("operations", query.operations);
+                _emitter << YAML::EndMap;
+            }
+        }
+
+        void write(collector_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "collector");
+            write("type", node.type);
+            write("exported", node.exported);
+            write("query", node.query);
+            write("end", node.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(unary_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "unary");
+            write("operator_position", node.operator_position);
+            write("operator", boost::lexical_cast<std::string>(node.operator_));
+            write("operand", node.operand);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(epp_render_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "EPP render");
+            write(static_cast<context const&>(node));
+            write("expression", node.expression);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(epp_render_block const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "EPP render block");
+            write(static_cast<context const&>(node));
+            write("block", node.block);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(epp_render_string const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "EPP render string");
+            write(static_cast<context const&>(node));
+            write("string", node.string);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(selector_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "selector");
+            write(static_cast<context const&>(node));
+            write("cases", node.cases);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(access_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "access");
+            write(static_cast<context const&>(node));
+            write("arguments", node.arguments);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(method_call_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "method call");
+            write("begin", node.begin);
+            write("method", node.method);
+            write("arguments", node.arguments);
+            write("end", node.end);
+            write("lambda", node.lambda);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(context const& node)
+        {
+            write("begin", node.begin);
+            write("end", node.end);
+        }
+
+        void write(std::pair<expression, expression> const& pair)
+        {
+            _emitter << YAML::BeginMap;
+            write("first", pair.first);
+            write("second", pair.second);
+            _emitter << YAML::EndMap;
+        }
+
+        template <typename T>
+        void write(x3::forward_ast<T> const& node)
+        {
+            write(node.get());
+        }
+
+        template <typename T>
+        void write(T const& value)
+        {
+            _emitter << value;
+        }
+
+        template <typename T>
+        void write(std::string const& key, boost::optional<T> const& node)
+        {
+            if (node) {
+                write(key, *node);
+            }
+        }
+
+        template <typename T>
+        void write(std::string const& key, T const& value)
+        {
+            _emitter << YAML::Key << key << YAML::Value;
+            write(value);
+        }
+
+        template <typename T>
+        void write(std::string const& key, std::vector<T> const& sequence)
+        {
+            if (sequence.empty()) {
+                return;
+            }
+
+            _emitter << YAML::Key << key << YAML::Value << YAML::BeginSeq;
+            for (auto const& element : sequence) {
+                write(element);
+            }
+            _emitter << YAML::EndSeq;
+        }
+
+        YAML::Emitter _emitter;
+        bool _include_path;
+    };
+
+    void syntax_tree::write(ast::format format, std::ostream& stream, bool include_path) const
+    {
+        switch (format) {
+            case ast::format::yaml: {
+                yaml_writer writer{stream, include_path};
+                writer.write(*this);
+                break;
+            }
+
+            default:
+                throw runtime_error("unexpected syntax tree format.");
+        }
     }
 
     shared_ptr<syntax_tree> syntax_tree::create(std::string path, compiler::module const* module)

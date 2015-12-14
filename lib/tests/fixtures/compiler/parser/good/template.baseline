@@ -1,0 +1,478 @@
+parameters:
+  - type:
+      kind: type
+      begin:
+        offset: 6
+        line: 1
+      end:
+        offset: 13
+        line: 1
+      name: Boolean
+    variable:
+      kind: variable
+      begin:
+        offset: 14
+        line: 1
+      end:
+        offset: 26
+        line: 1
+      name: keys_enable
+  - type:
+      kind: type
+      begin:
+        offset: 34
+        line: 2
+      end:
+        offset: 40
+        line: 2
+      name: String
+    variable:
+      kind: variable
+      begin:
+        offset: 42
+        line: 2
+      end:
+        offset: 52
+        line: 2
+      name: keys_file
+  - type:
+      kind: type
+      begin:
+        offset: 60
+        line: 3
+      end:
+        offset: 65
+        line: 3
+      name: Array
+    variable:
+      kind: variable
+      begin:
+        offset: 68
+        line: 3
+      end:
+        offset: 81
+        line: 3
+      name: keys_trusted
+  - type:
+      kind: type
+      begin:
+        offset: 89
+        line: 4
+      end:
+        offset: 95
+        line: 4
+      name: String
+    variable:
+      kind: variable
+      begin:
+        offset: 97
+        line: 4
+      end:
+        offset: 113
+        line: 4
+      name: keys_requestkey
+  - type:
+      kind: type
+      begin:
+        offset: 121
+        line: 5
+      end:
+        offset: 127
+        line: 5
+      name: String
+    variable:
+      kind: variable
+      begin:
+        offset: 129
+        line: 5
+      end:
+        offset: 145
+        line: 5
+      name: keys_controlkey
+statements:
+  - kind: EPP render string
+    begin:
+      offset: 178
+      line: 8
+    end:
+      offset: 179
+      line: 9
+    string: "\n"
+  - kind: if
+    begin:
+      offset: 211
+      line: 10
+    end:
+      offset: 570
+      line: 24
+    conditional:
+      kind: variable
+      begin:
+        offset: 214
+        line: 10
+      end:
+        offset: 226
+        line: 10
+      name: keys_enable
+    body:
+      - kind: EPP render string
+        begin:
+          offset: 233
+          line: 11
+        end:
+          offset: 234
+          line: 12
+        string: "\n"
+      - kind: EPP render string
+        begin:
+          offset: 270
+          line: 13
+        end:
+          offset: 275
+          line: 13
+        string: "keys "
+      - kind: EPP render
+        begin:
+          offset: 275
+          line: 13
+        end:
+          offset: 292
+          line: 13
+        expression:
+          kind: variable
+          begin:
+            offset: 279
+            line: 13
+          end:
+            offset: 289
+            line: 13
+          name: keys_file
+      - kind: EPP render string
+        begin:
+          offset: 292
+          line: 13
+        end:
+          offset: 293
+          line: 14
+        string: "\n"
+      - kind: unless
+        begin:
+          offset: 296
+          line: 14
+        end:
+          offset: 388
+          line: 16
+        conditional:
+          kind: binary
+          first:
+            kind: variable
+            begin:
+              offset: 303
+              line: 14
+            end:
+              offset: 316
+              line: 14
+            name: keys_trusted
+          operations:
+            - operator_position:
+                offset: 317
+                line: 14
+              operator: =~
+              operand:
+                kind: postfix
+                primary:
+                  kind: type
+                  begin:
+                    offset: 320
+                    line: 14
+                  end:
+                    offset: 325
+                    line: 14
+                  name: Array
+                subexpressions:
+                  - kind: access
+                    begin:
+                      offset: 325
+                      line: 14
+                    end:
+                      offset: 335
+                      line: 14
+                    arguments:
+                      - kind: type
+                        begin:
+                          offset: 326
+                          line: 14
+                        end:
+                          offset: 330
+                          line: 14
+                        name: Data
+                      - kind: number
+                        begin:
+                          offset: 331
+                          line: 14
+                        end:
+                          offset: 332
+                          line: 14
+                        base: decimal
+                        value: 0
+                      - kind: number
+                        begin:
+                          offset: 333
+                          line: 14
+                        end:
+                          offset: 334
+                          line: 14
+                        base: decimal
+                        value: 0
+        body:
+          - kind: EPP render string
+            begin:
+              offset: 342
+              line: 15
+            end:
+              offset: 353
+              line: 15
+            string: "trustedkey "
+          - kind: EPP render
+            begin:
+              offset: 353
+              line: 15
+            end:
+              offset: 383
+              line: 15
+            expression:
+              kind: postfix
+              primary:
+                kind: variable
+                begin:
+                  offset: 357
+                  line: 15
+                end:
+                  offset: 370
+                  line: 15
+                name: keys_trusted
+              subexpressions:
+                - kind: method call
+                  begin:
+                    offset: 370
+                    line: 15
+                  method:
+                    kind: name
+                    begin:
+                      offset: 371
+                      line: 15
+                    end:
+                      offset: 375
+                      line: 15
+                    value: join
+                  arguments:
+                    - kind: string
+                      begin:
+                        offset: 376
+                        line: 15
+                      end:
+                        offset: 379
+                        line: 15
+                      value_range:
+                        begin:
+                          offset: 377
+                          line: 15
+                        end:
+                          offset: 378
+                          line: 15
+                      value: " "
+                      escapes: \'
+                      format: ""
+                      margin: 0
+                      quote: "'"
+                      interpolated: false
+                      remove_break: false
+                  end:
+                    offset: 380
+                    line: 15
+          - kind: EPP render string
+            begin:
+              offset: 383
+              line: 15
+            end:
+              offset: 384
+              line: 16
+            string: "\n"
+      - kind: if
+        begin:
+          offset: 396
+          line: 17
+        end:
+          offset: 474
+          line: 19
+        conditional:
+          kind: binary
+          first:
+            kind: variable
+            begin:
+              offset: 399
+              line: 17
+            end:
+              offset: 415
+              line: 17
+            name: keys_requestkey
+          operations:
+            - operator_position:
+                offset: 416
+                line: 17
+              operator: =~
+              operand:
+                kind: postfix
+                primary:
+                  kind: type
+                  begin:
+                    offset: 419
+                    line: 17
+                  end:
+                    offset: 425
+                    line: 17
+                  name: String
+                subexpressions:
+                  - kind: access
+                    begin:
+                      offset: 425
+                      line: 17
+                    end:
+                      offset: 428
+                      line: 17
+                    arguments:
+                      - kind: number
+                        begin:
+                          offset: 426
+                          line: 17
+                        end:
+                          offset: 427
+                          line: 17
+                        base: decimal
+                        value: 1
+        body:
+          - kind: EPP render string
+            begin:
+              offset: 435
+              line: 18
+            end:
+              offset: 446
+              line: 18
+            string: "requestkey "
+          - kind: EPP render
+            begin:
+              offset: 446
+              line: 18
+            end:
+              offset: 469
+              line: 18
+            expression:
+              kind: variable
+              begin:
+                offset: 450
+                line: 18
+              end:
+                offset: 466
+                line: 18
+              name: keys_requestkey
+          - kind: EPP render string
+            begin:
+              offset: 469
+              line: 18
+            end:
+              offset: 470
+              line: 19
+            string: "\n"
+      - kind: if
+        begin:
+          offset: 482
+          line: 20
+        end:
+          offset: 560
+          line: 22
+        conditional:
+          kind: binary
+          first:
+            kind: variable
+            begin:
+              offset: 485
+              line: 20
+            end:
+              offset: 501
+              line: 20
+            name: keys_controlkey
+          operations:
+            - operator_position:
+                offset: 502
+                line: 20
+              operator: =~
+              operand:
+                kind: postfix
+                primary:
+                  kind: type
+                  begin:
+                    offset: 505
+                    line: 20
+                  end:
+                    offset: 511
+                    line: 20
+                  name: String
+                subexpressions:
+                  - kind: access
+                    begin:
+                      offset: 511
+                      line: 20
+                    end:
+                      offset: 514
+                      line: 20
+                    arguments:
+                      - kind: number
+                        begin:
+                          offset: 512
+                          line: 20
+                        end:
+                          offset: 513
+                          line: 20
+                        base: decimal
+                        value: 1
+        body:
+          - kind: EPP render string
+            begin:
+              offset: 521
+              line: 21
+            end:
+              offset: 532
+              line: 21
+            string: "controlkey "
+          - kind: EPP render
+            begin:
+              offset: 532
+              line: 21
+            end:
+              offset: 555
+              line: 21
+            expression:
+              kind: variable
+              begin:
+                offset: 536
+                line: 21
+              end:
+                offset: 552
+                line: 21
+              name: keys_controlkey
+          - kind: EPP render string
+            begin:
+              offset: 555
+              line: 21
+            end:
+              offset: 556
+              line: 22
+            string: "\n"
+      - kind: EPP render string
+        begin:
+          offset: 565
+          line: 23
+        end:
+          offset: 566
+          line: 24
+        string: "\n"

@@ -6,6 +6,27 @@ using namespace std;
 
 namespace puppet { namespace compiler { namespace lexer {
 
+    ostream& operator<<(ostream& os, numeric_base base)
+    {
+        switch (base) {
+            case numeric_base::decimal:
+                os << "decimal";
+                break;
+
+            case numeric_base::octal:
+                os << "octal";
+                break;
+
+            case lexer::numeric_base::hexadecimal:
+                os << "hexadecimal";
+                break;
+
+            default:
+                throw runtime_error("unexpected numeric base.");
+        }
+        return os;
+    }
+
     number_token::number_token(lexer::range range, int64_t value, numeric_base base) :
         _range(rvalue_cast(range)),
         _value(value),

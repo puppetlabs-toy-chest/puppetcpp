@@ -443,7 +443,7 @@ static postfix_expression create_postfix(primary_expression primary, vector<post
 static expression create_expression(primary_expression primary)
 {
     expression node;
-    node.postfix = create_postfix(rvalue_cast(primary));
+    node.first = create_postfix(rvalue_cast(primary));
     return node;
 }
 
@@ -459,7 +459,7 @@ static binary_operation create_binary(binary_operator operator_, postfix_express
 static expression create_expression(postfix_expression postfix, vector<binary_operation> operations = {})
 {
     expression node;
-    node.postfix = rvalue_cast(postfix);
+    node.first = rvalue_cast(postfix);
     node.operations = rvalue_cast(operations);
     return node;
 }
@@ -2763,9 +2763,9 @@ SCENARIO("resource body") {
 
 SCENARIO("resource status", "[ast]")
 {
-    REQUIRE(lexical_cast<std::string>(resource_status::realized) == "");
-    REQUIRE(lexical_cast<std::string>(resource_status::virtualized) == "@");
-    REQUIRE(lexical_cast<std::string>(resource_status::exported) == "@@");
+    REQUIRE(lexical_cast<std::string>(resource_status::realized) == "realized");
+    REQUIRE(lexical_cast<std::string>(resource_status::virtualized) == "virtual");
+    REQUIRE(lexical_cast<std::string>(resource_status::exported) == "exported");
     REQUIRE_THROWS(lexical_cast<std::string>(static_cast<resource_status>(numeric_limits<size_t>::max())));
 }
 

@@ -79,7 +79,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Climb the expression
         auto begin = expression.operations.begin();
-        return climb_expression(expression.postfix, 0, begin, expression.operations.end());
+        return climb_expression(expression.first, 0, begin, expression.operations.end());
     }
 
     value evaluator::evaluate(postfix_expression const& expression)

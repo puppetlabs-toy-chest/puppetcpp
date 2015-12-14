@@ -113,13 +113,13 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     static values::value transform(evaluation::evaluator& evaluator, ast::expression const& expression)
     {
-        // Check for a postfix expression that is not part of a binary expression
-        if (expression.postfix.subexpressions.empty()) {
+        // Check for a a postfix expression
+        if (expression.first.subexpressions.empty()) {
             return evaluator.evaluate(expression);
         }
 
         // Check for access or method call subexpressions
-        auto& subexpression = expression.postfix.subexpressions.front();
+        auto& subexpression = expression.first.subexpressions.front();
         if (!boost::get<x3::forward_ast<ast::access_expression>>(&subexpression) &&
             !boost::get<x3::forward_ast<ast::method_call_expression>>(&subexpression)) {
             return evaluator.evaluate(expression);
@@ -128,12 +128,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         string const* name = nullptr;
 
         // Check for name expression
-        auto name_expression = boost::get<ast::name>(&expression.postfix.primary);
+        auto name_expression = boost::get<ast::name>(&expression.first.primary);
         if (name_expression) {
             name = &name_expression->value;
         } else {
             // Also check for bare word expression
-            auto word_expression = boost::get<ast::bare_word>(&expression.postfix.primary);
+            auto word_expression = boost::get<ast::bare_word>(&expression.first.primary);
             if (word_expression) {
                 name = &word_expression->value;
             }
@@ -142,7 +142,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             return evaluator.evaluate(expression);
         }
 
-        auto context = expression.postfix.primary.context();
+        auto context = expression.first.primary.context();
 
         // Create a variable expression
         ast::variable variable;
@@ -153,7 +153,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Copy the expression and replace the primary expression with the variable expression
         auto transformed = expression;
-        transformed.postfix.primary = rvalue_cast(variable);
+        transformed.first.primary = rvalue_cast(variable);
         return evaluator.evaluate(transformed);
     }
 

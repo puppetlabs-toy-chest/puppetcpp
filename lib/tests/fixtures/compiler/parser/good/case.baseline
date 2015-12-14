@@ -1,0 +1,220 @@
+statements:
+  - kind: case
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 319
+      line: 6
+    conditional:
+      kind: variable
+      begin:
+        offset: 5
+        line: 1
+      end:
+        offset: 21
+        line: 1
+      name: operatingsystem
+    propositions:
+      - options:
+          - kind: string
+            begin:
+              offset: 26
+              line: 2
+            end:
+              offset: 35
+              line: 2
+            value_range:
+              begin:
+                offset: 27
+                line: 2
+              end:
+                offset: 34
+                line: 2
+            value: Solaris
+            escapes: \'
+            format: ""
+            margin: 0
+            quote: "'"
+            interpolated: false
+            remove_break: false
+        body:
+          - kind: function call
+            function:
+              kind: name
+              begin:
+                offset: 48
+                line: 2
+              end:
+                offset: 55
+                line: 2
+              value: include
+            arguments:
+              - kind: name
+                begin:
+                  offset: 56
+                  line: 2
+                end:
+                  offset: 69
+                  line: 2
+                value: role::solaris
+        end:
+          offset: 71
+          line: 2
+      - options:
+          - kind: string
+            begin:
+              offset: 100
+              line: 3
+            end:
+              offset: 108
+              line: 3
+            value_range:
+              begin:
+                offset: 101
+                line: 3
+              end:
+                offset: 107
+                line: 3
+            value: RedHat
+            escapes: \'
+            format: ""
+            margin: 0
+            quote: "'"
+            interpolated: false
+            remove_break: false
+          - kind: string
+            begin:
+              offset: 110
+              line: 3
+            end:
+              offset: 118
+              line: 3
+            value_range:
+              begin:
+                offset: 111
+                line: 3
+              end:
+                offset: 117
+                line: 3
+            value: CentOS
+            escapes: \'
+            format: ""
+            margin: 0
+            quote: "'"
+            interpolated: false
+            remove_break: false
+        body:
+          - kind: function call
+            function:
+              kind: name
+              begin:
+                offset: 122
+                line: 3
+              end:
+                offset: 129
+                line: 3
+              value: include
+            arguments:
+              - kind: name
+                begin:
+                  offset: 130
+                  line: 3
+                end:
+                  offset: 142
+                  line: 3
+                value: role::redhat
+        end:
+          offset: 145
+          line: 3
+      - options:
+          - kind: regex
+            begin:
+              offset: 173
+              line: 4
+            end:
+              offset: 192
+              line: 4
+            value: ^(Debian|Ubuntu)$
+        body:
+          - kind: function call
+            function:
+              kind: name
+              begin:
+                offset: 195
+                line: 4
+              end:
+                offset: 202
+                line: 4
+              value: include
+            arguments:
+              - kind: name
+                begin:
+                  offset: 203
+                  line: 4
+                end:
+                  offset: 215
+                  line: 4
+                value: role::debian
+        end:
+          offset: 218
+          line: 4
+      - options:
+          - kind: default
+            begin:
+              offset: 246
+              line: 5
+            end:
+              offset: 253
+              line: 5
+        body:
+          - kind: function call
+            function:
+              kind: name
+              begin:
+                offset: 268
+                line: 5
+              end:
+                offset: 275
+                line: 5
+              value: include
+            arguments:
+              - kind: name
+                begin:
+                  offset: 276
+                  line: 5
+                end:
+                  offset: 289
+                  line: 5
+                value: role::generic
+        end:
+          offset: 291
+          line: 5
+  - kind: case
+    begin:
+      offset: 321
+      line: 8
+    end:
+      offset: 350
+      line: 10
+    conditional:
+      kind: boolean
+      begin:
+        offset: 326
+        line: 8
+      end:
+        offset: 330
+        line: 8
+      value: true
+    propositions:
+      - options:
+          - kind: default
+            begin:
+              offset: 337
+              line: 9
+            end:
+              offset: 344
+              line: 9
+        end:
+          offset: 348
+          line: 9
