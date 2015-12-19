@@ -1744,8 +1744,8 @@ namespace puppet { namespace compiler { namespace ast {
         void write(node_expression const& node)
         {
             _emitter << YAML::BeginMap;
-            write(static_cast<context const&>(node));
             write("kind", "node");
+            write(static_cast<context const&>(node));
             write("hostnames", node.hostnames);
             write("body", node.body);
             _emitter << YAML::EndMap;

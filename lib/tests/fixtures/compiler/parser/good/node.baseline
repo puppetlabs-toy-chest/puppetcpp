@@ -1,0 +1,152 @@
+statements:
+  - kind: node
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 15
+      line: 3
+    hostnames:
+      - regex: false
+        value: foo
+  - kind: node
+    begin:
+      offset: 17
+      line: 5
+    end:
+      offset: 30
+      line: 7
+    hostnames:
+      - regex: false
+        value: foo
+  - kind: node
+    begin:
+      offset: 32
+      line: 9
+    end:
+      offset: 53
+      line: 11
+    hostnames:
+      - regex: false
+        value: foo.bar.com
+  - kind: node
+    begin:
+      offset: 55
+      line: 13
+    end:
+      offset: 88
+      line: 15
+    hostnames:
+      - regex: false
+        value: foo
+      - regex: false
+        value: bar
+      - regex: false
+        value: foo.bar.com
+  - kind: node
+    begin:
+      offset: 90
+      line: 17
+    end:
+      offset: 114
+      line: 19
+    hostnames:
+      - regex: true
+        value: ^foo(.*)bar$
+  - kind: node
+    begin:
+      offset: 116
+      line: 21
+    end:
+      offset: 146
+      line: 23
+    hostnames:
+      - default: true
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 135
+            line: 22
+          end:
+            offset: 141
+            line: 22
+          value: notice
+        arguments:
+          - kind: name
+            begin:
+              offset: 142
+              line: 22
+            end:
+              offset: 144
+              line: 22
+            value: hi
+  - kind: node
+    begin:
+      offset: 148
+      line: 25
+    end:
+      offset: 214
+      line: 28
+    hostnames:
+      - regex: false
+        value: foo
+      - regex: false
+        value: bar
+      - default: true
+      - regex: false
+        value: foo.bar.com
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 192
+            line: 26
+          end:
+            offset: 195
+            line: 26
+          value: foo
+        end:
+          offset: 197
+          line: 26
+      - kind: binary
+        first:
+          kind: variable
+          begin:
+            offset: 202
+            line: 27
+          end:
+            offset: 204
+            line: 27
+          name: a
+        operations:
+          - operator_position:
+              offset: 205
+              line: 27
+            operator: =
+            operand:
+              kind: number
+              begin:
+                offset: 207
+                line: 27
+              end:
+                offset: 208
+                line: 27
+              base: decimal
+              value: 1
+          - operator_position:
+              offset: 209
+              line: 27
+            operator: +
+            operand:
+              kind: number
+              begin:
+                offset: 211
+                line: 27
+              end:
+                offset: 212
+                line: 27
+              base: decimal
+              value: 1
