@@ -362,6 +362,18 @@ namespace puppet { namespace compiler {
             throw parse_exception("node definitions can only be defined at top-level or inside a class.", lexer::range(expression.begin, expression.end));
         }
 
+        // Check for valid host names
+        for (auto& hostname : expression.hostnames) {
+            if (!hostname.is_valid()) {
+                auto context = hostname.context();
+                throw parse_exception(
+                    (boost::format("hostname '%1%' is not valid: only letters, digits, '_', '-', and '.' are allowed.") %
+                     hostname.to_string()
+                    ).str(),
+                    lexer::range(context.begin, context.end));
+            }
+        }
+
         // Check for existing conflicting node definition
         if (auto existing = _registry.find_node(expression)) {
             throw parse_exception(

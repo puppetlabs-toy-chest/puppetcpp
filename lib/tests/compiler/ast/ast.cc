@@ -3163,7 +3163,16 @@ SCENARIO("hostname", "[ast]")
                 REQUIRE_FALSE(node.is_regex());
             }
             AND_THEN("to_string should return the expected format") {
-                REQUIRE(node.to_string() == "\"foo.bar.baz\"");
+                REQUIRE(node.to_string() == "foo.bar.baz");
+            }
+            AND_THEN("it should be valid") {
+                REQUIRE(node.is_valid());
+            }
+            AND_WHEN("the name is invalid") {
+                node = create_string("not$valid");
+                THEN("it should not be valid") {
+                    REQUIRE_FALSE(node.is_valid());
+                }
             }
         }
         THEN("it should be constructible from regex") {
@@ -3182,7 +3191,7 @@ SCENARIO("hostname", "[ast]")
                 REQUIRE(node.is_regex());
             }
             AND_THEN("to_string should return the expected format") {
-                REQUIRE(node.to_string() == "/^.*\\.foo\\.com$/");
+                REQUIRE(node.to_string() == "^.*\\.foo\\.com$");
             }
         }
         THEN("it should be constructible from parts") {

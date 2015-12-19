@@ -1671,6 +1671,12 @@ namespace puppet { namespace compiler { namespace ast {
         bool is_regex() const;
 
         /**
+         * Determines if the hostname is valid.
+         * @return Returns true if the hostname is valid or false if not.
+         */
+        bool is_valid() const;
+
+        /**
          * Converts the hostname to a string.
          * @return Returns the hostname as a string.
          */

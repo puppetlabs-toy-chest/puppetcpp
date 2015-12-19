@@ -121,8 +121,25 @@ namespace puppet { namespace compiler {
         }
 
         // Find and evaluate a node definition
-        auto result = _registry.find_node(context.node());
-        if (result.first) {
+        if (_registry.has_nodes()) {
+            auto result = _registry.find_node(context.node());
+            if (!result.first) {
+                ostringstream message;
+                message << "could not find a default node or a node with the following names: ";
+                bool first = true;
+                context.node().each_name([&](string const& name) {
+                    if (first) {
+                        first = false;
+                    } else {
+                        message << ", ";
+                    }
+                    message << name;
+                    return true;
+                });
+                 message << ".";
+                throw compiler::compilation_exception(message.str());
+            }
+
             auto& catalog = context.catalog();
             auto resource = catalog.add(
                 types::resource("node", result.second),

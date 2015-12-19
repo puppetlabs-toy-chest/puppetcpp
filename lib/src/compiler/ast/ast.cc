@@ -2,6 +2,7 @@
 #include <puppet/cast.hpp>
 #include <boost/lexical_cast.hpp>
 #include <yaml-cpp/yaml.h>
+#include <regex>
 
 using namespace std;
 namespace x3 = boost::spirit::x3;
@@ -1045,10 +1046,21 @@ namespace puppet { namespace compiler { namespace ast {
         return boost::get<regex>(this);
     }
 
+    bool hostname::is_valid() const
+    {
+        static const std::regex illegal{ R"([^-\w.])" };
+
+        if (is_default() || is_regex()) {
+            return true;
+        }
+        return !regex_search(to_string(), illegal);
+    }
+
     struct hostname_visitor : boost::static_visitor<>
     {
-        explicit hostname_visitor(ostringstream& ss) :
-            _ss(ss)
+        explicit hostname_visitor(ostream& ss, bool as_string = false) :
+            _ss(ss),
+            _as_string(as_string)
         {
         }
 
@@ -1059,12 +1071,20 @@ namespace puppet { namespace compiler { namespace ast {
 
         void operator()(regex const& r)
         {
-            _ss << r;
+            if (_as_string) {
+                _ss << r.value;
+            } else {
+                _ss << r;
+            }
         }
 
         void operator()(string const& s)
         {
-            _ss << s;
+            if (_as_string) {
+                _ss << s.value;
+            } else {
+                _ss << s;
+            }
         }
 
         void operator()(hostname_parts const& parts)
@@ -1073,20 +1093,22 @@ namespace puppet { namespace compiler { namespace ast {
         }
 
      private:
-        ostringstream& _ss;
+        ostream& _ss;
+        bool _as_string;
     };
 
     std::string hostname::to_string() const
     {
         ostringstream ss;
-        hostname_visitor visitor{ss};
+        hostname_visitor visitor{ss, true};
         boost::apply_visitor(visitor, *this);
         return ss.str();
     }
 
     ostream& operator<<(ostream& os, hostname const& node)
     {
-        os << node.to_string();
+        hostname_visitor visitor{os};
+        boost::apply_visitor(visitor, node);
         return os;
     }
 
