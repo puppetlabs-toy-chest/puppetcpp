@@ -11,6 +11,8 @@ script:
     cmake . -DTEST_COVERAGE=$TEST_COVERAGE -DCMAKE_BUILD_TYPE=$BUILD &&
     make -j 2 &&
     bin/puppetcpp --help &&
+    bin/puppetcpp lib/tests/fixtures/compiler/parser/good/sample.pp &&
+    cat catalog.json &&
     ctest -V &&
     CI=true TRAVIS=true TRAVIS_BRANCH=$TRAVIS_BRANCH TRAVIS_COMMIT=$TRAVIS_COMMIT TRAVIS_JOB_NUMBER=$TRAVIS_JOB_NUMBER TRAVIS_PULL_REQUEST=$TRAVIS_PULL_REQUEST TRAVIS_JOB_ID=$TRAVIS_JOB_ID TRAVIS_REPO_SLUG=$TRAVIS_REPO_SLUG $COVERAGE_TOOL
     "
