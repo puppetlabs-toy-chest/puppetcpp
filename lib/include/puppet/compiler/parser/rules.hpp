@@ -85,6 +85,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(attribute_query_value,         "attribute value",               ast::primary_expression)
     DECLARE_RULE(binary_query_operation,        "binary query expression",       ast::binary_query_operation)
     DECLARE_RULE(binary_query_operator,         "binary query operator",         ast::binary_query_operator)
+    DECLARE_RULE(function_expression,           "function expression",           ast::function_expression)
     DECLARE_RULE(unary_expression,              "unary expression",              ast::unary_expression)
     DECLARE_RULE(unary_operator,                "unary operator",                ast::unary_operator)
     DECLARE_RULE(postfix_expression,            "postfix expression",            ast::postfix_expression)
@@ -404,6 +405,15 @@ namespace puppet { namespace compiler { namespace parser {
         (raw(lexer::token_id::keyword_or)  > boost::spirit::x3::attr(ast::binary_query_operator::logical_or))
     )
 
+    // Functions
+    DEFINE_RULE(
+        function_expression,
+        begin(lexer::token_id::keyword_function) >
+        name >
+        -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
+        raw('{') > (raw('}', false) | statements) > end('}') > tree
+    )
+
     // Unary expressions
     DEFINE_RULE(
         unary_expression,
@@ -460,6 +470,7 @@ namespace puppet { namespace compiler { namespace parser {
         class_expression             |
         defined_type_expression      |
         node_expression              |
+        function_expression          |
         primary_expression
     )
     DEFINE_RULE(
@@ -636,6 +647,7 @@ namespace puppet { namespace compiler { namespace parser {
     );
 
     BOOST_SPIRIT_DEFINE(
+        function_expression,
         unary_expression,
         unary_operator,
         postfix_expression,

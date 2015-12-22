@@ -62,6 +62,7 @@ namespace puppet { namespace compiler {
         void operator()(ast::nested_query_expression const& expression);
         void operator()(ast::primary_query_expression const& expression);
         void operator()(ast::attribute_query const& expression);
+        void operator()(ast::function_expression const& expression);
         void operator()(ast::unary_expression const& expression);
         void operator()(ast::postfix_expression const& expression);
         void operator()(ast::selector_expression const& expression);

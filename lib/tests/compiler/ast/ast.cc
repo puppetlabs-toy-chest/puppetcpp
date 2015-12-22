@@ -373,6 +373,16 @@ static epp_render_string create_render_string(std::string string)
     return node;
 }
 
+static function_expression create_function(std::string name, vector<parameter> parameters = {}, vector<expression> body = {})
+{
+    function_expression node;
+    set_dummy_context(node);
+    node.name = create_name(rvalue_cast(name));
+    node.parameters = rvalue_cast(parameters);
+    node.body = rvalue_cast(body);
+    return node;
+}
+
 static unary_expression create_unary(unary_operator operator_, postfix_expression operand)
 {
     unary_expression node;
@@ -807,7 +817,7 @@ SCENARIO("primary expression", "[ast]")
 {
     primary_expression node;
     THEN("it should have the expected number of types") {
-        REQUIRE(boost::mpl::size<primary_expression::types>::value == 28);
+        REQUIRE(boost::mpl::size<primary_expression::types>::value == 29);
     }
     WHEN("using a primary expression") {
         GIVEN("an undef") {
@@ -1391,6 +1401,35 @@ SCENARIO("primary expression", "[ast]")
             }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "File<||>");
+            }
+        }
+        GIVEN("a function expression") {
+            auto subnode = create_function(
+                "foo",
+                {
+                    create_parameter(
+                        "bar",
+                        boost::none,
+                        true,
+                        create_expression(primary(create_array()))
+                    )
+                }
+            );
+            node = subnode;
+            THEN("the same context should be returned") {
+                REQUIRE(node.context() == subnode);
+            }
+            THEN("it should not be default") {
+                REQUIRE_FALSE(node.is_default());
+            }
+            THEN("it should be productive") {
+                REQUIRE(node.is_productive());
+            }
+            THEN("it should not be a splat expression") {
+                REQUIRE_FALSE(node.is_splat());
+            }
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "function foo(*$bar = []) { }");
             }
         }
         GIVEN("a non-splat unary expression") {
@@ -3552,6 +3591,83 @@ SCENARIO("collector expression", "[ast]")
             decltype(node) other;
             THEN("the objects should not be equal") {
                 REQUIRE(node.context() != other.context());
+            }
+        }
+    }
+}
+
+SCENARIO("function expression", "[ast]")
+{
+    auto node = create_function(
+        "foo::bar",
+        {
+            create_parameter(
+                "foo",
+                create_postfix(
+                    primary(create_type("Integer")),
+                    {
+                        subexpression(
+                            create_access(
+                                {
+                                    create_expression(primary(create_number(1000))),
+                                    create_expression(primary(create_number(2000))),
+                                }
+                            )
+                        )
+                    }
+                ),
+                false,
+                create_expression(primary(create_number(1234)))
+            ),
+            create_parameter("bar")
+        },
+        {
+            create_expression(primary(create_function_call("foo")))
+        }
+    );
+
+    WHEN("using function expression") {
+        THEN("it should be copy constructible") {
+            auto node2 = node;
+            REQUIRE(node2 == node);
+        }
+        THEN("it should be movable") {
+            auto node2 = node;
+            auto node3 = rvalue_cast(node2);
+            REQUIRE(node3 == node);
+        }
+        THEN("it should be convertible to context") {
+            context ctx = node;
+            REQUIRE(ctx == node);
+        }
+        WHEN("given no parameters") {
+            node.parameters.clear();
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "function foo::bar { foo() }");
+            }
+            AND_WHEN("given no body") {
+                node.body.clear();
+                THEN("it should output the expected format") {
+                    REQUIRE(lexical_cast<std::string>(node) == "function foo::bar { }");
+                }
+            }
+        }
+        WHEN("given parameters") {
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "function foo::bar(Integer[1000, 2000] $foo = 1234, $bar) { foo() }");
+            }
+            AND_WHEN("given no body") {
+                node.body.clear();
+                THEN("it should output the expected format") {
+                    REQUIRE(lexical_cast<std::string>(node) == "function foo::bar(Integer[1000, 2000] $foo = 1234, $bar) { }");
+                }
+
+            }
+        }
+        GIVEN("another non-equal object") {
+            decltype(node) other;
+            THEN("the objects should not be equal") {
+                REQUIRE(node != other);
             }
         }
     }

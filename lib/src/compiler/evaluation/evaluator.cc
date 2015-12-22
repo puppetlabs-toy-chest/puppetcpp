@@ -494,6 +494,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(node_expression const& expression)
     {
         // Node definition expressions are handled by the scanner; just return undef
+        // TODO: should this perhaps return [Resource[Node, hostname], Resource[Node, hostname], ...] for consistency?
         return values::undef();
     }
 
@@ -503,6 +504,16 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto collector = make_shared<collectors::query_collector>(expression, _context.current_scope());
         _context.add(collector);
         return types::runtime(types::runtime::object_type(rvalue_cast(collector)));
+    }
+
+    value evaluator::operator()(function_expression const& expression)
+    {
+        // Not yet implemented for evaluation (TODO: uncomment the subsequence lines)
+        throw evaluation_exception("function expressions are not yet implemented.", expression);
+        // Function expressions are handled by the scanner
+        // TODO: it sure would be nice if functions and lambdas are represented in the type system so we can return
+        // references to them here, allowing for functional programming
+        // return values::undef();
     }
 
     value evaluator::operator()(unary_expression const& expression)

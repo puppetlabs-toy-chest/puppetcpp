@@ -266,7 +266,7 @@ namespace puppet { namespace compiler { namespace ast {
             return ptr->get().operand.is_productive();
         }
 
-        // All control flow, catalog expressions, and EPP expressions are considered to be productive
+        // All control flow, catalog expressions, functions, and EPP expressions are considered to be productive
         if (boost::get<x3::forward_ast<case_expression>>(this) ||
             boost::get<x3::forward_ast<if_expression>>(this) ||
             boost::get<x3::forward_ast<unless_expression>>(this) ||
@@ -278,6 +278,7 @@ namespace puppet { namespace compiler { namespace ast {
             boost::get<x3::forward_ast<defined_type_expression>>(this) ||
             boost::get<x3::forward_ast<node_expression>>(this) ||
             boost::get<x3::forward_ast<collector_expression>>(this) ||
+            boost::get<x3::forward_ast<function_expression>>(this) ||
             boost::get<x3::forward_ast<epp_render_expression>>(this) ||
             boost::get<x3::forward_ast<epp_render_block>>(this) ||
             boost::get<x3::forward_ast<epp_render_string>>(this)) {
@@ -1239,6 +1240,24 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    ostream& operator<<(ostream& os, function_expression const& node)
+    {
+        os << "function " << node.name;
+        if (!node.parameters.empty()) {
+            os << "(";
+            pretty_print(os, node.parameters, ", ");
+            os << ")";
+        }
+        if (node.body.empty()) {
+            os << " { }";
+        } else {
+            os << " { ";
+            pretty_print(os, node.body, "; ");
+            os << " }";
+        }
+        return os;
+    }
+
     ostream& operator<<(ostream& os, unary_operator const& node)
     {
         switch (node) {
@@ -1808,6 +1827,17 @@ namespace puppet { namespace compiler { namespace ast {
             write("exported", node.exported);
             write("query", node.query);
             write("end", node.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(function_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "function");
+            write(static_cast<context const&>(node));
+            write("name", node.name);
+            write("parameters", node.parameters);
+            write("body", node.body);
             _emitter << YAML::EndMap;
         }
 
