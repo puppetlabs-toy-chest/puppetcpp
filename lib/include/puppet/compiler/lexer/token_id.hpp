@@ -79,7 +79,6 @@ namespace puppet { namespace compiler { namespace lexer {
         epp_render_string,
         epp_render_expression,
         comment,              // Not in token stream
-        comment_trim,         // Not in token stream
         whitespace,           // Not in token stream
         unclosed_quote,       // Error token that will not match the grammar
         unclosed_comment,     // Error token that will not match the grammar

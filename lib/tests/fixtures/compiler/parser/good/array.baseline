@@ -1,0 +1,116 @@
+statements:
+  - kind: array
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 2
+      line: 1
+  - kind: array
+    begin:
+      offset: 3
+      line: 2
+    end:
+      offset: 18
+      line: 2
+    elements:
+      - kind: number
+        begin:
+          offset: 4
+          line: 2
+        end:
+          offset: 5
+          line: 2
+        base: decimal
+        value: 1
+      - kind: number
+        begin:
+          offset: 7
+          line: 2
+        end:
+          offset: 8
+          line: 2
+        base: decimal
+        value: 2
+      - kind: number
+        begin:
+          offset: 10
+          line: 2
+        end:
+          offset: 11
+          line: 2
+        base: decimal
+        value: 3
+      - kind: number
+        begin:
+          offset: 13
+          line: 2
+        end:
+          offset: 14
+          line: 2
+        base: decimal
+        value: 4
+      - kind: number
+        begin:
+          offset: 16
+          line: 2
+        end:
+          offset: 17
+          line: 2
+        base: decimal
+        value: 5
+  - kind: array
+    begin:
+      offset: 19
+      line: 3
+    end:
+      offset: 48
+      line: 7
+    elements:
+      - kind: number
+        begin:
+          offset: 25
+          line: 4
+        end:
+          offset: 26
+          line: 4
+        base: decimal
+        value: 1
+      - kind: name
+        begin:
+          offset: 32
+          line: 5
+        end:
+          offset: 35
+          line: 5
+        value: foo
+      - kind: regex
+        begin:
+          offset: 41
+          line: 6
+        end:
+          offset: 46
+          line: 6
+        value: baz
+  - kind: unary
+    operator_position:
+      offset: 50
+      line: 8
+    operator: "*"
+    operand:
+      kind: array
+      begin:
+        offset: 51
+        line: 8
+      end:
+        offset: 56
+        line: 8
+      elements:
+        - kind: name
+          begin:
+            offset: 52
+            line: 8
+          end:
+            offset: 55
+            line: 8
+          value: foo

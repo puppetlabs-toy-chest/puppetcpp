@@ -1,0 +1,437 @@
+statements:
+  - kind: resource
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 43
+      line: 4
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 4
+        line: 1
+      value: file
+    bodies:
+      - title:
+          kind: name
+          begin:
+            offset: 7
+            line: 1
+          end:
+            offset: 10
+            line: 1
+          value: foo
+        operations:
+          - name:
+              kind: name
+              begin:
+                offset: 16
+                line: 2
+              end:
+                offset: 19
+                line: 2
+              value: bar
+            operator_position:
+              offset: 20
+              line: 2
+            operator: =>
+            value:
+              kind: number
+              begin:
+                offset: 23
+                line: 2
+              end:
+                offset: 24
+                line: 2
+              base: decimal
+              value: 1
+          - name:
+              kind: name
+              begin:
+                offset: 30
+                line: 3
+              end:
+                offset: 33
+                line: 3
+              value: baz
+            operator_position:
+              offset: 34
+              line: 3
+            operator: =>
+            value:
+              kind: variable
+              begin:
+                offset: 37
+                line: 3
+              end:
+                offset: 41
+                line: 3
+              name: baz
+  - kind: resource
+    begin:
+      offset: 45
+      line: 6
+    end:
+      offset: 147
+      line: 15
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 45
+        line: 6
+      end:
+        offset: 49
+        line: 6
+      value: user
+    bodies:
+      - title:
+          kind: name
+          begin:
+            offset: 56
+            line: 7
+          end:
+            offset: 59
+            line: 7
+          value: foo
+        operations:
+          - name:
+              kind: name
+              begin:
+                offset: 69
+                line: 8
+              end:
+                offset: 72
+                line: 8
+              value: foo
+            operator_position:
+              offset: 73
+              line: 8
+            operator: =>
+            value:
+              kind: number
+              begin:
+                offset: 76
+                line: 8
+              end:
+                offset: 77
+                line: 8
+              base: decimal
+              value: 0
+      - title:
+          kind: name
+          begin:
+            offset: 88
+            line: 10
+          end:
+            offset: 91
+            line: 10
+          value: bar
+        operations:
+          - name:
+              kind: name
+              begin:
+                offset: 101
+                line: 11
+              end:
+                offset: 104
+                line: 11
+              value: bar
+            operator_position:
+              offset: 105
+              line: 11
+            operator: =>
+            value:
+              kind: number
+              begin:
+                offset: 108
+                line: 11
+              end:
+                offset: 109
+                line: 11
+              base: decimal
+              value: 1
+      - title:
+          kind: default
+          begin:
+            offset: 120
+            line: 13
+          end:
+            offset: 127
+            line: 13
+        operations:
+          - name:
+              kind: name
+              begin:
+                offset: 137
+                line: 14
+              end:
+                offset: 140
+                line: 14
+              value: baz
+            operator_position:
+              offset: 141
+              line: 14
+            operator: =>
+            value:
+              kind: number
+              begin:
+                offset: 144
+                line: 14
+              end:
+                offset: 145
+                line: 14
+              base: decimal
+              value: 2
+  - kind: resource
+    begin:
+      offset: 149
+      line: 17
+    end:
+      offset: 243
+      line: 23
+    status: realized
+    type:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 149
+          line: 17
+        end:
+          offset: 157
+          line: 17
+        name: Resource
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 157
+            line: 17
+          end:
+            offset: 162
+            line: 17
+          arguments:
+            - kind: name
+              begin:
+                offset: 158
+                line: 17
+              end:
+                offset: 161
+                line: 17
+              value: foo
+    bodies:
+      - title:
+          kind: name
+          begin:
+            offset: 165
+            line: 17
+          end:
+            offset: 168
+            line: 17
+          value: bar
+        operations:
+          - name:
+              kind: name
+              begin:
+                offset: 174
+                line: 18
+              end:
+                offset: 175
+                line: 18
+              value: "*"
+            operator_position:
+              offset: 176
+              line: 18
+            operator: =>
+            value:
+              kind: hash
+              begin:
+                offset: 179
+                line: 18
+              end:
+                offset: 206
+                line: 20
+              elements:
+                - first:
+                    kind: name
+                    begin:
+                      offset: 189
+                      line: 19
+                    end:
+                      offset: 192
+                      line: 19
+                    value: foo
+                  second:
+                    kind: name
+                    begin:
+                      offset: 196
+                      line: 19
+                    end:
+                      offset: 199
+                      line: 19
+                    value: bar
+          - name:
+              kind: name
+              begin:
+                offset: 212
+                line: 21
+              end:
+                offset: 214
+                line: 21
+              value: if
+            operator_position:
+              offset: 215
+              line: 21
+            operator: =>
+            value:
+              kind: boolean
+              begin:
+                offset: 218
+                line: 21
+              end:
+                offset: 222
+                line: 21
+              value: true
+          - name:
+              kind: name
+              begin:
+                offset: 228
+                line: 22
+              end:
+                offset: 234
+                line: 22
+              value: notice
+            operator_position:
+              offset: 235
+              line: 22
+            operator: =>
+            value:
+              kind: name
+              begin:
+                offset: 238
+                line: 22
+              end:
+                offset: 241
+                line: 22
+              value: lol
+  - kind: resource
+    begin:
+      offset: 245
+      line: 25
+    end:
+      offset: 262
+      line: 25
+    status: virtual
+    type:
+      kind: name
+      begin:
+        offset: 246
+        line: 25
+      end:
+        offset: 253
+        line: 25
+      value: virtual
+    bodies:
+      - title:
+          kind: name
+          begin:
+            offset: 256
+            line: 25
+          end:
+            offset: 259
+            line: 25
+          value: foo
+  - kind: resource
+    begin:
+      offset: 264
+      line: 27
+    end:
+      offset: 283
+      line: 27
+    status: exported
+    type:
+      kind: name
+      begin:
+        offset: 266
+        line: 27
+      end:
+        offset: 274
+        line: 27
+      value: exported
+    bodies:
+      - title:
+          kind: name
+          begin:
+            offset: 277
+            line: 27
+          end:
+            offset: 280
+            line: 27
+          value: foo
+  - kind: resource
+    begin:
+      offset: 285
+      line: 29
+    end:
+      offset: 327
+      line: 31
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 285
+        line: 29
+      end:
+        offset: 290
+        line: 29
+      value: class
+    bodies:
+      - title:
+          kind: string
+          begin:
+            offset: 293
+            line: 29
+          end:
+            offset: 303
+            line: 29
+          value_range:
+            begin:
+              offset: 294
+              line: 29
+            end:
+              offset: 302
+              line: 29
+          value: my_class
+          escapes: \'
+          format: ""
+          margin: 0
+          quote: "'"
+          interpolated: false
+          remove_break: false
+        operations:
+          - name:
+              kind: name
+              begin:
+                offset: 307
+                line: 30
+              end:
+                offset: 316
+                line: 30
+              value: something
+            operator_position:
+              offset: 317
+              line: 30
+            operator: =>
+            value:
+              kind: undef
+              begin:
+                offset: 320
+                line: 30
+              end:
+                offset: 325
+                line: 30

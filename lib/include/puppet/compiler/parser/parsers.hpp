@@ -313,6 +313,7 @@ namespace puppet { namespace compiler { namespace parser {
             attr.begin = token.range().begin();
             attr.end = token.range().end();
             attr.tree = x3::get<tree_context_tag>(context);
+            attr.base = token.base();
             attr.value = token.value();
         }
     };

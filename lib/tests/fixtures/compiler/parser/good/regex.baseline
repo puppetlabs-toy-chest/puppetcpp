@@ -1,0 +1,25 @@
+statements:
+  - kind: regex
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 2
+      line: 1
+    value: ""
+  - kind: regex
+    begin:
+      offset: 3
+      line: 2
+    end:
+      offset: 21
+      line: 2
+    value: ^(.*)foo\d+(.*)$
+  - kind: regex
+    begin:
+      offset: 22
+      line: 3
+    end:
+      offset: 27
+      line: 3
+    value: foo

@@ -40,7 +40,7 @@ namespace puppet { namespace compiler {
         _classes.clear();
         _defined_types.clear();
         _nodes.clear();
-        
+
         // Check all parameters
         if (tree.parameters) {
             for (auto const& parameter : *tree.parameters) {
@@ -145,11 +145,16 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::expression const& expression)
     {
-        operator()(expression.postfix);
+        operator()(expression.first);
 
         for (auto const& operation : expression.operations) {
             operator()(operation.operand);
         }
+    }
+
+    void scanner::operator()(ast::nested_expression const& expression)
+    {
+        operator()(expression.expression);
     }
 
     void scanner::operator()(ast::case_expression const& expression)
@@ -357,6 +362,18 @@ namespace puppet { namespace compiler {
             throw parse_exception("node definitions can only be defined at top-level or inside a class.", lexer::range(expression.begin, expression.end));
         }
 
+        // Check for valid host names
+        for (auto& hostname : expression.hostnames) {
+            if (!hostname.is_valid()) {
+                auto context = hostname.context();
+                throw parse_exception(
+                    (boost::format("hostname '%1%' is not valid: only letters, digits, '_', '-', and '.' are allowed.") %
+                     hostname.to_string()
+                    ).str(),
+                    lexer::range(context.begin, context.end));
+            }
+        }
+
         // Check for existing conflicting node definition
         if (auto existing = _registry.find_node(expression)) {
             throw parse_exception(
@@ -400,6 +417,11 @@ namespace puppet { namespace compiler {
         for (auto const& operation : expression.operations) {
             operator()(operation.operand);
         }
+    }
+
+    void scanner::operator()(ast::nested_query_expression const& expression)
+    {
+        operator()(expression.expression);
     }
 
     void scanner::operator()(ast::primary_query_expression const& expression)

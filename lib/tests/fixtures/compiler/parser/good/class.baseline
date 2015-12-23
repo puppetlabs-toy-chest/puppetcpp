@@ -1,0 +1,633 @@
+statements:
+  - kind: class
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 13
+      line: 2
+    name:
+      kind: name
+      begin:
+        offset: 6
+        line: 1
+      end:
+        offset: 9
+        line: 1
+      value: foo
+  - kind: class
+    begin:
+      offset: 15
+      line: 4
+    end:
+      offset: 39
+      line: 6
+    name:
+      kind: name
+      begin:
+        offset: 21
+        line: 4
+      end:
+        offset: 34
+        line: 4
+      value: bar::baz::jam
+  - kind: class
+    begin:
+      offset: 41
+      line: 8
+    end:
+      offset: 55
+      line: 8
+    name:
+      kind: name
+      begin:
+        offset: 47
+        line: 8
+      end:
+        offset: 50
+        line: 8
+      value: baz
+  - kind: class
+    begin:
+      offset: 57
+      line: 10
+    end:
+      offset: 122
+      line: 14
+    name:
+      kind: name
+      begin:
+        offset: 63
+        line: 10
+      end:
+        offset: 66
+        line: 10
+      value: baz
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 67
+            line: 10
+          end:
+            offset: 71
+            line: 10
+          name: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 79
+            line: 11
+          end:
+            offset: 83
+            line: 11
+          value: each
+        arguments:
+          - kind: variable
+            begin:
+              offset: 84
+              line: 11
+            end:
+              offset: 88
+              line: 11
+            name: foo
+        lambda:
+          begin:
+            offset: 90
+            line: 11
+          end:
+            offset: 120
+            line: 13
+          parameters:
+            - variable:
+                kind: variable
+                begin:
+                  offset: 91
+                  line: 11
+                end:
+                  offset: 93
+                  line: 11
+                name: x
+          body:
+            - kind: function call
+              function:
+                kind: name
+                begin:
+                  offset: 105
+                  line: 12
+                end:
+                  offset: 111
+                  line: 12
+                value: notice
+              arguments:
+                - kind: variable
+                  begin:
+                    offset: 112
+                    line: 12
+                  end:
+                    offset: 114
+                    line: 12
+                  name: x
+        end:
+          offset: 89
+          line: 11
+  - kind: class
+    begin:
+      offset: 124
+      line: 16
+    end:
+      offset: 150
+      line: 18
+    name:
+      kind: name
+      begin:
+        offset: 130
+        line: 16
+      end:
+        offset: 133
+        line: 16
+      value: baz
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 134
+            line: 16
+          end:
+            offset: 138
+            line: 16
+          name: foo
+      - variable:
+          kind: variable
+          begin:
+            offset: 140
+            line: 16
+          end:
+            offset: 144
+            line: 16
+          name: bar
+  - kind: class
+    begin:
+      offset: 152
+      line: 20
+    end:
+      offset: 209
+      line: 22
+    name:
+      kind: name
+      begin:
+        offset: 158
+        line: 20
+      end:
+        offset: 161
+        line: 20
+      value: ntp
+    parameters:
+      - type:
+          kind: type
+          begin:
+            offset: 162
+            line: 20
+          end:
+            offset: 169
+            line: 20
+          name: Integer
+        variable:
+          kind: variable
+          begin:
+            offset: 170
+            line: 20
+          end:
+            offset: 172
+            line: 20
+          name: x
+      - type:
+          kind: postfix
+          primary:
+            kind: type
+            begin:
+              offset: 174
+              line: 20
+            end:
+              offset: 180
+              line: 20
+            name: String
+          subexpressions:
+            - kind: access
+              begin:
+                offset: 180
+                line: 20
+              end:
+                offset: 186
+                line: 20
+              arguments:
+                - kind: number
+                  begin:
+                    offset: 181
+                    line: 20
+                  end:
+                    offset: 182
+                    line: 20
+                  base: decimal
+                  value: 0
+                - kind: number
+                  begin:
+                    offset: 184
+                    line: 20
+                  end:
+                    offset: 185
+                    line: 20
+                  base: decimal
+                  value: 1
+        variable:
+          kind: variable
+          begin:
+            offset: 187
+            line: 20
+          end:
+            offset: 189
+            line: 20
+          name: y
+        default_value:
+          kind: string
+          begin:
+            offset: 192
+            line: 20
+          end:
+            offset: 195
+            line: 20
+          value_range:
+            begin:
+              offset: 193
+              line: 20
+            end:
+              offset: 194
+              line: 20
+          value: X
+          escapes: \'
+          format: ""
+          margin: 0
+          quote: "'"
+          interpolated: false
+          remove_break: false
+      - captures:
+          offset: 197
+          line: 20
+        variable:
+          kind: variable
+          begin:
+            offset: 198
+            line: 20
+          end:
+            offset: 203
+            line: 20
+          name: rest
+  - kind: class
+    begin:
+      offset: 211
+      line: 24
+    end:
+      offset: 292
+      line: 26
+    name:
+      kind: name
+      begin:
+        offset: 217
+        line: 24
+      end:
+        offset: 221
+        line: 24
+      value: ntp2
+    parameters:
+      - type:
+          kind: type
+          begin:
+            offset: 222
+            line: 24
+          end:
+            offset: 229
+            line: 24
+          name: Integer
+        variable:
+          kind: variable
+          begin:
+            offset: 230
+            line: 24
+          end:
+            offset: 232
+            line: 24
+          name: x
+      - type:
+          kind: postfix
+          primary:
+            kind: type
+            begin:
+              offset: 234
+              line: 24
+            end:
+              offset: 240
+              line: 24
+            name: String
+          subexpressions:
+            - kind: access
+              begin:
+                offset: 240
+                line: 24
+              end:
+                offset: 246
+                line: 24
+              arguments:
+                - kind: number
+                  begin:
+                    offset: 241
+                    line: 24
+                  end:
+                    offset: 242
+                    line: 24
+                  base: decimal
+                  value: 0
+                - kind: number
+                  begin:
+                    offset: 244
+                    line: 24
+                  end:
+                    offset: 245
+                    line: 24
+                  base: decimal
+                  value: 1
+        variable:
+          kind: variable
+          begin:
+            offset: 247
+            line: 24
+          end:
+            offset: 249
+            line: 24
+          name: y
+        default_value:
+          kind: string
+          begin:
+            offset: 252
+            line: 24
+          end:
+            offset: 255
+            line: 24
+          value_range:
+            begin:
+              offset: 253
+              line: 24
+            end:
+              offset: 254
+              line: 24
+          value: X
+          escapes: \'
+          format: ""
+          margin: 0
+          quote: "'"
+          interpolated: false
+          remove_break: false
+      - captures:
+          offset: 257
+          line: 24
+        variable:
+          kind: variable
+          begin:
+            offset: 258
+            line: 24
+          end:
+            offset: 263
+            line: 24
+          name: rest
+    parent:
+      kind: name
+      begin:
+        offset: 274
+        line: 24
+      end:
+        offset: 287
+        line: 24
+      value: bar::baz::jam
+  - kind: class
+    begin:
+      offset: 294
+      line: 28
+    end:
+      offset: 427
+      line: 32
+    name:
+      kind: name
+      begin:
+        offset: 300
+        line: 28
+      end:
+        offset: 304
+        line: 28
+      value: ntp3
+    parameters:
+      - type:
+          kind: type
+          begin:
+            offset: 305
+            line: 28
+          end:
+            offset: 312
+            line: 28
+          name: Integer
+        variable:
+          kind: variable
+          begin:
+            offset: 313
+            line: 28
+          end:
+            offset: 315
+            line: 28
+          name: x
+      - type:
+          kind: postfix
+          primary:
+            kind: type
+            begin:
+              offset: 317
+              line: 28
+            end:
+              offset: 323
+              line: 28
+            name: String
+          subexpressions:
+            - kind: access
+              begin:
+                offset: 323
+                line: 28
+              end:
+                offset: 329
+                line: 28
+              arguments:
+                - kind: number
+                  begin:
+                    offset: 324
+                    line: 28
+                  end:
+                    offset: 325
+                    line: 28
+                  base: decimal
+                  value: 0
+                - kind: number
+                  begin:
+                    offset: 327
+                    line: 28
+                  end:
+                    offset: 328
+                    line: 28
+                  base: decimal
+                  value: 1
+        variable:
+          kind: variable
+          begin:
+            offset: 330
+            line: 28
+          end:
+            offset: 332
+            line: 28
+          name: y
+        default_value:
+          kind: string
+          begin:
+            offset: 335
+            line: 28
+          end:
+            offset: 338
+            line: 28
+          value_range:
+            begin:
+              offset: 336
+              line: 28
+            end:
+              offset: 337
+              line: 28
+          value: X
+          escapes: \'
+          format: ""
+          margin: 0
+          quote: "'"
+          interpolated: false
+          remove_break: false
+      - captures:
+          offset: 340
+          line: 28
+        variable:
+          kind: variable
+          begin:
+            offset: 341
+            line: 28
+          end:
+            offset: 346
+            line: 28
+          name: rest
+    parent:
+      kind: name
+      begin:
+        offset: 357
+        line: 28
+      end:
+        offset: 370
+        line: 28
+      value: bar::baz::jam
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 377
+            line: 29
+          end:
+            offset: 383
+            line: 29
+          value: notice
+        arguments:
+          - kind: name
+            begin:
+              offset: 384
+              line: 29
+            end:
+              offset: 386
+              line: 29
+            value: hi
+      - kind: binary
+        first:
+          kind: variable
+          begin:
+            offset: 391
+            line: 30
+          end:
+            offset: 395
+            line: 30
+          name: two
+        operations:
+          - operator_position:
+              offset: 396
+              line: 30
+            operator: =
+            operand:
+              kind: number
+              begin:
+                offset: 398
+                line: 30
+              end:
+                offset: 399
+                line: 30
+              base: decimal
+              value: 1
+          - operator_position:
+              offset: 400
+              line: 30
+            operator: +
+            operand:
+              kind: number
+              begin:
+                offset: 402
+                line: 30
+              end:
+                offset: 403
+                line: 30
+              base: decimal
+              value: 1
+      - kind: binary
+        first:
+          kind: variable
+          begin:
+            offset: 408
+            line: 31
+          end:
+            offset: 414
+            line: 31
+          name: three
+        operations:
+          - operator_position:
+              offset: 415
+              line: 31
+            operator: =
+            operand:
+              kind: variable
+              begin:
+                offset: 417
+                line: 31
+              end:
+                offset: 421
+                line: 31
+              name: two
+          - operator_position:
+              offset: 422
+              line: 31
+            operator: +
+            operand:
+              kind: number
+              begin:
+                offset: 424
+                line: 31
+              end:
+                offset: 425
+                line: 31
+              base: decimal
+              value: 1

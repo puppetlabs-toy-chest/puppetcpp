@@ -30,8 +30,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
     bool query_evaluator::evaluate(ast::primary_query_expression const& expression, compiler::resource const& resource) const
     {
         // Handle nested expressions
-        if (auto nested = boost::get<x3::forward_ast<ast::query_expression>>(&expression)) {
-            query_evaluator evaluator{ _context, nested->get() };
+        if (auto nested = boost::get<x3::forward_ast<ast::nested_query_expression>>(&expression)) {
+            query_evaluator evaluator{ _context, nested->get().expression };
             return evaluator.evaluate(resource);
         }
 

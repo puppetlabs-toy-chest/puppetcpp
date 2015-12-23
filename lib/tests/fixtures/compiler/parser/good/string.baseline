@@ -1,0 +1,85 @@
+statements:
+  - kind: string
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 13
+      line: 1
+    value_range:
+      begin:
+        offset: 1
+        line: 1
+      end:
+        offset: 12
+        line: 1
+    value: hello world
+    escapes: \"'nrtsu$
+    format: ""
+    margin: 0
+    quote: "\""
+    interpolated: true
+    remove_break: false
+  - kind: string
+    begin:
+      offset: 15
+      line: 3
+    end:
+      offset: 27
+      line: 3
+    value_range:
+      begin:
+        offset: 16
+        line: 3
+      end:
+        offset: 26
+        line: 3
+    value: foo\tbar\n
+    escapes: \"'nrtsu$
+    format: ""
+    margin: 0
+    quote: "\""
+    interpolated: true
+    remove_break: false
+  - kind: string
+    begin:
+      offset: 29
+      line: 5
+    end:
+      offset: 38
+      line: 5
+    value_range:
+      begin:
+        offset: 30
+        line: 5
+      end:
+        offset: 37
+        line: 5
+    value: foo bar
+    escapes: \'
+    format: ""
+    margin: 0
+    quote: "'"
+    interpolated: false
+    remove_break: false
+  - kind: string
+    begin:
+      offset: 40
+      line: 7
+    end:
+      offset: 50
+      line: 7
+    value_range:
+      begin:
+        offset: 51
+        line: 8
+      end:
+        offset: 68
+        line: 9
+    value: "  another string\n"
+    escapes: ""
+    format: ""
+    margin: 2
+    quote: "\x00"
+    interpolated: false
+    remove_break: true

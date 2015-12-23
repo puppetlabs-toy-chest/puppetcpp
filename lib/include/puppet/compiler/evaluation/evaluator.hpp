@@ -86,7 +86,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::type const& expression);
         runtime::values::value operator()(ast::array const& expression);
         runtime::values::value operator()(ast::hash const& expression);
-        runtime::values::value operator()(ast::expression const& expression);
+        runtime::values::value operator()(ast::nested_expression const& expression);
         runtime::values::value operator()(ast::case_expression const& expression);
         runtime::values::value operator()(ast::if_expression const& expression);
         runtime::values::value operator()(ast::unless_expression const& expression);
@@ -124,9 +124,6 @@ namespace puppet { namespace compiler { namespace evaluation {
             ast::context const& left_context,
             runtime::values::value& right,
             ast::binary_operation const& operation);
-
-        static unsigned int get_precedence(ast::binary_operator op);
-        static bool is_right_associative(ast::binary_operator op);
 
         evaluation::context& _context;
     };

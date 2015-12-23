@@ -1,0 +1,505 @@
+statements:
+  - kind: collector
+    type:
+      kind: type
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 4
+        line: 1
+      name: File
+    exported: false
+    end:
+      offset: 9
+      line: 1
+  - kind: collector
+    type:
+      kind: type
+      begin:
+        offset: 11
+        line: 3
+      end:
+        offset: 19
+        line: 3
+      name: Foo::Bar
+    exported: false
+    query:
+      kind: attribute query
+      attribute:
+        kind: name
+        begin:
+          offset: 22
+          line: 3
+        end:
+          offset: 27
+          line: 3
+        value: title
+      operator_position:
+        offset: 28
+        line: 3
+      operator: ==
+      value:
+        kind: name
+        begin:
+          offset: 31
+          line: 3
+        end:
+          offset: 34
+          line: 3
+        value: foo
+    end:
+      offset: 37
+      line: 3
+  - kind: collector
+    type:
+      kind: type
+      begin:
+        offset: 39
+        line: 5
+      end:
+        offset: 42
+        line: 5
+      name: Bar
+    exported: false
+    query:
+      kind: binary query
+      primary:
+        kind: attribute query
+        attribute:
+          kind: name
+          begin:
+            offset: 46
+            line: 5
+          end:
+            offset: 51
+            line: 5
+          value: title
+        operator_position:
+          offset: 52
+          line: 5
+        operator: ==
+        value:
+          kind: name
+          begin:
+            offset: 55
+            line: 5
+          end:
+            offset: 58
+            line: 5
+          value: foo
+      operations:
+        - operator_position:
+            offset: 59
+            line: 5
+          operator: and
+          operand:
+            kind: nested query
+            expression:
+              kind: binary query
+              primary:
+                kind: attribute query
+                attribute:
+                  kind: name
+                  begin:
+                    offset: 64
+                    line: 5
+                  end:
+                    offset: 69
+                    line: 5
+                  value: other
+                operator_position:
+                  offset: 70
+                  line: 5
+                operator: ==
+                value:
+                  kind: array
+                  begin:
+                    offset: 73
+                    line: 5
+                  end:
+                    offset: 82
+                    line: 5
+                  elements:
+                    - kind: number
+                      begin:
+                        offset: 74
+                        line: 5
+                      end:
+                        offset: 75
+                        line: 5
+                      base: decimal
+                      value: 1
+                    - kind: number
+                      begin:
+                        offset: 77
+                        line: 5
+                      end:
+                        offset: 78
+                        line: 5
+                      base: decimal
+                      value: 2
+                    - kind: number
+                      begin:
+                        offset: 80
+                        line: 5
+                      end:
+                        offset: 81
+                        line: 5
+                      base: decimal
+                      value: 3
+              operations:
+                - operator_position:
+                    offset: 83
+                    line: 5
+                  operator: or
+                  operand:
+                    kind: attribute query
+                    attribute:
+                      kind: name
+                      begin:
+                        offset: 86
+                        line: 5
+                      end:
+                        offset: 95
+                        line: 5
+                      value: something
+                    operator_position:
+                      offset: 96
+                      line: 5
+                    operator: "!="
+                    value:
+                      kind: hash
+                      begin:
+                        offset: 99
+                        line: 5
+                      end:
+                        offset: 113
+                        line: 5
+                      elements:
+                        - first:
+                            kind: name
+                            begin:
+                              offset: 101
+                              line: 5
+                            end:
+                              offset: 104
+                              line: 5
+                            value: foo
+                          second:
+                            kind: name
+                            begin:
+                              offset: 108
+                              line: 5
+                            end:
+                              offset: 111
+                              line: 5
+                            value: bar
+    end:
+      offset: 117
+      line: 5
+  - kind: collector
+    type:
+      kind: type
+      begin:
+        offset: 119
+        line: 7
+      end:
+        offset: 122
+        line: 7
+      name: Yay
+    exported: false
+    query:
+      kind: attribute query
+      attribute:
+        kind: name
+        begin:
+          offset: 126
+          line: 7
+        end:
+          offset: 130
+          line: 7
+        value: cake
+      operator_position:
+        offset: 131
+        line: 7
+      operator: "!="
+      value:
+        kind: name
+        begin:
+          offset: 134
+          line: 7
+        end:
+          offset: 137
+          line: 7
+        value: lie
+    end:
+      offset: 140
+      line: 7
+  - kind: collector
+    type:
+      kind: type
+      begin:
+        offset: 143
+        line: 10
+      end:
+        offset: 147
+        line: 10
+      name: File
+    exported: true
+    end:
+      offset: 154
+      line: 10
+  - kind: collector
+    type:
+      kind: type
+      begin:
+        offset: 156
+        line: 12
+      end:
+        offset: 164
+        line: 12
+      name: Foo::Bar
+    exported: true
+    query:
+      kind: attribute query
+      attribute:
+        kind: name
+        begin:
+          offset: 168
+          line: 12
+        end:
+          offset: 173
+          line: 12
+        value: title
+      operator_position:
+        offset: 174
+        line: 12
+      operator: ==
+      value:
+        kind: name
+        begin:
+          offset: 177
+          line: 12
+        end:
+          offset: 180
+          line: 12
+        value: foo
+    end:
+      offset: 184
+      line: 12
+  - kind: collector
+    type:
+      kind: type
+      begin:
+        offset: 186
+        line: 14
+      end:
+        offset: 189
+        line: 14
+      name: Bar
+    exported: true
+    query:
+      kind: binary query
+      primary:
+        kind: attribute query
+        attribute:
+          kind: name
+          begin:
+            offset: 194
+            line: 14
+          end:
+            offset: 199
+            line: 14
+          value: title
+        operator_position:
+          offset: 200
+          line: 14
+        operator: ==
+        value:
+          kind: name
+          begin:
+            offset: 203
+            line: 14
+          end:
+            offset: 206
+            line: 14
+          value: foo
+      operations:
+        - operator_position:
+            offset: 207
+            line: 14
+          operator: and
+          operand:
+            kind: nested query
+            expression:
+              kind: binary query
+              primary:
+                kind: attribute query
+                attribute:
+                  kind: name
+                  begin:
+                    offset: 212
+                    line: 14
+                  end:
+                    offset: 217
+                    line: 14
+                  value: other
+                operator_position:
+                  offset: 218
+                  line: 14
+                operator: ==
+                value:
+                  kind: array
+                  begin:
+                    offset: 221
+                    line: 14
+                  end:
+                    offset: 230
+                    line: 14
+                  elements:
+                    - kind: number
+                      begin:
+                        offset: 222
+                        line: 14
+                      end:
+                        offset: 223
+                        line: 14
+                      base: decimal
+                      value: 1
+                    - kind: number
+                      begin:
+                        offset: 225
+                        line: 14
+                      end:
+                        offset: 226
+                        line: 14
+                      base: decimal
+                      value: 2
+                    - kind: number
+                      begin:
+                        offset: 228
+                        line: 14
+                      end:
+                        offset: 229
+                        line: 14
+                      base: decimal
+                      value: 3
+              operations:
+                - operator_position:
+                    offset: 231
+                    line: 14
+                  operator: or
+                  operand:
+                    kind: attribute query
+                    attribute:
+                      kind: name
+                      begin:
+                        offset: 234
+                        line: 14
+                      end:
+                        offset: 243
+                        line: 14
+                      value: something
+                    operator_position:
+                      offset: 244
+                      line: 14
+                    operator: "!="
+                    value:
+                      kind: hash
+                      begin:
+                        offset: 247
+                        line: 14
+                      end:
+                        offset: 261
+                        line: 14
+                      elements:
+                        - first:
+                            kind: name
+                            begin:
+                              offset: 249
+                              line: 14
+                            end:
+                              offset: 252
+                              line: 14
+                            value: foo
+                          second:
+                            kind: name
+                            begin:
+                              offset: 256
+                              line: 14
+                            end:
+                              offset: 259
+                              line: 14
+                            value: bar
+    end:
+      offset: 266
+      line: 14
+  - kind: collector
+    type:
+      kind: type
+      begin:
+        offset: 268
+        line: 16
+      end:
+        offset: 271
+        line: 16
+      name: Yay
+    exported: true
+    query:
+      kind: binary query
+      primary:
+        kind: attribute query
+        attribute:
+          kind: name
+          begin:
+            offset: 276
+            line: 16
+          end:
+            offset: 280
+            line: 16
+          value: cake
+        operator_position:
+          offset: 281
+          line: 16
+        operator: "!="
+        value:
+          kind: name
+          begin:
+            offset: 284
+            line: 16
+          end:
+            offset: 287
+            line: 16
+          value: lie
+      operations:
+        - operator_position:
+            offset: 288
+            line: 16
+          operator: and
+          operand:
+            kind: attribute query
+            attribute:
+              kind: name
+              begin:
+                offset: 292
+                line: 16
+              end:
+                offset: 295
+                line: 16
+              value: foo
+            operator_position:
+              offset: 296
+              line: 16
+            operator: ==
+            value:
+              kind: default
+              begin:
+                offset: 299
+                line: 16
+              end:
+                offset: 306
+                line: 16
+    end:
+      offset: 310
+      line: 16

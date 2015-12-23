@@ -1,0 +1,25 @@
+statements:
+  - kind: bare word
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 3
+      line: 1
+    value: a-b
+  - kind: bare word
+    begin:
+      offset: 4
+      line: 2
+    end:
+      offset: 17
+      line: 2
+    value: _foo-bar_-baz
+  - kind: bare word
+    begin:
+      offset: 18
+      line: 3
+    end:
+      offset: 19
+      line: 3
+    value: _

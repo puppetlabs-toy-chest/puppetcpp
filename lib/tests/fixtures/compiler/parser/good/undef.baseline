@@ -1,0 +1,8 @@
+statements:
+  - kind: undef
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 5
+      line: 1

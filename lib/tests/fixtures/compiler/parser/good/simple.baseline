@@ -1,0 +1,57 @@
+statements:
+  - kind: binary
+    first:
+      kind: variable
+      begin:
+        offset: 3
+        line: 1
+      end:
+        offset: 8
+        line: 1
+      name: name
+    operations:
+      - operator_position:
+          offset: 9
+          line: 1
+        operator: =
+        operand:
+          kind: name
+          begin:
+            offset: 11
+            line: 1
+          end:
+            offset: 16
+            line: 1
+          value: peter
+  - kind: EPP render string
+    begin:
+      offset: 21
+      line: 2
+    end:
+      offset: 28
+      line: 2
+    string: "Hello, "
+  - kind: EPP render
+    begin:
+      offset: 28
+      line: 2
+    end:
+      offset: 40
+      line: 2
+    expression:
+      kind: variable
+      begin:
+        offset: 32
+        line: 2
+      end:
+        offset: 37
+        line: 2
+      name: name
+  - kind: EPP render string
+    begin:
+      offset: 40
+      line: 2
+    end:
+      offset: 41
+      line: 3
+    string: "\n"

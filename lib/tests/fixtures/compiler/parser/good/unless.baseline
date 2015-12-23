@@ -1,0 +1,109 @@
+statements:
+  - kind: unless
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 48
+      line: 3
+    conditional:
+      kind: binary
+      first:
+        kind: variable
+        begin:
+          offset: 7
+          line: 1
+        end:
+          offset: 18
+          line: 1
+        name: memorysize
+      operations:
+        - operator_position:
+            offset: 19
+            line: 1
+          operator: ">"
+          operand:
+            kind: number
+            begin:
+              offset: 21
+              line: 1
+            end:
+              offset: 25
+              line: 1
+            base: decimal
+            value: 1024
+    body:
+      - kind: binary
+        first:
+          kind: variable
+          begin:
+            offset: 30
+            line: 2
+          end:
+            offset: 40
+            line: 2
+          name: maxclient
+        operations:
+          - operator_position:
+              offset: 41
+              line: 2
+            operator: =
+            operand:
+              kind: number
+              begin:
+                offset: 43
+                line: 2
+              end:
+                offset: 46
+                line: 2
+              base: decimal
+              value: 500
+    else:
+      begin:
+        offset: 49
+        line: 3
+      body:
+        - kind: binary
+          first:
+            kind: variable
+            begin:
+              offset: 58
+              line: 4
+            end:
+              offset: 68
+              line: 4
+            name: maxclient
+          operations:
+            - operator_position:
+                offset: 69
+                line: 4
+              operator: =
+              operand:
+                kind: number
+                begin:
+                  offset: 71
+                  line: 4
+                end:
+                  offset: 75
+                  line: 4
+                base: decimal
+                value: 1000
+      end:
+        offset: 77
+        line: 5
+  - kind: unless
+    begin:
+      offset: 79
+      line: 7
+    end:
+      offset: 94
+      line: 7
+    conditional:
+      kind: boolean
+      begin:
+        offset: 86
+        line: 7
+      end:
+        offset: 91
+        line: 7
+      value: false

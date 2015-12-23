@@ -79,6 +79,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(exported_collector_expression, "exported resource collector",   ast::collector_expression)
     DECLARE_RULE(query_expression,              "query expression",              ast::query_expression)
     DECLARE_RULE(primary_query_expression,      "primary query expression",      ast::primary_query_expression)
+    DECLARE_RULE(nested_query_expression,       "nested query expression",       ast::nested_query_expression)
     DECLARE_RULE(attribute_query,               "attribute query",               ast::attribute_query)
     DECLARE_RULE(query_operator,                "query operator",                ast::query_operator)
     DECLARE_RULE(attribute_query_value,         "attribute value",               ast::primary_expression)
@@ -101,6 +102,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(expression,                    "expression",                    ast::expression)
     DECLARE_RULE(binary_expression,             "binary expression",             ast::binary_operation)
     DECLARE_RULE(primary_expression,            "primary expression",            ast::primary_expression)
+    DECLARE_RULE(nested_expression,             "nested expression",             ast::nested_expression)
     DECLARE_RULE(syntax_tree,                   "syntax tree",                   ast::syntax_tree)
     DECLARE_RULE(interpolated_syntax_tree,      "syntax tree",                   ast::syntax_tree)
     DECLARE_RULE(epp_render_expression,         "render expression",             ast::epp_render_expression)
@@ -233,15 +235,15 @@ namespace puppet { namespace compiler { namespace parser {
         resource_expression,
         virtualized_resource |
         exported_resource |
-        (begin(false) >> boost::spirit::x3::attr(ast::resource_status::realized) >> resource_type >> (raw('{') > (raw('}', false) | resource_bodies) > end('}') > tree))
+        (begin(false) >> boost::spirit::x3::attr(ast::resource_status::realized) >> resource_type >> raw('{') >> (resource_bodies > end('}') > tree))
     )
     DEFINE_RULE(
         virtualized_resource,
-        begin('@') > boost::spirit::x3::attr(ast::resource_status::virtualized) > resource_type > raw('{') > (raw('}', false) | resource_bodies) > end('}') > tree
+        begin('@') > boost::spirit::x3::attr(ast::resource_status::virtualized) > resource_type > raw('{') > resource_bodies > end('}') > tree
     )
     DEFINE_RULE(
         exported_resource,
-        begin(lexer::token_id::atat) > boost::spirit::x3::attr(ast::resource_status::exported) > resource_type > raw('{') > (raw('}', false) | resource_bodies) > end('}') > tree
+        begin(lexer::token_id::atat) > boost::spirit::x3::attr(ast::resource_status::exported) > resource_type > raw('{') > resource_bodies > end('}') > tree
     )
     DEFINE_RULE(
         resource_type,
@@ -258,7 +260,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         resource_body,
-        primary_expression > raw(':') > (attributes | boost::spirit::x3::eps)
+        (primary_expression >> raw(':')) > (attributes | boost::spirit::x3::eps)
     )
     DEFINE_RULE(
         attributes,
@@ -312,7 +314,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         resource_reference_expression,
-        (type | variable) > *access_expression
+        (type >> +access_expression) | (variable > *access_expression)
     )
     DEFINE_RULE(
         resource_defaults_expression,
@@ -362,8 +364,11 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         primary_query_expression,
-        attribute_query |
-        (raw('(') > query_expression > raw(')'))
+        nested_query_expression | attribute_query
+    )
+    DEFINE_RULE(
+        nested_query_expression,
+        begin('(') > query_expression > end(')') > tree
     )
     DEFINE_RULE(
         attribute_query,
@@ -505,6 +510,7 @@ namespace puppet { namespace compiler { namespace parser {
     // Note: parsing of EPP render block must come before EPP render expression
     DEFINE_RULE(
         primary_expression,
+        nested_expression             |
         epp_render_block              |
         epp_render_expression         |
         epp_render_string             |
@@ -526,8 +532,11 @@ namespace puppet { namespace compiler { namespace parser {
         bare_word                     |
         type                          |
         array                         |
-        hash                          |
-        (raw('(') > expression > raw(')'))
+        hash;
+    )
+    DEFINE_RULE(
+        nested_expression,
+        begin('(') > expression > end(')') > tree
     )
     DEFINE_RULE(
         syntax_tree,
@@ -618,6 +627,7 @@ namespace puppet { namespace compiler { namespace parser {
         exported_collector_expression,
         query_expression,
         primary_query_expression,
+        nested_query_expression,
         attribute_query,
         query_operator,
         attribute_query_value,
@@ -643,6 +653,7 @@ namespace puppet { namespace compiler { namespace parser {
         expression,
         binary_expression,
         primary_expression,
+        nested_expression,
         syntax_tree,
         interpolated_syntax_tree
     );

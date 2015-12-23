@@ -1,0 +1,8 @@
+statements:
+  - kind: default
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 7
+      line: 1

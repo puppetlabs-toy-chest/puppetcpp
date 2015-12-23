@@ -1,0 +1,41 @@
+statements:
+  - kind: name
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 3
+      line: 1
+    value: foo
+  - kind: name
+    begin:
+      offset: 4
+      line: 2
+    end:
+      offset: 11
+      line: 2
+    value: foo_bar
+  - kind: name
+    begin:
+      offset: 12
+      line: 3
+    end:
+      offset: 25
+      line: 3
+    value: foo::bar::baz
+  - kind: name
+    begin:
+      offset: 26
+      line: 4
+    end:
+      offset: 31
+      line: 4
+    value: ::foo
+  - kind: name
+    begin:
+      offset: 32
+      line: 5
+    end:
+      offset: 46
+      line: 5
+    value: ::foo_baz::bar

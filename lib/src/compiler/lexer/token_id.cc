@@ -67,7 +67,6 @@ namespace puppet { namespace compiler { namespace lexer {
             { token_id::epp_render_string,      "EPP render string" },
             { token_id::epp_render_expression,  "EPP render expression" },
             { token_id::comment,                "comment" },
-            { token_id::comment_trim,           "comment" },
             { token_id::whitespace,             "whitespace" },
             { token_id::unclosed_quote,         "unclosed quote" },
             { token_id::unclosed_comment,       "unclosed comment" },

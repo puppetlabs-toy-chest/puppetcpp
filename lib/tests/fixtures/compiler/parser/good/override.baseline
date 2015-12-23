@@ -1,0 +1,323 @@
+statements:
+  - kind: resource override
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 13
+      line: 2
+    reference:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 0
+          line: 1
+        end:
+          offset: 4
+          line: 1
+        name: File
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 4
+            line: 1
+          end:
+            offset: 9
+            line: 1
+          arguments:
+            - kind: name
+              begin:
+                offset: 5
+                line: 1
+              end:
+                offset: 8
+                line: 1
+              value: foo
+  - kind: resource override
+    begin:
+      offset: 15
+      line: 4
+    end:
+      offset: 60
+      line: 7
+    reference:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 15
+          line: 4
+        end:
+          offset: 19
+          line: 4
+        name: File
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 19
+            line: 4
+          end:
+            offset: 24
+            line: 4
+          arguments:
+            - kind: name
+              begin:
+                offset: 20
+                line: 4
+              end:
+                offset: 23
+                line: 4
+              value: foo
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 31
+            line: 5
+          end:
+            offset: 34
+            line: 5
+          value: bar
+        operator_position:
+          offset: 35
+          line: 5
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 38
+            line: 5
+          end:
+            offset: 41
+            line: 5
+          value: baz
+      - name:
+          kind: name
+          begin:
+            offset: 47
+            line: 6
+          end:
+            offset: 50
+            line: 6
+          value: jam
+        operator_position:
+          offset: 51
+          line: 6
+        operator: +>
+        value:
+          kind: name
+          begin:
+            offset: 54
+            line: 6
+          end:
+            offset: 58
+            line: 6
+          value: cake
+  - kind: resource override
+    begin:
+      offset: 62
+      line: 9
+    end:
+      offset: 95
+      line: 11
+    reference:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 62
+          line: 9
+        end:
+          offset: 66
+          line: 9
+        name: File
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 66
+            line: 9
+          end:
+            offset: 76
+            line: 9
+          arguments:
+            - kind: name
+              begin:
+                offset: 67
+                line: 9
+              end:
+                offset: 70
+                line: 9
+              value: foo
+            - kind: name
+              begin:
+                offset: 72
+                line: 9
+              end:
+                offset: 75
+                line: 9
+              value: bar
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 83
+            line: 10
+          end:
+            offset: 86
+            line: 10
+          value: baz
+        operator_position:
+          offset: 87
+          line: 10
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 90
+            line: 10
+          end:
+            offset: 93
+            line: 10
+          value: yep
+  - kind: resource override
+    begin:
+      offset: 97
+      line: 13
+    end:
+      offset: 122
+      line: 15
+    reference:
+      kind: variable
+      begin:
+        offset: 97
+        line: 13
+      end:
+        offset: 101
+        line: 13
+      name: foo
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 108
+            line: 14
+          end:
+            offset: 111
+            line: 14
+          value: foo
+        operator_position:
+          offset: 112
+          line: 14
+        operator: =>
+        value:
+          kind: undef
+          begin:
+            offset: 115
+            line: 14
+          end:
+            offset: 120
+            line: 14
+  - kind: resource override
+    begin:
+      offset: 124
+      line: 17
+    end:
+      offset: 185
+      line: 21
+    reference:
+      kind: postfix
+      primary:
+        kind: variable
+        begin:
+          offset: 124
+          line: 17
+        end:
+          offset: 128
+          line: 17
+        name: foo
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 128
+            line: 17
+          end:
+            offset: 133
+            line: 17
+          arguments:
+            - kind: name
+              begin:
+                offset: 129
+                line: 17
+              end:
+                offset: 132
+                line: 17
+              value: bar
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 140
+            line: 18
+          end:
+            offset: 143
+            line: 18
+          value: baz
+        operator_position:
+          offset: 144
+          line: 18
+        operator: =>
+        value:
+          kind: number
+          begin:
+            offset: 147
+            line: 18
+          end:
+            offset: 148
+            line: 18
+          base: decimal
+          value: 1
+      - name:
+          kind: name
+          begin:
+            offset: 154
+            line: 19
+          end:
+            offset: 156
+            line: 19
+          value: if
+        operator_position:
+          offset: 157
+          line: 19
+        operator: =>
+        value:
+          kind: boolean
+          begin:
+            offset: 160
+            line: 19
+          end:
+            offset: 164
+            line: 19
+          value: true
+      - name:
+          kind: name
+          begin:
+            offset: 170
+            line: 20
+          end:
+            offset: 176
+            line: 20
+          value: notice
+        operator_position:
+          offset: 177
+          line: 20
+        operator: +>
+        value:
+          kind: name
+          begin:
+            offset: 180
+            line: 20
+          end:
+            offset: 183
+            line: 20
+          value: lol

@@ -1,0 +1,124 @@
+statements:
+  - kind: hash
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 2
+      line: 1
+  - kind: hash
+    begin:
+      offset: 3
+      line: 2
+    end:
+      offset: 29
+      line: 2
+    elements:
+      - first:
+          kind: name
+          begin:
+            offset: 5
+            line: 2
+          end:
+            offset: 8
+            line: 2
+          value: foo
+        second:
+          kind: hash
+          begin:
+            offset: 12
+            line: 2
+          end:
+            offset: 14
+            line: 2
+      - first:
+          kind: name
+          begin:
+            offset: 16
+            line: 2
+          end:
+            offset: 19
+            line: 2
+          value: bar
+        second:
+          kind: array
+          begin:
+            offset: 23
+            line: 2
+          end:
+            offset: 27
+            line: 2
+          elements:
+            - kind: hash
+              begin:
+                offset: 24
+                line: 2
+              end:
+                offset: 26
+                line: 2
+  - kind: hash
+    begin:
+      offset: 30
+      line: 3
+    end:
+      offset: 74
+      line: 7
+    elements:
+      - first:
+          kind: number
+          begin:
+            offset: 36
+            line: 4
+          end:
+            offset: 37
+            line: 4
+          base: decimal
+          value: 1
+        second:
+          kind: number
+          begin:
+            offset: 41
+            line: 4
+          end:
+            offset: 42
+            line: 4
+          base: decimal
+          value: 1
+      - first:
+          kind: number
+          begin:
+            offset: 48
+            line: 5
+          end:
+            offset: 49
+            line: 5
+          base: decimal
+          value: 2
+        second:
+          kind: name
+          begin:
+            offset: 53
+            line: 5
+          end:
+            offset: 56
+            line: 5
+          value: foo
+      - first:
+          kind: number
+          begin:
+            offset: 62
+            line: 6
+          end:
+            offset: 63
+            line: 6
+          base: decimal
+          value: 3
+        second:
+          kind: regex
+          begin:
+            offset: 67
+            line: 6
+          end:
+            offset: 72
+            line: 6
+          value: baz

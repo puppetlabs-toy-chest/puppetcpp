@@ -277,4 +277,9 @@ namespace puppet { namespace compiler {
         return nullptr;
     }
 
+    bool registry::has_nodes() const
+    {
+        return !_nodes.empty();
+    }
+
 }}  // namespace puppet::compiler

@@ -209,6 +209,12 @@ namespace puppet { namespace compiler {
          */
         node_definition const* register_node(node_definition node);
 
+        /**
+         * Determines if the registry has a node definition.
+         * @return Returns true if the registry contains any node definitions or false if not.
+         */
+        bool has_nodes() const;
+
      private:
         registry(registry&) = delete;
         registry& operator=(registry&) = delete;

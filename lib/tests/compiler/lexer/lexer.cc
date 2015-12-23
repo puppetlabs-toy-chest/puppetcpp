@@ -140,9 +140,9 @@ void lex_bad_string(string const& input, size_t expected_offset, size_t expected
     }
 }
 
-SCENARIO("lexing single quoted strings")
+SCENARIO("lexing single quoted strings", "[lexer]")
 {
-    ifstream input(FIXTURES_DIR "lexer/single_quoted_strings.pp");
+    ifstream input(FIXTURES_DIR "compiler/lexer/single_quoted_strings.pp");
     REQUIRE(input);
 
     auto input_begin = lex_begin(input);
@@ -166,9 +166,108 @@ SCENARIO("lexing single quoted strings")
     REQUIRE(token == end);
 }
 
-SCENARIO("lexing double quoted strings")
+SCENARIO("getting ranges of tokens", "[lexer]")
 {
-    ifstream input(FIXTURES_DIR "lexer/double_quoted_strings.pp");
+    auto const ranges = vector<range>({
+        range(position{0, 1}, position {2, 1}),
+        range(position{5, 3}, position {23, 3}),
+        range(position{31, 5}, position {60, 5}),
+        range(position{62, 7}, position {94, 7}),
+        range(position{97, 9}, position {126, 9}),
+        range(position{131, 11}, position {159, 14}),
+        range(position{165, 16}, position {166, 16}),
+        range(position{166, 16}, position {173, 16}),
+        range(position{174, 16}, position {182, 16}),
+        range(position{182, 16}, position {183, 16}),
+        range(position{183, 16}, position {184, 16}),
+        range(position{184, 16}, position {185, 16})
+    });
+    WHEN("lexing a file") {
+        ifstream input(FIXTURES_DIR "compiler/lexer/single_quoted_strings.pp");
+        REQUIRE(input);
+        REQUIRE(get_last_position(input).offset() == 184);
+
+        auto input_begin = lex_begin(input);
+        auto input_end = lex_end(input);
+
+        file_static_lexer lexer;
+        auto token = lexer.begin(input_begin, input_end);
+        auto end = lexer.end();
+
+        for (auto const& range : ranges) {
+            REQUIRE(get_range(input, *token++) == range);
+        }
+        REQUIRE(token == end);
+
+        string text;
+        size_t column;
+        THEN("the text and column for a position should match what's expected") {
+            tie(text, column) = get_text_and_column(input, ranges[4].begin().offset());
+            REQUIRE(column == 2);
+            REQUIRE(text == " 'this back\\\\slash is escaped'");
+        }
+        THEN("the text and column for the last position should match the last line") {
+            tie(text, column) = get_text_and_column(input, get_range(input, decltype(*token){}).begin().offset());
+            REQUIRE(column == 24);
+            REQUIRE(text == "    'missing endquote\\'");
+        }
+    }
+    WHEN("lexing a string") {
+        ifstream file(FIXTURES_DIR "compiler/lexer/single_quoted_strings.pp");
+        REQUIRE(file);
+        ostringstream buffer;
+        buffer << file.rdbuf();
+        string contents = buffer.str();
+
+        AND_WHEN("given the string as input") {
+            auto& input = contents;
+            REQUIRE(get_last_position(input).offset() == 184);
+            auto input_begin = lex_begin(input);
+            auto input_end = lex_end(input);
+
+            string_static_lexer lexer;
+            auto token = lexer.begin(input_begin, input_end);
+            auto end = lexer.end();
+
+            for (auto const& range : ranges) {
+                REQUIRE(get_range(input, *token++) == range);
+            }
+            REQUIRE(token == end);
+
+            string text;
+            size_t column;
+            THEN("the text and column for a position should match what's expected") {
+                tie(text, column) = get_text_and_column(input, ranges[4].begin().offset());
+                REQUIRE(column == 2);
+                REQUIRE(text == " 'this back\\\\slash is escaped'");
+            }
+            THEN("the text and column for the last position should match the last line") {
+                tie(text, column) = get_text_and_column(input, get_range(input, decltype(*token){}).begin().offset());
+                REQUIRE(column == 24);
+                REQUIRE(text == "    'missing endquote\\'");
+            }
+        }
+        AND_WHEN("using an iterator range as input") {
+            auto input = boost::make_iterator_range(lex_begin(contents), lex_end(contents));
+            REQUIRE(get_last_position(input).offset() == 184);
+            auto input_begin = lex_begin(input);
+            auto input_end = lex_end(input);
+
+            string_static_lexer lexer;
+            auto token = lexer.begin(input_begin, input_end);
+            auto end = lexer.end();
+
+            for (auto const& range : ranges) {
+                REQUIRE(get_range(input, *token++) == range);
+            }
+            REQUIRE(token == end);
+        }
+    }
+}
+
+SCENARIO("lexing double quoted strings", "[lexer]")
+{
+    ifstream input(FIXTURES_DIR "compiler/lexer/double_quoted_strings.pp");
     REQUIRE(input);
 
     auto input_begin = lex_begin(input);
@@ -199,9 +298,9 @@ SCENARIO("lexing double quoted strings")
     REQUIRE(token == end);
 }
 
-SCENARIO("lexing heredocs")
+SCENARIO("lexing heredocs", "[lexer]")
 {
-    ifstream input(FIXTURES_DIR "lexer/heredocs.pp");
+    ifstream input(FIXTURES_DIR "compiler/lexer/heredocs.pp");
     REQUIRE(input);
 
     auto input_begin = lex_begin(input);
@@ -242,9 +341,9 @@ SCENARIO("lexing heredocs")
     lex_bad_string("\n   @(MALFORMED/z)\nthis heredoc is\nMALFORMED", 4, 2, "invalid heredoc escapes 'z': only t, r, n, s, u, L, and $ are allowed.");
 }
 
-SCENARIO("lexing symbolic tokens")
+SCENARIO("lexing symbolic tokens", "[lexer]")
 {
-    ifstream input(FIXTURES_DIR "lexer/symbolic_tokens.pp");
+    ifstream input(FIXTURES_DIR "compiler/lexer/symbolic_tokens.pp");
     REQUIRE(input);
 
     auto input_begin = lex_begin(input);
@@ -300,9 +399,9 @@ SCENARIO("lexing symbolic tokens")
     REQUIRE(token == end);
 }
 
-SCENARIO("lexing keywords")
+SCENARIO("lexing keywords", "[lexer]")
 {
-    ifstream input(FIXTURES_DIR "lexer/keywords.pp");
+    ifstream input(FIXTURES_DIR "compiler/lexer/keywords.pp");
     REQUIRE(input);
 
     auto input_begin = lex_begin(input);
@@ -334,9 +433,28 @@ SCENARIO("lexing keywords")
     REQUIRE(token == end);
 }
 
-SCENARIO("lexing statement calls")
+SCENARIO("using is_keyword", "[lexer]")
 {
-    ifstream input(FIXTURES_DIR "lexer/statement_calls.pp");
+    GIVEN("a token that is not a keyword") {
+        auto token = token_id::name;
+        THEN("is_keyword should return false") {
+            CAPTURE(token);
+            REQUIRE_FALSE(is_keyword(token));
+        }
+    }
+    GIVEN("any keyword token") {
+        for (auto token = static_cast<size_t>(token_id::first_keyword) + 1; token < static_cast<size_t>(token_id::last_keyword); ++token) {
+            THEN("is_keyword should return true") {
+                CAPTURE(token);
+                REQUIRE(is_keyword(static_cast<token_id>(token)));
+            }
+        }
+    }
+}
+
+SCENARIO("lexing statement calls", "[lexer]")
+{
+    ifstream input(FIXTURES_DIR "compiler/lexer/statement_calls.pp");
     REQUIRE(input);
 
     auto input_begin = lex_begin(input);
@@ -360,9 +478,9 @@ SCENARIO("lexing statement calls")
     REQUIRE(token == end);
 }
 
-SCENARIO("lexing numbers")
+SCENARIO("lexing numbers", "[lexer]")
 {
-    ifstream input(FIXTURES_DIR "lexer/numbers.pp");
+    ifstream input(FIXTURES_DIR "compiler/lexer/numbers.pp");
     REQUIRE(input);
 
     auto input_begin = lex_begin(input);
@@ -414,4 +532,81 @@ SCENARIO("lexing numbers")
     lex_bad_string("123.0ebad", 0, 1, "'123.0ebad' is not a valid number.");
     lex_bad_string("123bad.2bad2e-bad", 0, 1, "'123bad.2bad2e-bad' is not a valid number.");
     lex_bad_string("1e100000", 0, 1, (boost::format("'1e100000' is not in the range of %1% to %2%.") % numeric_limits<double>::min() % numeric_limits<double>::max()).str());
+}
+
+SCENARIO("lexing tokens with values", "[lexer]")
+{
+    ifstream input(FIXTURES_DIR "compiler/lexer/value_tokens.pp");
+    REQUIRE(input);
+
+    auto input_begin = lex_begin(input);
+    auto input_end = lex_end(input);
+
+    file_static_lexer lexer;
+    auto token = lexer.begin(input_begin, input_end);
+    auto end = lexer.end();
+    require_token(token, end, token_id::variable, "$foo");
+    require_token(token, end, token_id::type, "Bar::Baz");
+    require_token(token, end, token_id::name, "::snap::crackle::pop");
+    require_token(token, end, token_id::bare_word, "_foo_-_bar_");
+    require_token(token, end, token_id::regex, "/regex/");
+    REQUIRE(token == end);
+}
+
+SCENARIO("lexing comments", "[lexer]")
+{
+    ifstream input(FIXTURES_DIR "compiler/lexer/comments.pp");
+    REQUIRE(input);
+
+    auto input_begin = lex_begin(input);
+    auto input_end = lex_end(input);
+
+    file_static_lexer lexer;
+    auto token = lexer.begin(input_begin, input_end);
+    auto end = lexer.end();
+    require_token(token, end, token_id::name, "foo");
+    require_token(token, end, token_id::name, "bar");
+    require_token(token, end, token_id::name, "baz");
+    require_token(token, end, token_id::unclosed_comment, "/*");
+    require_token(token, end, token_id::name, "jam");
+    REQUIRE(token == end);
+}
+
+SCENARIO("lexing EPP", "[lexer]")
+{
+    ifstream input(FIXTURES_DIR "compiler/lexer/epp.pp");
+    REQUIRE(input);
+
+    auto input_begin = lex_begin(input);
+    auto input_end = lex_end(input);
+
+    file_static_lexer lexer;
+    auto token = lexer.begin(input_begin, input_end, file_static_lexer::EPP_STATE);
+    auto end = lexer.end();
+    require_token(token, end, token_id::epp_render_string, "foo ");
+    require_token(token, end, token_id::keyword_if, "if");
+    require_token(token, end, token_id::epp_render_string, "  \nbar");
+    require_token(token, end, token_id::keyword_elsif, "elsif");
+    require_token(token, end, token_id::epp_render_string, "  \n");
+    require_token(token, end, token_id::keyword_unless, "unless");
+    require_token(token, end, token_id::epp_render_string, "  \n  ");
+    require_token(token, end, token_id::keyword_class, "class");
+    require_token(token, end, token_id::keyword_define, "define");
+    require_token(token, end, token_id::name, "nope");
+    require_token(token, end, token_id::epp_render_string, "  nope  \nbaz ");
+    require_token(token, end, token_id::epp_render_expression, "<%=");
+    require_token(token, end, token_id::statement_call, "notice");
+    require_token(token, end, token_id::epp_end, "%>");
+    require_token(token, end, token_id::epp_render_string, "  \nclass ");
+    require_token(token, end, token_id::epp_render_expression, "<%=");
+    require_token(token, end, token_id::statement_call, "err");
+    require_token(token, end, token_id::epp_end_trim, "-%>  \n");
+    require_token(token, end, token_id::epp_render_string, "  \n");
+    require_token(token, end, token_id::epp_render_string, "\n");
+    require_token(token, end, token_id::epp_render_string, "<%");
+    REQUIRE(input_begin.epp_end());
+    require_token(token, end, token_id::epp_render_string, ">  \n");
+    require_token(token, end, token_id::name, "unclosed");
+    REQUIRE_FALSE(input_begin.epp_end());
+    REQUIRE(token == end);
 }

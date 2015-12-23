@@ -50,6 +50,30 @@ namespace puppet { namespace compiler { namespace lexer {
     };
 
     /**
+     * Stream insertion operator for position.
+     * @param os The output stream to write the position to.
+     * @param position The position to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, lexer::position const& position);
+
+    /**
+     * Equality operator for position.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two positions are equal or false if not.
+     */
+    bool operator==(position const& left, position const& right);
+
+    /**
+     * Inequality operator for position.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two positions are not equal or false if they are equal.
+     */
+    bool operator!=(position const& left, position const& right);
+
+    /**
      * Represents a range within a lexed input.
      */
     struct range
@@ -109,11 +133,27 @@ namespace puppet { namespace compiler { namespace lexer {
     };
 
     /**
-     * Stream insertion operator for position.
-     * @param os The output stream to write the position to.
-     * @param position The position to write.
+     * Stream insertion operator for range.
+     * @param os The output stream to write the range to.
+     * @param range The range to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, lexer::position const& position);
+    std::ostream& operator<<(std::ostream& os, lexer::range const& range);
+
+    /**
+     * Equality operator for range.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two ranges are equal or false if not.
+     */
+    bool operator==(range const& left, range const& right);
+
+    /**
+     * Inequality operator for range.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two ranges are not equal or false if they are equal.
+     */
+    bool operator!=(range const& left, range const& right);
 
 }}}  // namespace puppet::compiler::lexer

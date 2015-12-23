@@ -71,6 +71,14 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::nested_expression,
+    begin,
+    expression,
+    end,
+    tree
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::array,
     begin,
     elements,
@@ -280,6 +288,14 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::nested_query_expression,
+    begin,
+    expression,
+    end,
+    tree
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::collector_expression,
     type,
     exported,
@@ -309,7 +325,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::expression,
-    postfix,
+    first,
     operations
 )
 
