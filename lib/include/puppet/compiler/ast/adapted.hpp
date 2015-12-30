@@ -304,6 +304,16 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::function_expression,
+    begin,
+    name,
+    parameters,
+    body,
+    end,
+    tree
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::postfix_expression,
     primary,
     subexpressions

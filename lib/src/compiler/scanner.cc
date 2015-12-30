@@ -434,6 +434,28 @@ namespace puppet { namespace compiler {
         operator()(expression.value);
     }
 
+    void scanner::operator()(ast::function_expression const& expression)
+    {
+        if (!can_define()) {
+            throw parse_exception("function definitions can only be defined at top-level or inside a class.", lexer::range(expression.begin, expression.end));
+        }
+
+        // TODO: register the function
+
+        // Functions have no class scope
+        class_scope scope(_scopes, {});
+
+        // Scan the parameters
+        for (auto const& parameter : expression.parameters) {
+            operator()(parameter);
+        }
+
+        // Scan the body
+        for (auto const& statement : expression.body) {
+            operator()(statement);
+        }
+    }
+
     void scanner::operator()(ast::unary_expression const& expression)
     {
         operator()(expression.operand);

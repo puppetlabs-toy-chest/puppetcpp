@@ -41,6 +41,7 @@ namespace puppet { namespace compiler { namespace ast {
     struct node_expression;
     struct nested_query_expression;
     struct collector_expression;
+    struct function_expression;
     struct unary_expression;
     struct selector_expression;
     struct method_call_expression;
@@ -487,6 +488,7 @@ namespace puppet { namespace compiler { namespace ast {
         boost::spirit::x3::forward_ast<defined_type_expression>,
         boost::spirit::x3::forward_ast<node_expression>,
         boost::spirit::x3::forward_ast<collector_expression>,
+        boost::spirit::x3::forward_ast<function_expression>,
         boost::spirit::x3::forward_ast<unary_expression>,
         boost::spirit::x3::forward_ast<epp_render_expression>,
         boost::spirit::x3::forward_ast<epp_render_block>,
@@ -1979,6 +1981,35 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, collector_expression const& node);
+
+    /**
+     * Represents an expression for defining a function in the Puppet language.
+     */
+    struct function_expression : context
+    {
+        /**
+         * Stores the function's name.
+         */
+        ast::name name;
+
+        /**
+         * Stores the function's parameters.
+         */
+        std::vector<parameter> parameters;
+
+        /**
+         * Stores the function's body.
+         */
+        std::vector<expression> body;
+    };
+
+    /**
+     * Stream insertion operator for function expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, function_expression const& node);
 
     /**
      * Represents a unary operator.
