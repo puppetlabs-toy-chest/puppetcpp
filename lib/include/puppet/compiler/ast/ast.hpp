@@ -49,6 +49,10 @@ namespace puppet { namespace compiler { namespace ast {
     struct epp_render_expression;
     struct epp_render_block;
     struct epp_render_string;
+    struct produces_expression;
+    struct consumes_expression;
+    struct application_expression;
+    struct site_expression;
     struct syntax_tree;
 
     /**
@@ -492,7 +496,11 @@ namespace puppet { namespace compiler { namespace ast {
         boost::spirit::x3::forward_ast<unary_expression>,
         boost::spirit::x3::forward_ast<epp_render_expression>,
         boost::spirit::x3::forward_ast<epp_render_block>,
-        boost::spirit::x3::forward_ast<epp_render_string>
+        boost::spirit::x3::forward_ast<epp_render_string>,
+        boost::spirit::x3::forward_ast<produces_expression>,
+        boost::spirit::x3::forward_ast<consumes_expression>,
+        boost::spirit::x3::forward_ast<application_expression>,
+        boost::spirit::x3::forward_ast<site_expression>
         >
     {
         // Use the base's construction and assignment semantics
@@ -2066,9 +2074,9 @@ namespace puppet { namespace compiler { namespace ast {
         postfix_expression operand;
 
         /**
-          * Get the context of the unary expression.
-          * @return Returns the context of the unary expression.
-          */
+         * Get the context of the unary expression.
+         * @return Returns the context of the unary expression.
+         */
         ast::context context() const;
 
         /**
@@ -2142,6 +2150,134 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, epp_render_string const& node);
+
+    /**
+     * Represents a produces expression.
+     */
+    struct produces_expression
+    {
+        /**
+         * Stores the resource type that produces the capability type.
+         */
+        ast::type resource;
+
+        /**
+         * Stores the capability type being produced.
+         */
+        ast::type capability;
+
+        /**
+         * Stores the attribute operations.
+         */
+        std::vector<attribute_operation> operations;
+
+        /**
+         * Stores the ending position of the expression.
+         */
+        lexer::position end;
+
+        /**
+         * Get the context of the produces expression.
+         * @return Returns the context of the produces expression.
+         */
+        ast::context context() const;
+    };
+
+    /**
+     * Stream insertion operator for produces expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, produces_expression const& node);
+
+    /**
+     * Represents a consumes expression.
+     */
+    struct consumes_expression
+    {
+        /**
+         * Stores the resource type consuming the capability type.
+         */
+        ast::type resource;
+
+        /**
+         * Stores the capability type being consumed.
+         */
+        ast::type capability;
+
+        /**
+         * Stores the attribute operations.
+         */
+        std::vector<attribute_operation> operations;
+
+        /**
+         * Stores the ending position of the expression.
+         */
+        lexer::position end;
+
+        /**
+         * Get the context of the consumes expression.
+         * @return Returns the context of the consumes expression.
+         */
+        ast::context context() const;
+    };
+
+    /**
+     * Stream insertion operator for consumes expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, consumes_expression const& node);
+
+    /**
+     * Represents an application expression.
+     */
+    struct application_expression : context
+    {
+        /**
+         * Stores the application name.
+         */
+        ast::name name;
+
+        /**
+         * Stores the parameters.
+         */
+        std::vector<parameter> parameters;
+
+        /**
+         * Stores the body.
+         */
+        std::vector<expression> body;
+    };
+
+    /**
+     * Stream insertion operator for application expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, application_expression const& node);
+
+    /**
+     * Represents a site expression.
+     */
+    struct site_expression : context
+    {
+        /**
+         * Stores the body.
+         */
+        std::vector<expression> body;
+    };
+
+    /**
+     * Stream insertion operator for site expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, site_expression const& node);
 
     /**
      * Represents a supported serialization format for the syntax tree.

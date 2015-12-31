@@ -383,6 +383,44 @@ static function_expression create_function(std::string name, vector<parameter> p
     return node;
 }
 
+static produces_expression create_produces(std::string resource, std::string capability, vector<attribute_operation> operations = {})
+{
+    produces_expression node;
+    node.resource = create_type(rvalue_cast(resource));
+    node.capability = create_type(rvalue_cast(capability));
+    node.operations = rvalue_cast(operations);
+    node.end = create_position();
+    return node;
+}
+
+static consumes_expression create_consumes(std::string resource, std::string capability, vector<attribute_operation> operations = {})
+{
+    consumes_expression node;
+    node.resource = create_type(rvalue_cast(resource));
+    node.capability = create_type(rvalue_cast(capability));
+    node.operations = rvalue_cast(operations);
+    node.end = create_position();
+    return node;
+}
+
+static application_expression create_application(std::string name, vector<parameter> parameters = {}, vector<expression> body = {})
+{
+    application_expression node;
+    set_dummy_context(node);
+    node.name = create_name(rvalue_cast(name));
+    node.parameters = rvalue_cast(parameters);
+    node.body = rvalue_cast(body);
+    return node;
+}
+
+static site_expression create_site(vector<expression> body = {})
+{
+    site_expression node;
+    set_dummy_context(node);
+    node.body = rvalue_cast(body);
+    return node;
+}
+
 static unary_expression create_unary(unary_operator operator_, postfix_expression operand)
 {
     unary_expression node;
@@ -817,7 +855,7 @@ SCENARIO("primary expression", "[ast]")
 {
     primary_expression node;
     THEN("it should have the expected number of types") {
-        REQUIRE(boost::mpl::size<primary_expression::types>::value == 29);
+        REQUIRE(boost::mpl::size<primary_expression::types>::value == 33);
     }
     WHEN("using a primary expression") {
         GIVEN("an undef") {
@@ -1522,6 +1560,133 @@ SCENARIO("primary expression", "[ast]")
             }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "render('hello')");
+            }
+        }
+        GIVEN("a produces expression") {
+            auto subnode = create_produces(
+                "Foo::Bar",
+                "Sql",
+                {
+                    create_attribute(
+                        "baz",
+                        attribute_operator::assignment,
+                        create_expression(primary(create_variable("jam")))
+                    )
+                }
+            );
+            node = subnode;
+            THEN("the same context should be returned") {
+                REQUIRE(node.context() == subnode.context());
+            }
+            THEN("it should not be default") {
+                REQUIRE_FALSE(node.is_default());
+            }
+            THEN("it should be productive") {
+                REQUIRE(node.is_productive());
+            }
+            THEN("it should not be a splat expression") {
+                REQUIRE_FALSE(node.is_splat());
+            }
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "Foo::Bar produces Sql { baz => $jam }");
+            }
+        }
+        GIVEN("a consumes expression") {
+            auto subnode = create_consumes(
+                "Foo::Bar",
+                "Sql",
+                {
+                    create_attribute(
+                        "baz",
+                        attribute_operator::assignment,
+                        create_expression(primary(create_variable("jam")))
+                    )
+                }
+            );
+            node = subnode;
+            THEN("the same context should be returned") {
+                REQUIRE(node.context() == subnode.context());
+            }
+            THEN("it should not be default") {
+                REQUIRE_FALSE(node.is_default());
+            }
+            THEN("it should be productive") {
+                REQUIRE(node.is_productive());
+            }
+            THEN("it should not be a splat expression") {
+                REQUIRE_FALSE(node.is_splat());
+            }
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "Foo::Bar consumes Sql { baz => $jam }");
+            }
+        }
+        GIVEN("an application expression") {
+            auto subnode = create_application(
+                "foo",
+                {
+                    create_parameter(
+                        "bar",
+                        boost::none,
+                        false,
+                        create_expression(primary(create_number(80)))
+                    )
+                }
+            );
+            node = subnode;
+            THEN("the same context should be returned") {
+                REQUIRE(node.context() == subnode);
+            }
+            THEN("it should not be default") {
+                REQUIRE_FALSE(node.is_default());
+            }
+            THEN("it should be productive") {
+                REQUIRE(node.is_productive());
+            }
+            THEN("it should not be a splat expression") {
+                REQUIRE_FALSE(node.is_splat());
+            }
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "application foo($bar = 80) { }");
+            }
+        }
+        GIVEN("a site expression") {
+            auto subnode = create_site(
+                {
+                    create_expression(primary(
+                        create_resource(
+                            resource_status::realized,
+                            create_postfix(primary(create_name("foo"))),
+                            {
+                                create_resource_body(
+                                    primary(create_name("something")),
+                                    {
+                                        create_attribute(
+                                            "bar",
+                                            attribute_operator::assignment,
+                                            create_expression(primary(create_number(8080)))
+                                        )
+                                    }
+                                )
+                            }
+                        ))
+                    )
+                }
+            );
+            node = subnode;
+            THEN("the same context should be returned") {
+                REQUIRE(node.context() == subnode);
+            }
+            THEN("it should not be default") {
+                REQUIRE_FALSE(node.is_default());
+            }
+            THEN("it should be productive") {
+                REQUIRE(node.is_productive());
+            }
+            THEN("it should not be a splat expression") {
+                REQUIRE_FALSE(node.is_splat());
+            }
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "site { foo { something: bar => 8080 } }");
             }
         }
     }
@@ -3826,6 +3991,275 @@ SCENARIO("EPP render string", "[ast]")
         }
         THEN("it should output the expected format") {
             REQUIRE(lexical_cast<std::string>(node) == "render('foo')");
+        }
+        GIVEN("another non-equal object") {
+            decltype(node) other;
+            THEN("the objects should not be equal") {
+                REQUIRE(node != other);
+            }
+        }
+    }
+}
+
+SCENARIO("produces expression", "[ast]")
+{
+    auto node = create_produces(
+        "Foo",
+        "Sql",
+        {
+            create_attribute(
+                "foo",
+                attribute_operator::assignment,
+                create_expression(primary(create_variable("foo")))
+            ),
+            create_attribute(
+                "bar",
+                attribute_operator::assignment,
+                create_expression(primary(create_variable("bar")))
+            )
+        }
+    );
+
+    WHEN("using produces expression") {
+        THEN("it should be copy constructible") {
+            auto node2 = node;
+            REQUIRE(node2.context() == node.context());
+        }
+        THEN("it should be movable") {
+            auto node2 = node;
+            auto node3 = rvalue_cast(node2);
+            REQUIRE(node3.context() == node.context());
+        }
+        THEN("it should output the expected format") {
+            REQUIRE(lexical_cast<std::string>(node) == "Foo produces Sql { foo => $foo, bar => $bar }");
+        }
+        THEN("the context should be from the resource type to the end") {
+            auto context = node.context();
+            REQUIRE(context.begin == node.resource.begin);
+            REQUIRE(context.end == node.end);
+            REQUIRE(context.tree == node.resource.tree);
+        }
+        WHEN("given no attributes") {
+            node.operations.clear();
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "Foo produces Sql { }");
+            }
+        }
+        GIVEN("another non-equal object") {
+            decltype(node) other;
+            THEN("the objects should not be equal") {
+                REQUIRE(node.context() != other.context());
+            }
+        }
+    }
+}
+
+SCENARIO("consumes expression", "[ast]")
+{
+    auto node = create_consumes(
+        "Foo",
+        "Sql",
+        {
+            create_attribute(
+                "foo",
+                attribute_operator::assignment,
+                create_expression(primary(create_variable("foo")))
+            ),
+            create_attribute(
+                "bar",
+                attribute_operator::assignment,
+                create_expression(primary(create_variable("bar")))
+            )
+        }
+    );
+
+    WHEN("using consumes expression") {
+        THEN("it should be copy constructible") {
+            auto node2 = node;
+            REQUIRE(node2.context() == node.context());
+        }
+        THEN("it should be movable") {
+            auto node2 = node;
+            auto node3 = rvalue_cast(node2);
+            REQUIRE(node3.context() == node.context());
+        }
+        THEN("it should output the expected format") {
+            REQUIRE(lexical_cast<std::string>(node) == "Foo consumes Sql { foo => $foo, bar => $bar }");
+        }
+        THEN("the context should be from the resource type to the end") {
+            auto context = node.context();
+            REQUIRE(context.begin == node.resource.begin);
+            REQUIRE(context.end == node.end);
+            REQUIRE(context.tree == node.resource.tree);
+        }
+        WHEN("given no attributes") {
+            node.operations.clear();
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "Foo consumes Sql { }");
+            }
+        }
+        GIVEN("another non-equal object") {
+            decltype(node) other;
+            THEN("the objects should not be equal") {
+                REQUIRE(node.context() != other.context());
+            }
+        }
+    }
+}
+
+SCENARIO("application expression", "[ast]")
+{
+    auto node = create_application(
+        "foo",
+        {
+            create_parameter(
+                "bar",
+                create_postfix(
+                    primary(create_type("Integer")),
+                    {
+                        subexpression(
+                            create_access(
+                                {
+                                    create_expression(primary(create_number(1000))),
+                                    create_expression(primary(create_number(2000))),
+                                }
+                            )
+                        )
+                    }
+                ),
+                false,
+                create_expression(primary(create_number(1234)))
+            ),
+            create_parameter("baz")
+        },
+        {
+            create_expression(primary(create_function_call("cake")))
+        }
+    );
+
+    WHEN("using application expression") {
+        THEN("it should be copy constructible") {
+            auto node2 = node;
+            REQUIRE(node2 == node);
+        }
+        THEN("it should be movable") {
+            auto node2 = node;
+            auto node3 = rvalue_cast(node2);
+            REQUIRE(node3 == node);
+        }
+        THEN("it should be convertible to context") {
+            context ctx = node;
+            REQUIRE(ctx == node);
+        }
+        WHEN("given no parameters") {
+            node.parameters.clear();
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "application foo { cake() }");
+            }
+            AND_WHEN("given no body") {
+                node.body.clear();
+                THEN("it should output the expected format") {
+                    REQUIRE(lexical_cast<std::string>(node) == "application foo { }");
+                }
+
+            }
+        }
+        WHEN("given parameters") {
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "application foo(Integer[1000, 2000] $bar = 1234, $baz) { cake() }");
+            }
+            AND_WHEN("given no body") {
+                node.body.clear();
+                THEN("it should output the expected format") {
+                    REQUIRE(lexical_cast<std::string>(node) == "application foo(Integer[1000, 2000] $bar = 1234, $baz) { }");
+                }
+
+            }
+        }
+        GIVEN("another non-equal object") {
+            decltype(node) other;
+            THEN("the objects should not be equal") {
+                REQUIRE(node != other);
+            }
+        }
+    }
+}
+
+SCENARIO("site expression", "[ast]")
+{
+    auto node = create_site(
+        {
+            create_expression(primary(
+                create_resource(
+                    resource_status::realized,
+                    create_postfix(primary(create_name("app"))),
+                    {
+                        create_resource_body(
+                            primary(create_name("lamp")),
+                            {
+                                create_attribute(
+                                    "nodes",
+                                    attribute_operator::assignment,
+                                    create_expression(primary(
+                                        create_hash(
+                                        {
+                                            make_pair(
+                                                create_expression(
+                                                    create_postfix(
+                                                        primary(create_type("Node")),
+                                                        {
+                                                            subexpression(create_access({ create_expression(primary(create_name("foo"))) }))
+                                                        }
+                                                    )
+                                                ),
+                                                create_expression(primary(
+                                                    create_array(
+                                                    {
+                                                        create_expression(
+                                                            create_postfix(
+                                                            primary(create_type("Lamp::Db")),
+                                                            {
+                                                                subexpression(create_access({ create_expression(primary(create_name("foo"))) }))
+                                                            }
+                                                        ))
+                                                    }
+                                                ))
+                                            ))
+                                        }
+                                    )))
+                                )
+                            }
+                        )
+                    }
+                ))
+            )
+        }
+    );
+
+    WHEN("using node expression") {
+        THEN("it should be copy constructible") {
+            auto node2 = node;
+            REQUIRE(node2 == node);
+        }
+        THEN("it should be movable") {
+            auto node2 = node;
+            auto node3 = rvalue_cast(node2);
+            REQUIRE(node3 == node);
+        }
+        THEN("it should be convertible to context") {
+            context ctx = node;
+            REQUIRE(ctx == node);
+        }
+        WHEN("given no body") {
+            node.body.clear();
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "site { }");
+            }
+        }
+        WHEN("given a body") {
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "site { app { lamp: nodes => {Node[foo] => [Lamp::Db[foo]]} } }");
+            }
         }
         GIVEN("another non-equal object") {
             decltype(node) other;

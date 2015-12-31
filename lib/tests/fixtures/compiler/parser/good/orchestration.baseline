@@ -1,0 +1,1362 @@
+statements:
+  - kind: produces
+    resource:
+      kind: type
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 3
+        line: 1
+      name: Foo
+    capability:
+      kind: type
+      begin:
+        offset: 13
+        line: 1
+      end:
+        offset: 16
+        line: 1
+      name: Sql
+    end:
+      offset: 20
+      line: 2
+  - kind: produces
+    resource:
+      kind: type
+      begin:
+        offset: 22
+        line: 4
+      end:
+        offset: 30
+        line: 4
+      name: Foo::Bar
+    capability:
+      kind: type
+      begin:
+        offset: 40
+        line: 4
+      end:
+        offset: 48
+        line: 4
+      name: Foo::Sql
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 55
+            line: 5
+          end:
+            offset: 58
+            line: 5
+          value: bar
+        operator_position:
+          offset: 59
+          line: 5
+        operator: =>
+        value:
+          kind: variable
+          begin:
+            offset: 62
+            line: 5
+          end:
+            offset: 66
+            line: 5
+          name: bar
+      - name:
+          kind: name
+          begin:
+            offset: 72
+            line: 6
+          end:
+            offset: 75
+            line: 6
+          value: baz
+        operator_position:
+          offset: 76
+          line: 6
+        operator: =>
+        value:
+          kind: function call
+          function:
+            kind: name
+            begin:
+              offset: 79
+              line: 6
+            end:
+              offset: 82
+              line: 6
+            value: foo
+          end:
+            offset: 84
+            line: 6
+    end:
+      offset: 86
+      line: 7
+  - kind: consumes
+    resource:
+      kind: type
+      begin:
+        offset: 88
+        line: 9
+      end:
+        offset: 91
+        line: 9
+      name: Foo
+    capability:
+      kind: type
+      begin:
+        offset: 101
+        line: 9
+      end:
+        offset: 104
+        line: 9
+      name: Sql
+    end:
+      offset: 108
+      line: 10
+  - kind: consumes
+    resource:
+      kind: type
+      begin:
+        offset: 110
+        line: 12
+      end:
+        offset: 118
+        line: 12
+      name: Foo::Bar
+    capability:
+      kind: type
+      begin:
+        offset: 128
+        line: 12
+      end:
+        offset: 136
+        line: 12
+      name: Foo::Sql
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 143
+            line: 13
+          end:
+            offset: 146
+            line: 13
+          value: bar
+        operator_position:
+          offset: 147
+          line: 13
+        operator: =>
+        value:
+          kind: variable
+          begin:
+            offset: 150
+            line: 13
+          end:
+            offset: 154
+            line: 13
+          name: bar
+      - name:
+          kind: name
+          begin:
+            offset: 160
+            line: 14
+          end:
+            offset: 163
+            line: 14
+          value: baz
+        operator_position:
+          offset: 164
+          line: 14
+        operator: =>
+        value:
+          kind: function call
+          function:
+            kind: name
+            begin:
+              offset: 167
+              line: 14
+            end:
+              offset: 170
+              line: 14
+            value: foo
+          end:
+            offset: 172
+            line: 14
+    end:
+      offset: 174
+      line: 15
+  - kind: application
+    begin:
+      offset: 176
+      line: 17
+    end:
+      offset: 196
+      line: 18
+    name:
+      kind: name
+      begin:
+        offset: 188
+        line: 17
+      end:
+        offset: 192
+        line: 17
+      value: lamp
+  - kind: application
+    begin:
+      offset: 198
+      line: 20
+    end:
+      offset: 220
+      line: 21
+    name:
+      kind: name
+      begin:
+        offset: 210
+        line: 20
+      end:
+        offset: 214
+        line: 20
+      value: lamp
+  - kind: application
+    begin:
+      offset: 222
+      line: 23
+    end:
+      offset: 246
+      line: 24
+    name:
+      kind: name
+      begin:
+        offset: 234
+        line: 23
+      end:
+        offset: 238
+        line: 23
+      value: lamp
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 239
+            line: 23
+          end:
+            offset: 241
+            line: 23
+          name: x
+  - kind: application
+    begin:
+      offset: 248
+      line: 26
+    end:
+      offset: 276
+      line: 27
+    name:
+      kind: name
+      begin:
+        offset: 260
+        line: 26
+      end:
+        offset: 264
+        line: 26
+      value: lamp
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 265
+            line: 26
+          end:
+            offset: 267
+            line: 26
+          name: x
+      - variable:
+          kind: variable
+          begin:
+            offset: 269
+            line: 26
+          end:
+            offset: 271
+            line: 26
+          name: y
+  - kind: application
+    begin:
+      offset: 278
+      line: 29
+    end:
+      offset: 310
+      line: 30
+    name:
+      kind: name
+      begin:
+        offset: 290
+        line: 29
+      end:
+        offset: 294
+        line: 29
+      value: lamp
+    parameters:
+      - type:
+          kind: type
+          begin:
+            offset: 295
+            line: 29
+          end:
+            offset: 302
+            line: 29
+          name: Integer
+        variable:
+          kind: variable
+          begin:
+            offset: 303
+            line: 29
+          end:
+            offset: 305
+            line: 29
+          name: x
+  - kind: application
+    begin:
+      offset: 312
+      line: 32
+    end:
+      offset: 428
+      line: 36
+    name:
+      kind: name
+      begin:
+        offset: 324
+        line: 32
+      end:
+        offset: 328
+        line: 32
+      value: lamp
+    parameters:
+      - type:
+          kind: type
+          begin:
+            offset: 329
+            line: 32
+          end:
+            offset: 336
+            line: 32
+          name: Integer
+        variable:
+          kind: variable
+          begin:
+            offset: 337
+            line: 32
+          end:
+            offset: 339
+            line: 32
+          name: x
+      - type:
+          kind: postfix
+          primary:
+            kind: type
+            begin:
+              offset: 341
+              line: 32
+            end:
+              offset: 347
+              line: 32
+            name: String
+          subexpressions:
+            - kind: access
+              begin:
+                offset: 347
+                line: 32
+              end:
+                offset: 353
+                line: 32
+              arguments:
+                - kind: number
+                  begin:
+                    offset: 348
+                    line: 32
+                  end:
+                    offset: 349
+                    line: 32
+                  base: decimal
+                  value: 0
+                - kind: number
+                  begin:
+                    offset: 351
+                    line: 32
+                  end:
+                    offset: 352
+                    line: 32
+                  base: decimal
+                  value: 1
+        variable:
+          kind: variable
+          begin:
+            offset: 354
+            line: 32
+          end:
+            offset: 356
+            line: 32
+          name: y
+        default_value:
+          kind: string
+          begin:
+            offset: 359
+            line: 32
+          end:
+            offset: 362
+            line: 32
+          value_range:
+            begin:
+              offset: 360
+              line: 32
+            end:
+              offset: 361
+              line: 32
+          value: X
+          escapes: \'
+          format: ""
+          margin: 0
+          quote: "'"
+          interpolated: false
+          remove_break: false
+      - captures:
+          offset: 364
+          line: 32
+        variable:
+          kind: variable
+          begin:
+            offset: 365
+            line: 32
+          end:
+            offset: 370
+            line: 32
+          name: rest
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 378
+            line: 33
+          end:
+            offset: 384
+            line: 33
+          value: notice
+        arguments:
+          - kind: name
+            begin:
+              offset: 385
+              line: 33
+            end:
+              offset: 387
+              line: 33
+            value: hi
+      - kind: binary
+        first:
+          kind: variable
+          begin:
+            offset: 392
+            line: 34
+          end:
+            offset: 396
+            line: 34
+          name: two
+        operations:
+          - operator_position:
+              offset: 397
+              line: 34
+            operator: =
+            operand:
+              kind: number
+              begin:
+                offset: 399
+                line: 34
+              end:
+                offset: 400
+                line: 34
+              base: decimal
+              value: 1
+          - operator_position:
+              offset: 401
+              line: 34
+            operator: +
+            operand:
+              kind: number
+              begin:
+                offset: 403
+                line: 34
+              end:
+                offset: 404
+                line: 34
+              base: decimal
+              value: 1
+      - kind: binary
+        first:
+          kind: variable
+          begin:
+            offset: 409
+            line: 35
+          end:
+            offset: 415
+            line: 35
+          name: three
+        operations:
+          - operator_position:
+              offset: 416
+              line: 35
+            operator: =
+            operand:
+              kind: variable
+              begin:
+                offset: 418
+                line: 35
+              end:
+                offset: 422
+                line: 35
+              name: two
+          - operator_position:
+              offset: 423
+              line: 35
+            operator: +
+            operand:
+              kind: number
+              begin:
+                offset: 425
+                line: 35
+              end:
+                offset: 426
+                line: 35
+              base: decimal
+              value: 1
+  - kind: produces
+    resource:
+      kind: type
+      begin:
+        offset: 430
+        line: 38
+      end:
+        offset: 439
+        line: 38
+      name: Mysql::Db
+    capability:
+      kind: type
+      begin:
+        offset: 449
+        line: 38
+      end:
+        offset: 452
+        line: 38
+      name: Sql
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 457
+            line: 39
+          end:
+            offset: 461
+            line: 39
+          value: user
+        operator_position:
+          offset: 467
+          line: 39
+        operator: =>
+        value:
+          kind: variable
+          begin:
+            offset: 470
+            line: 39
+          end:
+            offset: 475
+            line: 39
+          name: user
+      - name:
+          kind: name
+          begin:
+            offset: 479
+            line: 40
+          end:
+            offset: 487
+            line: 40
+          value: password
+        operator_position:
+          offset: 489
+          line: 40
+        operator: =>
+        value:
+          kind: variable
+          begin:
+            offset: 492
+            line: 40
+          end:
+            offset: 501
+            line: 40
+          name: password
+      - name:
+          kind: name
+          begin:
+            offset: 505
+            line: 41
+          end:
+            offset: 509
+            line: 41
+          value: host
+        operator_position:
+          offset: 515
+          line: 41
+        operator: =>
+        value:
+          kind: function call
+          function:
+            kind: name
+            begin:
+              offset: 518
+              line: 41
+            end:
+              offset: 522
+              line: 41
+            value: pick
+          arguments:
+            - kind: variable
+              begin:
+                offset: 523
+                line: 41
+              end:
+                offset: 545
+                line: 41
+              name: ::mysql_host_override
+            - kind: variable
+              begin:
+                offset: 547
+                line: 41
+              end:
+                offset: 554
+                line: 41
+              name: ::fqdn
+          end:
+            offset: 555
+            line: 41
+      - name:
+          kind: name
+          begin:
+            offset: 633
+            line: 43
+          end:
+            offset: 641
+            line: 43
+          value: database
+        operator_position:
+          offset: 643
+          line: 43
+        operator: =>
+        value:
+          kind: variable
+          begin:
+            offset: 646
+            line: 43
+          end:
+            offset: 653
+            line: 43
+          name: dbname
+      - name:
+          kind: name
+          begin:
+            offset: 657
+            line: 44
+          end:
+            offset: 661
+            line: 44
+          value: type
+        operator_position:
+          offset: 667
+          line: 44
+        operator: =>
+        value:
+          kind: string
+          begin:
+            offset: 670
+            line: 44
+          end:
+            offset: 677
+            line: 44
+          value_range:
+            begin:
+              offset: 671
+              line: 44
+            end:
+              offset: 676
+              line: 44
+          value: mysql
+          escapes: \'
+          format: ""
+          margin: 0
+          quote: "'"
+          interpolated: false
+          remove_break: false
+    end:
+      offset: 680
+      line: 45
+  - kind: application
+    begin:
+      offset: 682
+      line: 47
+    end:
+      offset: 1067
+      line: 69
+    name:
+      kind: name
+      begin:
+        offset: 694
+        line: 47
+      end:
+        offset: 698
+        line: 47
+      value: lamp
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 703
+            line: 48
+          end:
+            offset: 711
+            line: 48
+          name: db_user
+      - variable:
+          kind: variable
+          begin:
+            offset: 715
+            line: 49
+          end:
+            offset: 727
+            line: 49
+          name: db_password
+      - variable:
+          kind: variable
+          begin:
+            offset: 731
+            line: 50
+          end:
+            offset: 739
+            line: 50
+          name: docroot
+        default_value:
+          kind: string
+          begin:
+            offset: 742
+            line: 50
+          end:
+            offset: 757
+            line: 50
+          value_range:
+            begin:
+              offset: 743
+              line: 50
+            end:
+              offset: 756
+              line: 50
+          value: /var/www/html
+          escapes: \'
+          format: ""
+          margin: 0
+          quote: "'"
+          interpolated: false
+          remove_break: false
+    body:
+      - kind: resource
+        begin:
+          offset: 766
+          line: 53
+        end:
+          offset: 850
+          line: 56
+        status: realized
+        type:
+          kind: name
+          begin:
+            offset: 766
+            line: 53
+          end:
+            offset: 775
+            line: 53
+          value: lamp::web
+        bodies:
+          - title:
+              kind: variable
+              begin:
+                offset: 778
+                line: 53
+              end:
+                offset: 783
+                line: 53
+              name: name
+            operations:
+              - name:
+                  kind: name
+                  begin:
+                    offset: 789
+                    line: 54
+                  end:
+                    offset: 796
+                    line: 54
+                  value: docroot
+                operator_position:
+                  offset: 797
+                  line: 54
+                operator: =>
+                value:
+                  kind: variable
+                  begin:
+                    offset: 800
+                    line: 54
+                  end:
+                    offset: 808
+                    line: 54
+                  name: docroot
+              - name:
+                  kind: name
+                  begin:
+                    offset: 814
+                    line: 55
+                  end:
+                    offset: 820
+                    line: 55
+                  value: export
+                operator_position:
+                  offset: 822
+                  line: 55
+                operator: =>
+                value:
+                  kind: postfix
+                  primary:
+                    kind: type
+                    begin:
+                      offset: 825
+                      line: 55
+                    end:
+                      offset: 829
+                      line: 55
+                    name: Http
+                  subexpressions:
+                    - kind: access
+                      begin:
+                        offset: 829
+                        line: 55
+                      end:
+                        offset: 845
+                        line: 55
+                      arguments:
+                        - kind: string
+                          begin:
+                            offset: 830
+                            line: 55
+                          end:
+                            offset: 844
+                            line: 55
+                          value_range:
+                            begin:
+                              offset: 831
+                              line: 55
+                            end:
+                              offset: 843
+                              line: 55
+                          value: lamp-${name}
+                          escapes: \"'nrtsu$
+                          format: ""
+                          margin: 0
+                          quote: "\""
+                          interpolated: true
+                          remove_break: false
+      - kind: resource
+        begin:
+          offset: 854
+          line: 58
+        end:
+          offset: 937
+          line: 61
+        status: realized
+        type:
+          kind: name
+          begin:
+            offset: 854
+            line: 58
+          end:
+            offset: 863
+            line: 58
+          value: lamp::app
+        bodies:
+          - title:
+              kind: variable
+              begin:
+                offset: 866
+                line: 58
+              end:
+                offset: 871
+                line: 58
+              name: name
+            operations:
+              - name:
+                  kind: name
+                  begin:
+                    offset: 877
+                    line: 59
+                  end:
+                    offset: 884
+                    line: 59
+                  value: docroot
+                operator_position:
+                  offset: 885
+                  line: 59
+                operator: =>
+                value:
+                  kind: variable
+                  begin:
+                    offset: 888
+                    line: 59
+                  end:
+                    offset: 896
+                    line: 59
+                  name: docroot
+              - name:
+                  kind: name
+                  begin:
+                    offset: 902
+                    line: 60
+                  end:
+                    offset: 909
+                    line: 60
+                  value: consume
+                operator_position:
+                  offset: 910
+                  line: 60
+                operator: =>
+                value:
+                  kind: postfix
+                  primary:
+                    kind: type
+                    begin:
+                      offset: 913
+                      line: 60
+                    end:
+                      offset: 916
+                      line: 60
+                    name: Sql
+                  subexpressions:
+                    - kind: access
+                      begin:
+                        offset: 916
+                        line: 60
+                      end:
+                        offset: 932
+                        line: 60
+                      arguments:
+                        - kind: string
+                          begin:
+                            offset: 917
+                            line: 60
+                          end:
+                            offset: 931
+                            line: 60
+                          value_range:
+                            begin:
+                              offset: 918
+                              line: 60
+                            end:
+                              offset: 930
+                              line: 60
+                          value: lamp-${name}
+                          escapes: \"'nrtsu$
+                          format: ""
+                          margin: 0
+                          quote: "\""
+                          interpolated: true
+                          remove_break: false
+      - kind: resource
+        begin:
+          offset: 941
+          line: 63
+        end:
+          offset: 1064
+          line: 67
+        status: realized
+        type:
+          kind: name
+          begin:
+            offset: 941
+            line: 63
+          end:
+            offset: 949
+            line: 63
+          value: lamp::db
+        bodies:
+          - title:
+              kind: variable
+              begin:
+                offset: 952
+                line: 63
+              end:
+                offset: 957
+                line: 63
+              name: name
+            operations:
+              - name:
+                  kind: name
+                  begin:
+                    offset: 963
+                    line: 64
+                  end:
+                    offset: 970
+                    line: 64
+                  value: db_user
+                operator_position:
+                  offset: 975
+                  line: 64
+                operator: =>
+                value:
+                  kind: variable
+                  begin:
+                    offset: 978
+                    line: 64
+                  end:
+                    offset: 986
+                    line: 64
+                  name: db_user
+              - name:
+                  kind: name
+                  begin:
+                    offset: 992
+                    line: 65
+                  end:
+                    offset: 1003
+                    line: 65
+                  value: db_password
+                operator_position:
+                  offset: 1004
+                  line: 65
+                operator: =>
+                value:
+                  kind: variable
+                  begin:
+                    offset: 1007
+                    line: 65
+                  end:
+                    offset: 1019
+                    line: 65
+                  name: db_password
+              - name:
+                  kind: name
+                  begin:
+                    offset: 1025
+                    line: 66
+                  end:
+                    offset: 1031
+                    line: 66
+                  value: export
+                operator_position:
+                  offset: 1037
+                  line: 66
+                operator: =>
+                value:
+                  kind: postfix
+                  primary:
+                    kind: type
+                    begin:
+                      offset: 1040
+                      line: 66
+                    end:
+                      offset: 1043
+                      line: 66
+                    name: Sql
+                  subexpressions:
+                    - kind: access
+                      begin:
+                        offset: 1043
+                        line: 66
+                      end:
+                        offset: 1059
+                        line: 66
+                      arguments:
+                        - kind: string
+                          begin:
+                            offset: 1044
+                            line: 66
+                          end:
+                            offset: 1058
+                            line: 66
+                          value_range:
+                            begin:
+                              offset: 1045
+                              line: 66
+                            end:
+                              offset: 1057
+                              line: 66
+                          value: lamp-${name}
+                          escapes: \"'nrtsu$
+                          format: ""
+                          margin: 0
+                          quote: "\""
+                          interpolated: true
+                          remove_break: false
+  - kind: site
+    begin:
+      offset: 1069
+      line: 71
+    end:
+      offset: 1077
+      line: 72
+  - kind: site
+    begin:
+      offset: 1079
+      line: 74
+    end:
+      offset: 1297
+      line: 83
+    body:
+      - kind: resource
+        begin:
+          offset: 1088
+          line: 75
+        end:
+          offset: 1295
+          line: 82
+        status: realized
+        type:
+          kind: name
+          begin:
+            offset: 1088
+            line: 75
+          end:
+            offset: 1092
+            line: 75
+          value: lamp
+        bodies:
+          - title:
+              kind: name
+              begin:
+                offset: 1095
+                line: 75
+              end:
+                offset: 1102
+                line: 75
+              value: example
+            operations:
+              - name:
+                  kind: name
+                  begin:
+                    offset: 1108
+                    line: 76
+                  end:
+                    offset: 1118
+                    line: 76
+                  value: wp_db_user
+                operator_position:
+                  offset: 1124
+                  line: 76
+                operator: =>
+                value:
+                  kind: name
+                  begin:
+                    offset: 1127
+                    line: 76
+                  end:
+                    offset: 1130
+                    line: 76
+                  value: foo
+              - name:
+                  kind: name
+                  begin:
+                    offset: 1136
+                    line: 77
+                  end:
+                    offset: 1150
+                    line: 77
+                  value: wp_db_password
+                operator_position:
+                  offset: 1152
+                  line: 77
+                operator: =>
+                value:
+                  kind: name
+                  begin:
+                    offset: 1155
+                    line: 77
+                  end:
+                    offset: 1158
+                    line: 77
+                  value: bar
+              - name:
+                  kind: name
+                  begin:
+                    offset: 1164
+                    line: 78
+                  end:
+                    offset: 1169
+                    line: 78
+                  value: nodes
+                operator_position:
+                  offset: 1180
+                  line: 78
+                operator: =>
+                value:
+                  kind: hash
+                  begin:
+                    offset: 1183
+                    line: 78
+                  end:
+                    offset: 1291
+                    line: 81
+                  elements:
+                    - first:
+                        kind: postfix
+                        primary:
+                          kind: type
+                          begin:
+                            offset: 1191
+                            line: 79
+                          end:
+                            offset: 1195
+                            line: 79
+                          name: Node
+                        subexpressions:
+                          - kind: access
+                            begin:
+                              offset: 1195
+                              line: 79
+                            end:
+                              offset: 1210
+                              line: 79
+                            arguments:
+                              - kind: string
+                                begin:
+                                  offset: 1196
+                                  line: 79
+                                end:
+                                  offset: 1209
+                                  line: 79
+                                value_range:
+                                  begin:
+                                    offset: 1197
+                                    line: 79
+                                  end:
+                                    offset: 1208
+                                    line: 79
+                                value: database.vm
+                                escapes: \'
+                                format: ""
+                                margin: 0
+                                quote: "'"
+                                interpolated: false
+                                remove_break: false
+                      second:
+                        kind: array
+                        begin:
+                          offset: 1214
+                          line: 79
+                        end:
+                          offset: 1233
+                          line: 79
+                        elements:
+                          - kind: postfix
+                            primary:
+                              kind: type
+                              begin:
+                                offset: 1215
+                                line: 79
+                              end:
+                                offset: 1223
+                                line: 79
+                              name: Lamp::Db
+                            subexpressions:
+                              - kind: access
+                                begin:
+                                  offset: 1223
+                                  line: 79
+                                end:
+                                  offset: 1232
+                                  line: 79
+                                arguments:
+                                  - kind: name
+                                    begin:
+                                      offset: 1224
+                                      line: 79
+                                    end:
+                                      offset: 1231
+                                      line: 79
+                                    value: example
+                    - first:
+                        kind: postfix
+                        primary:
+                          kind: type
+                          begin:
+                            offset: 1241
+                            line: 80
+                          end:
+                            offset: 1245
+                            line: 80
+                          name: Node
+                        subexpressions:
+                          - kind: access
+                            begin:
+                              offset: 1245
+                              line: 80
+                            end:
+                              offset: 1261
+                              line: 80
+                            arguments:
+                              - kind: string
+                                begin:
+                                  offset: 1246
+                                  line: 80
+                                end:
+                                  offset: 1260
+                                  line: 80
+                                value_range:
+                                  begin:
+                                    offset: 1247
+                                    line: 80
+                                  end:
+                                    offset: 1259
+                                    line: 80
+                                value: appserver.vm
+                                escapes: \'
+                                format: ""
+                                margin: 0
+                                quote: "'"
+                                interpolated: false
+                                remove_break: false
+                      second:
+                        kind: array
+                        begin:
+                          offset: 1265
+                          line: 80
+                        end:
+                          offset: 1285
+                          line: 80
+                        elements:
+                          - kind: postfix
+                            primary:
+                              kind: type
+                              begin:
+                                offset: 1266
+                                line: 80
+                              end:
+                                offset: 1275
+                                line: 80
+                              name: Lamp::Web
+                            subexpressions:
+                              - kind: access
+                                begin:
+                                  offset: 1275
+                                  line: 80
+                                end:
+                                  offset: 1284
+                                  line: 80
+                                arguments:
+                                  - kind: name
+                                    begin:
+                                      offset: 1276
+                                      line: 80
+                                    end:
+                                      offset: 1283
+                                      line: 80
+                                    value: example

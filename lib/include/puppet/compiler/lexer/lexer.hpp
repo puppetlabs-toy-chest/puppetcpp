@@ -312,24 +312,28 @@ namespace puppet { namespace compiler { namespace lexer {
 
             // Add the keywords
             this->self.add
-                ("case",     static_cast<id_type>(token_id::keyword_case))
-                ("class",    static_cast<id_type>(token_id::keyword_class))
-                ("default",  static_cast<id_type>(token_id::keyword_default))
-                ("define",   static_cast<id_type>(token_id::keyword_define))
-                ("if",       static_cast<id_type>(token_id::keyword_if))
-                ("elsif",    static_cast<id_type>(token_id::keyword_elsif))
-                ("else",     static_cast<id_type>(token_id::keyword_else))
-                ("inherits", static_cast<id_type>(token_id::keyword_inherits))
-                ("node",     static_cast<id_type>(token_id::keyword_node))
-                ("and",      static_cast<id_type>(token_id::keyword_and))
-                ("or",       static_cast<id_type>(token_id::keyword_or))
-                ("undef",    static_cast<id_type>(token_id::keyword_undef))
-                ("in",       static_cast<id_type>(token_id::keyword_in))
-                ("unless",   static_cast<id_type>(token_id::keyword_unless))
-                ("function", static_cast<id_type>(token_id::keyword_function))
-                ("type",     static_cast<id_type>(token_id::keyword_type))
-                ("attr",     static_cast<id_type>(token_id::keyword_attr))
-                ("private",  static_cast<id_type>(token_id::keyword_private));
+                ("case",        static_cast<id_type>(token_id::keyword_case))
+                ("class",       static_cast<id_type>(token_id::keyword_class))
+                ("default",     static_cast<id_type>(token_id::keyword_default))
+                ("define",      static_cast<id_type>(token_id::keyword_define))
+                ("if",          static_cast<id_type>(token_id::keyword_if))
+                ("elsif",       static_cast<id_type>(token_id::keyword_elsif))
+                ("else",        static_cast<id_type>(token_id::keyword_else))
+                ("inherits",    static_cast<id_type>(token_id::keyword_inherits))
+                ("node",        static_cast<id_type>(token_id::keyword_node))
+                ("and",         static_cast<id_type>(token_id::keyword_and))
+                ("or",          static_cast<id_type>(token_id::keyword_or))
+                ("undef",       static_cast<id_type>(token_id::keyword_undef))
+                ("in",          static_cast<id_type>(token_id::keyword_in))
+                ("unless",      static_cast<id_type>(token_id::keyword_unless))
+                ("function",    static_cast<id_type>(token_id::keyword_function))
+                ("type",        static_cast<id_type>(token_id::keyword_type))
+                ("attr",        static_cast<id_type>(token_id::keyword_attr))
+                ("private",     static_cast<id_type>(token_id::keyword_private))
+                ("produces",    static_cast<id_type>(token_id::keyword_produces))
+                ("consumes",    static_cast<id_type>(token_id::keyword_consumes))
+                ("application", static_cast<id_type>(token_id::keyword_application))
+                ("site",        static_cast<id_type>(token_id::keyword_site));
             this->self +=
                 lex::token_def<>("true",  static_cast<id_type>(token_id::keyword_true)) [ no_regex ] |
                 lex::token_def<>("false", static_cast<id_type>(token_id::keyword_false)) [ no_regex ];

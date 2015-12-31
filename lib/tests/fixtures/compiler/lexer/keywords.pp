@@ -17,5 +17,9 @@ function
 type
 attr
 private
+produces
+consumes
+application
+site
 true
 false

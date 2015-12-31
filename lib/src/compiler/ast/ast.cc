@@ -281,7 +281,11 @@ namespace puppet { namespace compiler { namespace ast {
             boost::get<x3::forward_ast<function_expression>>(this) ||
             boost::get<x3::forward_ast<epp_render_expression>>(this) ||
             boost::get<x3::forward_ast<epp_render_block>>(this) ||
-            boost::get<x3::forward_ast<epp_render_string>>(this)) {
+            boost::get<x3::forward_ast<epp_render_string>>(this) ||
+            boost::get<x3::forward_ast<produces_expression>>(this) ||
+            boost::get<x3::forward_ast<consumes_expression>>(this) ||
+            boost::get<x3::forward_ast<application_expression>>(this) ||
+            boost::get<x3::forward_ast<site_expression>>(this)) {
             return true;
         }
         return false;
@@ -967,17 +971,27 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(ostream& os, resource_override_expression const& node)
     {
-        os << node.reference << " { ";
-        pretty_print(os, node.operations, ", ");
-        os << " }";
+        os << node.reference;
+        if (node.operations.empty()) {
+            os << " { }";
+        } else {
+            os << " { ";
+            pretty_print(os, node.operations, ", ");
+            os << " }";
+        }
         return os;
     }
 
     ostream& operator<<(ostream& os, resource_defaults_expression const& node)
     {
-        os << node.type << " { ";
-        pretty_print(os, node.operations, ", ");
-        os << " }";
+        os << node.type;
+        if (node.operations.empty()) {
+            os << " { }";
+        } else {
+            os << " { ";
+            pretty_print(os, node.operations, ", ");
+            os << " }";
+        }
         return os;
     }
 
@@ -1323,6 +1337,76 @@ namespace puppet { namespace compiler { namespace ast {
         os << "render('";
         print_string(os, node.string);
         os << "')";
+        return os;
+    }
+
+    ast::context produces_expression::context() const
+    {
+        ast::context context = resource;
+        context.end = end;
+        return context;
+    }
+
+    ostream& operator<<(ostream& os, produces_expression const& node)
+    {
+        os << node.resource << " produces " << node.capability;
+        if (node.operations.empty()) {
+            os << " { }";
+        } else {
+            os << " { ";
+            pretty_print(os, node.operations, ", ");
+            os << " }";
+        }
+        return os;
+    }
+
+    ast::context consumes_expression::context() const
+    {
+        ast::context context = resource;
+        context.end = end;
+        return context;
+    }
+
+    ostream& operator<<(ostream& os, consumes_expression const& node)
+    {
+        os << node.resource << " consumes " << node.capability;
+        if (node.operations.empty()) {
+            os << " { }";
+        } else {
+            os << " { ";
+            pretty_print(os, node.operations, ", ");
+            os << " }";
+        }
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, application_expression const& node)
+    {
+        os << "application " << node.name;
+        if (!node.parameters.empty()) {
+            os << "(";
+            pretty_print(os, node.parameters, ", ");
+            os << ")";
+        }
+        if (node.body.empty()) {
+            os << " { }";
+        } else {
+            os << " { ";
+            pretty_print(os, node.body, ", ");
+            os << " }";
+        }
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, site_expression const& node)
+    {
+        os << "site { ";
+        if (node.body.empty()) {
+            os << "}";
+        } else {
+            pretty_print(os, node.body, ", ");
+            os << " }";
+        }
         return os;
     }
 
@@ -1875,6 +1959,48 @@ namespace puppet { namespace compiler { namespace ast {
             write("kind", "EPP render string");
             write(static_cast<context const&>(node));
             write("string", node.string);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(produces_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "produces");
+            write("resource", node.resource);
+            write("capability", node.capability);
+            write("operations", node.operations);
+            write("end", node.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(consumes_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "consumes");
+            write("resource", node.resource);
+            write("capability", node.capability);
+            write("operations", node.operations);
+            write("end", node.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(application_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "application");
+            write(static_cast<context const&>(node));
+            write("name", node.name);
+            write("parameters", node.parameters);
+            write("body", node.body);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(site_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "site");
+            write(static_cast<context const&>(node));
+            write("body", node.body);
             _emitter << YAML::EndMap;
         }
 

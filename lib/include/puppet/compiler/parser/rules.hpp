@@ -110,6 +110,10 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(epp_render_block,              "render expression",             ast::epp_render_block)
     DECLARE_RULE(epp_render_string,             "render string",                 ast::epp_render_string)
     DECLARE_RULE(epp_syntax_tree,               "syntax tree",                   ast::syntax_tree)
+    DECLARE_RULE(produces_expression,           "produces expression",           ast::produces_expression)
+    DECLARE_RULE(consumes_expression,           "consumes expression",           ast::consumes_expression)
+    DECLARE_RULE(application_expression,        "application expression",        ast::application_expression)
+    DECLARE_RULE(site_expression,               "site expression",               ast::site_expression)
 
     // Literal rules
     DEFINE_RULE(
@@ -287,28 +291,32 @@ namespace puppet { namespace compiler { namespace parser {
         keyword_name,
         (
             // NOTE: keywords 'true' and 'false' are not valid names
-            begin(lexer::token_id::keyword_and, false)      |
-            begin(lexer::token_id::keyword_case, false)     |
-            begin(lexer::token_id::keyword_class, false)    |
-            begin(lexer::token_id::keyword_default, false)  |
-            begin(lexer::token_id::keyword_define, false)   |
-            begin(lexer::token_id::keyword_else, false)     |
-            begin(lexer::token_id::keyword_elsif, false)    |
-            begin(lexer::token_id::keyword_if, false)       |
-            begin(lexer::token_id::keyword_in, false)       |
-            begin(lexer::token_id::keyword_inherits, false) |
-            begin(lexer::token_id::keyword_node, false)     |
-            begin(lexer::token_id::keyword_or, false)       |
-            begin(lexer::token_id::keyword_undef, false)    |
-            begin(lexer::token_id::keyword_unless, false)   |
-            begin(lexer::token_id::keyword_type, false)     |
-            begin(lexer::token_id::keyword_attr, false)     |
-            begin(lexer::token_id::keyword_function, false) |
-            begin(lexer::token_id::keyword_private, false)
+            begin(lexer::token_id::keyword_and, false)         |
+            begin(lexer::token_id::keyword_case, false)        |
+            begin(lexer::token_id::keyword_class, false)       |
+            begin(lexer::token_id::keyword_default, false)     |
+            begin(lexer::token_id::keyword_define, false)      |
+            begin(lexer::token_id::keyword_else, false)        |
+            begin(lexer::token_id::keyword_elsif, false)       |
+            begin(lexer::token_id::keyword_if, false)          |
+            begin(lexer::token_id::keyword_in, false)          |
+            begin(lexer::token_id::keyword_inherits, false)    |
+            begin(lexer::token_id::keyword_node, false)        |
+            begin(lexer::token_id::keyword_or, false)          |
+            begin(lexer::token_id::keyword_undef, false)       |
+            begin(lexer::token_id::keyword_unless, false)      |
+            begin(lexer::token_id::keyword_type, false)        |
+            begin(lexer::token_id::keyword_attr, false)        |
+            begin(lexer::token_id::keyword_function, false)    |
+            begin(lexer::token_id::keyword_private, false)     |
+            begin(lexer::token_id::keyword_produces, false)    |
+            begin(lexer::token_id::keyword_consumes, false)    |
+            begin(lexer::token_id::keyword_application, false) |
+            begin(lexer::token_id::keyword_site, false)
         ) > value > end() > tree
     )
     // Ensure all keywords (except true/false) are present in the list above
-    static_assert((static_cast<size_t>(lexer::token_id::last_keyword) - static_cast<size_t>(lexer::token_id::first_keyword)) == (20 + 1), "a keyword is missing from the keyword_name rule.");
+    static_assert((static_cast<size_t>(lexer::token_id::last_keyword) - static_cast<size_t>(lexer::token_id::first_keyword)) == (24 + 1), "a keyword is missing from the keyword_name rule.");
     DEFINE_RULE(
         resource_override_expression,
         begin(false) >> resource_reference_expression >> (raw('{') > (raw('}', false) | attributes) > end('}') > tree)
@@ -333,7 +341,7 @@ namespace puppet { namespace compiler { namespace parser {
         defined_type_expression,
         begin(lexer::token_id::keyword_define) >
         name >
-        -(raw('(') > (raw(')', false) | parameters) >raw(')')) >
+        -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
         raw('{') > (raw('}', false) | statements) > end('}') > tree
     )
     DEFINE_RULE(
@@ -471,6 +479,10 @@ namespace puppet { namespace compiler { namespace parser {
         defined_type_expression      |
         node_expression              |
         function_expression          |
+        produces_expression          |
+        consumes_expression          |
+        application_expression       |
+        site_expression              |
         primary_expression
     )
     DEFINE_RULE(
@@ -576,6 +588,27 @@ namespace puppet { namespace compiler { namespace parser {
         -(raw('|') > (raw('|', false) | parameters) > raw('|')) > statements > boost::spirit::x3::attr(lexer::position())
     )
 
+    // Application orchestration
+    DEFINE_RULE(
+        produces_expression,
+        type >> (raw(lexer::token_id::keyword_produces) > type > raw('{') > (raw('}', false) | attributes) > end('}'))
+    )
+    DEFINE_RULE(
+        consumes_expression,
+        type >> (raw(lexer::token_id::keyword_consumes) > type > raw('{') > (raw('}', false) | attributes) > end('}'))
+    )
+    DEFINE_RULE(
+        application_expression,
+        begin(lexer::token_id::keyword_application) >
+        name >
+        -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
+        raw('{') > (raw('}', false) | statements) > end('}') > tree
+    )
+    DEFINE_RULE(
+        site_expression,
+        begin(lexer::token_id::keyword_site) > raw('{') > (raw('}', false) | statements) > end('}') > tree
+    )
+
     // These macros associate the above rules with their definitions
     // Too many rules to associate in a single macro
     BOOST_SPIRIT_DEFINE(
@@ -675,6 +708,13 @@ namespace puppet { namespace compiler { namespace parser {
         epp_render_block,
         epp_render_string,
         epp_syntax_tree
+    );
+
+    BOOST_SPIRIT_DEFINE(
+        produces_expression,
+        consumes_expression,
+        application_expression,
+        site_expression
     );
 
     /// @endcond

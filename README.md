@@ -72,6 +72,7 @@ Expression evaluator status:
 * [ ] external data binding (i.e. hiera)
 * [ ] module data functions (Ruby or Puppet)
 * [x] EPP support
+* [ ] application orchestration (NYI: evaluation)
 
 Type system implemented:
 

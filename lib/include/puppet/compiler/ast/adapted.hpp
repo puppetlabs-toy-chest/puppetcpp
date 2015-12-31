@@ -364,6 +364,40 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::produces_expression,
+    resource,
+    capability,
+    operations,
+    end
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::consumes_expression,
+    resource,
+    capability,
+    operations,
+    end
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::application_expression,
+    begin,
+    name,
+    parameters,
+    body,
+    end,
+    tree
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::site_expression,
+    begin,
+    body ,
+    end,
+    tree
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::syntax_tree,
     parameters,
     statements,
