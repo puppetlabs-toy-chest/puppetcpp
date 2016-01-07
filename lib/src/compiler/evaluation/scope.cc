@@ -10,7 +10,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         _line(0)
     {
         if (context) {
-            _path = context->tree->shared_path();
+            if (context->tree) {
+                _path = context->tree->shared_path();
+            }
             _line = context->begin.line();
         }
     }

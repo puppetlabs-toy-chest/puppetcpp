@@ -78,3 +78,10 @@ case $name {
         wrong.fail
     }
 }
+
+notice assert_type(Integer[0], 1)
+notice assert_type('Integer[1]', 1)
+notice assert_type('String[4, 4]', 'foo') |$expected, $actual| {
+    warning "expected $expected but was given $actual"
+    'bar'
+}

@@ -261,6 +261,13 @@ namespace puppet { namespace compiler { namespace evaluation {
     struct context
     {
         /**
+         * Constructs a default evaluation context.
+         * Operations requiring node or catalog context will not be allowed.
+         * @param create_scope True to create a top scope or false to create no top scope; if there is no top scope, operations requiring scope access will not be permitted.
+         */
+        explicit context(bool create_scope = true);
+
+        /**
          * Constructs an evaluation context.
          * @param node The node being compiled.
          * @param catalog The catalog being compiled.
@@ -478,10 +485,13 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         context(context&) = delete;
         context& operator=(context&) = delete;
+        void create_top_scope(std::shared_ptr<facts::provider> facts = nullptr);
         void evaluate_defined_types(size_t& index, std::vector<declared_defined_type*>& virtualized);
 
-        compiler::node& _node;
-        compiler::catalog& _catalog;
+        compiler::node* _node;
+        compiler::catalog* _catalog;
+        compiler::registry const* _registry;
+        evaluation::dispatcher const* _dispatcher;
         std::unordered_map<std::string, std::shared_ptr<evaluation::scope>> _scopes;
         std::vector<std::shared_ptr<scope>> _scope_stack;
         std::shared_ptr<scope> _node_scope;

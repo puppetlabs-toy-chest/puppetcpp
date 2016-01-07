@@ -41,7 +41,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 return rvalue_cast(second);
             }
         } else if (auto str = first.as<string>()) {
-            auto type = values::type::parse(context.context(), *str);
+            auto type = values::type::parse(*str);
             if (!type) {
                 throw evaluation_exception((boost::format("the expression '%1%' is not a valid type specification.") % *str).str(), context.argument_context(0));
             }
