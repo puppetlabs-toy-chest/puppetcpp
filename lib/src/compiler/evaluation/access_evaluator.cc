@@ -569,6 +569,58 @@ namespace puppet { namespace compiler { namespace evaluation {
             return result;
         }
 
+        value operator()(callable const& target)
+        {
+            vector<unique_ptr<values::type>> types;
+            types.reserve(_arguments.size());
+
+            int64_t min = _arguments.size();
+            int64_t max = _arguments.size();
+            unique_ptr<values::type> block_type;
+            for (size_t i = 0; i < _arguments.size(); ++i) {
+                // Stop at first parameter that isn't a type
+                if (!_arguments[i]->as<values::type>()) {
+                    // There must be at most 3 more parameters (min, max, and block type)
+                    if ((i + 3) < _arguments.size()) {
+                        throw evaluation_exception((boost::format("expected at most %1% arguments for %2% but %3% were given.") % (i + 3) % types::callable::name() % _arguments.size()).str(), _contexts[i + 3]);
+                    }
+                    // Get the optional min/max range
+                    tie(min, max) = get_range<int64_t, integer>(false, i, 0, numeric_limits<int64_t>::max());
+
+                    // Get the optional block type
+                    if (i + 2 < _arguments.size()) {
+                        // Ensure the last argument is a type representing the block's signature
+                        if (_arguments[i + 2]->as<values::type>()) {
+                            auto type = _arguments[i + 2]->move_as<values::type>();
+
+                            bool acceptable = false;
+
+                            // Check for just Callable
+                            if (boost::get<callable>(&type)) {
+                                acceptable = true;
+                            } else if (auto optional = boost::get<types::optional>(&type)) {
+                                // Check the Optional[Callable]
+                                if (optional->type() && boost::get<callable>(optional->type().get())) {
+                                    acceptable = true;
+                                }
+                            }
+
+                            // Move the type into a new type if it is acceptable
+                            if (acceptable) {
+                                block_type.reset(new values::type{ rvalue_cast(type) });
+                            }
+                        }
+                        if (!block_type) {
+                            throw evaluation_exception((boost::format("expected %1% or %2%[%1%] for last argument but found %3%.") % types::callable::name() % types::optional::name() % _arguments[i + 2]->get_type()).str(), _contexts[i + 2]);
+                        }
+                    }
+                    break;
+                }
+                types.emplace_back(new values::type(_arguments[i]->move_as<values::type>()));
+            }
+            return callable(rvalue_cast(types), min, max, rvalue_cast(block_type));
+        }
+
         value operator()(types::runtime const& target)
         {
             // Ensure there are at most 2 arguments to runtime

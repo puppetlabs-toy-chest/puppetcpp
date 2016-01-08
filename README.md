@@ -79,7 +79,7 @@ Type system implemented:
 * [x] Any
 * [x] Array
 * [x] Boolean
-* [ ] Callable
+* [x] Callable
 * [x] CatalogEntry
 * [x] Collection
 * [x] Data
