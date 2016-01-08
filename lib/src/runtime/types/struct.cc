@@ -205,10 +205,7 @@ namespace puppet { namespace runtime { namespace types {
 
         size_t seed = 0;
         boost::hash_combine(seed, name_hash);
-        for (auto const& kvp : type.schema()) {
-            boost::hash_combine(seed, *kvp.first);
-            boost::hash_combine(seed, *kvp.second);
-        }
+        boost::hash_range(seed, type.schema().begin(), type.schema().end());
         return seed;
     }
 

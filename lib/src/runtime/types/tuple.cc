@@ -197,9 +197,7 @@ namespace puppet { namespace runtime { namespace types {
 
         size_t seed = 0;
         boost::hash_combine(seed, name_hash);
-        for (auto const& element : type.types()) {
-            boost::hash_combine(seed, *element);
-        }
+        boost::hash_range(seed, type.types().begin(), type.types().end());
         boost::hash_combine(seed, type.from());
         boost::hash_combine(seed, type.to());
         return seed;
