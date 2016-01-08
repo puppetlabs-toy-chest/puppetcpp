@@ -44,7 +44,7 @@ namespace puppet { namespace runtime { namespace types {
             return true;
         }
         // Compare the types
-        return *ptr == *_parameter;
+        return *ptr == *_parameter || _parameter->is_specialization(*ptr);
     }
 
     bool type::is_specialization(values::type const& other) const

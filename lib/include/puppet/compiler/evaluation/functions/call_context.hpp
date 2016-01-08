@@ -14,14 +14,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     /**
      * Represents context for a function call.
      */
-    struct function_call_context
+    struct call_context
     {
         /**
          * Constructs a function call context from a function call expression.
          * @param context The current evaluation context.
          * @param expression The function call expression.
          */
-        explicit function_call_context(evaluation::context& context, ast::function_call_expression const& expression);
+        explicit call_context(evaluation::context& context, ast::function_call_expression const& expression);
 
         /**
          * Constructs a function call context from a method call expression.
@@ -31,7 +31,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
          * @param instance_context The AST context for the instance.
          * @param splat True if splatting of the instance value is supported or false if not.
          */
-        explicit function_call_context(evaluation::context& context, ast::method_call_expression const& expression, runtime::values::value& instance, ast::context const& instance_context, bool splat);
+        explicit call_context(evaluation::context& context, ast::method_call_expression const& expression, runtime::values::value& instance, ast::context const& instance_context, bool splat);
 
         /**
          * Gets the current evaluation context.
@@ -52,11 +52,24 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         runtime::values::array& arguments();
 
         /**
+         * Gets the arguments to the function.
+         * @return Returns the arguments to the function.
+         */
+        runtime::values::array const& arguments() const;
+
+        /**
          * Gets an argument to the function.
          * @param index The argument index.
          * @return Returns the argument.
          */
         runtime::values::value& argument(size_t index);
+
+        /**
+         * Gets an argument to the function.
+         * @param index The argument index.
+         * @return Returns the argument.
+         */
+        runtime::values::value const& argument(size_t index) const;
 
         /**
          * Gets the AST context of an argument to the function.
@@ -66,22 +79,22 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         ast::context const& argument_context(size_t index) const;
 
         /**
-         * Gets the optional lambda passed to the function.
-         * @return Returns the optional lambda passed to the function.
+         * Gets the optional block passed to the function.
+         * @return Returns the optional block passed to the function.
          */
-        boost::optional<ast::lambda_expression> const& lambda() const;
+        boost::optional<ast::lambda_expression> const& block() const;
 
         /**
-         * Yields to the lambda if one is present.
-         * @param arguments The arguments to yield to the lambda.
-         * @return Returns the value that was returned by the lambda.
+         * Yields to the block if one is present.
+         * @param arguments The arguments to yield to the block.
+         * @return Returns the value that was returned by the block.
          */
         runtime::values::value yield(runtime::values::array& arguments) const;
 
         /**
-         * Yields to the lambda if one is present, without catching argument exceptions.
-         * @param arguments The arguments to yield to the lambda.
-         * @return Returns the value that was returned by the lambda.
+         * Yields to the block if one is present, without catching argument exceptions.
+         * @param arguments The arguments to yield to the block.
+         * @return Returns the value that was returned by the block.
          */
         runtime::values::value yield_without_catch(runtime::values::array& arguments) const;
 
@@ -92,7 +105,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         ast::name const& _name;
         runtime::values::array _arguments;
         std::vector<ast::context> _argument_contexts;
-        boost::optional<ast::lambda_expression> const& _lambda;
+        boost::optional<ast::lambda_expression> const& _block;
     };
 
 }}}}  // namespace puppet::compiler::evaluation::functions

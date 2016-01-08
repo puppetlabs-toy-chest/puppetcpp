@@ -32,6 +32,15 @@ namespace puppet { namespace runtime { namespace types {
                std::max(_from, _to) != numeric_limits<int64_t>::max();
     }
 
+    size_t integer::size() const
+    {
+        if (!enumerable()) {
+            return 0;
+        }
+        // Ranges are inclusive, so size is always > 0
+        return std::max(_from, _to) - std::min(_from, _to) + 1;
+    }
+
     void integer::each(function<bool(int64_t, int64_t)> const& callback) const
     {
         if (!callback || !enumerable()) {

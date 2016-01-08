@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/functions/inline_epp.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/compiler/parser/parser.hpp>
 #include <puppet/compiler/evaluation/call_evaluator.hpp>
@@ -12,34 +13,13 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    value inline_epp::operator()(function_call_context& context) const
+    static values::value evaluate_epp(call_context& context)
     {
-        // Check the argument count
-        auto& arguments = context.arguments();
-        auto count = arguments.size();
-        if (count == 0 || count > 2) {
-            throw evaluation_exception((boost::format("expected 1 or 2 arguments to '%1%' function but %2% were given.") % context.name() % count).str(), count > 2 ? context.argument_context(2) : context.name());
-        }
-        // First argument should be a string
-        auto input = arguments[0]->as<string>();
-        if (!input) {
-            throw evaluation_exception((boost::format("expected %1% for first argument but found %2%.") % types::string::name() % arguments[0]->get_type()).str(), context.argument_context(0));
-        }
-        // Verify the template arguments if present
-        values::hash template_arguments;
-        if (count > 1) {
-            if (!arguments[1]->as<values::hash>()) {
-                throw evaluation_exception((boost::format("expected %1% for second argument but found %2%.") % types::hash::name() % arguments[1]->get_type()).str(), context.argument_context(1));
-            }
+        auto& input = context.argument(0).require<std::string>();
+        values::hash arguments;
 
-            template_arguments = arguments[1]->move_as<values::hash>();
-
-            // Ensure all keys are strings
-            for (auto const& kvp : template_arguments) {
-                if (!kvp.key().as<string>()) {
-                    throw evaluation_exception((boost::format("expected all keys in EPP template arguments to be %1% found %2%.") % types::string::name() % kvp.key().get_type()).str(), context.argument_context(1));
-                }
-            }
+        if (context.arguments().size() > 1) {
+            arguments = context.argument(1).move_as<values::hash>();
         }
 
         auto& evaluation_context = context.context();
@@ -48,7 +28,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         try {
             // Parse the string as an EPP template
-            auto tree = parser::parse_string(*input, path, nullptr, true);
+            auto tree = parser::parse_string(input, path, nullptr, true);
             LOG(debug, "parsed inline EPP AST:\n-----\n%1%\n-----", *tree);
 
             // Create a local EPP stream
@@ -57,14 +37,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
             // Evaluate the syntax tree
             evaluation::evaluator evaluator{ evaluation_context };
-            evaluator.evaluate(*tree, &template_arguments);
+            evaluator.evaluate(*tree, &arguments);
             return os.str();
         } catch (parse_exception const& ex) {
             // Log the underlying problem and then throw an error pointing at the argument
             size_t column;
             string text;
             auto& begin = ex.range().begin();
-            tie(text, column) = lexer::get_text_and_column(*input, begin.offset());
+            tie(text, column) = lexer::get_text_and_column(input, begin.offset());
             evaluation_context.node().logger().log(logging::level::error, begin.line(), column, ex.range().length(), text, path, ex.what());
             throw evaluation_exception("parsing of EPP template failed.", context.argument_context(0));
         } catch (argument_exception const& ex) {
@@ -74,6 +54,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             evaluation_context.log(logging::level::error, ex.what(), &ex.context());
             throw evaluation_exception("evaluation of EPP template failed.", context.argument_context(0));
         }
+    }
+
+    descriptor inline_epp::create_descriptor()
+    {
+        functions::descriptor descriptor{ "inline_epp" };
+        descriptor.add("Callable[String, Hash[String, Any], 1, 2]", evaluate_epp);
+        return descriptor;
     }
 
 }}}}  // namespace puppet::compiler::evaluation::functions

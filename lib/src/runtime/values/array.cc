@@ -5,7 +5,7 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace values {
 
-    void array::join(ostream& os, string const& separator)
+    void array::join(ostream& os, string const& separator) const
     {
         bool first = true;
         for (auto const& element : *this) {

@@ -17,22 +17,32 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/collectors/list_collector.cc
     src/compiler/evaluation/collectors/query_collector.cc
     src/compiler/evaluation/collectors/query_evaluator.cc
+    src/compiler/evaluation/functions/alert.cc
     src/compiler/evaluation/functions/assert_type.cc
-    src/compiler/evaluation/functions/declare.cc
+    src/compiler/evaluation/functions/call_context.cc
+    src/compiler/evaluation/functions/contain.cc
+    src/compiler/evaluation/functions/crit.cc
+    src/compiler/evaluation/functions/debug.cc
     src/compiler/evaluation/functions/defined.cc
+    src/compiler/evaluation/functions/descriptor.cc
     src/compiler/evaluation/functions/each.cc
+    src/compiler/evaluation/functions/emerg.cc
+    src/compiler/evaluation/functions/err.cc
     src/compiler/evaluation/functions/fail.cc
     src/compiler/evaluation/functions/filter.cc
-    src/compiler/evaluation/functions/function_call_context.cc
+    src/compiler/evaluation/functions/include.cc
+    src/compiler/evaluation/functions/info.cc
     src/compiler/evaluation/functions/inline_epp.cc
-    src/compiler/evaluation/functions/log.cc
     src/compiler/evaluation/functions/map.cc
+    src/compiler/evaluation/functions/notice.cc
     src/compiler/evaluation/functions/realize.cc
     src/compiler/evaluation/functions/reduce.cc
+    src/compiler/evaluation/functions/require.cc
     src/compiler/evaluation/functions/split.cc
     src/compiler/evaluation/functions/tag.cc
     src/compiler/evaluation/functions/tagged.cc
     src/compiler/evaluation/functions/versioncmp.cc
+    src/compiler/evaluation/functions/warning.cc
     src/compiler/evaluation/functions/with.cc
     src/compiler/evaluation/operators/assignment.cc
     src/compiler/evaluation/operators/binary_operator_context.cc

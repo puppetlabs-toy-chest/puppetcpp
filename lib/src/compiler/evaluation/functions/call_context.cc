@@ -1,4 +1,4 @@
-#include <puppet/compiler/evaluation/functions/function_call_context.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/evaluator.hpp>
 #include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
@@ -8,10 +8,10 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    function_call_context::function_call_context(evaluation::context& context, ast::function_call_expression const& expression) :
+    call_context::call_context(evaluation::context& context, ast::function_call_expression const& expression) :
         _context(context),
         _name(expression.function),
-        _lambda(expression.lambda)
+        _block(expression.lambda)
     {
         _arguments.reserve(expression.arguments.size());
 
@@ -19,10 +19,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         evaluate_arguments(expression.arguments);
     }
 
-    function_call_context::function_call_context(evaluation::context& context, ast::method_call_expression const& expression, values::value& instance, ast::context const& instance_context, bool splat) :
+    call_context::call_context(evaluation::context& context, ast::method_call_expression const& expression, values::value& instance, ast::context const& instance_context, bool splat) :
         _context(context),
         _name(expression.method),
-        _lambda(expression.lambda)
+        _block(expression.lambda)
     {
         _arguments.reserve(expression.arguments.size() + 1);
 
@@ -41,56 +41,66 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         evaluate_arguments(expression.arguments);
     }
 
-    evaluation::context& function_call_context::context() const
+    evaluation::context& call_context::context() const
     {
         return _context;
     }
 
-    ast::name const& function_call_context::name() const
+    ast::name const& call_context::name() const
     {
         return _name;
     }
 
-    values::array& function_call_context::arguments()
+    values::array& call_context::arguments()
     {
         return _arguments;
     }
 
-    values::value& function_call_context::argument(size_t index)
+    values::array const& call_context::arguments() const
+    {
+        return _arguments;
+    }
+
+    values::value& call_context::argument(size_t index)
     {
         return _arguments.at(index);
     }
 
-    ast::context const& function_call_context::argument_context(size_t index) const
+    values::value const& call_context::argument(size_t index) const
+    {
+        return _arguments.at(index);
+    }
+
+    ast::context const& call_context::argument_context(size_t index) const
     {
         return _argument_contexts.at(index);
     }
 
-    boost::optional<ast::lambda_expression> const& function_call_context::lambda() const
+    boost::optional<ast::lambda_expression> const& call_context::block() const
     {
-        return _lambda;
+        return _block;
     }
 
-    values::value function_call_context::yield(values::array& arguments) const
+    values::value call_context::yield(values::array& arguments) const
     {
-        // Execute the lambda
+        // Execute the block
         try {
             return yield_without_catch(arguments);
         } catch (argument_exception const& ex) {
-            throw evaluation_exception(ex.what(), _lambda->parameters[ex.index()].context());
+            throw evaluation_exception(ex.what(), _block->parameters[ex.index()].context());
         }
     }
 
-    values::value function_call_context::yield_without_catch(values::array& arguments) const
+    values::value call_context::yield_without_catch(values::array& arguments) const
     {
-        if (!_lambda) {
+        if (!_block) {
             return values::undef();
         }
-        call_evaluator evaluator { _context, _lambda->parameters, _lambda->body };
+        call_evaluator evaluator{ _context, _block->parameters, _block->body };
         return evaluator.evaluate(arguments);
     }
 
-    void function_call_context::evaluate_arguments(vector<ast::expression> const& arguments)
+    void call_context::evaluate_arguments(vector<ast::expression> const& arguments)
     {
         // Evaluate the arguments
         evaluation::evaluator evaluator{ _context };

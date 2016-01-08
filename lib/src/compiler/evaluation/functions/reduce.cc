@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/functions/reduce.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
@@ -9,166 +10,141 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    struct reduce_visitor : boost::static_visitor<values::value>
+    static values::value reduce_values(call_context& context, boost::optional<values::value> memo, string const& argument)
     {
-        reduce_visitor(function_call_context& context, boost::optional<values::value> memo) :
-            _context(context),
-            _memo(rvalue_cast(memo))
-        {
-        }
+        values::array block_arguments(2);
 
-        result_type operator()(string const& argument)
-        {
-            values::array arguments;
-            arguments.reserve(2);
-
-            // Enumerate the string as Unicode code points
-            values::enumerate_string(argument, [&](string codepoint) {
-                // If no memo, set it now
-                if (!_memo) {
-                    _memo.emplace(rvalue_cast(codepoint));
-                    return true;
-                }
-
-                arguments.clear();
-                arguments.emplace_back(rvalue_cast(*_memo));
-                arguments.emplace_back(rvalue_cast(codepoint));
-                _memo.emplace(_context.yield(arguments));
+        // Enumerate the string as Unicode codepoints
+        values::enumerate_string(argument, [&](string codepoint) {
+            // If no memo, set it now
+            if (!memo) {
+                memo.emplace(rvalue_cast(codepoint));
                 return true;
-            });
-            if (_memo) {
-                return rvalue_cast(*_memo);
             }
-            return values::undef();
+
+            block_arguments[0] = rvalue_cast(*memo);
+            block_arguments[1] = rvalue_cast(codepoint);
+            memo.emplace(context.yield(block_arguments));
+            return true;
+        });
+
+        if (memo) {
+            return rvalue_cast(*memo);
+        }
+        return values::undef();
+    }
+
+    static values::value reduce_values(call_context& context, boost::optional<values::value> memo, types::integer const& range)
+    {
+        if (!range.enumerable()) {
+            throw evaluation_exception((boost::format("%1% is not enumerable.") % range).str(), context.argument_context(0));
         }
 
-        result_type operator()(int64_t argument)
-        {
+        values::array block_arguments(2);
+
+        range.each([&](int64_t index, int64_t value) {
+            // If no memo, set it now
+            if (!memo) {
+                memo = value;
+                return true;
+            }
+
+            block_arguments[0] = rvalue_cast(*memo);
+            block_arguments[1] = value;
+            memo.emplace(context.yield(block_arguments));
+            return true;
+        });
+
+        if (memo) {
+            return rvalue_cast(*memo);
+        }
+        return values::undef();
+    }
+
+    static values::value reduce_values(call_context& context, boost::optional<values::value> memo, values::array const& argument)
+    {
+        values::array block_arguments(2);
+
+        for (size_t i = 0; i < argument.size(); ++i) {
+            auto& element = argument[i];
+
+            // If no memo, set it now
+            if (!memo) {
+                memo = element;
+                continue;
+            }
+
+            block_arguments[0] = rvalue_cast(*memo);
+            block_arguments[1] = element;
+            memo.emplace(context.yield(block_arguments));
+        }
+
+        if (memo) {
+            return rvalue_cast(*memo);
+        }
+        return values::undef();
+    }
+
+    static values::value reduce_values(call_context& context, boost::optional<values::value> memo, values::hash const& argument)
+    {
+        values::array block_arguments(2);
+
+        for (auto& kvp : argument) {
+            values::array pair(2);
+            pair[0] = kvp.key();
+            pair[1] = kvp.value();
+
+            // If no memo, set it now
+            if (!memo) {
+                memo.emplace(rvalue_cast(pair));
+                continue;
+            }
+
+            block_arguments[0] = rvalue_cast(*memo);
+            block_arguments[1] = rvalue_cast(pair);
+            memo.emplace(context.yield(block_arguments));
+        }
+
+        if (memo) {
+            return rvalue_cast(*memo);
+        }
+        return values::undef();
+    }
+
+    descriptor reduce::create_descriptor()
+    {
+        functions::descriptor descriptor{ "reduce" };
+
+        // Utility function for extracting the memo
+        auto static const extract_memo = [](call_context& context) -> boost::optional<values::value> {
+            if (context.arguments().size() < 2) {
+                return boost::none;
+            }
+            return rvalue_cast(context.argument(1));
+        };
+
+        descriptor.add("Callable[String, Any, 1, 2, Callable[2, 2]]", [&](call_context& context) {
+            return reduce_values(context, extract_memo(context), context.argument(0).require<string>());
+        });
+        descriptor.add("Callable[Integer, Any, 1, 2, Callable[2, 2]]", [&](call_context& context) -> values::value {
+            auto argument = context.argument(0).require<int64_t>();
             if (argument <= 0) {
-                return values::array();
+                return values::undef();
             }
-            return enumerate(types::integer(0, argument));
-        }
-
-        result_type operator()(values::array const& argument)
-        {
-            values::array arguments;
-            arguments.reserve(2);
-            for (size_t i = 0; i < argument.size(); ++i) {
-                // If no memo, set it now
-                if (!_memo) {
-                    _memo = argument[i];
-                    continue;
-                }
-
-                arguments.clear();
-                arguments.emplace_back(rvalue_cast(*_memo));
-                arguments.emplace_back(argument[i]);
-                _memo = _context.yield(arguments);
-            }
-            if (_memo) {
-                return rvalue_cast(*_memo);
-            }
-            return values::undef();
-        }
-
-        result_type operator()(values::hash const& argument)
-        {
-            values::array arguments;
-            arguments.reserve(2);
-            for (auto& kvp : argument) {
-                values::array pair(2);
-                pair[0] = kvp.key();
-                pair[1] = kvp.value();
-
-                if (!_memo) {
-                    _memo = rvalue_cast(pair);
-                    continue;
-                }
-
-                arguments.clear();
-                arguments.emplace_back(rvalue_cast(*_memo));
-                arguments.emplace_back(rvalue_cast(pair));
-                _memo = _context.yield(arguments);
-            }
-            if (_memo) {
-                return rvalue_cast(*_memo);
-            }
-            return values::undef();
-        }
-
-        result_type operator()(values::type const& argument)
-        {
-            return boost::apply_visitor(*this, argument);
-        }
-
-        result_type operator()(types::integer const& argument)
-        {
-            if (!argument.enumerable()) {
-                throw evaluation_exception((boost::format("%1% is not enumerable.") % argument).str(), _context.argument_context(0));
-            }
-            return enumerate(argument);
-        }
-
-        template <typename T>
-        result_type operator()(T const& argument)
-        {
-            throw evaluation_exception((boost::format("expected enumerable type for first argument but found %1%.") % values::value(argument).get_type()).str(), _context.argument_context(0));
-        }
-
-     private:
-        result_type enumerate(types::integer const& range)
-        {
-            values::array arguments;
-            arguments.reserve(2);
-
-            range.each([&](int64_t index, int64_t value) {
-                if (!_memo) {
-                    _memo = value;
-                    return true;
-                }
-                arguments.clear();
-                arguments.emplace_back(rvalue_cast(*_memo));
-                arguments.emplace_back(value);
-                _memo = _context.yield(arguments);
-                return true;
-            });
-            if (_memo) {
-                return rvalue_cast(*_memo);
-            }
-            return values::undef();
-        }
-
-        function_call_context& _context;
-        boost::optional<values::value> _memo;
-    };
-
-    values::value reduce::operator()(function_call_context& context) const
-    {
-        // Check the argument count
-        auto& arguments = context.arguments();
-        auto count = arguments.size();
-        if (arguments.size() == 0 || arguments.size() > 2) {
-            throw evaluation_exception((boost::format("expected 1 or 2 arguments to '%1%' function but %2% were given.") % context.name() % count).str(), count > 2 ? context.argument_context(2) : context.name());
-        }
-
-        // Check the lambda
-        if (!context.lambda()) {
-            throw evaluation_exception((boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str(), context.name());
-        }
-        count = context.lambda()->parameters.size();
-        if (count != 2) {
-            throw evaluation_exception((boost::format("expected 2 lambda parameters but %1% were specified.") % count).str(), *context.lambda());
-        }
-
-        // Use the provided memo if there is one
-        boost::optional<values::value> memo;
-        if (arguments.size() == 2) {
-            memo.emplace(rvalue_cast(arguments[1]));
-        }
-
-        reduce_visitor visitor{context, rvalue_cast(memo)};
-        return boost::apply_visitor(visitor, arguments[0]);
+            return reduce_values(context, extract_memo(context), types::integer{ 0, argument - 1 });
+        });
+        descriptor.add("Callable[Array[Any], Any, 1, 2, Callable[2, 2]]", [&](call_context& context) {
+            return reduce_values(context, extract_memo(context), context.argument(0).require<values::array>());
+        });
+        descriptor.add("Callable[Hash[Any, Any], Any, 1, 2, Callable[2, 2]]", [&](call_context& context) {
+            return reduce_values(context, extract_memo(context), context.argument(0).require<values::hash>());
+        });
+        descriptor.add("Callable[Type[Integer], Any, 1, 2, Callable[2, 2]]", [&](call_context& context) {
+            auto& argument = context.argument(0).require<values::type>();
+            auto& range = boost::get<types::integer>(argument);
+            return reduce_values(context, extract_memo(context), range);
+        });
+        return descriptor;
     }
 
 }}}}  // namespace puppet::compiler::evaluation::functions

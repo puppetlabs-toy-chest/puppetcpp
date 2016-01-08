@@ -5,10 +5,19 @@
 #pragma once
 
 #include "../values/forward.hpp"
+#include "../../compiler/ast/ast.hpp"
+#include <boost/optional.hpp>
 #include <ostream>
 #include <vector>
 #include <memory>
 #include <limits>
+
+namespace puppet { namespace compiler { namespace evaluation { namespace functions {
+
+    // Forward declaration of call context
+    struct call_context;
+
+}}}}  // namespace puppet::compiler::evaluation::functions
 
 namespace puppet { namespace runtime { namespace types {
 
@@ -88,6 +97,12 @@ namespace puppet { namespace runtime { namespace types {
         std::unique_ptr<values::type> const& block_type() const;
 
         /**
+         * Gets the underlying block signature for the callable (i.e. dereferences a block signature of Optional[Callable[...]]).
+         * @return Returns the pairing of block signature and a boolean signifying whether or not the block is required; if no block is accepted, (nullptr, false) is returned.
+         */
+        std::pair<callable const*, bool> block() const;
+
+        /**
          * Gets the name of the type.
          * @return Returns the name of the type (i.e. Callable).
          */
@@ -106,6 +121,27 @@ namespace puppet { namespace runtime { namespace types {
          * @return Returns true if the other type is a specialization or false if not.
          */
         bool is_specialization(values::type const& other) const;
+
+        /**
+         * Determines if a function call can be dispatched to a function matching this Callable's signature.
+         * @param context The call context to determine if the call can be dispatched.
+         * @return Returns true if the call can be dispatched or false if not.
+         */
+        bool can_dispatch(compiler::evaluation::functions::call_context const& context) const;
+
+        /**
+         * Finds the first argument with a parameter type mismatch.
+         * @param arguments The arguments to find a parameter type mismatch for.
+         * @return Returns the index of the argument if a mismatch is found or less than 0 if all arguments conform to the parameter types.
+         */
+        int64_t find_mismatch(values::array const& arguments) const;
+
+        /**
+         * Gets the type of the parameter at the given index.
+         * @param index The index of the parameter.
+         * @return Returns the type of the parameter at the given index or nullptr for an invalid index.
+         */
+        values::type const* parameter_type(int64_t index) const;
 
      private:
         std::vector<std::unique_ptr<values::type>> _types;

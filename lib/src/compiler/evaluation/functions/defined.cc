@@ -1,144 +1,156 @@
 #include <puppet/compiler/evaluation/functions/defined.hpp>
-#include <puppet/compiler/evaluation/call_evaluator.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    struct defined_visitor : boost::static_visitor<bool>
+    static bool is_defined(evaluation::context& context, std::string const& argument, ast::context const& argument_context)
     {
-        defined_visitor(function_call_context& context, ast::context const& argument_context) :
-            _context(context),
-            _argument_context(argument_context)
-        {
+        // Check for variable lookup
+        if (boost::starts_with(argument, "$")) {
+            ast::variable variable;
+            variable.begin = argument_context.begin;
+            variable.end = argument_context.end;
+            variable.tree = argument_context.tree;
+            variable.name = argument.substr(1);
+            return context.lookup(variable, false).get();
         }
 
-        result_type operator()(string const& argument) const
-        {
-            auto& context = _context.context();
+        // Check for built-in type
+        if (types::resource(argument).is_builtin()) {
+            return true;
+        }
 
-            // Check for variable lookup
-            if (boost::starts_with(argument, "$")) {
-                ast::variable variable;
-                variable.begin = _argument_context.begin;
-                variable.end = _argument_context.end;
-                variable.tree = _argument_context.tree;
-                variable.name = argument.substr(1);
-                return context.lookup(variable, false).get();
-            }
+        // Check for "main" class (no definition)
+        if (boost::iequals(argument, "main")) {
+            return context.find_scope("").get();
+        }
+        // Check for "settings" class (no definition)
+        if (boost::iequals(argument, "settings")) {
+            return context.find_scope("settings").get();
+        }
 
-            // Check for built-in type
-            if (types::resource(argument).is_builtin()) {
+        // Check type name
+        return context.is_defined(argument);
+    }
+
+    static bool is_defined(evaluation::context& context, values::type const& argument, ast::context const& argument_context);
+
+    static bool is_defined(evaluation::context& context, types::resource const& argument, ast::context const& argument_context)
+    {
+        // Ensure the type isn't simply an unqualified Resource type
+        if (argument.type_name().empty()) {
+            throw evaluation_exception((boost::format("expected a qualified %1%.") % types::resource::name()).str(), argument_context);
+        }
+
+        // If no title, check for built-in or defined type
+        if (argument.title().empty()) {
+            if (argument.is_builtin()) {
                 return true;
             }
-
-            // Check for "main" class (no definition)
-            if (boost::iequals(argument, "main")) {
-                return context.find_scope("").get();
-            }
-            // Check for "settings" class (no definition)
-            if (boost::iequals(argument, "settings")) {
-                return context.find_scope("settings").get();
-            }
-            return context.is_defined(argument);
+            return context.is_defined(argument.title(), false, true);
         }
 
-        result_type operator()(values::type const& argument) const
-        {
-            auto& context = _context.context();
-            auto& catalog = context.catalog();
+        // Find the resource in the catalog
+        return context.catalog().find(argument);
+    }
 
-            if (auto resource = boost::get<types::resource>(&argument)) {
-                // Ensure the type isn't simply an unqualified Resource type
-                if (resource->type_name().empty()) {
-                    throw evaluation_exception((boost::format("expected a qualified %1%.") % types::resource::name()).str(), _argument_context);
-                }
-                // If no title, check for built-in or defined type
-                if (resource->title().empty()) {
-                    if (resource->is_builtin()) {
-                        return true;
-                    }
-                    return context.is_defined(resource->title(), false, true);
-                }
-                // Find the resource in the catalog
-                return catalog.find(*resource);
-            }
-            if (auto klass = boost::get<types::klass>(&argument)) {
-                // Ensure the type isn't simply an unqualified Class type
-                if (klass->title().empty()) {
-                    throw evaluation_exception((boost::format("expected a qualified %1%.") % types::klass::name()).str(), _argument_context);
-                }
-                return context.is_defined(klass->title(), true, false);
-            }
-            if (auto type = boost::get<types::type>(&argument)) {
-                if (!type->parameter()) {
-                    throw evaluation_exception((boost::format("expected a qualified %1%.") % types::type::name()).str(), _argument_context);
-                }
-                // For resource types, simply recurse on the nested type
-                if (boost::get<types::resource>(&*type->parameter())) {
-                    return operator()(*type->parameter());
-                }
-                // For class types, only check if the class is defined
-                if (auto klass = boost::get<types::klass>(&*type->parameter())) {
-                    // Ensure the type isn't simply an unqualified Class type
-                    if (klass->title().empty()) {
-                        throw evaluation_exception((boost::format("expected a qualified %1%.") % types::klass::name()).str(), _argument_context);
-                    }
-                    return context.is_defined(klass->title(), true, false);
-                }
-                throw evaluation_exception(
-                    (
-                     boost::format("expected %1% or %2% for %3% parameter but found %4%.") %
-                     types::resource::name() %
-                     types::klass::name() %
-                     types::type::name() %
-                     values::value(*type->parameter()).get_type()
-                    ).str(),
-                    _argument_context);
-            }
-
-            // Treat as undef to raise an unexpected type error
-            return operator()(values::undef());
-        }
-
-        template <typename T>
-        result_type operator()(T const& argument) const
-        {
-            throw evaluation_exception(
-                (
-                 boost::format("expected %1%, qualified %2%, qualified %3%, or qualified %4% for argument but found %5%.") %
-                 types::string::name() %
-                 types::resource::name() %
-                 types::klass::name() %
-                 types::type::name() %
-                 values::value(argument).get_type()
-                ).str(),
-                _argument_context);
-        }
-
-     private:
-        function_call_context& _context;
-        ast::context const& _argument_context;
-    };
-
-    values::value defined::operator()(function_call_context& context) const
+    static bool is_defined(evaluation::context& context, types::klass const& argument, ast::context const& argument_context)
     {
-        // Ensure there is at least one argument
-        auto& arguments = context.arguments();
-        if (arguments.empty()) {
-            throw evaluation_exception((boost::format("expected at least one argument to '%1%' function.") % context.name()).str(), context.name());
+        // Ensure the type isn't simply an unqualified Class type
+        if (argument.title().empty()) {
+            throw evaluation_exception((boost::format("expected a qualified %1%.") % types::klass::name()).str(), argument_context);
         }
 
-        // Return true if any argument is defined
-        for (size_t i = 0; i < arguments.size(); ++i) {
-            if (boost::apply_visitor(defined_visitor(context, context.argument_context(i)), arguments[i])) {
-                return true;
-            }
+        // Check that the class is defined
+        return context.is_defined(argument.title(), true, false);
+    }
+
+    static bool is_defined(evaluation::context& context, types::type const& argument, ast::context const& argument_context)
+    {
+        if (!argument.parameter()) {
+            throw evaluation_exception((boost::format("expected a parameterized %1%.") % types::type::name()).str(), argument_context);
         }
-        return false;
+        // For resource types, simply recurse on the nested type
+        if (boost::get<types::resource>(argument.parameter().get())) {
+            return is_defined(context, *argument.parameter(), argument_context);
+        }
+        // For class types, only check if the class is defined
+        if (auto klass = boost::get<types::klass>(argument.parameter().get())) {
+            // Ensure the type isn't simply an unqualified Class type
+            if (klass->title().empty()) {
+                throw evaluation_exception((boost::format("expected a qualified %1%.") % types::klass::name()).str(), argument_context);
+            }
+            return context.is_defined(klass->title(), true, false);
+        }
+        throw evaluation_exception(
+            (boost::format("expected %1% or %2% for type parameter but found %3%.") %
+             types::resource::name() %
+             types::klass::name() %
+             values::value(*argument.parameter()).get_type()
+            ).str(),
+            argument_context);
+    }
+
+    static bool is_defined(evaluation::context& context, values::type const& argument, ast::context const& argument_context)
+    {
+        if (auto resource = boost::get<types::resource>(&argument)) {
+            return is_defined(context, *resource, argument_context);
+        }
+        if (auto klass = boost::get<types::klass>(&argument)) {
+            return is_defined(context, *klass, argument_context);
+        }
+        if (auto type = boost::get<types::type>(&argument)) {
+            return is_defined(context, *type, argument_context);
+        }
+        throw evaluation_exception(
+            (boost::format("expected %1%, %2%, or %3% but found %4%.") %
+             types::resource::name() %
+             types::klass::name() %
+             types::type::name() %
+             values::value(argument).get_type()
+            ).str(),
+            argument_context);
+    }
+
+    static bool is_defined(evaluation::context& context, values::value const& argument, ast::context const& argument_context)
+    {
+        if (auto string = argument.as<std::string>()) {
+            return is_defined(context, *string, argument_context);
+        }
+        if (auto type = argument.as<values::type>()) {
+            return is_defined(context, *type, argument_context);
+        }
+
+        throw evaluation_exception(
+            (boost::format("expected %1% or %2% but found %3%.") %
+             types::string::name() %
+             types::type::name() %
+             argument.get_type()
+            ).str(),
+            argument_context);
+    }
+
+    descriptor defined::create_descriptor()
+    {
+        functions::descriptor descriptor{ "defined" };
+
+        descriptor.add("Callable[Variant[String, Type, Resource, Class], 1]", [](call_context& context) {
+            // Return true if any argument is defined; otherwise false
+            auto count = context.arguments().size();
+            for (size_t i = 0; i < count; ++i) {
+                if (is_defined(context.context(), context.argument(i), context.argument_context(i))) {
+                    return true;
+                }
+            }
+            return false;
+        });
+        return descriptor;
     }
 
 }}}}  // namespace puppet::compiler::evaluation::functions

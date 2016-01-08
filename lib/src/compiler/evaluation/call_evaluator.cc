@@ -248,6 +248,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                         attribute.name_context());
                 }
             }
+            
             current_scope->set(attribute.name(), attribute.shared_value(), attribute.value_context());
             return true;
         });
