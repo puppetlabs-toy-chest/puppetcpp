@@ -60,6 +60,10 @@ namespace puppet { namespace compiler { namespace lexer {
         keyword_type,
         keyword_attr,
         keyword_private,
+        keyword_produces,
+        keyword_consumes,
+        keyword_application,
+        keyword_site,
         last_keyword,       // Add new keywords before this id
         statement_call,
         single_quoted_string,

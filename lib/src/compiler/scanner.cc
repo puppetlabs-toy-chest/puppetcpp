@@ -269,7 +269,7 @@ namespace puppet { namespace compiler {
         string name = validate_name(true, expression.name);
 
         // Validate the class parameters
-        validate_parameters(true, expression.parameters);
+        validate_parameters("class", expression.parameters);
 
         // Validate the class' parent
         if (expression.parent) {
@@ -326,7 +326,7 @@ namespace puppet { namespace compiler {
         auto name = validate_name(false, expression.name);
 
         // Validate the defined type parameters
-        validate_parameters(false, expression.parameters);
+        validate_parameters("defined type", expression.parameters);
 
         // Check if the defined type already exists
         if (auto existing = _registry.find_defined_type(name)) {
@@ -541,6 +541,51 @@ namespace puppet { namespace compiler {
     {
     }
 
+    void scanner::operator()(ast::produces_expression const& expression)
+    {
+        // TODO: register the mapping
+
+        // Produces expressions have no class scope
+        class_scope scope(_scopes);
+
+        for (auto const& operation : expression.operations) {
+            operator()(operation.value);
+        }
+    }
+
+    void scanner::operator()(ast::consumes_expression const& expression)
+    {
+        // TODO: register the mapping
+
+        // Consumes expressions have no class scope
+        class_scope scope(_scopes);
+
+        for (auto const& operation : expression.operations) {
+            operator()(operation.value);
+        }
+    }
+
+    void scanner::operator()(ast::application_expression const& expression)
+    {
+        // TODO: register the application
+
+        validate_parameters("application", expression.parameters);
+
+        // Scan the body
+        for (auto const& statement : expression.body) {
+            operator()(statement);
+        }
+    }
+
+    void scanner::operator()(ast::site_expression const& expression)
+    {
+        // TODO: register the site
+
+        for (auto const& statement : expression.body) {
+            operator()(statement);
+        }
+    }
+
     bool scanner::can_define() const
     {
         return _scopes.empty() || !_scopes.back().empty();
@@ -557,7 +602,6 @@ namespace puppet { namespace compiler {
             if (it->empty()) {
                 continue;
             }
-
             return *it + "::" + normalized;
         }
         return normalized;
@@ -612,7 +656,7 @@ namespace puppet { namespace compiler {
         return qualified_name;
     }
 
-    void scanner::validate_parameters(bool is_class, vector<ast::parameter> const& parameters) const
+    void scanner::validate_parameters(char const* type, vector<ast::parameter> const& parameters) const
     {
         for (auto const& parameter : parameters) {
             auto const& name = parameter.variable.name;
@@ -620,14 +664,14 @@ namespace puppet { namespace compiler {
             // Validate the name
             validate_parameter_name(parameter);
 
-            // Check for reserved names for classes and defined types
+            // Check for reserved names
             if (name == "title" || name == "name") {
                 throw parse_exception((boost::format("parameter $%1% is reserved and cannot be used.") % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
             }
 
             // Check for capture parameters
             if (parameter.captures) {
-                throw parse_exception((boost::format("%1% parameter $%2% cannot \"captures rest\".") % (is_class ? "class" : "defined type") % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
+                throw parse_exception((boost::format("%1% parameter $%2% cannot \"captures rest\".") % type % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
             }
 
             // Check for metaparameter names

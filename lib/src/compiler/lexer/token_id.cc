@@ -7,7 +7,7 @@ namespace puppet { namespace compiler { namespace lexer {
 
     ostream& operator<<(ostream& os, token_id const& id)
     {
-        static map<token_id, string> token_names = {
+        static const map<token_id, string> token_names = {
             { token_id::append,                 "unsupported '+=' operator" },
             { token_id::remove,                 "'-='" },
             { token_id::equals,                 "'=='" },
@@ -49,6 +49,10 @@ namespace puppet { namespace compiler { namespace lexer {
             { token_id::keyword_type,           "type keyword" },
             { token_id::keyword_attr,           "attr keyword" },
             { token_id::keyword_private,        "private keyword" },
+            { token_id::keyword_produces,       "produces keyword" },
+            { token_id::keyword_consumes,       "consumes keyword" },
+            { token_id::keyword_application,    "application keyword" },
+            { token_id::keyword_site,           "site keyword" },
             { token_id::statement_call,         "name" },  // Statement calls are technically names
             { token_id::single_quoted_string,   "string" },
             { token_id::double_quoted_string,   "string" },

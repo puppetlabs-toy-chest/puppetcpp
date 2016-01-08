@@ -566,6 +566,30 @@ namespace puppet { namespace compiler { namespace evaluation {
         return values::undef();
     }
 
+    value evaluator::operator()(produces_expression const& expression)
+    {
+        // TODO: implement
+        throw evaluation_exception("produces expressions are not yet implemented.", expression.context());
+    }
+
+    value evaluator::operator()(consumes_expression const& expression)
+    {
+        // TODO: implement
+        throw evaluation_exception("consumes expressions are not yet implemented.", expression.context());
+    }
+
+    value evaluator::operator()(application_expression const& expression)
+    {
+        // TODO: implement
+        throw evaluation_exception("application expressions are not yet implemented.", expression);
+    }
+
+    value evaluator::operator()(site_expression const& expression)
+    {
+        // TODO: implement
+        throw evaluation_exception("site expressions are not yet implemented.", expression);
+    }
+
     value evaluator::evaluate_body(vector<ast::expression> const& body)
     {
         value result;

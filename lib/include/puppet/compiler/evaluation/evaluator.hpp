@@ -103,6 +103,10 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::epp_render_expression const& expression);
         runtime::values::value operator()(ast::epp_render_block const& expression);
         runtime::values::value operator()(ast::epp_render_string const& expression);
+        runtime::values::value operator()(ast::produces_expression const& expression);
+        runtime::values::value operator()(ast::consumes_expression const& expression);
+        runtime::values::value operator()(ast::application_expression const& expression);
+        runtime::values::value operator()(ast::site_expression const& expression);
 
         runtime::values::value evaluate_body(std::vector<ast::expression> const& body);
         ast::resource_body const* find_default_body(ast::resource_expression const& expression);

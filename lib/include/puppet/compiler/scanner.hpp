@@ -74,11 +74,15 @@ namespace puppet { namespace compiler {
         void operator()(ast::epp_render_expression const& expression);
         void operator()(ast::epp_render_block const& expression);
         void operator()(ast::epp_render_string const& expression);
+        void operator()(ast::produces_expression const& expression);
+        void operator()(ast::consumes_expression const& expression);
+        void operator()(ast::application_expression const& expression);
+        void operator()(ast::site_expression const& expression);
         bool can_define() const;
         std::string qualify(std::string const& name) const;
         std::string validate_name(bool is_class, ast::name const& name) const;
         void validate_parameter_name(ast::parameter const& parameter) const;
-        void validate_parameters(bool is_class, std::vector<ast::parameter> const& parameters) const;
+        void validate_parameters(char const* type, std::vector<ast::parameter> const& parameters) const;
 
         registry& _registry;
         std::vector<std::string> _scopes;
