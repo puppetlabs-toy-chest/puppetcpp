@@ -131,8 +131,9 @@ namespace puppet { namespace runtime { namespace types {
 
     ostream& operator<<(ostream& os, tuple const& type)
     {
+        // Only output the tuple name if everything is default
         os << tuple::name();
-        if (type.types().empty()) {
+        if (type.types().empty() && type.from() == 0 && type.to() == std::numeric_limits<int64_t>::max()) {
             return os;
         }
         os << '[';
@@ -145,14 +146,16 @@ namespace puppet { namespace runtime { namespace types {
             }
             os << *element;
         }
-        // If the from, to, and size of the types are equal, only output the types
+        // If the from and to are equal to the size of the types, only output the types
         int64_t size = static_cast<int64_t>(type.types().size());
         if (type.from() == size && type.to() == size) {
             os << ']';
             return os;
         }
-        os << ", ";
-        if (type.from() == std::numeric_limits<int64_t>::min()) {
+        if (size > 0) {
+            os << ", ";
+        }
+        if (type.from() == 0) {
             os << "default";
         } else {
             os << type.from();
