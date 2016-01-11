@@ -194,7 +194,7 @@ namespace puppet { namespace compiler {
 
     bool resource::is_metaparameter(string const& name)
     {
-        static const unordered_set<string> metaparameters = {
+        static const vector<string> metaparameters = {
             "alias",
             "audit",
             "before",
@@ -207,7 +207,7 @@ namespace puppet { namespace compiler {
             "subscribe",
             "tag"
         };
-        return metaparameters.count(name) > 0;
+        return find(metaparameters.begin(), metaparameters.end(), name) != metaparameters.end();
     }
 
     resource::resource(types::resource type, resource const* container, boost::optional<ast::context> context, bool exported) :

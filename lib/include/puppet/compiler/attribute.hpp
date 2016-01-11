@@ -53,6 +53,12 @@ namespace puppet { namespace compiler {
          * Gets the attribute's shared value.
          * @return Returns the attribute's shared value.
          */
+        std::shared_ptr<runtime::values::value> shared_value();
+
+        /**
+         * Gets the attribute's shared value.
+         * @return Returns the attribute's shared value.
+         */
         std::shared_ptr<runtime::values::value const> shared_value() const;
 
         /**

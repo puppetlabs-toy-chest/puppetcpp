@@ -122,7 +122,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.variable);
             }
 
-            // Evaluate the default value
+            // Evaluate the default value expression
             auto value = evaluator.evaluate(*parameter.default_value);
 
             // Verify the value matches the parameter type
@@ -183,75 +183,85 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         evaluation::evaluator evaluator { _context };
 
-        // Set any default parameters without attributes
-        for (auto const& parameter : _parameters) {
-            auto const& name = parameter.variable.name;
-
-            // Check if the attribute exists
-            if (resource.get(name)) {
-                continue;
-            }
-
-            // If there's no default value, the parameter is required
-            if (!parameter.default_value) {
-                throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.variable);
-            }
-
-            // Evaluate the default value
-            auto value = evaluator.evaluate(*parameter.default_value);
-
-            // Verify the value matches the parameter type
-            validate_parameter_type(parameter, value, [&](string message) {
-                throw evaluation_exception(rvalue_cast(message), parameter.default_value->context());
-            });
-
-            // Set the parameter as an attribute on the resource
-            resource.set(std::make_shared<attribute>(
-                parameter.variable.name,
-                parameter.variable,
-                std::make_shared<values::value>(rvalue_cast(value)),
-                parameter.default_value->context()
-            ));
-        }
-
-        // Set each attribute in the scope
+        // Verify the resource's attributes
         resource.each_attribute([&](compiler::attribute const& attribute) {
-            // Ignore the name attribute as it was already set
+            // Ignore the name attribute as it was already handled above
             if (attribute.name() == "name") {
                 return true;
             }
 
-            // Find the attribute as a class parameter
-            auto it = find_if(_parameters.begin(), _parameters.end(), [&](auto const& parameter) { return parameter.variable.name == attribute.name(); });
-
-            // If the attribute is a parameter, validate it
-            if (it != _parameters.end()) {
-                // Verify the value matches the parameter type
-                validate_parameter_type(*it, attribute.value(), [&](string message) {
-                    throw evaluation_exception(rvalue_cast(message), attribute.value_context());
-                });
-            } else if (!resource::is_metaparameter(attribute.name())) {
-                // Not a parameter or metaparameter for the class or defined type
-                if (resource.type().is_class()) {
-                    throw evaluation_exception(
-                        (boost::format("'%1%' is not a valid parameter for class '%2%'.") %
-                         attribute.name() %
-                         resource.type().title()
-                        ).str(),
-                        attribute.name_context());
-                } else {
-                    throw evaluation_exception(
-                        (boost::format("'%1%' is not a valid parameter for defined type %2%.") %
-                         attribute.name() %
-                         resource.type()
-                        ).str(),
-                        attribute.name_context());
-                }
+            // If the attribute is a parameter, it will be validated below
+            if (find_if(_parameters.begin(), _parameters.end(), [&](auto const& parameter) { return parameter.variable.name == attribute.name(); }) != _parameters.end()) {
+                return true;
             }
-            
-            current_scope->set(attribute.name(), attribute.shared_value(), attribute.value_context());
-            return true;
+
+            // If the attribute is a metaparameter, set it in the scope now
+            if (resource::is_metaparameter(attribute.name())) {
+                current_scope->set(attribute.name(), attribute.shared_value(), attribute.value_context());
+                return true;
+            }
+
+            // Not a parameter or metaparameter, therefore not a valid parameter
+            if (resource.type().is_class()) {
+                throw evaluation_exception(
+                    (boost::format("'%1%' is not a valid parameter for class '%2%'.") %
+                     attribute.name() %
+                     resource.type().title()
+                    ).str(),
+                    attribute.name_context());
+            }
+            throw evaluation_exception(
+                (boost::format("'%1%' is not a valid parameter for defined type %2%.") %
+                 attribute.name() %
+                 resource.type()
+                ).str(),
+                attribute.name_context());
         });
+
+        // Go through the parameters and set them into the scope
+        for (auto const& parameter : _parameters) {
+            auto const& name = parameter.variable.name;
+
+            ast::context context;
+            shared_ptr<values::value> value;
+
+            // Check if the attribute exists
+            if (auto attribute = resource.get(name)) {
+                value = attribute->shared_value();
+                context = attribute->value_context();
+            } else {
+                // If there's no default value, the parameter is required
+                if (!parameter.default_value) {
+                    throw evaluation_exception(
+                        (boost::format("parameter $%1% is required but no value was given.") %
+                         name
+                        ).str(),
+                        parameter.variable);
+                }
+
+                // Evaluate the default value expression
+                value = std::make_shared<values::value>(evaluator.evaluate(*parameter.default_value));
+                context = parameter.default_value->context();
+
+                // Set the parameter as an attribute on the resource
+                resource.set(std::make_shared<compiler::attribute>(
+                    name,
+                    parameter.variable,
+                    value,
+                    context
+                ));
+            }
+
+            // Verify the value matches the parameter type
+            validate_parameter_type(parameter, *value, [&](string message) {
+                throw evaluation_exception(rvalue_cast(message), parameter.default_value->context());
+            });
+
+            // Set the parameter in the scope
+            if (current_scope->set(name, rvalue_cast(value), context)) {
+                throw evaluation_exception((boost::format("parameter $%1% already exists in the parameter list.") % name).str(), parameter.variable);
+            }
+        }
         return evaluate_body();
     }
 
