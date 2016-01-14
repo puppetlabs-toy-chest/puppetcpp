@@ -614,3 +614,42 @@ SCENARIO("lexing EPP", "[lexer]")
     REQUIRE_FALSE(input_begin.epp_end());
     REQUIRE(token == end);
 }
+
+SCENARIO("lexing regex tokens", "[lexer]")
+{
+    ifstream input(FIXTURES_DIR "compiler/lexer/regex.pp");
+    REQUIRE(input);
+
+    auto input_begin = lex_begin(input);
+    auto input_end = lex_end(input);
+
+    file_static_lexer lexer;
+    auto token = lexer.begin(input_begin, input_end);
+    auto end = lexer.end();
+    require_token(token, end, token_id::regex, "//");
+    require_token(token, end, static_cast<token_id>('+'), "+");
+    require_token(token, end, token_id::regex, "/\\//");
+    require_token(token, end, static_cast<token_id>('+'), "+");
+    require_token(token, end, token_id::regex, "//");
+    require_token(token, end, static_cast<token_id>('/'), "/");
+    require_token(token, end, token_id::regex, "//");
+    require_token(token, end, static_cast<token_id>('+'), "+");
+    require_token(token, end, token_id::regex, "/foo/");
+    require_token(token, end, static_cast<token_id>('/'), "/");
+    require_token(token, end, token_id::regex, "/bar/");
+    require_token(token, end, static_cast<token_id>('+'), "+");
+    require_token(token, end, static_cast<token_id>('/'), "/");
+    require_token(token, end, token_id::name, "nope");
+    require_token(token, end, static_cast<token_id>('/'), "/");
+    require_number_token(token, end, 6, numeric_base::decimal, "6");
+    require_token(token, end, static_cast<token_id>('/'), "/");
+    require_number_token(token, end, 2, numeric_base::decimal, "2");
+    require_token(token, end, static_cast<token_id>('/'), "/");
+    require_number_token(token, end, 1, numeric_base::decimal, "1");
+    require_number_token(token, end, 10, numeric_base::decimal, "10");
+    require_token(token, end, static_cast<token_id>('/'), "/");
+    require_number_token(token, end, 5, numeric_base::decimal, "5");
+    require_token(token, end, static_cast<token_id>('/'), "/");
+    require_number_token(token, end, 2, numeric_base::decimal, "2");
+    REQUIRE(token == end);
+}

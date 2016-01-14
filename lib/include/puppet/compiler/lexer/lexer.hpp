@@ -251,14 +251,22 @@ namespace puppet { namespace compiler { namespace lexer {
             // For SLASH_CHECK_STATE, we're doing a lookahead to see if the next token should be a division operator.
             // For FORCE_SLASH_STATE, the lookahead succeeded, so force the next token to be "/" and not a regex, and
             // reset state back to the initial state.
-            this->self(SLASH_CHECK_STATE).add(SLASH_CHECK_PATTERN, '/');
-            this->self(FORCE_SLASH_STATE, base_type::initial_state()) = lex::token_def<>(SLASH_CHECK_PATTERN, '/') [ use_last ];
+            this->self(SLASH_CHECK_STATE).add(R"([\x20\t\f\v]*\/[^\*])", '/');
+            this->self(FORCE_SLASH_STATE, base_type::initial_state()) = lex::token_def<>(R"(\s*\/)", '/') [ use_last ];
 
             // The following are in match order
-            // Add the three-character operators
-            this->self.add
-                (R"(<<\|)",                 static_cast<id_type>(token_id::left_double_collect));
+
+            // Add whitespace, comments, and regex
+            // Multiline comments, regexes, and the division operator share the same opening character ('/')
             this->self +=
+                lex::token_def<>(R"(\s+)",                                        static_cast<id_type>(token_id::whitespace))       [ lex::_pass = lex::pass_flags::pass_ignore ] |
+                lex::token_def<>(R"((#[^\n]*)|(\/\*[^*]*\*+([^/*][^*]*\*+)*\/))", static_cast<id_type>(token_id::comment))          [ lex::_pass = lex::pass_flags::pass_ignore ] |
+                lex::token_def<>(R"(\/([^\\/\n]|\\[^\n])*\/)",                    static_cast<id_type>(token_id::regex))            [ parse_regex ] |
+                lex::token_def<>(R"(\/\*)",                                       static_cast<id_type>(token_id::unclosed_comment));
+
+            // Add the three-character operators
+            this->self +=
+                lex::token_def<>(R"(<<\|)", static_cast<id_type>(token_id::left_double_collect))  |
                 lex::token_def<>(R"(\|>>)", static_cast<id_type>(token_id::right_double_collect)) [ no_regex ];
 
             // Add the two-character operators
@@ -353,25 +361,21 @@ namespace puppet { namespace compiler { namespace lexer {
                 ("fail",    static_cast<id_type>(token_id::statement_call))
                 ("import",  static_cast<id_type>(token_id::statement_call));
 
-            // Comments, variables, types, names, bare words, regexes, and whitespace
+            // Variables, types, names, bare words
             this->self +=
-                lex::token_def<>(R"((#[^\n]*)|(\/\*[^*]*\*+([^/*][^*]*\*+)*\/))", static_cast<id_type>(token_id::comment))              [ lex::_pass = lex::pass_flags::pass_ignore ] |
                 lex::token_def<>(R"(\$(::)?(\w+::)*\w+)",                         static_cast<id_type>(token_id::variable))             [ no_regex ] |
                 lex::token_def<>(R"(\s+\[)",                                      static_cast<id_type>(token_id::array_start))          [ use_last ] |
                 lex::token_def<>(R"(((::)?[A-Z][\w]*)+)",                         static_cast<id_type>(token_id::type))                 [ no_regex ] |
                 lex::token_def<>(R"(((::)?[a-z][\w]*)(::[a-z][\w]*)*)",           static_cast<id_type>(token_id::name))                 [ no_regex ] |
                 lex::token_def<>(R"([a-z_]([\w\-]*[\w])?)",                       static_cast<id_type>(token_id::bare_word))            [ no_regex ] |
-                lex::token_def<>(R"((\/\/)|(\/[^*]([^\\/\n]|\\.)*\/))",           static_cast<id_type>(token_id::regex))                [ no_regex ] |
                 lex::token_def<>(R"('([^\\']|\\.)*')",                            static_cast<id_type>(token_id::single_quoted_string)) [ parse_single_quoted_string ] |
                 lex::token_def<>(R"(\"([^\\"]|\\.)*\")",                          static_cast<id_type>(token_id::double_quoted_string)) [ parse_double_quoted_string ] |
                 lex::token_def<>(HEREDOC_PATTERN,                                 static_cast<id_type>(token_id::heredoc))              [ parse_heredoc ] |
-                lex::token_def<>(R"(\d\w*(\.\d\w*)?([eE]-?\w*)?)",                static_cast<id_type>(token_id::number))               [ parse_number ] |
-                lex::token_def<>(R"(\s+)",                                        static_cast<id_type>(token_id::whitespace))           [ lex::_pass = lex::pass_flags::pass_ignore ];
+                lex::token_def<>(R"(\d\w*(\.\d\w*)?([eE]-?\w*)?)",                static_cast<id_type>(token_id::number))               [ parse_number ];
 
-            // Lastly, a catch for unclosed quotes and unknown tokens
+            // Lastly, catch unclosed quotes, invalid variables, and unknown tokens
             this->self.add
                 (R"(['"])", static_cast<id_type>(token_id::unclosed_quote))
-                (R"(\/\*)", static_cast<id_type>(token_id::unclosed_comment))
                 (R"(\$)",   static_cast<id_type>(token_id::invalid_variable))
                 (R"(.)",    static_cast<id_type>(token_id::unknown));
         }
@@ -659,6 +663,24 @@ namespace puppet { namespace compiler { namespace lexer {
             throw lexer_exception<input_iterator_type>((boost::format("'%1%' is not a valid number.") % token).str(), start);
         }
 
+        static void parse_regex(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        {
+            auto begin = start;
+            if (begin != end) {
+                ++begin;
+                // Regex literals cannot start with /*
+                if (begin != end && *begin == '*') {
+                    // Since we failed to match a multiline comment, treat this as a unclosed comment instead
+                    id = static_cast<id_type>(token_id::unclosed_comment);
+                    context.set_value(boost::make_iterator_range(start, ++begin));
+                    return;
+                }
+            }
+
+            // Force any following '/' to be interpreted as a '/' token
+            force_slash(context);
+        }
+
         static void no_regex(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             // Force any following '/' to be interpreted as a '/' token
@@ -772,7 +794,6 @@ namespace puppet { namespace compiler { namespace lexer {
         static const char* const HEREDOC_ESCAPES;
         static const char* const FORCE_SLASH_STATE;
         static const char* const SLASH_CHECK_STATE;
-        static const char* const SLASH_CHECK_PATTERN;
     };
 
     template<typename Base>
@@ -783,8 +804,6 @@ namespace puppet { namespace compiler { namespace lexer {
     char const* const lexer<Base>::FORCE_SLASH_STATE = "FS";
     template<typename Base>
     char const* const lexer<Base>::SLASH_CHECK_STATE = "SC";
-    template<typename Base>
-    char const* const lexer<Base>::SLASH_CHECK_PATTERN = R"(\s*\/\s+)";
     template<typename Base>
     char const* const lexer<Base>::EPP_STATE = "EPP";
 
