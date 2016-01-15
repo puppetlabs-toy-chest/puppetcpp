@@ -91,8 +91,9 @@ namespace puppet { namespace logging {
          * Logs a message.
          * @param level The log level.
          * @param message The message to log.
+         * @param error_is_failure True to treat logged errors as a failure or false if not.
          */
-        void log(logging::level level, std::string const& message);
+        void log(logging::level level, std::string const& message, bool error_is_failure = true);
 
         /**
          * Logs a message with source context.
@@ -103,29 +104,32 @@ namespace puppet { namespace logging {
          * @param text The context text.
          * @param path The path of the source file.
          * @param message The message to log.
+         * @param error_is_failure True to treat logged errors as a failure or false if not.
          */
-        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message);
+        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message, bool error_is_failure = true);
 
         /**
          * Logs a message.
-         * @tparam TArgs The type of the message formatting arguments.
+         * @tparam Args The type of the message formatting arguments.
          * @param level The log level.
          * @param format The format of the message to log.
          * @param args The format arguments.
          */
-        template <typename... TArgs>
-        void log(logging::level level, std::string const& format, TArgs... args)
+        template <typename... Args>
+        void log(logging::level level, std::string const& format, Args&&... args)
         {
             if (!would_log(level)) {
                 return;
             }
-            boost::format message(format);
-            log(level, 0, 0, 0, {}, {}, message, std::forward<TArgs>(args)...);
+            // This magic calls `boost::format::operator %` for every argument given without having to do recursion
+            boost::format message{ format };
+            static_cast<void>(std::initializer_list<int>{(message % std::forward<Args>(args), 0)...});
+            log(level, 0, 0, 0, {}, {}, message.str());
         }
 
         /**
          * Logs a message.
-         * @tparam TArgs The type of the message formatting arguments.
+         * @tparam Args The type of the message formatting arguments.
          * @param level The log level.
          * @param line The line of the source context.
          * @param column The column of the source context.
@@ -135,14 +139,16 @@ namespace puppet { namespace logging {
          * @param format The format of the message to log.
          * @param args The format arguments.
          */
-        template <typename... TArgs>
-        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& format, TArgs... args)
+        template <typename... Args>
+        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& format, Args&&... args)
         {
             if (!would_log(level)) {
                 return;
             }
-            boost::format message(format);
-            log(level, line, column, length, text, path, message, std::forward<TArgs>(args)...);
+            // This magic calls `boost::format::operator %` for every argument given without having to do recursion
+            boost::format message{ format };
+            static_cast<void>(std::initializer_list<int>{(message % std::forward<Args>(args), 0)...});
+            log(level, line, column, length, text, path, message.str());
         }
 
         /**
@@ -156,6 +162,12 @@ namespace puppet { namespace logging {
          * @return Returns the number of errors logged.
          */
         size_t errors() const;
+
+        /**
+         * Gets whether or not a failing error was logged.
+         * @return Returns true if a failing error was logged or false if not.
+         */
+        bool failed() const;
 
         /**
          * Gets the current logging level.
@@ -195,18 +207,10 @@ namespace puppet { namespace logging {
         virtual void log_message(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message) = 0;
 
      private:
-        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, boost::format& message);
-
-        template <typename T, typename... TArgs>
-        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, boost::format& message, T arg, TArgs... args)
-        {
-            message % std::forward<T>(arg);
-            log(level, line, column, length, text, path, message, std::forward<TArgs>(args)...);
-        }
-
         size_t _warnings;
         size_t _errors;
         logging::level _level;
+        bool _failed;
     };
 
     /**

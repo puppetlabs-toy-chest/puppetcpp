@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/functions/log.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 using namespace puppet::runtime::values;
@@ -21,7 +22,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         // Log the message
         if (logger.would_log(_level)) {
-            logger.log(_level, "%1%: %2%", *context.context().current_scope(), message);
+            logger.log(_level, (boost::format("%1%: %2%") % *context.context().current_scope() % message).str(), false /* errors are not failures */);
         }
         return message;
     }
