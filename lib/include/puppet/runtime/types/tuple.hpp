@@ -27,7 +27,7 @@ namespace puppet { namespace runtime { namespace types {
          */
         explicit tuple(
             std::vector<std::unique_ptr<values::type>> types = std::vector<std::unique_ptr<values::type>>(),
-            int64_t from = std::numeric_limits<int64_t>::min(),
+            int64_t from = 0,
             int64_t to = std::numeric_limits<int64_t>::max());
 
         /**

@@ -156,4 +156,29 @@ namespace puppet { namespace compiler { namespace parser {
         return tree;
     }
 
+    boost::optional<ast::postfix_expression> parse_postfix(std::string const& source)
+    {
+        static string_static_lexer lexer;
+
+        try {
+            // Get lexer iterators
+            auto begin = lex_begin(source);
+            auto end = lex_end(source);
+
+            // Get the token iterators from the lexer
+            auto token_begin = lexer.begin(begin, end);
+            auto token_end = lexer.end();
+
+            // Parse the entire source into a single postfix expression
+            ast::postfix_expression result;
+            if (x3::parse(token_begin, token_end, x3::with<tree_context_tag>(nullptr)[parser::postfix_expression], result) &&
+                (token_begin == token_end || token_begin->id() == boost::lexer::npos)) {
+                return result;
+            }
+        } catch (lexer_exception<typename string_static_lexer::input_iterator_type> const& ex) {
+        } catch (x3::expectation_failure<typename string_static_lexer::iterator_type> const& ex) {
+        }
+        return boost::none;
+    }
+
 }}}  // namespace puppet::compiler::parser

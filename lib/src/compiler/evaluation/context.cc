@@ -41,7 +41,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         _context(context)
     {
         // Create a node scope that inherits from the top scope
-        _context._node_scope = make_shared<scope>(_context._scope_stack.front(), &resource);
+        _context._node_scope = make_shared<scope>(_context.top_scope(), &resource);
         _context._scope_stack.push_back(_context._node_scope);
     }
 
@@ -237,46 +237,71 @@ namespace puppet { namespace compiler { namespace evaluation {
         _definition.evaluate(context, _resource);
     }
 
-    context::context(compiler::node& node, compiler::catalog& catalog) :
-        _node(node),
-        _catalog(catalog)
+    context::context(bool create_scope) :
+        _node(nullptr),
+        _catalog(nullptr),
+        _registry(nullptr),
+        _dispatcher(nullptr)
     {
-        // Add the top scope
-        auto top = make_shared<scope>(node.facts());
-        _scopes.emplace("", top);
-        _scope_stack.emplace_back(rvalue_cast(top));
+        if (create_scope) {
+            create_top_scope();
+        }
+    }
 
-        // Add an empty top match scope
-        _match_stack.emplace_back();
+    context::context(compiler::node& node, compiler::catalog& catalog) :
+        _node(&node),
+        _catalog(&catalog),
+        _registry(&node.environment().registry()),
+        _dispatcher(&node.environment().dispatcher())
+    {
+        create_top_scope(node.facts());
     }
 
     compiler::node& context::node() const
     {
-        return _node;
+        if (!_node) {
+            throw evaluation_exception("operation not permitted: node is not available.");
+        }
+        return *_node;
     }
 
     compiler::catalog& context::catalog() const
     {
-        return _catalog;
+        if (!_catalog) {
+            throw evaluation_exception("operation not permitted: catalog is not available.");
+        }
+        return *_catalog;
     }
 
     compiler::registry const& context::registry() const
     {
-        return _node.environment().registry();
+        if (!_registry) {
+            throw evaluation_exception("operation not permitted: registry is not available.");
+        }
+        return *_registry;
     }
 
     evaluation::dispatcher const& context::dispatcher() const
     {
-        return _node.environment().dispatcher();
+        if (!_dispatcher) {
+            throw evaluation_exception("operation not permitted: function dispatcher is not available.");
+        }
+        return *_dispatcher;
     }
 
     shared_ptr<scope> const& context::current_scope()
     {
+        if (_scope_stack.empty()) {
+            throw evaluation_exception("operation not permitted: the current scope is not available.");
+        }
         return _scope_stack.back();
     }
 
     shared_ptr<scope> const& context::top_scope()
     {
+        if (_scope_stack.empty()) {
+            throw evaluation_exception("operation not permitted: the top scope is not available.");
+        }
         return _scope_stack.front();
     }
 
@@ -362,9 +387,9 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         if (warn) {
             string message;
-            if (!registry().find_class(ns)) {
+            if (_registry && !_registry->find_class(ns)) {
                 message = (boost::format("could not look up variable $%1% because class '%2%' is not defined.") % expression.name % ns).str();
-            } else if (!_catalog.find(types::resource("class", ns))) {
+            } else if (_catalog && !_catalog->find(types::resource("class", ns))) {
                 message = (boost::format("could not look up variable $%1% because class '%2%' has not been declared.") % expression.name % ns).str();
             }
 
@@ -420,7 +445,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     void context::log(logging::level level, string const& message, ast::context const* context)
     {
-        auto& logger = _node.logger();
+        auto& logger = node().logger();
 
         // Do nothing if not warn level
         if (!logger.would_log(level)) {
@@ -453,14 +478,18 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     resource* context::declare_class(string name, ast::context const& context)
     {
+        auto& catalog = this->catalog();
+
         // Ensure the name is in the expected format
         types::klass::normalize(name);
 
         // Find the class definitions
         auto definitions = registry().find_class(name);
         if (!definitions) {
+            auto& node = this->node();
+
             // Attempt to import the class
-            _node.environment().import(_node.logger(), find_type::manifest, name);
+            node.environment().import(node.logger(), find_type::manifest, name);
 
             // Search again
             definitions = registry().find_class(name);
@@ -471,10 +500,10 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Find the resource
         auto type = types::resource("class", rvalue_cast(name));
-        auto resource = _catalog.find(type);
+        auto resource = catalog.find(type);
         if (!resource) {
             // Create the class resource
-            resource = _catalog.add(rvalue_cast(type), nullptr, context);
+            resource = catalog.add(rvalue_cast(type), nullptr, context);
         }
 
         // If the class was already declared, return it without evaluating
@@ -494,7 +523,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     ).str(),
                     attribute->value_context());
             }
-            stage = _catalog.find(types::resource("stage", *ptr));
+            stage = catalog.find(types::resource("stage", *ptr));
             if (!stage) {
                 throw evaluation_exception(
                     (boost::format("stage '%1%' does not exist in the catalog.") %
@@ -503,14 +532,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                     attribute->value_context());
             }
         } else {
-            stage = _catalog.find(types::resource("stage", "main"));
+            stage = catalog.find(types::resource("stage", "main"));
             if (!stage) {
                 throw evaluation_exception("stage 'main' does not exist in the catalog.");
             }
         }
 
         // Contain the class in the stage
-        _catalog.relate(relationship::contains, *stage, *resource);
+        catalog.relate(relationship::contains, *stage, *resource);
 
         try {
             // Evaluate all definitions of the class
@@ -531,17 +560,21 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     vector<klass> const* context::find_class(string name, bool import)
     {
+        auto& registry = this->registry();
+
         // Ensure the name is in the expected format
         types::klass::normalize(name);
 
-        auto definitions = registry().find_class(name);
+        auto definitions = registry.find_class(name);
         if (!definitions) {
             if (import) {
+                auto& node = this->node();
+
                 // Attempt to import the class
-                _node.environment().import(_node.logger(), find_type::manifest, name);
+                node.environment().import(node.logger(), find_type::manifest, name);
 
                 // Find it again
-                definitions = registry().find_class(name);
+                definitions = registry.find_class(name);
             }
         }
         return definitions;
@@ -549,17 +582,21 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     compiler::defined_type const* context::find_defined_type(string name, bool import)
     {
+        auto& registry = this->registry();
+
         // Ensure the name is in the expected format
         types::klass::normalize(name);
 
-        auto definition = registry().find_defined_type(name);
+        auto definition = registry.find_defined_type(name);
         if (!definition) {
             if (import) {
+                auto& node = this->node();
+
                 // Attempt to import the defined type
-                _node.environment().import(_node.logger(), find_type::manifest, name);
+                node.environment().import(node.logger(), find_type::manifest, name);
 
                 // Find it again
-                definition = registry().find_defined_type(name);
+                definition = registry.find_defined_type(name);
             }
         }
         return definition;
@@ -567,6 +604,8 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     bool context::is_defined(string name, bool klass, bool defined_type)
     {
+        auto& registry = this->registry();
+
         if (!klass && !defined_type) {
             return false;
         }
@@ -575,13 +614,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         types::klass::normalize(name);
 
         // Check for class or defined type
-        auto& registry = _node.environment().registry();
         if ((klass && registry.find_class(name)) || (defined_type && registry.find_defined_type(name))) {
             return true;
         }
 
+        auto& node = this->node();
+
         // Try to import a manifest with the name
-        _node.environment().import(_node.logger(), find_type::manifest, name);
+        node.environment().import(node.logger(), find_type::manifest, name);
 
         // Check again for class or defined type
         return (klass && registry.find_class(name)) || (defined_type && registry.find_defined_type(name));
@@ -589,13 +629,18 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     void context::add(resource_relationship relationship)
     {
+        // Ensure there is a catalog
+        catalog();
+
         _relationships.emplace_back(rvalue_cast(relationship));
     }
 
     void context::add(resource_override override)
     {
+        auto& catalog = this->catalog();
+
         // Find the resource first
-        auto resource = _catalog.find(override.type());
+        auto resource = catalog.find(override.type());
         if (!resource) {
             // Not yet declared, so store for later
             auto type = override.type();
@@ -607,31 +652,41 @@ namespace puppet { namespace compiler { namespace evaluation {
         evaluate_overrides(override.type());
 
         // Now evaluate the given override
-        override.evaluate(_catalog);
+        override.evaluate(catalog);
     }
 
     void context::add(declared_defined_type defined_type)
     {
+        // Ensure there is a catalog
+        catalog();
+
         _defined_types.emplace_back(rvalue_cast(defined_type));
     }
 
     void context::add(shared_ptr<collectors::collector> collector)
     {
+        // Ensure there is a catalog
+        catalog();
+
         _collectors.emplace_back(rvalue_cast(collector));
     }
 
     void context::evaluate_overrides(runtime::types::resource const& resource)
     {
+        auto& catalog = this->catalog();
+
         // Evaluate the overrides for the given type
         auto range = _overrides.equal_range(resource);
         for (auto it = range.first; it != range.second; ++it) {
-            it->second.evaluate(_catalog);
+            it->second.evaluate(catalog);
         }
         _overrides.erase(resource);
     }
 
     void context::finalize()
     {
+        auto& catalog = this->catalog();
+
         const size_t max_iterations = 1000;
         size_t iteration = 0;
         size_t index = 0;
@@ -670,12 +725,12 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Evaluate all resource relationships
         for (auto const& relationship : _relationships) {
-            relationship.evaluate(_catalog);
+            relationship.evaluate(catalog);
         }
 
         // Evaluate any remaining overrides
         for (auto& kvp : _overrides) {
-            kvp.second.evaluate(_catalog);
+            kvp.second.evaluate(catalog);
         }
 
         // Clear the data
@@ -684,6 +739,21 @@ namespace puppet { namespace compiler { namespace evaluation {
         _defined_types.clear();
         _relationships.clear();
         _overrides.clear();
+    }
+
+    void context::create_top_scope(std::shared_ptr<facts::provider> facts)
+    {
+        if (!_scopes.empty()) {
+            return;
+        }
+
+        // Add the top scope
+        auto top = make_shared<scope>(rvalue_cast(facts));
+        _scopes.emplace("", top);
+        _scope_stack.emplace_back(rvalue_cast(top));
+
+        // Add an empty top match scope
+        _match_stack.emplace_back();
     }
 
     void context::evaluate_defined_types(size_t& index, vector<declared_defined_type*>& virtualized)

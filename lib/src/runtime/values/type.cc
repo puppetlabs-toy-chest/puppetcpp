@@ -63,18 +63,23 @@ namespace puppet { namespace runtime { namespace values {
         return boost::apply_visitor(is_specialization_visitor(type), _value);
     }
 
-    boost::optional<type> type::parse(evaluation::context& context, string const& expression)
+    boost::optional<type> type::parse(string const& expression)
     {
+        // Type specifications are postfix access expressions
+        auto postfix = parser::parse_postfix(expression);
+        if (!postfix) {
+            return boost::none;
+        }
+
         try {
-            auto ast = parser::parse_string(expression);
-            if (ast->statements.size() == 1) {
-                evaluation::evaluator evaluator { context };
-                auto result = evaluator.evaluate(ast->statements.front());
-                if (result.as<type>()) {
-                    return result.move_as<type>();
-                }
+            // Use an empty evaluation context that has no top scope
+            // This will prevent evaluation of expressions that require access to the node, catalog, or scope
+            evaluation::context context{ false };
+            evaluation::evaluator evaluator { context };
+            auto result = evaluator.evaluate(*postfix);
+            if (result.as<type>()) {
+                return result.move_as<type>();
             }
-        } catch (parse_exception const&) {
         } catch (evaluation_exception const&) {
         }
         return boost::none;

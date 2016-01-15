@@ -8,6 +8,7 @@
 #include "../lexer/lexer.hpp"
 #include "../module.hpp"
 #include <boost/iterator.hpp>
+#include <boost/optional.hpp>
 #include <string>
 #include <memory>
 
@@ -34,9 +35,16 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Interpolates a string iterator range into a syntax tree.
      * @param range The range of the string to interpolate.
-     * @param moodule The module where the parsing is taking place.
+     * @param module The module where the parsing is taking place.
      * @return Returns the parsed syntax tree.
      */
     std::shared_ptr<ast::syntax_tree> interpolate(boost::iterator_range<lexer::lexer_string_iterator> range, compiler::module const* module = nullptr);
+
+    /**
+     * Parses a single postfix expression from a string.
+     * @param source The source to parse.
+     * @return Returns the postfix expression if parsed successfully or boost::none if not.
+     */
+    boost::optional<ast::postfix_expression> parse_postfix(std::string const& source);
 
 }}}  // namespace puppet::compiler::parser

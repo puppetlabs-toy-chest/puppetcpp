@@ -1249,3 +1249,267 @@ statements:
         end:
           offset: 1076
           line: 79
+  - kind: function call
+    function:
+      kind: name
+      begin:
+        offset: 1080
+        line: 82
+      end:
+        offset: 1086
+        line: 82
+      value: notice
+    arguments:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 1087
+            line: 82
+          end:
+            offset: 1098
+            line: 82
+          value: assert_type
+        arguments:
+          - kind: postfix
+            primary:
+              kind: type
+              begin:
+                offset: 1099
+                line: 82
+              end:
+                offset: 1106
+                line: 82
+              name: Integer
+            subexpressions:
+              - kind: access
+                begin:
+                  offset: 1106
+                  line: 82
+                end:
+                  offset: 1109
+                  line: 82
+                arguments:
+                  - kind: number
+                    begin:
+                      offset: 1107
+                      line: 82
+                    end:
+                      offset: 1108
+                      line: 82
+                    base: decimal
+                    value: 0
+          - kind: number
+            begin:
+              offset: 1111
+              line: 82
+            end:
+              offset: 1112
+              line: 82
+            base: decimal
+            value: 1
+        end:
+          offset: 1113
+          line: 82
+  - kind: function call
+    function:
+      kind: name
+      begin:
+        offset: 1114
+        line: 83
+      end:
+        offset: 1120
+        line: 83
+      value: notice
+    arguments:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 1121
+            line: 83
+          end:
+            offset: 1132
+            line: 83
+          value: assert_type
+        arguments:
+          - kind: string
+            begin:
+              offset: 1133
+              line: 83
+            end:
+              offset: 1145
+              line: 83
+            value_range:
+              begin:
+                offset: 1134
+                line: 83
+              end:
+                offset: 1144
+                line: 83
+            value: Integer[1]
+            escapes: \'
+            format: ""
+            margin: 0
+            quote: "'"
+            interpolated: false
+            remove_break: false
+          - kind: number
+            begin:
+              offset: 1147
+              line: 83
+            end:
+              offset: 1148
+              line: 83
+            base: decimal
+            value: 1
+        end:
+          offset: 1149
+          line: 83
+  - kind: function call
+    function:
+      kind: name
+      begin:
+        offset: 1150
+        line: 84
+      end:
+        offset: 1156
+        line: 84
+      value: notice
+    arguments:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 1157
+            line: 84
+          end:
+            offset: 1168
+            line: 84
+          value: assert_type
+        arguments:
+          - kind: string
+            begin:
+              offset: 1169
+              line: 84
+            end:
+              offset: 1183
+              line: 84
+            value_range:
+              begin:
+                offset: 1170
+                line: 84
+              end:
+                offset: 1182
+                line: 84
+            value: String[4, 4]
+            escapes: \'
+            format: ""
+            margin: 0
+            quote: "'"
+            interpolated: false
+            remove_break: false
+          - kind: string
+            begin:
+              offset: 1185
+              line: 84
+            end:
+              offset: 1190
+              line: 84
+            value_range:
+              begin:
+                offset: 1186
+                line: 84
+              end:
+                offset: 1189
+                line: 84
+            value: foo
+            escapes: \'
+            format: ""
+            margin: 0
+            quote: "'"
+            interpolated: false
+            remove_break: false
+        lambda:
+          begin:
+            offset: 1192
+            line: 84
+          end:
+            offset: 1281
+            line: 87
+          parameters:
+            - variable:
+                kind: variable
+                begin:
+                  offset: 1193
+                  line: 84
+                end:
+                  offset: 1202
+                  line: 84
+                name: expected
+            - variable:
+                kind: variable
+                begin:
+                  offset: 1204
+                  line: 84
+                end:
+                  offset: 1211
+                  line: 84
+                name: actual
+          body:
+            - kind: function call
+              function:
+                kind: name
+                begin:
+                  offset: 1219
+                  line: 85
+                end:
+                  offset: 1226
+                  line: 85
+                value: warning
+              arguments:
+                - kind: string
+                  begin:
+                    offset: 1227
+                    line: 85
+                  end:
+                    offset: 1269
+                    line: 85
+                  value_range:
+                    begin:
+                      offset: 1228
+                      line: 85
+                    end:
+                      offset: 1268
+                      line: 85
+                  value: expected $expected but was given $actual
+                  escapes: \"'nrtsu$
+                  format: ""
+                  margin: 0
+                  quote: "\""
+                  interpolated: true
+                  remove_break: false
+            - kind: string
+              begin:
+                offset: 1274
+                line: 86
+              end:
+                offset: 1279
+                line: 86
+              value_range:
+                begin:
+                  offset: 1275
+                  line: 86
+                end:
+                  offset: 1278
+                  line: 86
+              value: bar
+              escapes: \'
+              format: ""
+              margin: 0
+              quote: "'"
+              interpolated: false
+              remove_break: false
+        end:
+          offset: 1191
+          line: 84
