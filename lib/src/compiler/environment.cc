@@ -19,6 +19,9 @@ namespace puppet { namespace compiler {
         _settings(settings),
         _name(rvalue_cast(name))
     {
+        // Add the built-in functions to the dispatcher
+        _dispatcher.add_builtin_functions();
+
         // First load this module's directories
         // TODO: the modules subdirectory can come from an environment configuration file
         load_modules(logger, (fs::path{ this->directory() } / "modules").string());

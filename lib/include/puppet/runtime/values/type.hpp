@@ -35,6 +35,7 @@
 #include "../../cast.hpp"
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
+#include <boost/mpl/contains.hpp>
 
 namespace puppet { namespace compiler { namespace evaluation {
 
@@ -206,6 +207,29 @@ namespace puppet { namespace runtime { namespace values {
          * @return Returns the type if the parse was successful or boost::none if the string is not a valid type expression.
          */
         static boost::optional<type> parse(std::string const& expression);
+
+        /**
+         * Creates a type from a Puppet type expression.
+         * @tparam T The expected Puppet type.
+         * @param expression The expression to parse for the type.
+         * @return Returns the type if the parse was successful or boost::none if the string is not a valid type expression.
+         */
+        template <
+            typename T,
+            typename = typename boost::mpl::contains<type_variant::types, T>::type
+        >
+        static boost::optional<T> parse_as(std::string const& expression)
+        {
+            auto result = parse(expression);
+            if (!result) {
+                return boost::none;
+            }
+            auto ptr = boost::get<T>(&result->get());
+            if (!ptr) {
+                return boost::none;
+            }
+            return rvalue_cast(*ptr);
+        }
 
      private:
         type_variant _value;

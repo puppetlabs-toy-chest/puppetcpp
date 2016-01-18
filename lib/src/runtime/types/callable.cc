@@ -1,8 +1,11 @@
 #include <puppet/runtime/values/value.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/cast.hpp>
 #include <boost/functional/hash.hpp>
 
 using namespace std;
+using namespace puppet::compiler::ast;
+using namespace puppet::compiler::evaluation::functions;
 
 namespace puppet { namespace runtime { namespace types {
 
@@ -57,6 +60,28 @@ namespace puppet { namespace runtime { namespace types {
         return _block_type;
     }
 
+    std::pair<callable const*, bool> callable::block() const
+    {
+        callable const* block = nullptr;
+        bool required = static_cast<bool>(_block_type);
+
+        if (_block_type) {
+            // Check to see if the block is required
+            block = boost::get<callable>(_block_type.get());
+            if (!block) {
+                // Check to see if the block is optional
+                auto optional = boost::get<types::optional>(_block_type.get());
+                if (optional) {
+                    block = boost::get<callable>(optional->type().get());
+                }
+                if (block) {
+                    required = false;
+                }
+            }
+        }
+        return std::make_pair(block, required);
+    }
+
     char const* callable::name()
     {
         return "Callable";
@@ -90,9 +115,7 @@ namespace puppet { namespace runtime { namespace types {
         }
 
         // The blocks must match
-        if ((_block_type && !ptr->block_type()) ||
-            (!_block_type && ptr->block_type()) ||
-            *_block_type != *ptr->block_type()) {
+        if ((_block_type && !ptr->_block_type) || (!_block_type && ptr->_block_type) || (*_block_type != *ptr->_block_type)) {
             return false;
         }
 
@@ -103,6 +126,69 @@ namespace puppet { namespace runtime { namespace types {
         // Check for a more specialized min/max
         return std::min(ptr->min(), ptr->max()) >= std::min(_min, _max) &&
                std::max(ptr->min(), ptr->max()) <= std::max(_min, _max);
+    }
+
+    bool callable::can_dispatch(call_context const& context) const
+    {
+        auto& arguments = context.arguments();
+        auto argument_count = static_cast<int64_t>(arguments.size());
+
+        // Check for too many or too few arguments
+        if (argument_count < _min || argument_count > _max) {
+            return false;
+        }
+
+        bool passed_block = static_cast<bool>(context.block());
+
+        // Check for block mismatch
+        types::callable const* block = nullptr;
+        bool required = false;
+        tie(block, required) = this->block();
+        if ((!block && passed_block) || (block && required && !passed_block)) {
+            return false;
+        }
+
+        // If a block was passed, check the number of parameters
+        if (block && passed_block) {
+            auto parameter_count = static_cast<int64_t>(context.block()->parameters.size());
+            if (parameter_count < block->min() || parameter_count > block->max()) {
+                return false;
+            }
+        }
+
+        // Ensure no mismatched parameter types
+        return find_mismatch(arguments) < 0;
+    }
+
+    int64_t callable::find_mismatch(values::array const& arguments) const
+    {
+        // If there are no argument types, there is no mismatch
+        if (_types.empty()) {
+            return -1;
+        }
+
+        // Check the argument types
+        auto argument_count = static_cast<int64_t>(arguments.size());
+        for (int64_t i = 0; i < argument_count; ++i) {
+            // Ensure the argument is of the specified type
+            if (!parameter_type(i)->is_instance(arguments[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    values::type const* callable::parameter_type(int64_t index) const
+    {
+        if (index < 0 || _types.empty()) {
+            return nullptr;
+        }
+        // If the index is in bounds, use the specified type
+        if (index < static_cast<int64_t>(_types.size())) {
+            return _types[index].get();
+        }
+        // If the index is beyond the specified types, use the last one
+        return _types.back().get();
     }
 
     ostream& operator<<(ostream& os, callable const& type)

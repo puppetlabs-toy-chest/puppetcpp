@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/functions/each.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
@@ -9,143 +10,107 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    struct each_visitor : boost::static_visitor<void>
+    static void each_value(call_context& context, string const& argument)
     {
-        explicit each_visitor(function_call_context& context) :
-            _context(context),
-            _lambda_parameter_count(_context.lambda()->parameters.size())
-        {
+        values::array block_arguments(context.block()->parameters.size());
+
+        // Enumerate the string as Unicode codepoints
+        int64_t i = 0;
+        values::enumerate_string(argument, [&](string codepoint) {
+            if (block_arguments.size() == 1) {
+                block_arguments[0] = codepoint;
+            } else {
+                block_arguments[0] = i++;
+                block_arguments[1] = codepoint;
+            }
+            context.yield(block_arguments);
+            return true;
+        });
+    }
+
+    static void each_value(call_context& context, types::integer const& range)
+    {
+        if (!range.enumerable()) {
+            throw evaluation_exception((boost::format("%1% is not enumerable.") % range).str(), context.argument_context(0));
         }
 
-        result_type operator()(string const& argument) const
-        {
-            values::array arguments;
-            arguments.reserve(2);
+        values::array block_arguments(context.block()->parameters.size());
 
-            // Enumerate the string as Unicode codepoints
-            int64_t i = 0;
-            values::enumerate_string(argument, [&](string codepoint) {
-                arguments.clear();
-                if (_lambda_parameter_count == 1) {
-                    arguments.push_back(rvalue_cast(codepoint));
-                } else {
-                    arguments.push_back(i++);
-                    arguments.push_back(rvalue_cast(codepoint));
-                }
-                _context.yield(arguments);
-                return true;
-            });
+        range.each([&](int64_t index, int64_t value) {
+            if (block_arguments.size() == 1) {
+                block_arguments[0] = value;
+            } else {
+                block_arguments[0] = index;
+                block_arguments[1] = value;
+            }
+            context.yield(block_arguments);
+            return true;
+        });
+    }
+
+    static void each_value(call_context& context, values::array const& argument)
+    {
+        values::array block_arguments(context.block()->parameters.size());
+
+        for (size_t i = 0; i < argument.size(); ++i) {
+            auto& element = argument[i];
+
+            if (block_arguments.size() == 1) {
+                block_arguments[0] = element;
+            } else {
+                block_arguments[0] = static_cast<int64_t>(i);
+                block_arguments[1] = element;
+            }
+            context.yield(block_arguments);
         }
+    }
 
-        result_type operator()(int64_t argument) const
-        {
+    static void each_value(call_context& context, values::hash const& argument)
+    {
+        values::array block_arguments(context.block()->parameters.size());
+
+        for (auto& kvp : argument) {
+            if (block_arguments.size() == 1) {
+                values::array pair(2);
+                pair[0] = kvp.key();
+                pair[1] = kvp.value();
+                block_arguments[0] = rvalue_cast(pair);
+            } else {
+                block_arguments[0] = kvp.key();
+                block_arguments[1] = kvp.value();
+            }
+            context.yield(block_arguments);
+        }
+    }
+
+    descriptor each::create_descriptor()
+    {
+        functions::descriptor descriptor{ "each" };
+
+        descriptor.add("Callable[String, 1, 1, Callable[1, 2]]", [](call_context& context) {
+            each_value(context, context.argument(0).require<string>());
+            return rvalue_cast(context.argument(0));
+        });
+        descriptor.add("Callable[Integer, 1, 1, Callable[1, 2]]", [](call_context& context) -> values::value {
+            auto argument = context.argument(0).require<int64_t>();
             if (argument > 0) {
-                enumerate(types::integer(0, argument));
+                each_value(context, types::integer{0, argument - 1});
             }
-        }
-
-        result_type operator()(values::array const& argument) const
-        {
-            values::array arguments;
-            arguments.reserve(2);
-            for (size_t i = 0; i < argument.size(); ++i) {
-                arguments.clear();
-                if (_lambda_parameter_count == 1) {
-                    arguments.push_back(argument[i]);
-                } else {
-                    arguments.push_back(static_cast<int64_t>(i));
-                    arguments.push_back(argument[i]);
-                }
-                _context.yield(arguments);
-            }
-        }
-
-        result_type operator()(values::hash const& argument) const
-        {
-            values::array arguments;
-            arguments.reserve(2);
-            for (auto const& kvp : argument) {
-                arguments.clear();
-                if (_lambda_parameter_count == 1) {
-                    values::array pair(2);
-                    pair[0] = kvp.key();
-                    pair[1] = kvp.value();
-                    arguments.emplace_back(rvalue_cast(pair));
-                } else {
-                    arguments.push_back(kvp.key());
-                    arguments.push_back(kvp.value());
-                }
-                _context.yield(arguments);
-            }
-        }
-
-        result_type operator()(values::type const& argument) const
-        {
-            return boost::apply_visitor(*this, argument);
-        }
-
-        result_type operator()(types::integer const& argument) const
-        {
-            if (!argument.enumerable()) {
-                throw evaluation_exception((boost::format("%1% is not enumerable.") % argument).str(), _context.argument_context(0));
-            }
-            enumerate(argument);
-        }
-
-        template <typename T>
-        result_type operator()(T const& argument) const
-        {
-            throw evaluation_exception((boost::format("expected enumerable type for first argument but found %1%.") % values::value(argument).get_type()).str(), _context.argument_context(0));
-        }
-
-     private:
-        void enumerate(types::integer const& range) const
-        {
-            values::array arguments;
-            arguments.reserve(2);
-            range.each([&](int64_t index, int64_t value) {
-                arguments.clear();
-                if (_lambda_parameter_count == 1) {
-                    arguments.push_back(value);
-                } else {
-                    arguments.push_back(index);
-                    arguments.push_back(value);
-                }
-                _context.yield(arguments);
-                return true;
-            });
-        }
-
-        function_call_context& _context;
-        size_t _lambda_parameter_count;
-    };
-
-    values::value each::operator()(function_call_context& context) const
-    {
-        // Check the argument count
-        auto& arguments = context.arguments();
-        if (arguments.size() != 1) {
-            throw evaluation_exception(
-                (boost::format("expected 1 argument to '%1%' function but %2% were given.") %
-                    context.name() %
-                    arguments.size()
-                ).str(),
-                arguments.size() > 1 ? context.argument_context(1) : context.name()
-            );
-        }
-
-        // Check the lambda
-        if (!context.lambda()) {
-            throw evaluation_exception((boost::format("expected a lambda to '%1%' function but one was not given.") % context.name()).str(), context.name());
-        }
-        auto count = context.lambda()->parameters.size();
-        if (count == 0 || count > 2) {
-            throw evaluation_exception((boost::format("expected 1 or 2 lambda parameters but %1% were specified.") % count).str(), *context.lambda());
-        }
-
-        // Visit the argument and return it
-        boost::apply_visitor(each_visitor(context), arguments[0]);
-        return rvalue_cast(*arguments[0]);
+            return rvalue_cast(context.argument(0));
+        });
+        descriptor.add("Callable[Array[Any], 1, 1, Callable[1, 2]]", [](call_context& context) {
+            each_value(context, context.argument(0).require<values::array>());
+            return rvalue_cast(context.argument(0));
+        });
+        descriptor.add("Callable[Hash[Any, Any], 1, 1, Callable[1, 2]]", [](call_context& context) {
+            each_value(context, context.argument(0).require<values::hash>());
+            return rvalue_cast(context.argument(0));
+        });
+        descriptor.add("Callable[Type[Integer], 1, 1, Callable[1, 2]]", [](call_context& context) {
+            each_value(context, boost::get<types::integer>(context.argument(0).require<values::type>()));
+            return rvalue_cast(context.argument(0));
+        });
+        return descriptor;
     }
 
 }}}}  // namespace puppet::compiler::evaluation::functions

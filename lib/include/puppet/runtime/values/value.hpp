@@ -198,6 +198,21 @@ namespace puppet { namespace runtime { namespace values {
         }
 
         /**
+         * Requires that the value hold the given type and returns a reference to it.
+         * @tparam T The requested value type.
+         * @return Returns a reference to the given type or throws an exception if the value is not of that type.
+         */
+        template <typename T>
+        T const& require() const
+        {
+            auto ptr = as<T>();
+            if (!ptr) {
+                throw std::runtime_error("invalid cast requested.");
+            }
+            return *ptr;
+        }
+
+        /**
          * Moves the value as the given value type.
          * Note: throws boost::bad_get if the value is not of the given type.
          * @tparam T The requested value type.

@@ -3,7 +3,7 @@
 #include <puppet/compiler/evaluation/postfix_evaluator.hpp>
 #include <puppet/compiler/evaluation/interpolator.hpp>
 #include <puppet/compiler/evaluation/call_evaluator.hpp>
-#include <puppet/compiler/evaluation/functions/function_call_context.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/assignment.hpp>
 #include <puppet/compiler/evaluation/operators/divide.hpp>
 #include <puppet/compiler/evaluation/operators/equals.hpp>
@@ -343,7 +343,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(function_call_expression const& expression)
     {
-        functions::function_call_context context { _context, expression };
+        functions::call_context context{ _context, expression };
         return _context.dispatcher().dispatch(context);
     }
 

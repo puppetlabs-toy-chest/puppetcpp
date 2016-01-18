@@ -96,11 +96,11 @@ int main(int argc, char const* argv[])
     auto warnings = logger.warnings();
 
     LOG(notice, "compilation %1% with %2% %3% and %4% %5%.",
-        (errors > 0 ? "failed" : "succeeded"),
+        (logger.failed() ? "failed" : "succeeded"),
         errors,
         (errors != 1 ? "errors" : "error"),
         warnings,
         (warnings != 1 ? "warnings" : "warning")
     );
-    return errors > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
+    return logger.failed() ? EXIT_FAILURE : EXIT_SUCCESS;
 }

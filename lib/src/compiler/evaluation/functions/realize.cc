@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/functions/realize.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/collectors/list_collector.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
@@ -8,94 +9,79 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    struct realize_visitor : boost::static_visitor<void>
+    static void add_resource(collectors::list_collector::list_type& list, types::resource resource, ast::context const& context)
     {
-        realize_visitor(collectors::list_collector::list_type& list, ast::context const& context) :
-            _list(list),
-            _context(context)
-        {
+        if (resource.is_class()) {
+            throw evaluation_exception("classes cannot be realized.", context);
+        }
+        if (!resource.fully_qualified()) {
+            throw evaluation_exception("expected a fully-qualified resource to realize.", context);
         }
 
-        result_type operator()(string const& argument)
-        {
-            auto resource = types::resource::parse(argument);
+        list.emplace(list.end(), make_pair(rvalue_cast(resource), context));
+    }
+
+    static void add_resource(collectors::list_collector::list_type& list, values::value const& argument, ast::context const& context)
+    {
+        if (auto string = argument.as<std::string>()) {
+            // Parse the string a a type
+            auto resource = types::resource::parse(*string);
             if (!resource) {
-                throw evaluation_exception((boost::format("expected a qualified resource string but found \"%1%\".") % argument).str(), _context);
+                throw evaluation_exception((boost::format("expected a qualified resource string but found \"%1%\".") % argument).str(), context);
             }
 
-            realize_resource(rvalue_cast(*resource));
+            add_resource(list, rvalue_cast(*resource), context);
+            return;
         }
-
-        result_type operator()(values::type const& argument)
-        {
-            boost::apply_visitor(*this, argument);
+        if (auto array = argument.as<values::array>()) {
+            // Recurse on array elements
+            for (auto const& element : *array) {
+                add_resource(list, element, context);
+            }
+            return;
         }
-
-        result_type operator()(values::array const& argument)
-        {
-            for (auto const& element : argument) {
-                boost::apply_visitor(*this, element);
+        if (auto type = argument.as<values::type>()) {
+            if (auto resource = boost::get<types::resource>(type)) {
+                add_resource(list, *resource, context);
+                return;
             }
         }
-        result_type operator()(types::resource const& argument)
-        {
-            realize_resource(argument);
-        }
 
-        template <typename T>
-        result_type operator()(T const& argument)
-        {
-            throw evaluation_exception(
-                (boost::format("expected %1%, %2%, or qualified %2% for argument but found %3%.") %
-                 types::string::name() %
-                 types::array::name() %
-                 types::resource::name() %
-                 values::value(argument).get_type()
-                ).str());
-        }
+        throw evaluation_exception(
+            (boost::format("expected %1%, %2%, or qualified %2% for argument but found %3%.") %
+             types::string::name() %
+             types::array::name() %
+             types::resource::name() %
+             argument.get_type()
+            ).str());
+    }
 
-     private:
-        void realize_resource(types::resource resource)
-        {
-            if (resource.is_class()) {
-                throw evaluation_exception("classes cannot be realized.", _context);
-            }
-            if (!resource.fully_qualified()) {
-                throw evaluation_exception("expected a fully-qualified resource to realize.", _context);
-            }
-
-            _list.emplace(_list.end(), make_pair(rvalue_cast(resource), _context));
-        }
-
-        collectors::list_collector::list_type& _list;
-        ast::context const& _context;
-    };
-
-    values::value realize::operator()(function_call_context& context) const
+    descriptor realize::create_descriptor()
     {
-        auto& arguments = context.arguments();
-        if (arguments.empty()) {
-            throw evaluation_exception((boost::format("expected at least one argument to '%1%' function.") % context.name()).str(), context.name());
-        }
+        functions::descriptor descriptor{ "realize" };
 
-        // Populate a list of resource types from the arguments
-        collectors::list_collector::list_type list;
-        for (size_t i = 0; i < arguments.size(); ++i) {
-            realize_visitor visitor{ list, context.argument_context(i) };
-            boost::apply_visitor(visitor, arguments[i]);
-        }
+        descriptor.add("Callable[Variant[String, Array[Any], Resource], 1]", [](call_context& context) {
+            auto& arguments = context.arguments();
 
-        values::array result;
-        if (!list.empty()) {
-            // Populate the resulting array
-            for (auto const& element : list) {
-                result.emplace_back(element.first);
+            // Populate a list of resource types from the arguments
+            collectors::list_collector::list_type list;
+            for (size_t i = 0; i < arguments.size(); ++i) {
+                add_resource(list, context.argument(i), context.argument_context(i));
             }
 
-            // Add a list collector
-            context.context().add(std::make_shared<collectors::list_collector>(rvalue_cast(list)));
-        }
-        return result;
+            values::array result;
+            if (!list.empty()) {
+                // Populate the resulting array
+                for (auto const& element : list) {
+                    result.emplace_back(element.first);
+                }
+
+                // Add a list collector
+                context.context().add(std::make_shared<collectors::list_collector>(rvalue_cast(list)));
+            }
+            return result;
+        });
+        return descriptor;
     }
 
 }}}}  // namespace puppet::compiler::evaluation::functions

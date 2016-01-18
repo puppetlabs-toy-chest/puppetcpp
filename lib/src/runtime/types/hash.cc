@@ -68,7 +68,7 @@ namespace puppet { namespace runtime { namespace types {
     bool hash::is_instance(values::value const& value) const
     {
         // Check for hash
-        auto ptr = value.as<values::hash>();;
+        auto ptr = value.as<values::hash>();
         if (!ptr) {
             return false;
         }
@@ -81,10 +81,10 @@ namespace puppet { namespace runtime { namespace types {
 
         // Check that each key and element is of the appropriate types
         for (auto const& kvp : *ptr) {
-            if (_key_type->is_instance(kvp.key())) {
+            if (!_key_type->is_instance(kvp.key())) {
                 return false;
             }
-            if (_element_type->is_instance(kvp.value())) {
+            if (!_element_type->is_instance(kvp.value())) {
                 return false;
             }
         }

@@ -1,7 +1,7 @@
 #include <puppet/compiler/evaluation/postfix_evaluator.hpp>
 #include <puppet/compiler/evaluation/access_evaluator.hpp>
 #include <puppet/compiler/evaluation/evaluator.hpp>
-#include <puppet/compiler/evaluation/functions/function_call_context.hpp>
+#include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
 
@@ -83,7 +83,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         void operator()(method_call_expression const& expression)
         {
-            functions::function_call_context context { _evaluator.context(), expression, _value, _value_context, _splat };
+            functions::call_context context{ _evaluator.context(), expression, _value, _value_context, _splat };
             _value = _evaluator.context().dispatcher().dispatch(context);
             _value_context = expression.context();
         }

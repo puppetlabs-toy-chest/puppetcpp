@@ -4,24 +4,21 @@
  */
 #pragma once
 
-#include "../../runtime/values/value.hpp"
-#include <functional>
+#include "functions/descriptor.hpp"
 #include <unordered_map>
 
 namespace puppet { namespace compiler { namespace evaluation {
-
-    namespace functions {
-
-        // Forward declaration of function_call_context.
-        struct function_call_context;
-
-    }  // namespace puppet::compiler::evaluation::functions
 
     /**
      * Represents the function call dispatcher.
      */
     struct dispatcher
     {
+        /**
+         * The function type for dispatch fallback.
+         */
+        using fallback_type = std::function<boost::optional<runtime::values::value>(functions::call_context& context)>;
+
         /**
          * Default constructor for dispatcher.
          */
@@ -39,23 +36,49 @@ namespace puppet { namespace compiler { namespace evaluation {
         dispatcher& operator=(dispatcher&&) = default;
 
         /**
+         * Adds the built-in Puppet functions to the dispatcher.
+         */
+        void add_builtin_functions();
+
+        /**
+         * Adds a function to the dispatcher.
+         * @param descriptor The descriptor of the function to add.
+         */
+        void add(functions::descriptor descriptor);
+
+        /**
+         * Finds a function by name.
+         * @param name The function to find.
+         * @return Returns the function descriptor if found or nullptr if not found.
+         */
+        functions::descriptor* find(std::string const& name);
+
+        /**
+         * Finds a function by name.
+         * @param name The function to find.
+         * @return Returns the function descriptor if found or nullptr if not found.
+         */
+        functions::descriptor const* find(std::string const& name) const;
+
+        /**
          * Dispatches a function call.
          * @param context The function call context to dispatch.
          * @return Returns the value returned by the called function.
          */
-        runtime::values::value dispatch(functions::function_call_context& context) const;
+        runtime::values::value dispatch(functions::call_context& context) const;
 
         /**
          * Set the fallback callback to use.
          * @param fallback The fallback callback to use.
          */
-        void fallback(std::function<boost::optional<runtime::values::value>(functions::function_call_context& context)> fallback);
+        void fallback(fallback_type fallback);
 
      private:
         dispatcher(dispatcher&) = delete;
         dispatcher& operator=(dispatcher&) = delete;
 
-        std::function<boost::optional<runtime::values::value>(functions::function_call_context& context)> _fallback;
+        fallback_type _fallback;
+        std::unordered_map<std::string, functions::descriptor> _functions;
     };
 
 }}}  // namespace puppet::compiler::evaluation

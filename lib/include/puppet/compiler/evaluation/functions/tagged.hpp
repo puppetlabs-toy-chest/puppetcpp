@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "function_call_context.hpp"
+#include "descriptor.hpp"
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
@@ -14,11 +14,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     struct tagged
     {
         /**
-         * Called to invoke the function.
-         * @param context The function call context.
-         * @return Returns the resulting value.
+         * Create a function descriptor.
+         * @return Returns the function descriptor representing this function.
          */
-        runtime::values::value operator()(function_call_context& context) const;
+        static descriptor create_descriptor();
     };
 
 }}}}  // puppet::compiler::evaluation::functions

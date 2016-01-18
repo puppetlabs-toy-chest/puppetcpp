@@ -25,7 +25,7 @@ namespace puppet { namespace runtime { namespace values {
          * @param os The output stream to write to.
          * @param separator The separator to write between array elements.
          */
-        void join(std::ostream& os, std::string const& separator = " ");
+        void join(std::ostream& os, std::string const& separator = " ") const;
     };
 
     /**
