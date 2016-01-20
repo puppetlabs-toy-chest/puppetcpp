@@ -5875,3 +5875,302 @@ statements:
     end:
       offset: 3712
       line: 245
+  - kind: class
+    begin:
+      offset: 3948
+      line: 260
+    end:
+      offset: 4008
+      line: 261
+    name:
+      kind: name
+      begin:
+        offset: 3954
+        line: 260
+      end:
+        offset: 3969
+        line: 260
+      value: class_ref_param
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 3970
+            line: 260
+          end:
+            offset: 3977
+            line: 260
+          name: param1
+      - variable:
+          kind: variable
+          begin:
+            offset: 3979
+            line: 260
+          end:
+            offset: 3986
+            line: 260
+          name: param2
+        default_value:
+          kind: string
+          begin:
+            offset: 3989
+            line: 260
+          end:
+            offset: 4003
+            line: 260
+          value_range:
+            begin:
+              offset: 3990
+              line: 260
+            end:
+              offset: 4002
+              line: 260
+          value: ${param1}bar
+          escapes: \"'nrtsu$
+          format: ""
+          margin: 0
+          quote: "\""
+          interpolated: true
+          remove_break: false
+  - kind: resource
+    begin:
+      offset: 4010
+      line: 263
+    end:
+      offset: 4054
+      line: 265
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 4010
+        line: 263
+      end:
+        offset: 4015
+        line: 263
+      value: class
+    bodies:
+      - title:
+          kind: name
+          begin:
+            offset: 4018
+            line: 263
+          end:
+            offset: 4033
+            line: 263
+          value: class_ref_param
+        operations:
+          - name:
+              kind: name
+              begin:
+                offset: 4039
+                line: 264
+              end:
+                offset: 4045
+                line: 264
+              value: param1
+            operator_position:
+              offset: 4046
+              line: 264
+            operator: =>
+            value:
+              kind: name
+              begin:
+                offset: 4049
+                line: 264
+              end:
+                offset: 4052
+                line: 264
+              value: foo
+  - kind: unless
+    begin:
+      offset: 4056
+      line: 267
+    end:
+      offset: 4122
+      line: 269
+    conditional:
+      kind: binary
+      first:
+        kind: variable
+        begin:
+          offset: 4063
+          line: 267
+        end:
+          offset: 4087
+          line: 267
+        name: class_ref_param::param2
+      operations:
+        - operator_position:
+            offset: 4088
+            line: 267
+          operator: ==
+          operand:
+            kind: string
+            begin:
+              offset: 4091
+              line: 267
+            end:
+              offset: 4099
+              line: 267
+            value_range:
+              begin:
+                offset: 4092
+                line: 267
+              end:
+                offset: 4098
+                line: 267
+            value: foobar
+            escapes: \'
+            format: ""
+            margin: 0
+            quote: "'"
+            interpolated: false
+            remove_break: false
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 4106
+            line: 268
+          end:
+            offset: 4110
+            line: 268
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 4111
+              line: 268
+            end:
+              offset: 4120
+              line: 268
+            value: incorrect
+  - kind: defined type
+    begin:
+      offset: 4124
+      line: 271
+    end:
+      offset: 4201
+      line: 273
+    name:
+      kind: name
+      begin:
+        offset: 4131
+        line: 271
+      end:
+        offset: 4143
+        line: 271
+      value: dt_ref_param
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 4144
+            line: 271
+          end:
+            offset: 4151
+            line: 271
+          name: param1
+      - variable:
+          kind: variable
+          begin:
+            offset: 4153
+            line: 271
+          end:
+            offset: 4160
+            line: 271
+          name: param2
+        default_value:
+          kind: string
+          begin:
+            offset: 4163
+            line: 271
+          end:
+            offset: 4177
+            line: 271
+          value_range:
+            begin:
+              offset: 4164
+              line: 271
+            end:
+              offset: 4176
+              line: 271
+          value: ${param1}bar
+          escapes: \"'nrtsu$
+          format: ""
+          margin: 0
+          quote: "\""
+          interpolated: true
+          remove_break: false
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 4185
+            line: 272
+          end:
+            offset: 4191
+            line: 272
+          value: notice
+        arguments:
+          - kind: variable
+            begin:
+              offset: 4192
+              line: 272
+            end:
+              offset: 4199
+              line: 272
+            name: param2
+  - kind: resource
+    begin:
+      offset: 4203
+      line: 275
+    end:
+      offset: 4242
+      line: 277
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 4203
+        line: 275
+      end:
+        offset: 4215
+        line: 275
+      value: dt_ref_param
+    bodies:
+      - title:
+          kind: name
+          begin:
+            offset: 4218
+            line: 275
+          end:
+            offset: 4221
+            line: 275
+          value: foo
+        operations:
+          - name:
+              kind: name
+              begin:
+                offset: 4227
+                line: 276
+              end:
+                offset: 4233
+                line: 276
+              value: param1
+            operator_position:
+              offset: 4234
+              line: 276
+            operator: =>
+            value:
+              kind: name
+              begin:
+                offset: 4237
+                line: 276
+              end:
+                offset: 4240
+                line: 276
+              value: foo

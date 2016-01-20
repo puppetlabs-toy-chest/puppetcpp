@@ -42,6 +42,11 @@ namespace puppet { namespace compiler {
         return *_value;
     }
 
+    shared_ptr<values::value> attribute::shared_value()
+    {
+        return _value;
+    }
+
     shared_ptr<values::value const> attribute::shared_value() const
     {
         return _value;

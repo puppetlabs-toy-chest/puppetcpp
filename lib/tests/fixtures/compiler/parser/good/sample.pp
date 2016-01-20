@@ -256,3 +256,22 @@ with(1, '2', [3], { 4 => 5}) |$a, $b, $c, $d| {
         fail incorrect
     }
 }
+
+class class_ref_param($param1, $param2 = "${param1}bar") {
+}
+
+class { class_ref_param:
+    param1 => foo
+}
+
+unless $class_ref_param::param2 == 'foobar' {
+    fail incorrect
+}
+
+define dt_ref_param($param1, $param2 = "${param1}bar") {
+    notice $param2
+}
+
+dt_ref_param { foo:
+    param1 => foo
+}
