@@ -83,6 +83,7 @@ SCENARIO("parsing files", "[parser]")
                 ofstream stream(baseline_path.string());
                 REQUIRE(stream);
                 tree->write(format::yaml, stream, false /* don't include paths */);
+                stream << '\n';
             }
 
             static auto const dummy_module = reinterpret_cast<puppet::compiler::module*>(0x1234);
