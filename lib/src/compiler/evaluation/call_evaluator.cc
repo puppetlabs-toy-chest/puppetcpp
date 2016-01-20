@@ -38,8 +38,6 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto local_scope = _context.create_local_scope(scope);
         auto& current_scope = _context.current_scope();
 
-        evaluation::evaluator evaluator { _context };
-
         bool has_optional_parameters = false;
         for (size_t i = 0; i < _parameters.size(); ++i) {
             auto const& parameter = _parameters[i];
@@ -59,7 +57,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     captured.reserve(arguments.size() - i);
                     captured.insert(captured.end(), std::make_move_iterator(arguments.begin() + i), std::make_move_iterator(arguments.end()));
                 } else if (parameter.default_value) {
-                    captured.emplace_back(evaluator.evaluate(*parameter.default_value));
+                    captured.emplace_back(evaluate_default_value(*parameter.default_value));
                 }
                 value = rvalue_cast(captured);
             } else {
@@ -84,7 +82,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                         throw evaluation_exception((boost::format("parameter $%1% is required but no value was given.") % name).str(), parameter.variable);
                     }
 
-                    value = evaluator.evaluate(*parameter.default_value);
+                    value = evaluate_default_value(*parameter.default_value);
 
                     // Verify the value matches the parameter type
                     validate_parameter_type(parameter, value, [&](string message) {
@@ -106,8 +104,6 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto local_scope = _context.create_local_scope(scope);
         auto& current_scope = _context.current_scope();
 
-        evaluation::evaluator evaluator { _context };
-
         // Set any default parameters that do not have arguments
         for (auto const& parameter : _parameters) {
             auto const& name = parameter.variable.name;
@@ -123,7 +119,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
 
             // Evaluate the default value expression
-            auto value = evaluator.evaluate(*parameter.default_value);
+            auto value = evaluate_default_value(*parameter.default_value);
 
             // Verify the value matches the parameter type
             validate_parameter_type(parameter, value, [&](string message) {
@@ -180,8 +176,6 @@ namespace puppet { namespace compiler { namespace evaluation {
             name = attribute->shared_value();
         }
         scope->set("name", rvalue_cast(name), resource.context());
-
-        evaluation::evaluator evaluator { _context };
 
         // Verify the resource's attributes
         resource.each_attribute([&](compiler::attribute const& attribute) {
@@ -240,7 +234,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 }
 
                 // Evaluate the default value expression
-                value = std::make_shared<values::value>(evaluator.evaluate(*parameter.default_value));
+                value = std::make_shared<values::value>(evaluate_default_value(*parameter.default_value));
                 context = parameter.default_value->context();
 
                 // Set the parameter as an attribute on the resource
@@ -271,7 +265,9 @@ namespace puppet { namespace compiler { namespace evaluation {
             return;
         }
 
+        // Create a new match scope in case the type expression assigns match variables
         evaluation::evaluator evaluator { _context };
+        auto match_scope = _context.create_match_scope();
 
         // Verify the value matches the parameter type
         auto result = evaluator.evaluate(*parameter.type);
@@ -296,6 +292,15 @@ namespace puppet { namespace compiler { namespace evaluation {
             result = evaluator.evaluate(expression, i < (_body.size() - 1));
         }
         return result;
+    }
+
+    values::value call_evaluator::evaluate_default_value(ast::expression const& expression) const
+    {
+        // Create a new match scope in case the default value assigns match variables
+        evaluation::evaluator evaluator { _context };
+        auto match_scope = _context.create_match_scope();
+
+        return evaluator.evaluate(expression);
     }
 
 }}}  // puppet::compiler::evaluation
