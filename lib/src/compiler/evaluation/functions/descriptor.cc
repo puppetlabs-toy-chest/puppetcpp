@@ -204,22 +204,6 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
     void descriptor::check_parameter_types(call_context const& context, vector<dispatch_descriptor const*> const& invocable) const
     {
-        struct indirect_hasher
-        {
-            size_t operator()(values::type const* type) const
-            {
-                return hash_value(*type);
-            }
-        };
-
-        struct indirect_comparer
-        {
-            bool operator()(values::type const* right, values::type const* left) const
-            {
-                return *right == *left;
-            }
-        };
-
         // Determine the first (lowest index) argument with a type mismatch
         int64_t min_argument_mismatch = -1;
         for (auto descriptor : invocable) {
@@ -230,38 +214,22 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         }
 
         // Number of arguments and block parameters is correct; the problem lies with one of the argument's type
-        // This determines the set of possible types for the first
-        vector<values::type const*> types;
-        unordered_set<values::type const*, indirect_hasher, indirect_comparer> type_set;
-
+        // Build a set of expected types
+        values::type_set set;
         for (auto& descriptor : invocable) {
             auto type = descriptor->signature.parameter_type(min_argument_mismatch);
-            if (!type || !type_set.emplace(type).second) {
+            if (!type) {
                 continue;
             }
-            types.emplace_back(type);
+            set.add(*type);
         }
-        if (types.empty()) {
+        if (set.empty()) {
             return;
-        }
-        ostringstream type_message;
-        auto count = types.size();
-        for (size_t i = 0; i < count; ++i) {
-            if (i > 0) {
-                if (count > 2) {
-                    type_message << ",";
-                }
-                type_message << " ";
-            }
-            if (count != 0 && i == (count - 1)) {
-                type_message << "or ";
-            }
-            type_message << *types[i];
         }
         throw evaluation_exception(
             (boost::format("function '%1%' expects %2% but was given %3%.") %
              _name %
-             type_message.str() %
+             set %
              context.argument(min_argument_mismatch).get_type()
             ).str(),
             context.argument_context(min_argument_mismatch));

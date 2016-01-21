@@ -100,4 +100,60 @@ namespace puppet { namespace runtime { namespace values {
         return hash_value(type.get());
     }
 
+    void type_set::add(values::type const& type)
+    {
+        if (_set.emplace(&type).second) {
+            _types.emplace_back(&type);
+        }
+    }
+
+    void type_set::clear()
+    {
+        _types.clear();
+        _set.clear();
+    }
+
+    bool type_set::empty() const
+    {
+        return _types.empty();
+    }
+
+    size_t type_set::size() const
+    {
+        return _types.size();
+    }
+
+    type const& type_set::operator[](size_t index) const
+    {
+        return *_types[index];
+    }
+
+    size_t type_set::indirect_hasher::operator()(values::type const* type) const
+    {
+        return hash_value(*type);
+    }
+
+    bool type_set::indirect_comparer::operator()(type const* right, type const* left) const
+    {
+        return *right == *left;
+    }
+
+    ostream& operator<<(ostream& os, type_set const& set)
+    {
+        auto count = set.size();
+        for (size_t i = 0; i < count; ++i) {
+            if (i > 0) {
+                if (count > 2) {
+                    os << ",";
+                }
+                os << " ";
+                if (i == (count - 1)) {
+                    os << "or ";
+                }
+            }
+            os << set[i];
+        }
+        return os;
+    }
+
 }}}  // namespace puppet::runtime::values

@@ -4,6 +4,8 @@
 #include <puppet/compiler/evaluation/interpolator.hpp>
 #include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
+#include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
+#include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/assignment.hpp>
 #include <puppet/compiler/evaluation/operators/divide.hpp>
 #include <puppet/compiler/evaluation/operators/equals.hpp>
@@ -31,6 +33,7 @@
 
 using namespace std;
 using namespace puppet::compiler::ast;
+using namespace puppet::compiler::evaluation::operators;
 using namespace puppet::runtime;
 using namespace puppet::runtime::values;
 
@@ -524,20 +527,27 @@ namespace puppet { namespace compiler { namespace evaluation {
             { ast::unary_operator::splat,       operators::splat() }
         };
 
+        auto operand = evaluate(expression.operand);
+
         auto it = unary_operators.find(expression.operator_);
         if (it == unary_operators.end()) {
-            throw evaluation_exception(
-                (boost::format("unspported unary operator '%1%'.") %
-                 expression.operator_
-                ).str(),
+            auto operand_context = expression.operand.context();
+
+            // TODO: use only the dispatcher once all operators have been ported
+            unary::call_context context{
+                _context,
+                expression.operator_,
                 ast::context{
                     expression.operator_position,
-                    lexer::position{expression.operator_position.offset() + 1, expression.operator_position.line()},
-                    expression.context().tree
-                });
+                    lexer::position{ expression.operator_position.offset() + 1, expression.operator_position.line() },
+                    operand_context.tree
+                },
+                operand,
+                operand_context
+            };
+            return _context.dispatcher().dispatch(context);
         }
 
-        auto operand = evaluate(expression.operand);
         operators::unary_operator_context context{ _context, operand, expression.operand.context() };
         return it->second(context);
     }
@@ -937,15 +947,22 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         auto it = binary_operators.find(operation.operator_);
         if (it == binary_operators.end()) {
-            throw evaluation_exception(
-                (boost::format("unsupported binary operator '%1%' in binary expression.") %
-                 operation.operator_
-                ).str(),
+            // TODO: use only the dispatcher once all operators have been ported
+            binary::call_context context{
+                _context,
+                operation.operator_,
                 ast::context{
                     operation.operator_position,
                     lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
                     left_context.tree
-                });
+                },
+                left,
+                left_context,
+                right,
+                operation.operand.context()
+            };
+            left = _context.dispatcher().dispatch(context);
+            return;
         }
 
         operators::binary_operator_context context{ _context, left, left_context, right, operation.operand.context() };

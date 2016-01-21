@@ -25,15 +25,18 @@
 #include <puppet/compiler/evaluation/functions/versioncmp.hpp>
 #include <puppet/compiler/evaluation/functions/warning.hpp>
 #include <puppet/compiler/evaluation/functions/with.hpp>
+#include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
+#include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
+using namespace puppet::compiler::evaluation::operators;
 
 namespace puppet { namespace compiler { namespace evaluation {
 
-    void dispatcher::add_builtin_functions()
+    void dispatcher::add_builtins()
     {
         // Add the built-in functions
         add(functions::alert::create_descriptor());
@@ -77,6 +80,28 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
     }
 
+    void dispatcher::add(binary::descriptor descriptor)
+    {
+        if (!descriptor.dispatchable()) {
+            throw runtime_error("cannot add a binary operator that is not dispatchable to the dispatcher.");
+        }
+        if (find(descriptor.oper())) {
+            throw runtime_error((boost::format("operator '%1%' already exists in the dispatcher.") % descriptor.oper()).str());
+        }
+        _binary_operators.emplace_back(rvalue_cast(descriptor));
+    }
+
+    void dispatcher::add(unary::descriptor descriptor)
+    {
+        if (!descriptor.dispatchable()) {
+            throw runtime_error("cannot add a unary operator that is not dispatchable to the dispatcher.");
+        }
+        if (find(descriptor.oper())) {
+            throw runtime_error((boost::format("operator '%1%' already exists in the dispatcher.") % descriptor.oper()).str());
+        }
+        _unary_operators.emplace_back(rvalue_cast(descriptor));
+    }
+
     functions::descriptor* dispatcher::find(string const& name)
     {
         return const_cast<functions::descriptor*>(static_cast<dispatcher const*>(this)->find(name));
@@ -91,12 +116,60 @@ namespace puppet { namespace compiler { namespace evaluation {
         return &it->second;
     }
 
+    binary::descriptor* dispatcher::find(ast::binary_operator oper)
+    {
+        return const_cast<binary::descriptor*>(static_cast<dispatcher const*>(this)->find(oper));
+    }
+
+    binary::descriptor const* dispatcher::find(ast::binary_operator oper) const
+    {
+        auto it = std::find_if(_binary_operators.begin(), _binary_operators.end(), [=](auto const& descriptor) { return descriptor.oper() == oper; });
+        if (it == _binary_operators.end()) {
+            return nullptr;
+        }
+        return &*it;
+    }
+
+    unary::descriptor* dispatcher::find(ast::unary_operator oper)
+    {
+        return const_cast<unary::descriptor*>(static_cast<dispatcher const*>(this)->find(oper));
+    }
+
+    unary::descriptor const* dispatcher::find(ast::unary_operator oper) const
+    {
+        auto it = std::find_if(_unary_operators.begin(), _unary_operators.end(), [=](auto const& descriptor) { return descriptor.oper() == oper; });
+        if (it == _unary_operators.end()) {
+            return nullptr;
+        }
+        return &*it;
+    }
+
     values::value dispatcher::dispatch(functions::call_context& context) const
     {
         // Find the requested function
         auto descriptor = find(context.name().value);
         if (!descriptor) {
             throw evaluation_exception((boost::format("unknown function '%1%'.") % context.name()).str(), context.name());
+        }
+        return descriptor->dispatch(context);
+    }
+
+    values::value dispatcher::dispatch(binary::call_context& context) const
+    {
+        // Find the requested function
+        auto descriptor = find(context.oper());
+        if (!descriptor) {
+            throw evaluation_exception((boost::format("unknown binary operator '%1%'.") % context.oper()).str(), context.operator_context());
+        }
+        return descriptor->dispatch(context);
+    }
+
+    values::value dispatcher::dispatch(unary::call_context& context) const
+    {
+        // Find the requested function
+        auto descriptor = find(context.oper());
+        if (!descriptor) {
+            throw evaluation_exception((boost::format("unknown unary operator '%1%'.") % context.oper()).str(), context.operator_context());
         }
         return descriptor->dispatch(context);
     }
