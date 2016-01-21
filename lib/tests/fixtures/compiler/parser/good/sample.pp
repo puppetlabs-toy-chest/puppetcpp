@@ -275,3 +275,12 @@ define dt_ref_param($param1, $param2 = "${param1}bar") {
 dt_ref_param { foo:
     param1 => foo
 }
+
+class param_math_scope($a = foo =~ /foo/, $b = $0) {
+}
+
+include param_math_scope
+
+unless $param_math_scope::a == true and $param_math_scope::b == undef {
+    fail incorrect
+}

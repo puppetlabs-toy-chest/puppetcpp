@@ -6174,3 +6174,168 @@ statements:
                 offset: 4240
                 line: 276
               value: foo
+  - kind: class
+    begin:
+      offset: 4244
+      line: 279
+    end:
+      offset: 4298
+      line: 280
+    name:
+      kind: name
+      begin:
+        offset: 4250
+        line: 279
+      end:
+        offset: 4266
+        line: 279
+      value: param_math_scope
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 4267
+            line: 279
+          end:
+            offset: 4269
+            line: 279
+          name: a
+        default_value:
+          kind: binary
+          first:
+            kind: name
+            begin:
+              offset: 4272
+              line: 279
+            end:
+              offset: 4275
+              line: 279
+            value: foo
+          operations:
+            - operator_position:
+                offset: 4276
+                line: 279
+              operator: =~
+              operand:
+                kind: regex
+                begin:
+                  offset: 4279
+                  line: 279
+                end:
+                  offset: 4284
+                  line: 279
+                value: foo
+      - variable:
+          kind: variable
+          begin:
+            offset: 4286
+            line: 279
+          end:
+            offset: 4288
+            line: 279
+          name: b
+        default_value:
+          kind: variable
+          begin:
+            offset: 4291
+            line: 279
+          end:
+            offset: 4293
+            line: 279
+          name: 0
+  - kind: function call
+    function:
+      kind: name
+      begin:
+        offset: 4300
+        line: 282
+      end:
+        offset: 4307
+        line: 282
+      value: include
+    arguments:
+      - kind: name
+        begin:
+          offset: 4308
+          line: 282
+        end:
+          offset: 4324
+          line: 282
+        value: param_math_scope
+  - kind: unless
+    begin:
+      offset: 4326
+      line: 284
+    end:
+      offset: 4418
+      line: 286
+    conditional:
+      kind: binary
+      first:
+        kind: variable
+        begin:
+          offset: 4333
+          line: 284
+        end:
+          offset: 4353
+          line: 284
+        name: param_math_scope::a
+      operations:
+        - operator_position:
+            offset: 4354
+            line: 284
+          operator: ==
+          operand:
+            kind: boolean
+            begin:
+              offset: 4357
+              line: 284
+            end:
+              offset: 4361
+              line: 284
+            value: true
+        - operator_position:
+            offset: 4362
+            line: 284
+          operator: and
+          operand:
+            kind: variable
+            begin:
+              offset: 4366
+              line: 284
+            end:
+              offset: 4386
+              line: 284
+            name: param_math_scope::b
+        - operator_position:
+            offset: 4387
+            line: 284
+          operator: ==
+          operand:
+            kind: undef
+            begin:
+              offset: 4390
+              line: 284
+            end:
+              offset: 4395
+              line: 284
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 4402
+            line: 285
+          end:
+            offset: 4406
+            line: 285
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 4407
+              line: 285
+            end:
+              offset: 4416
+              line: 285
+            value: incorrect

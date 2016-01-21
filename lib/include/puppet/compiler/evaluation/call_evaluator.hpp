@@ -86,6 +86,7 @@ namespace puppet { namespace compiler { namespace evaluation {
      private:
         void validate_parameter_type(ast::parameter const& parameter, runtime::values::value const& value, std::function<void(std::string)> const& error) const;
         runtime::values::value evaluate_body() const;
+        runtime::values::value evaluate_default_value(ast::expression const& expression) const;
 
         evaluation::context& _context;
         std::vector<ast::parameter> const& _parameters;
