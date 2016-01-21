@@ -2364,7 +2364,7 @@ namespace puppet { namespace compiler { namespace ast {
          * @param path The path to the file that was parsed.
          * @param module The module that owns the AST.
          */
-        explicit syntax_tree(std::string path, compiler::module const* module);
+        syntax_tree(std::string path, compiler::module const* module);
 
      private:
         std::shared_ptr<std::string> _path;
