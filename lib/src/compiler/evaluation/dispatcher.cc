@@ -26,6 +26,7 @@
 #include <puppet/compiler/evaluation/functions/warning.hpp>
 #include <puppet/compiler/evaluation/functions/with.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
+#include <puppet/compiler/evaluation/operators/binary/assignment.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
@@ -64,6 +65,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::versioncmp::create_descriptor());
         add(functions::warning::create_descriptor());
         add(functions::with::create_descriptor());
+
+        // Add the built-in binary operators
+        add(binary::assignment::create_descriptor());
     }
 
     void dispatcher::add(functions::descriptor descriptor)

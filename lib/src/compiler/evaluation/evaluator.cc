@@ -6,7 +6,6 @@
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
-#include <puppet/compiler/evaluation/operators/assignment.hpp>
 #include <puppet/compiler/evaluation/operators/divide.hpp>
 #include <puppet/compiler/evaluation/operators/equals.hpp>
 #include <puppet/compiler/evaluation/operators/greater.hpp>
@@ -920,7 +919,6 @@ namespace puppet { namespace compiler { namespace evaluation {
         ast::binary_operation const& operation)
     {
         static const unordered_map<binary_operator, function<value(operators::binary_operator_context const&)>, boost::hash<binary_operator>> binary_operators = {
-            { ast::binary_operator::assignment,         operators::assignment() },
             { ast::binary_operator::divide,             operators::divide() },
             { ast::binary_operator::equals,             operators::equals() },
             { ast::binary_operator::greater_than,       operators::greater() },

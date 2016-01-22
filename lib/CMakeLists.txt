@@ -44,11 +44,11 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/versioncmp.cc
     src/compiler/evaluation/functions/warning.cc
     src/compiler/evaluation/functions/with.cc
+    src/compiler/evaluation/operators/binary/assignment.cc
     src/compiler/evaluation/operators/binary/call_context.cc
     src/compiler/evaluation/operators/binary/descriptor.cc
     src/compiler/evaluation/operators/unary/call_context.cc
     src/compiler/evaluation/operators/unary/descriptor.cc
-    src/compiler/evaluation/operators/assignment.cc
     src/compiler/evaluation/operators/binary_operator_context.cc
     src/compiler/evaluation/operators/divide.cc
     src/compiler/evaluation/operators/equals.cc
