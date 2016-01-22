@@ -47,10 +47,10 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/binary/assignment.cc
     src/compiler/evaluation/operators/binary/call_context.cc
     src/compiler/evaluation/operators/binary/descriptor.cc
+    src/compiler/evaluation/operators/binary/divide.cc
     src/compiler/evaluation/operators/unary/call_context.cc
     src/compiler/evaluation/operators/unary/descriptor.cc
     src/compiler/evaluation/operators/binary_operator_context.cc
-    src/compiler/evaluation/operators/divide.cc
     src/compiler/evaluation/operators/equals.cc
     src/compiler/evaluation/operators/greater.cc
     src/compiler/evaluation/operators/greater_equal.cc

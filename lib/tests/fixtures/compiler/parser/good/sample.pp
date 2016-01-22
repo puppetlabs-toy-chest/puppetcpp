@@ -284,3 +284,23 @@ include param_math_scope
 unless $param_math_scope::a == true and $param_math_scope::b == undef {
     fail incorrect
 }
+
+# Operator tests
+if 2 / 2 != 1 {
+    fail incorrect
+}
+if 1 / 2 != 0 {
+    fail incorrect
+}
+if 1 / 2.0 != 0.5 {
+    fail incorrect
+}
+if 2.0 / 1.0 != 2.0 {
+    fail incorrect
+}
+if 1.0 / 5.0 != 0.2 {
+    fail incorrect
+}
+if 1.0 / 5 != 0.2 {
+    fail incorrect
+}
