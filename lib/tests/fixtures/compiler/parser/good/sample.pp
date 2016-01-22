@@ -304,3 +304,49 @@ if 1.0 / 5.0 != 0.2 {
 if 1.0 / 5 != 0.2 {
     fail incorrect
 }
+
+if 1 > 2 {
+    fail incorrect
+}
+unless 2 > 1 {
+    fail incorrect
+}
+if 1 > 1 {
+    fail incorrect
+}
+if 3.0 > 4 {
+    fail incorrect
+}
+unless 4 > 3.0 {
+    fail incorrect
+}
+if 3.0 > 3 {
+    fail incorrect
+}
+if 3.0 > 4.0 {
+    fail incorrect
+}
+unless 4.0 > 3.0 {
+    fail incorrect
+}
+if 3.0 > 3.0 {
+    fail incorrect
+}
+if bar > foo {
+    fail incorrect
+}
+unless foo > bar {
+    fail incorrect
+}
+if foo > foo {
+    fail incorrect
+}
+if String > String[0, 0] {
+    fail incorrect
+}
+unless String[0, 0] > String {
+    fail incorrect
+}
+if String[0, 0] > String[0, 0] {
+    fail incorrect
+}
