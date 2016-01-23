@@ -30,6 +30,7 @@
 #include <puppet/compiler/evaluation/operators/binary/divide.hpp>
 #include <puppet/compiler/evaluation/operators/binary/equals.hpp>
 #include <puppet/compiler/evaluation/operators/binary/greater.hpp>
+#include <puppet/compiler/evaluation/operators/binary/greater_equal.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
@@ -74,6 +75,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(binary::divide::create_descriptor());
         add(binary::equals::create_descriptor());
         add(binary::greater::create_descriptor());
+        add(binary::greater_equal::create_descriptor());
     }
 
     void dispatcher::add(functions::descriptor descriptor)

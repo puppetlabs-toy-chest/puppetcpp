@@ -7661,3 +7661,917 @@ statements:
               offset: 5261
               line: 351
             value: incorrect
+  - kind: if
+    begin:
+      offset: 5265
+      line: 354
+    end:
+      offset: 5297
+      line: 356
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5268
+          line: 354
+        end:
+          offset: 5269
+          line: 354
+        base: decimal
+        value: 1
+      operations:
+        - operator_position:
+            offset: 5270
+            line: 354
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5273
+              line: 354
+            end:
+              offset: 5274
+              line: 354
+            base: decimal
+            value: 2
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5281
+            line: 355
+          end:
+            offset: 5285
+            line: 355
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5286
+              line: 355
+            end:
+              offset: 5295
+              line: 355
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5298
+      line: 357
+    end:
+      offset: 5334
+      line: 359
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5305
+          line: 357
+        end:
+          offset: 5306
+          line: 357
+        base: decimal
+        value: 2
+      operations:
+        - operator_position:
+            offset: 5307
+            line: 357
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5310
+              line: 357
+            end:
+              offset: 5311
+              line: 357
+            base: decimal
+            value: 1
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5318
+            line: 358
+          end:
+            offset: 5322
+            line: 358
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5323
+              line: 358
+            end:
+              offset: 5332
+              line: 358
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5335
+      line: 360
+    end:
+      offset: 5371
+      line: 362
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5342
+          line: 360
+        end:
+          offset: 5343
+          line: 360
+        base: decimal
+        value: 1
+      operations:
+        - operator_position:
+            offset: 5344
+            line: 360
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5347
+              line: 360
+            end:
+              offset: 5348
+              line: 360
+            base: decimal
+            value: 1
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5355
+            line: 361
+          end:
+            offset: 5359
+            line: 361
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5360
+              line: 361
+            end:
+              offset: 5369
+              line: 361
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 5372
+      line: 363
+    end:
+      offset: 5406
+      line: 365
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5375
+          line: 363
+        end:
+          offset: 5378
+          line: 363
+        base: decimal
+        value: 3
+      operations:
+        - operator_position:
+            offset: 5379
+            line: 363
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5382
+              line: 363
+            end:
+              offset: 5383
+              line: 363
+            base: decimal
+            value: 4
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5390
+            line: 364
+          end:
+            offset: 5394
+            line: 364
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5395
+              line: 364
+            end:
+              offset: 5404
+              line: 364
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5407
+      line: 366
+    end:
+      offset: 5445
+      line: 368
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5414
+          line: 366
+        end:
+          offset: 5415
+          line: 366
+        base: decimal
+        value: 4
+      operations:
+        - operator_position:
+            offset: 5416
+            line: 366
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5419
+              line: 366
+            end:
+              offset: 5422
+              line: 366
+            base: decimal
+            value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5429
+            line: 367
+          end:
+            offset: 5433
+            line: 367
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5434
+              line: 367
+            end:
+              offset: 5443
+              line: 367
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5446
+      line: 369
+    end:
+      offset: 5484
+      line: 371
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5453
+          line: 369
+        end:
+          offset: 5456
+          line: 369
+        base: decimal
+        value: 3
+      operations:
+        - operator_position:
+            offset: 5457
+            line: 369
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5460
+              line: 369
+            end:
+              offset: 5461
+              line: 369
+            base: decimal
+            value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5468
+            line: 370
+          end:
+            offset: 5472
+            line: 370
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5473
+              line: 370
+            end:
+              offset: 5482
+              line: 370
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 5485
+      line: 372
+    end:
+      offset: 5521
+      line: 374
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5488
+          line: 372
+        end:
+          offset: 5491
+          line: 372
+        base: decimal
+        value: 3
+      operations:
+        - operator_position:
+            offset: 5492
+            line: 372
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5495
+              line: 372
+            end:
+              offset: 5498
+              line: 372
+            base: decimal
+            value: 4
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5505
+            line: 373
+          end:
+            offset: 5509
+            line: 373
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5510
+              line: 373
+            end:
+              offset: 5519
+              line: 373
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5522
+      line: 375
+    end:
+      offset: 5562
+      line: 377
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5529
+          line: 375
+        end:
+          offset: 5532
+          line: 375
+        base: decimal
+        value: 4
+      operations:
+        - operator_position:
+            offset: 5533
+            line: 375
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5536
+              line: 375
+            end:
+              offset: 5539
+              line: 375
+            base: decimal
+            value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5546
+            line: 376
+          end:
+            offset: 5550
+            line: 376
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5551
+              line: 376
+            end:
+              offset: 5560
+              line: 376
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5563
+      line: 378
+    end:
+      offset: 5603
+      line: 380
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 5570
+          line: 378
+        end:
+          offset: 5573
+          line: 378
+        base: decimal
+        value: 3
+      operations:
+        - operator_position:
+            offset: 5574
+            line: 378
+          operator: ">="
+          operand:
+            kind: number
+            begin:
+              offset: 5577
+              line: 378
+            end:
+              offset: 5580
+              line: 378
+            base: decimal
+            value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5587
+            line: 379
+          end:
+            offset: 5591
+            line: 379
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5592
+              line: 379
+            end:
+              offset: 5601
+              line: 379
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 5604
+      line: 381
+    end:
+      offset: 5640
+      line: 383
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 5607
+          line: 381
+        end:
+          offset: 5610
+          line: 381
+        value: bar
+      operations:
+        - operator_position:
+            offset: 5611
+            line: 381
+          operator: ">="
+          operand:
+            kind: name
+            begin:
+              offset: 5614
+              line: 381
+            end:
+              offset: 5617
+              line: 381
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5624
+            line: 382
+          end:
+            offset: 5628
+            line: 382
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5629
+              line: 382
+            end:
+              offset: 5638
+              line: 382
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5641
+      line: 384
+    end:
+      offset: 5681
+      line: 386
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 5648
+          line: 384
+        end:
+          offset: 5651
+          line: 384
+        value: foo
+      operations:
+        - operator_position:
+            offset: 5652
+            line: 384
+          operator: ">="
+          operand:
+            kind: name
+            begin:
+              offset: 5655
+              line: 384
+            end:
+              offset: 5658
+              line: 384
+            value: bar
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5665
+            line: 385
+          end:
+            offset: 5669
+            line: 385
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5670
+              line: 385
+            end:
+              offset: 5679
+              line: 385
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5682
+      line: 387
+    end:
+      offset: 5722
+      line: 389
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 5689
+          line: 387
+        end:
+          offset: 5692
+          line: 387
+        value: foo
+      operations:
+        - operator_position:
+            offset: 5693
+            line: 387
+          operator: ">="
+          operand:
+            kind: name
+            begin:
+              offset: 5696
+              line: 387
+            end:
+              offset: 5699
+              line: 387
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5706
+            line: 388
+          end:
+            offset: 5710
+            line: 388
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5711
+              line: 388
+            end:
+              offset: 5720
+              line: 388
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 5723
+      line: 390
+    end:
+      offset: 5771
+      line: 392
+    conditional:
+      kind: binary
+      first:
+        kind: type
+        begin:
+          offset: 5726
+          line: 390
+        end:
+          offset: 5732
+          line: 390
+        name: String
+      operations:
+        - operator_position:
+            offset: 5733
+            line: 390
+          operator: ">="
+          operand:
+            kind: postfix
+            primary:
+              kind: type
+              begin:
+                offset: 5736
+                line: 390
+              end:
+                offset: 5742
+                line: 390
+              name: String
+            subexpressions:
+              - kind: access
+                begin:
+                  offset: 5742
+                  line: 390
+                end:
+                  offset: 5748
+                  line: 390
+                arguments:
+                  - kind: number
+                    begin:
+                      offset: 5743
+                      line: 390
+                    end:
+                      offset: 5744
+                      line: 390
+                    base: decimal
+                    value: 0
+                  - kind: number
+                    begin:
+                      offset: 5746
+                      line: 390
+                    end:
+                      offset: 5747
+                      line: 390
+                    base: decimal
+                    value: 0
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5755
+            line: 391
+          end:
+            offset: 5759
+            line: 391
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5760
+              line: 391
+            end:
+              offset: 5769
+              line: 391
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5772
+      line: 393
+    end:
+      offset: 5824
+      line: 395
+    conditional:
+      kind: binary
+      first:
+        kind: postfix
+        primary:
+          kind: type
+          begin:
+            offset: 5779
+            line: 393
+          end:
+            offset: 5785
+            line: 393
+          name: String
+        subexpressions:
+          - kind: access
+            begin:
+              offset: 5785
+              line: 393
+            end:
+              offset: 5791
+              line: 393
+            arguments:
+              - kind: number
+                begin:
+                  offset: 5786
+                  line: 393
+                end:
+                  offset: 5787
+                  line: 393
+                base: decimal
+                value: 0
+              - kind: number
+                begin:
+                  offset: 5789
+                  line: 393
+                end:
+                  offset: 5790
+                  line: 393
+                base: decimal
+                value: 0
+      operations:
+        - operator_position:
+            offset: 5792
+            line: 393
+          operator: ">="
+          operand:
+            kind: type
+            begin:
+              offset: 5795
+              line: 393
+            end:
+              offset: 5801
+              line: 393
+            name: String
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5808
+            line: 394
+          end:
+            offset: 5812
+            line: 394
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5813
+              line: 394
+            end:
+              offset: 5822
+              line: 394
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 5825
+      line: 396
+    end:
+      offset: 5883
+      line: 398
+    conditional:
+      kind: binary
+      first:
+        kind: postfix
+        primary:
+          kind: type
+          begin:
+            offset: 5832
+            line: 396
+          end:
+            offset: 5838
+            line: 396
+          name: String
+        subexpressions:
+          - kind: access
+            begin:
+              offset: 5838
+              line: 396
+            end:
+              offset: 5844
+              line: 396
+            arguments:
+              - kind: number
+                begin:
+                  offset: 5839
+                  line: 396
+                end:
+                  offset: 5840
+                  line: 396
+                base: decimal
+                value: 0
+              - kind: number
+                begin:
+                  offset: 5842
+                  line: 396
+                end:
+                  offset: 5843
+                  line: 396
+                base: decimal
+                value: 0
+      operations:
+        - operator_position:
+            offset: 5845
+            line: 396
+          operator: ">="
+          operand:
+            kind: postfix
+            primary:
+              kind: type
+              begin:
+                offset: 5848
+                line: 396
+              end:
+                offset: 5854
+                line: 396
+              name: String
+            subexpressions:
+              - kind: access
+                begin:
+                  offset: 5854
+                  line: 396
+                end:
+                  offset: 5860
+                  line: 396
+                arguments:
+                  - kind: number
+                    begin:
+                      offset: 5855
+                      line: 396
+                    end:
+                      offset: 5856
+                      line: 396
+                    base: decimal
+                    value: 0
+                  - kind: number
+                    begin:
+                      offset: 5858
+                      line: 396
+                    end:
+                      offset: 5859
+                      line: 396
+                    base: decimal
+                    value: 0
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 5867
+            line: 397
+          end:
+            offset: 5871
+            line: 397
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 5872
+              line: 397
+            end:
+              offset: 5881
+              line: 397
+            value: incorrect
