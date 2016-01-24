@@ -36,6 +36,7 @@
 #include <puppet/compiler/evaluation/operators/binary/less.hpp>
 #include <puppet/compiler/evaluation/operators/binary/less_equal.hpp>
 #include <puppet/compiler/evaluation/operators/binary/logical_and.hpp>
+#include <puppet/compiler/evaluation/operators/binary/logical_or.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/logical_not.hpp>
 #include <puppet/compiler/exceptions.hpp>
@@ -87,6 +88,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(binary::less::create_descriptor());
         add(binary::less_equal::create_descriptor());
         add(binary::logical_and::create_descriptor());
+        add(binary::logical_or::create_descriptor());
 
         // Add the built-in unary operators
         add(unary::logical_not::create_descriptor());

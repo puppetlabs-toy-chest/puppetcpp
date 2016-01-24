@@ -564,3 +564,16 @@ if !true {
 unless !false {
     fail incorrect
 }
+
+if false or false {
+    fail incorrect
+}
+unless false or true {
+    fail incorrect
+}
+unless true or false {
+    fail incorrect
+}
+unless true or true {
+    fail incorrect
+}
