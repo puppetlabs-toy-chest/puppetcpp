@@ -557,3 +557,10 @@ if true and false {
 unless true and true {
     fail incorrect
 }
+
+if !true {
+    fail incorrect
+}
+unless !false {
+    fail incorrect
+}

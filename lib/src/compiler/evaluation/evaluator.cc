@@ -6,7 +6,6 @@
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
-#include <puppet/compiler/evaluation/operators/logical_not.hpp>
 #include <puppet/compiler/evaluation/operators/logical_or.hpp>
 #include <puppet/compiler/evaluation/operators/match.hpp>
 #include <puppet/compiler/evaluation/operators/minus.hpp>
@@ -513,7 +512,6 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         static const unordered_map<ast::unary_operator, function<value(operators::unary_operator_context const&)>, boost::hash<unary_operator>> unary_operators = {
             { ast::unary_operator::negate,      operators::negate() },
-            { ast::unary_operator::logical_not, operators::logical_not() },
             { ast::unary_operator::splat,       operators::splat() }
         };
 

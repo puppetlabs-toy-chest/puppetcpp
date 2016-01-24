@@ -12050,3 +12050,87 @@ statements:
               offset: 8143
               line: 558
             value: incorrect
+  - kind: if
+    begin:
+      offset: 8147
+      line: 561
+    end:
+      offset: 8178
+      line: 563
+    conditional:
+      kind: unary
+      operator_position:
+        offset: 8150
+        line: 561
+      operator: "!"
+      operand:
+        kind: boolean
+        begin:
+          offset: 8151
+          line: 561
+        end:
+          offset: 8155
+          line: 561
+        value: true
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8162
+            line: 562
+          end:
+            offset: 8166
+            line: 562
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8167
+              line: 562
+            end:
+              offset: 8176
+              line: 562
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 8179
+      line: 564
+    end:
+      offset: 8215
+      line: 566
+    conditional:
+      kind: unary
+      operator_position:
+        offset: 8186
+        line: 564
+      operator: "!"
+      operand:
+        kind: boolean
+        begin:
+          offset: 8187
+          line: 564
+        end:
+          offset: 8192
+          line: 564
+        value: false
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8199
+            line: 565
+          end:
+            offset: 8203
+            line: 565
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8204
+              line: 565
+            end:
+              offset: 8213
+              line: 565
+            value: incorrect
