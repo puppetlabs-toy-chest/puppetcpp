@@ -671,3 +671,16 @@ if 13 % 9 != 4 {
 if 1044 % 22 != 10 {
     fail incorrect
 }
+
+if 2 * 2 != 4 {
+    fail incorrect
+}
+if 2 * 3.0 != 6.0 {
+    fail incorrect
+}
+if 2.0 * 5 != 10.0 {
+    fail incorrect
+}
+if 3.0 * 5.0 != 15.0 {
+    fail incorrect
+}
