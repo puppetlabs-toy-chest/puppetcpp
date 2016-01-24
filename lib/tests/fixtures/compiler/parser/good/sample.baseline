@@ -9595,3 +9595,422 @@ statements:
               offset: 6539
               line: 437
             value: incorrect
+  - kind: unless
+    begin:
+      offset: 6543
+      line: 440
+    end:
+      offset: 6584
+      line: 442
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6550
+          line: 440
+        end:
+          offset: 6551
+          line: 440
+        base: decimal
+        value: 1
+      operations:
+        - operator_position:
+            offset: 6552
+            line: 440
+          operator: <<
+          operand:
+            kind: number
+            begin:
+              offset: 6555
+              line: 440
+            end:
+              offset: 6556
+              line: 440
+            base: decimal
+            value: 3
+        - operator_position:
+            offset: 6557
+            line: 440
+          operator: ==
+          operand:
+            kind: number
+            begin:
+              offset: 6560
+              line: 440
+            end:
+              offset: 6561
+              line: 440
+            base: decimal
+            value: 8
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6568
+            line: 441
+          end:
+            offset: 6572
+            line: 441
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6573
+              line: 441
+            end:
+              offset: 6582
+              line: 441
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 6585
+      line: 443
+    end:
+      offset: 6629
+      line: 445
+    conditional:
+      kind: binary
+      first:
+        kind: unary
+        operator_position:
+          offset: 6592
+          line: 443
+        operator: "-"
+        operand:
+          kind: number
+          begin:
+            offset: 6593
+            line: 443
+          end:
+            offset: 6594
+            line: 443
+          base: decimal
+          value: 8
+      operations:
+        - operator_position:
+            offset: 6595
+            line: 443
+          operator: <<
+          operand:
+            kind: unary
+            operator_position:
+              offset: 6598
+              line: 443
+            operator: "-"
+            operand:
+              kind: number
+              begin:
+                offset: 6599
+                line: 443
+              end:
+                offset: 6600
+                line: 443
+              base: decimal
+              value: 3
+        - operator_position:
+            offset: 6601
+            line: 443
+          operator: ==
+          operand:
+            kind: unary
+            operator_position:
+              offset: 6604
+              line: 443
+            operator: "-"
+            operand:
+              kind: number
+              begin:
+                offset: 6605
+                line: 443
+              end:
+                offset: 6606
+                line: 443
+              base: decimal
+              value: 1
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6613
+            line: 444
+          end:
+            offset: 6617
+            line: 444
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6618
+              line: 444
+            end:
+              offset: 6627
+              line: 444
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 6630
+      line: 446
+    end:
+      offset: 6672
+      line: 448
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6637
+          line: 446
+        end:
+          offset: 6638
+          line: 446
+        base: decimal
+        value: 8
+      operations:
+        - operator_position:
+            offset: 6639
+            line: 446
+          operator: <<
+          operand:
+            kind: unary
+            operator_position:
+              offset: 6642
+              line: 446
+            operator: "-"
+            operand:
+              kind: number
+              begin:
+                offset: 6643
+                line: 446
+              end:
+                offset: 6644
+                line: 446
+              base: decimal
+              value: 3
+        - operator_position:
+            offset: 6645
+            line: 446
+          operator: ==
+          operand:
+            kind: number
+            begin:
+              offset: 6648
+              line: 446
+            end:
+              offset: 6649
+              line: 446
+            base: decimal
+            value: 1
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6656
+            line: 447
+          end:
+            offset: 6660
+            line: 447
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6661
+              line: 447
+            end:
+              offset: 6670
+              line: 447
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 6673
+      line: 449
+    end:
+      offset: 6716
+      line: 451
+    conditional:
+      kind: binary
+      first:
+        kind: unary
+        operator_position:
+          offset: 6680
+          line: 449
+        operator: "-"
+        operand:
+          kind: number
+          begin:
+            offset: 6681
+            line: 449
+          end:
+            offset: 6682
+            line: 449
+          base: decimal
+          value: 1
+      operations:
+        - operator_position:
+            offset: 6683
+            line: 449
+          operator: <<
+          operand:
+            kind: number
+            begin:
+              offset: 6686
+              line: 449
+            end:
+              offset: 6687
+              line: 449
+            base: decimal
+            value: 3
+        - operator_position:
+            offset: 6688
+            line: 449
+          operator: ==
+          operand:
+            kind: unary
+            operator_position:
+              offset: 6691
+              line: 449
+            operator: "-"
+            operand:
+              kind: number
+              begin:
+                offset: 6692
+                line: 449
+              end:
+                offset: 6693
+                line: 449
+              base: decimal
+              value: 8
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6700
+            line: 450
+          end:
+            offset: 6704
+            line: 450
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6705
+              line: 450
+            end:
+              offset: 6714
+              line: 450
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 6717
+      line: 452
+    end:
+      offset: 6771
+      line: 454
+    conditional:
+      kind: binary
+      first:
+        kind: array
+        begin:
+          offset: 6724
+          line: 452
+        end:
+          offset: 6730
+          line: 452
+        elements:
+          - kind: number
+            begin:
+              offset: 6725
+              line: 452
+            end:
+              offset: 6726
+              line: 452
+            base: decimal
+            value: 1
+          - kind: number
+            begin:
+              offset: 6728
+              line: 452
+            end:
+              offset: 6729
+              line: 452
+            base: decimal
+            value: 2
+      operations:
+        - operator_position:
+            offset: 6731
+            line: 452
+          operator: <<
+          operand:
+            kind: number
+            begin:
+              offset: 6734
+              line: 452
+            end:
+              offset: 6735
+              line: 452
+            base: decimal
+            value: 3
+        - operator_position:
+            offset: 6736
+            line: 452
+          operator: ==
+          operand:
+            kind: array
+            begin:
+              offset: 6739
+              line: 452
+            end:
+              offset: 6748
+              line: 452
+            elements:
+              - kind: number
+                begin:
+                  offset: 6740
+                  line: 452
+                end:
+                  offset: 6741
+                  line: 452
+                base: decimal
+                value: 1
+              - kind: number
+                begin:
+                  offset: 6743
+                  line: 452
+                end:
+                  offset: 6744
+                  line: 452
+                base: decimal
+                value: 2
+              - kind: number
+                begin:
+                  offset: 6746
+                  line: 452
+                end:
+                  offset: 6747
+                  line: 452
+                base: decimal
+                value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6755
+            line: 453
+          end:
+            offset: 6759
+            line: 453
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6760
+              line: 453
+            end:
+              offset: 6769
+              line: 453
+            value: incorrect

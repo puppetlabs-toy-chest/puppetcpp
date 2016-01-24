@@ -436,3 +436,19 @@ if foo in { 1 => 2, 3 => 4, 5 => 6 } {
 if 5 in 2 {
     fail incorrect
 }
+
+unless 1 << 3 == 8 {
+    fail incorrect
+}
+unless -8 << -3 == -1 {
+    fail incorrect
+}
+unless 8 << -3 == 1 {
+    fail incorrect
+}
+unless -1 << 3 == -8 {
+    fail incorrect
+}
+unless [1, 2] << 3 == [1, 2, 3] {
+    fail incorrect
+}

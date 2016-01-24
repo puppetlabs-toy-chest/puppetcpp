@@ -32,6 +32,7 @@
 #include <puppet/compiler/evaluation/operators/binary/greater.hpp>
 #include <puppet/compiler/evaluation/operators/binary/greater_equal.hpp>
 #include <puppet/compiler/evaluation/operators/binary/in.hpp>
+#include <puppet/compiler/evaluation/operators/binary/left_shift.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
@@ -78,6 +79,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(binary::greater::create_descriptor());
         add(binary::greater_equal::create_descriptor());
         add(binary::in::create_descriptor());
+        add(binary::left_shift::create_descriptor());
     }
 
     void dispatcher::add(functions::descriptor descriptor)
