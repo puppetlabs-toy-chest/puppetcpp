@@ -577,3 +577,41 @@ unless true or false {
 unless true or true {
     fail incorrect
 }
+
+unless foobar =~ foo {
+    fail incorrect
+}
+if baz =~ foo {
+    fail incorrect
+}
+unless foobar =~ /foo/ {
+    fail incorrect
+}
+if baz =~ /foo/ {
+    fail incorrect
+}
+if 5 =~ String {
+    fail incorrect
+}
+unless foo =~ String {
+    fail incorrect
+}
+
+if foobar !~ foo {
+    fail incorrect
+}
+unless baz !~ foo {
+    fail incorrect
+}
+if foobar !~ /foo/ {
+    fail incorrect
+}
+unless baz !~ /foo/ {
+    fail incorrect
+}
+unless 5 !~ String {
+    fail incorrect
+}
+if foo !~ String {
+    fail incorrect
+}

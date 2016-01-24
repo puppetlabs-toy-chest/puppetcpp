@@ -6,13 +6,11 @@
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
-#include <puppet/compiler/evaluation/operators/match.hpp>
 #include <puppet/compiler/evaluation/operators/minus.hpp>
 #include <puppet/compiler/evaluation/operators/modulo.hpp>
 #include <puppet/compiler/evaluation/operators/multiply.hpp>
 #include <puppet/compiler/evaluation/operators/negate.hpp>
 #include <puppet/compiler/evaluation/operators/not_equals.hpp>
-#include <puppet/compiler/evaluation/operators/not_match.hpp>
 #include <puppet/compiler/evaluation/operators/plus.hpp>
 #include <puppet/compiler/evaluation/operators/relationship.hpp>
 #include <puppet/compiler/evaluation/operators/right_shift.hpp>
@@ -91,8 +89,21 @@ namespace puppet { namespace compiler { namespace evaluation {
         if (regex) {
             // Only match against strings
             if (actual.as<std::string>()) {
-                operators::binary_operator_context context{ _context, actual, actual_context, expected, expected_context };
-                if (operators::match()(context).is_truthy()) {
+                // Dispatch a match operator
+                binary::call_context context{
+                    _context,
+                    ast::binary_operator::match,
+                    ast::context{
+                        actual_context.begin,
+                        lexer::position{ actual_context.begin.offset() + 1, actual_context.begin.line() },
+                        actual_context.tree
+                    },
+                    actual,
+                    actual_context,
+                    expected,
+                    expected_context
+                };
+                if (_context.dispatcher().dispatch(context).is_truthy()) {
                     return true;
                 }
             }
@@ -909,12 +920,10 @@ namespace puppet { namespace compiler { namespace evaluation {
         static const unordered_map<binary_operator, function<value(operators::binary_operator_context const&)>, boost::hash<binary_operator>> binary_operators = {
             { ast::binary_operator::in_edge,            operators::in_edge() },
             { ast::binary_operator::in_edge_subscribe,  operators::in_edge_subscribe() },
-            { ast::binary_operator::match,              operators::match() },
             { ast::binary_operator::minus,              operators::minus() },
             { ast::binary_operator::modulo,             operators::modulo() },
             { ast::binary_operator::multiply,           operators::multiply() },
             { ast::binary_operator::not_equals,         operators::not_equals() },
-            { ast::binary_operator::not_match,          operators::not_match() },
             { ast::binary_operator::out_edge,           operators::out_edge() },
             { ast::binary_operator::out_edge_subscribe, operators::out_edge_subscribe() },
             { ast::binary_operator::plus,               operators::plus() },

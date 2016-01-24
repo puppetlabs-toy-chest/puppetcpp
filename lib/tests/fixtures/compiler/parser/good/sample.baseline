@@ -12342,3 +12342,629 @@ statements:
               offset: 8386
               line: 578
             value: incorrect
+  - kind: unless
+    begin:
+      offset: 8390
+      line: 581
+    end:
+      offset: 8433
+      line: 583
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8397
+          line: 581
+        end:
+          offset: 8403
+          line: 581
+        value: foobar
+      operations:
+        - operator_position:
+            offset: 8404
+            line: 581
+          operator: =~
+          operand:
+            kind: name
+            begin:
+              offset: 8407
+              line: 581
+            end:
+              offset: 8410
+              line: 581
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8417
+            line: 582
+          end:
+            offset: 8421
+            line: 582
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8422
+              line: 582
+            end:
+              offset: 8431
+              line: 582
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 8434
+      line: 584
+    end:
+      offset: 8470
+      line: 586
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8437
+          line: 584
+        end:
+          offset: 8440
+          line: 584
+        value: baz
+      operations:
+        - operator_position:
+            offset: 8441
+            line: 584
+          operator: =~
+          operand:
+            kind: name
+            begin:
+              offset: 8444
+              line: 584
+            end:
+              offset: 8447
+              line: 584
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8454
+            line: 585
+          end:
+            offset: 8458
+            line: 585
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8459
+              line: 585
+            end:
+              offset: 8468
+              line: 585
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 8471
+      line: 587
+    end:
+      offset: 8516
+      line: 589
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8478
+          line: 587
+        end:
+          offset: 8484
+          line: 587
+        value: foobar
+      operations:
+        - operator_position:
+            offset: 8485
+            line: 587
+          operator: =~
+          operand:
+            kind: regex
+            begin:
+              offset: 8488
+              line: 587
+            end:
+              offset: 8493
+              line: 587
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8500
+            line: 588
+          end:
+            offset: 8504
+            line: 588
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8505
+              line: 588
+            end:
+              offset: 8514
+              line: 588
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 8517
+      line: 590
+    end:
+      offset: 8555
+      line: 592
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8520
+          line: 590
+        end:
+          offset: 8523
+          line: 590
+        value: baz
+      operations:
+        - operator_position:
+            offset: 8524
+            line: 590
+          operator: =~
+          operand:
+            kind: regex
+            begin:
+              offset: 8527
+              line: 590
+            end:
+              offset: 8532
+              line: 590
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8539
+            line: 591
+          end:
+            offset: 8543
+            line: 591
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8544
+              line: 591
+            end:
+              offset: 8553
+              line: 591
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 8556
+      line: 593
+    end:
+      offset: 8593
+      line: 595
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 8559
+          line: 593
+        end:
+          offset: 8560
+          line: 593
+        base: decimal
+        value: 5
+      operations:
+        - operator_position:
+            offset: 8561
+            line: 593
+          operator: =~
+          operand:
+            kind: type
+            begin:
+              offset: 8564
+              line: 593
+            end:
+              offset: 8570
+              line: 593
+            name: String
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8577
+            line: 594
+          end:
+            offset: 8581
+            line: 594
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8582
+              line: 594
+            end:
+              offset: 8591
+              line: 594
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 8594
+      line: 596
+    end:
+      offset: 8637
+      line: 598
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8601
+          line: 596
+        end:
+          offset: 8604
+          line: 596
+        value: foo
+      operations:
+        - operator_position:
+            offset: 8605
+            line: 596
+          operator: =~
+          operand:
+            kind: type
+            begin:
+              offset: 8608
+              line: 596
+            end:
+              offset: 8614
+              line: 596
+            name: String
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8621
+            line: 597
+          end:
+            offset: 8625
+            line: 597
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8626
+              line: 597
+            end:
+              offset: 8635
+              line: 597
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 8639
+      line: 600
+    end:
+      offset: 8678
+      line: 602
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8642
+          line: 600
+        end:
+          offset: 8648
+          line: 600
+        value: foobar
+      operations:
+        - operator_position:
+            offset: 8649
+            line: 600
+          operator: "!~"
+          operand:
+            kind: name
+            begin:
+              offset: 8652
+              line: 600
+            end:
+              offset: 8655
+              line: 600
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8662
+            line: 601
+          end:
+            offset: 8666
+            line: 601
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8667
+              line: 601
+            end:
+              offset: 8676
+              line: 601
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 8679
+      line: 603
+    end:
+      offset: 8719
+      line: 605
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8686
+          line: 603
+        end:
+          offset: 8689
+          line: 603
+        value: baz
+      operations:
+        - operator_position:
+            offset: 8690
+            line: 603
+          operator: "!~"
+          operand:
+            kind: name
+            begin:
+              offset: 8693
+              line: 603
+            end:
+              offset: 8696
+              line: 603
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8703
+            line: 604
+          end:
+            offset: 8707
+            line: 604
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8708
+              line: 604
+            end:
+              offset: 8717
+              line: 604
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 8720
+      line: 606
+    end:
+      offset: 8761
+      line: 608
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8723
+          line: 606
+        end:
+          offset: 8729
+          line: 606
+        value: foobar
+      operations:
+        - operator_position:
+            offset: 8730
+            line: 606
+          operator: "!~"
+          operand:
+            kind: regex
+            begin:
+              offset: 8733
+              line: 606
+            end:
+              offset: 8738
+              line: 606
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8745
+            line: 607
+          end:
+            offset: 8749
+            line: 607
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8750
+              line: 607
+            end:
+              offset: 8759
+              line: 607
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 8762
+      line: 609
+    end:
+      offset: 8804
+      line: 611
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8769
+          line: 609
+        end:
+          offset: 8772
+          line: 609
+        value: baz
+      operations:
+        - operator_position:
+            offset: 8773
+            line: 609
+          operator: "!~"
+          operand:
+            kind: regex
+            begin:
+              offset: 8776
+              line: 609
+            end:
+              offset: 8781
+              line: 609
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8788
+            line: 610
+          end:
+            offset: 8792
+            line: 610
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8793
+              line: 610
+            end:
+              offset: 8802
+              line: 610
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 8805
+      line: 612
+    end:
+      offset: 8846
+      line: 614
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 8812
+          line: 612
+        end:
+          offset: 8813
+          line: 612
+        base: decimal
+        value: 5
+      operations:
+        - operator_position:
+            offset: 8814
+            line: 612
+          operator: "!~"
+          operand:
+            kind: type
+            begin:
+              offset: 8817
+              line: 612
+            end:
+              offset: 8823
+              line: 612
+            name: String
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8830
+            line: 613
+          end:
+            offset: 8834
+            line: 613
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8835
+              line: 613
+            end:
+              offset: 8844
+              line: 613
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 8847
+      line: 615
+    end:
+      offset: 8886
+      line: 617
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 8850
+          line: 615
+        end:
+          offset: 8853
+          line: 615
+        value: foo
+      operations:
+        - operator_position:
+            offset: 8854
+            line: 615
+          operator: "!~"
+          operand:
+            kind: type
+            begin:
+              offset: 8857
+              line: 615
+            end:
+              offset: 8863
+              line: 615
+            name: String
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8870
+            line: 616
+          end:
+            offset: 8874
+            line: 616
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8875
+              line: 616
+            end:
+              offset: 8884
+              line: 616
+            value: incorrect
