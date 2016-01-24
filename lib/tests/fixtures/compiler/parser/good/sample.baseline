@@ -10014,3 +10014,917 @@ statements:
               offset: 6769
               line: 453
             value: incorrect
+  - kind: unless
+    begin:
+      offset: 6773
+      line: 456
+    end:
+      offset: 6808
+      line: 458
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6780
+          line: 456
+        end:
+          offset: 6781
+          line: 456
+        base: decimal
+        value: 1
+      operations:
+        - operator_position:
+            offset: 6782
+            line: 456
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 6784
+              line: 456
+            end:
+              offset: 6785
+              line: 456
+            base: decimal
+            value: 2
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6792
+            line: 457
+          end:
+            offset: 6796
+            line: 457
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6797
+              line: 457
+            end:
+              offset: 6806
+              line: 457
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 6809
+      line: 459
+    end:
+      offset: 6840
+      line: 461
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6812
+          line: 459
+        end:
+          offset: 6813
+          line: 459
+        base: decimal
+        value: 2
+      operations:
+        - operator_position:
+            offset: 6814
+            line: 459
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 6816
+              line: 459
+            end:
+              offset: 6817
+              line: 459
+            base: decimal
+            value: 1
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6824
+            line: 460
+          end:
+            offset: 6828
+            line: 460
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6829
+              line: 460
+            end:
+              offset: 6838
+              line: 460
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 6841
+      line: 462
+    end:
+      offset: 6872
+      line: 464
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6844
+          line: 462
+        end:
+          offset: 6845
+          line: 462
+        base: decimal
+        value: 1
+      operations:
+        - operator_position:
+            offset: 6846
+            line: 462
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 6848
+              line: 462
+            end:
+              offset: 6849
+              line: 462
+            base: decimal
+            value: 1
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6856
+            line: 463
+          end:
+            offset: 6860
+            line: 463
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6861
+              line: 463
+            end:
+              offset: 6870
+              line: 463
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 6873
+      line: 465
+    end:
+      offset: 6910
+      line: 467
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6880
+          line: 465
+        end:
+          offset: 6883
+          line: 465
+        base: decimal
+        value: 3
+      operations:
+        - operator_position:
+            offset: 6884
+            line: 465
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 6886
+              line: 465
+            end:
+              offset: 6887
+              line: 465
+            base: decimal
+            value: 4
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6894
+            line: 466
+          end:
+            offset: 6898
+            line: 466
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6899
+              line: 466
+            end:
+              offset: 6908
+              line: 466
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 6911
+      line: 468
+    end:
+      offset: 6944
+      line: 470
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6914
+          line: 468
+        end:
+          offset: 6915
+          line: 468
+        base: decimal
+        value: 4
+      operations:
+        - operator_position:
+            offset: 6916
+            line: 468
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 6918
+              line: 468
+            end:
+              offset: 6921
+              line: 468
+            base: decimal
+            value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6928
+            line: 469
+          end:
+            offset: 6932
+            line: 469
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6933
+              line: 469
+            end:
+              offset: 6942
+              line: 469
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 6945
+      line: 471
+    end:
+      offset: 6978
+      line: 473
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6948
+          line: 471
+        end:
+          offset: 6951
+          line: 471
+        base: decimal
+        value: 3
+      operations:
+        - operator_position:
+            offset: 6952
+            line: 471
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 6954
+              line: 471
+            end:
+              offset: 6955
+              line: 471
+            base: decimal
+            value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 6962
+            line: 472
+          end:
+            offset: 6966
+            line: 472
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 6967
+              line: 472
+            end:
+              offset: 6976
+              line: 472
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 6979
+      line: 474
+    end:
+      offset: 7018
+      line: 476
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 6986
+          line: 474
+        end:
+          offset: 6989
+          line: 474
+        base: decimal
+        value: 3
+      operations:
+        - operator_position:
+            offset: 6990
+            line: 474
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 6992
+              line: 474
+            end:
+              offset: 6995
+              line: 474
+            base: decimal
+            value: 4
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7002
+            line: 475
+          end:
+            offset: 7006
+            line: 475
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7007
+              line: 475
+            end:
+              offset: 7016
+              line: 475
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 7019
+      line: 477
+    end:
+      offset: 7054
+      line: 479
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 7022
+          line: 477
+        end:
+          offset: 7025
+          line: 477
+        base: decimal
+        value: 4
+      operations:
+        - operator_position:
+            offset: 7026
+            line: 477
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 7028
+              line: 477
+            end:
+              offset: 7031
+              line: 477
+            base: decimal
+            value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7038
+            line: 478
+          end:
+            offset: 7042
+            line: 478
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7043
+              line: 478
+            end:
+              offset: 7052
+              line: 478
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 7055
+      line: 480
+    end:
+      offset: 7090
+      line: 482
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 7058
+          line: 480
+        end:
+          offset: 7061
+          line: 480
+        base: decimal
+        value: 3
+      operations:
+        - operator_position:
+            offset: 7062
+            line: 480
+          operator: <
+          operand:
+            kind: number
+            begin:
+              offset: 7064
+              line: 480
+            end:
+              offset: 7067
+              line: 480
+            base: decimal
+            value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7074
+            line: 481
+          end:
+            offset: 7078
+            line: 481
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7079
+              line: 481
+            end:
+              offset: 7088
+              line: 481
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 7091
+      line: 483
+    end:
+      offset: 7130
+      line: 485
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 7098
+          line: 483
+        end:
+          offset: 7101
+          line: 483
+        value: bar
+      operations:
+        - operator_position:
+            offset: 7102
+            line: 483
+          operator: <
+          operand:
+            kind: name
+            begin:
+              offset: 7104
+              line: 483
+            end:
+              offset: 7107
+              line: 483
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7114
+            line: 484
+          end:
+            offset: 7118
+            line: 484
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7119
+              line: 484
+            end:
+              offset: 7128
+              line: 484
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 7131
+      line: 486
+    end:
+      offset: 7166
+      line: 488
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 7134
+          line: 486
+        end:
+          offset: 7137
+          line: 486
+        value: foo
+      operations:
+        - operator_position:
+            offset: 7138
+            line: 486
+          operator: <
+          operand:
+            kind: name
+            begin:
+              offset: 7140
+              line: 486
+            end:
+              offset: 7143
+              line: 486
+            value: bar
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7150
+            line: 487
+          end:
+            offset: 7154
+            line: 487
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7155
+              line: 487
+            end:
+              offset: 7164
+              line: 487
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 7167
+      line: 489
+    end:
+      offset: 7202
+      line: 491
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 7170
+          line: 489
+        end:
+          offset: 7173
+          line: 489
+        value: foo
+      operations:
+        - operator_position:
+            offset: 7174
+            line: 489
+          operator: <
+          operand:
+            kind: name
+            begin:
+              offset: 7176
+              line: 489
+            end:
+              offset: 7179
+              line: 489
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7186
+            line: 490
+          end:
+            offset: 7190
+            line: 490
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7191
+              line: 490
+            end:
+              offset: 7200
+              line: 490
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 7203
+      line: 492
+    end:
+      offset: 7254
+      line: 494
+    conditional:
+      kind: binary
+      first:
+        kind: type
+        begin:
+          offset: 7210
+          line: 492
+        end:
+          offset: 7216
+          line: 492
+        name: String
+      operations:
+        - operator_position:
+            offset: 7217
+            line: 492
+          operator: <
+          operand:
+            kind: postfix
+            primary:
+              kind: type
+              begin:
+                offset: 7219
+                line: 492
+              end:
+                offset: 7225
+                line: 492
+              name: String
+            subexpressions:
+              - kind: access
+                begin:
+                  offset: 7225
+                  line: 492
+                end:
+                  offset: 7231
+                  line: 492
+                arguments:
+                  - kind: number
+                    begin:
+                      offset: 7226
+                      line: 492
+                    end:
+                      offset: 7227
+                      line: 492
+                    base: decimal
+                    value: 0
+                  - kind: number
+                    begin:
+                      offset: 7229
+                      line: 492
+                    end:
+                      offset: 7230
+                      line: 492
+                    base: decimal
+                    value: 0
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7238
+            line: 493
+          end:
+            offset: 7242
+            line: 493
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7243
+              line: 493
+            end:
+              offset: 7252
+              line: 493
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 7255
+      line: 495
+    end:
+      offset: 7302
+      line: 497
+    conditional:
+      kind: binary
+      first:
+        kind: postfix
+        primary:
+          kind: type
+          begin:
+            offset: 7258
+            line: 495
+          end:
+            offset: 7264
+            line: 495
+          name: String
+        subexpressions:
+          - kind: access
+            begin:
+              offset: 7264
+              line: 495
+            end:
+              offset: 7270
+              line: 495
+            arguments:
+              - kind: number
+                begin:
+                  offset: 7265
+                  line: 495
+                end:
+                  offset: 7266
+                  line: 495
+                base: decimal
+                value: 0
+              - kind: number
+                begin:
+                  offset: 7268
+                  line: 495
+                end:
+                  offset: 7269
+                  line: 495
+                base: decimal
+                value: 0
+      operations:
+        - operator_position:
+            offset: 7271
+            line: 495
+          operator: <
+          operand:
+            kind: type
+            begin:
+              offset: 7273
+              line: 495
+            end:
+              offset: 7279
+              line: 495
+            name: String
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7286
+            line: 496
+          end:
+            offset: 7290
+            line: 496
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7291
+              line: 496
+            end:
+              offset: 7300
+              line: 496
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 7303
+      line: 498
+    end:
+      offset: 7356
+      line: 500
+    conditional:
+      kind: binary
+      first:
+        kind: postfix
+        primary:
+          kind: type
+          begin:
+            offset: 7306
+            line: 498
+          end:
+            offset: 7312
+            line: 498
+          name: String
+        subexpressions:
+          - kind: access
+            begin:
+              offset: 7312
+              line: 498
+            end:
+              offset: 7318
+              line: 498
+            arguments:
+              - kind: number
+                begin:
+                  offset: 7313
+                  line: 498
+                end:
+                  offset: 7314
+                  line: 498
+                base: decimal
+                value: 0
+              - kind: number
+                begin:
+                  offset: 7316
+                  line: 498
+                end:
+                  offset: 7317
+                  line: 498
+                base: decimal
+                value: 0
+      operations:
+        - operator_position:
+            offset: 7319
+            line: 498
+          operator: <
+          operand:
+            kind: postfix
+            primary:
+              kind: type
+              begin:
+                offset: 7321
+                line: 498
+              end:
+                offset: 7327
+                line: 498
+              name: String
+            subexpressions:
+              - kind: access
+                begin:
+                  offset: 7327
+                  line: 498
+                end:
+                  offset: 7333
+                  line: 498
+                arguments:
+                  - kind: number
+                    begin:
+                      offset: 7328
+                      line: 498
+                    end:
+                      offset: 7329
+                      line: 498
+                    base: decimal
+                    value: 0
+                  - kind: number
+                    begin:
+                      offset: 7331
+                      line: 498
+                    end:
+                      offset: 7332
+                      line: 498
+                    base: decimal
+                    value: 0
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 7340
+            line: 499
+          end:
+            offset: 7344
+            line: 499
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 7345
+              line: 499
+            end:
+              offset: 7354
+              line: 499
+            value: incorrect

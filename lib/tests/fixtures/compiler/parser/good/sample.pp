@@ -452,3 +452,49 @@ unless -1 << 3 == -8 {
 unless [1, 2] << 3 == [1, 2, 3] {
     fail incorrect
 }
+
+unless 1 < 2 {
+    fail incorrect
+}
+if 2 < 1 {
+    fail incorrect
+}
+if 1 < 1 {
+    fail incorrect
+}
+unless 3.0 < 4 {
+    fail incorrect
+}
+if 4 < 3.0 {
+    fail incorrect
+}
+if 3.0 < 3 {
+    fail incorrect
+}
+unless 3.0 < 4.0 {
+    fail incorrect
+}
+if 4.0 < 3.0 {
+    fail incorrect
+}
+if 3.0 < 3.0 {
+    fail incorrect
+}
+unless bar < foo {
+    fail incorrect
+}
+if foo < bar {
+    fail incorrect
+}
+if foo < foo {
+    fail incorrect
+}
+unless String < String[0, 0] {
+    fail incorrect
+}
+if String[0, 0] < String {
+    fail incorrect
+}
+if String[0, 0] < String[0, 0] {
+    fail incorrect
+}
