@@ -396,3 +396,43 @@ unless String[0, 0] >= String {
 unless String[0, 0] >= String[0, 0] {
     fail incorrect
 }
+
+unless foo in foobar {
+    fail incorrect
+}
+if bar in baz {
+    fail incorrect
+}
+unless /.*oo.*/ in foobar {
+    fail incorrect
+}
+if /.*oo.*/ in baz {
+    fail incorrect
+}
+unless String in [1, foo, 3] {
+    fail incorrect
+}
+if String in [1, 2, 3] {
+    fail incorrect
+}
+unless foo in [1, foo, 3] {
+    fail incorrect
+}
+if foo in [1, 2, 3] {
+    fail incorrect
+}
+unless String in { 1 => 2, foo => bar, 5 => 6 } {
+    fail incorrect
+}
+if String in { 1 => 2, 3 => 4, 5 => 6 } {
+    fail incorrect
+}
+unless foo in { 1 => 2, foo => bar, 5 => 6 } {
+    fail incorrect
+}
+if foo in { 1 => 2, 3 => 4, 5 => 6 } {
+    fail incorrect
+}
+if 5 in 2 {
+    fail incorrect
+}
