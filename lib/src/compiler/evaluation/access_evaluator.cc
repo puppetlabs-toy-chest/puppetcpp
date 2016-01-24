@@ -655,7 +655,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         std::tuple<Value, Value> get_range(
             bool accept_range = false,
             size_t start_index = 0,
-            Value from_default = numeric_limits<Value>::min(),
+            Value from_default = numeric_limits<Value>::lowest(),
             Value to_default = numeric_limits<Value>::max()) const
         {
             // Check for Integer range first

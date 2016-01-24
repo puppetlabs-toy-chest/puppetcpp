@@ -651,7 +651,7 @@ namespace puppet { namespace compiler { namespace lexer {
                     throw lexer_exception<input_iterator_type>(
                         (boost::format("'%1%' is not in the range of %2% to %3%.") %
                             token %
-                            numeric_limits<double>::min() %
+                            numeric_limits<double>::lowest() %
                             numeric_limits<double>::max()
                         ).str(),
                         start);

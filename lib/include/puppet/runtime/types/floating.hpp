@@ -20,7 +20,7 @@ namespace puppet { namespace runtime { namespace types {
          * @param from The "from" type parameter.
          * @param to The "to" type parameter.
          */
-        explicit floating(double from = std::numeric_limits<double>::min(), double to = std::numeric_limits<double>::max());
+        explicit floating(double from = std::numeric_limits<double>::lowest(), double to = std::numeric_limits<double>::max());
 
         /**
          * Gets the "from" type parameter.
