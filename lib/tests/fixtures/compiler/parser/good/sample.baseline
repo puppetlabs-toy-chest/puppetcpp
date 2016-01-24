@@ -14491,3 +14491,207 @@ statements:
               offset: 9639
               line: 662
             value: incorrect
+  - kind: if
+    begin:
+      offset: 9643
+      line: 665
+    end:
+      offset: 9680
+      line: 667
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 9646
+          line: 665
+        end:
+          offset: 9648
+          line: 665
+        base: decimal
+        value: 10
+      operations:
+        - operator_position:
+            offset: 9649
+            line: 665
+          operator: "%"
+          operand:
+            kind: number
+            begin:
+              offset: 9651
+              line: 665
+            end:
+              offset: 9652
+              line: 665
+            base: decimal
+            value: 2
+        - operator_position:
+            offset: 9653
+            line: 665
+          operator: "!="
+          operand:
+            kind: number
+            begin:
+              offset: 9656
+              line: 665
+            end:
+              offset: 9657
+              line: 665
+            base: decimal
+            value: 0
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 9664
+            line: 666
+          end:
+            offset: 9668
+            line: 666
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 9669
+              line: 666
+            end:
+              offset: 9678
+              line: 666
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 9681
+      line: 668
+    end:
+      offset: 9718
+      line: 670
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 9684
+          line: 668
+        end:
+          offset: 9686
+          line: 668
+        base: decimal
+        value: 13
+      operations:
+        - operator_position:
+            offset: 9687
+            line: 668
+          operator: "%"
+          operand:
+            kind: number
+            begin:
+              offset: 9689
+              line: 668
+            end:
+              offset: 9690
+              line: 668
+            base: decimal
+            value: 9
+        - operator_position:
+            offset: 9691
+            line: 668
+          operator: "!="
+          operand:
+            kind: number
+            begin:
+              offset: 9694
+              line: 668
+            end:
+              offset: 9695
+              line: 668
+            base: decimal
+            value: 4
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 9702
+            line: 669
+          end:
+            offset: 9706
+            line: 669
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 9707
+              line: 669
+            end:
+              offset: 9716
+              line: 669
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 9719
+      line: 671
+    end:
+      offset: 9760
+      line: 673
+    conditional:
+      kind: binary
+      first:
+        kind: number
+        begin:
+          offset: 9722
+          line: 671
+        end:
+          offset: 9726
+          line: 671
+        base: decimal
+        value: 1044
+      operations:
+        - operator_position:
+            offset: 9727
+            line: 671
+          operator: "%"
+          operand:
+            kind: number
+            begin:
+              offset: 9729
+              line: 671
+            end:
+              offset: 9731
+              line: 671
+            base: decimal
+            value: 22
+        - operator_position:
+            offset: 9732
+            line: 671
+          operator: "!="
+          operand:
+            kind: number
+            begin:
+              offset: 9735
+              line: 671
+            end:
+              offset: 9737
+              line: 671
+            base: decimal
+            value: 10
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 9744
+            line: 672
+          end:
+            offset: 9748
+            line: 672
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 9749
+              line: 672
+            end:
+              offset: 9758
+              line: 672
+            value: incorrect

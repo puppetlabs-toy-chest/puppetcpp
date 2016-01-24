@@ -661,3 +661,13 @@ if {a => b, c => d, e => f} - { c => z} != {a => b, e => f} {
 if {a => b, c => d, e => f} - [c, e] != {a => b} {
     fail incorrect
 }
+
+if 10 % 2 != 0 {
+    fail incorrect
+}
+if 13 % 9 != 4 {
+    fail incorrect
+}
+if 1044 % 22 != 10 {
+    fail incorrect
+}
