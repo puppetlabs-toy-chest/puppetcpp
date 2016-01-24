@@ -11842,3 +11842,211 @@ statements:
               offset: 7974
               line: 545
             value: incorrect
+  - kind: if
+    begin:
+      offset: 7978
+      line: 548
+    end:
+      offset: 8019
+      line: 550
+    conditional:
+      kind: binary
+      first:
+        kind: boolean
+        begin:
+          offset: 7981
+          line: 548
+        end:
+          offset: 7986
+          line: 548
+        value: false
+      operations:
+        - operator_position:
+            offset: 7987
+            line: 548
+          operator: and
+          operand:
+            kind: boolean
+            begin:
+              offset: 7991
+              line: 548
+            end:
+              offset: 7996
+              line: 548
+            value: false
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8003
+            line: 549
+          end:
+            offset: 8007
+            line: 549
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8008
+              line: 549
+            end:
+              offset: 8017
+              line: 549
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 8020
+      line: 551
+    end:
+      offset: 8060
+      line: 553
+    conditional:
+      kind: binary
+      first:
+        kind: boolean
+        begin:
+          offset: 8023
+          line: 551
+        end:
+          offset: 8028
+          line: 551
+        value: false
+      operations:
+        - operator_position:
+            offset: 8029
+            line: 551
+          operator: and
+          operand:
+            kind: boolean
+            begin:
+              offset: 8033
+              line: 551
+            end:
+              offset: 8037
+              line: 551
+            value: true
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8044
+            line: 552
+          end:
+            offset: 8048
+            line: 552
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8049
+              line: 552
+            end:
+              offset: 8058
+              line: 552
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 8061
+      line: 554
+    end:
+      offset: 8101
+      line: 556
+    conditional:
+      kind: binary
+      first:
+        kind: boolean
+        begin:
+          offset: 8064
+          line: 554
+        end:
+          offset: 8068
+          line: 554
+        value: true
+      operations:
+        - operator_position:
+            offset: 8069
+            line: 554
+          operator: and
+          operand:
+            kind: boolean
+            begin:
+              offset: 8073
+              line: 554
+            end:
+              offset: 8078
+              line: 554
+            value: false
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8085
+            line: 555
+          end:
+            offset: 8089
+            line: 555
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8090
+              line: 555
+            end:
+              offset: 8099
+              line: 555
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 8102
+      line: 557
+    end:
+      offset: 8145
+      line: 559
+    conditional:
+      kind: binary
+      first:
+        kind: boolean
+        begin:
+          offset: 8109
+          line: 557
+        end:
+          offset: 8113
+          line: 557
+        value: true
+      operations:
+        - operator_position:
+            offset: 8114
+            line: 557
+          operator: and
+          operand:
+            kind: boolean
+            begin:
+              offset: 8118
+              line: 557
+            end:
+              offset: 8122
+              line: 557
+            value: true
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 8129
+            line: 558
+          end:
+            offset: 8133
+            line: 558
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 8134
+              line: 558
+            end:
+              offset: 8143
+              line: 558
+            value: incorrect

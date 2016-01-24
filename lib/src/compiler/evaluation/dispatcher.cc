@@ -35,6 +35,7 @@
 #include <puppet/compiler/evaluation/operators/binary/left_shift.hpp>
 #include <puppet/compiler/evaluation/operators/binary/less.hpp>
 #include <puppet/compiler/evaluation/operators/binary/less_equal.hpp>
+#include <puppet/compiler/evaluation/operators/binary/logical_and.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
@@ -84,6 +85,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(binary::left_shift::create_descriptor());
         add(binary::less::create_descriptor());
         add(binary::less_equal::create_descriptor());
+        add(binary::logical_and::create_descriptor());
     }
 
     void dispatcher::add(functions::descriptor descriptor)

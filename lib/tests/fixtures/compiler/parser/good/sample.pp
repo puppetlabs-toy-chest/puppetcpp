@@ -544,3 +544,16 @@ if String[0, 0] <= String {
 unless String[0, 0] <= String[0, 0] {
     fail incorrect
 }
+
+if false and false {
+    fail incorrect
+}
+if false and true {
+    fail incorrect
+}
+if true and false {
+    fail incorrect
+}
+unless true and true {
+    fail incorrect
+}
