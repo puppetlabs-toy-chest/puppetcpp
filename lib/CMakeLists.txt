@@ -54,10 +54,10 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/binary/in.cc
     src/compiler/evaluation/operators/binary/left_shift.cc
     src/compiler/evaluation/operators/binary/less.cc
+    src/compiler/evaluation/operators/binary/less_equal.cc
     src/compiler/evaluation/operators/unary/call_context.cc
     src/compiler/evaluation/operators/unary/descriptor.cc
     src/compiler/evaluation/operators/binary_operator_context.cc
-    src/compiler/evaluation/operators/less_equal.cc
     src/compiler/evaluation/operators/logical_and.cc
     src/compiler/evaluation/operators/logical_not.cc
     src/compiler/evaluation/operators/logical_or.cc
