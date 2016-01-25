@@ -41,6 +41,7 @@
 #include <puppet/compiler/evaluation/operators/binary/minus.hpp>
 #include <puppet/compiler/evaluation/operators/binary/modulo.hpp>
 #include <puppet/compiler/evaluation/operators/binary/multiply.hpp>
+#include <puppet/compiler/evaluation/operators/binary/not_equals.hpp>
 #include <puppet/compiler/evaluation/operators/binary/not_match.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/logical_not.hpp>
@@ -99,6 +100,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(binary::minus::create_descriptor());
         add(binary::modulo::create_descriptor());
         add(binary::multiply::create_descriptor());
+        add(binary::not_equals::create_descriptor());
         add(binary::not_match::create_descriptor());
 
         // Add the built-in unary operators
