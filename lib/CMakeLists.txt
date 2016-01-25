@@ -68,12 +68,11 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/binary/out_edge.cc
     src/compiler/evaluation/operators/binary/out_edge_subscribe.cc
     src/compiler/evaluation/operators/binary/plus.cc
+    src/compiler/evaluation/operators/binary/right_shift.cc
     src/compiler/evaluation/operators/unary/call_context.cc
     src/compiler/evaluation/operators/unary/descriptor.cc
     src/compiler/evaluation/operators/unary/logical_not.cc
     src/compiler/evaluation/operators/unary/negate.cc
-    src/compiler/evaluation/operators/binary_operator_context.cc
-    src/compiler/evaluation/operators/right_shift.cc
     src/compiler/evaluation/operators/splat.cc
     src/compiler/evaluation/operators/unary_operator_context.cc
     src/compiler/evaluation/access_evaluator.cc

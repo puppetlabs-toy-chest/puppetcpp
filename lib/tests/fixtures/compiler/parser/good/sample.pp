@@ -742,3 +742,16 @@ File[a] -> File[b]
 File[c] ~> File[d]
 File[e] <- File[f]
 File[g] <~ File[h]
+
+unless 8 >> 3 == 1 {
+    fail incorrect
+}
+unless -1 >> -3 == -8 {
+    fail incorrect
+}
+unless 1 >> -3 == 8 {
+    fail incorrect
+}
+unless -8 >> 3 == -1 {
+    fail incorrect
+}

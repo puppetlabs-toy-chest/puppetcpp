@@ -6,7 +6,6 @@
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
-#include <puppet/compiler/evaluation/operators/right_shift.hpp>
 #include <puppet/compiler/evaluation/operators/splat.hpp>
 #include <puppet/compiler/exceptions.hpp>
 
@@ -909,32 +908,20 @@ namespace puppet { namespace compiler { namespace evaluation {
         value& right,
         ast::binary_operation const& operation)
     {
-        static const unordered_map<binary_operator, function<value(operators::binary_operator_context const&)>, boost::hash<binary_operator>> binary_operators = {
-            { ast::binary_operator::right_shift,        operators::right_shift() }
+        binary::call_context context{
+            _context,
+            operation.operator_,
+            ast::context{
+                operation.operator_position,
+                lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
+                left_context.tree
+            },
+            left,
+            left_context,
+            right,
+            operation.operand.context()
         };
-
-        auto it = binary_operators.find(operation.operator_);
-        if (it == binary_operators.end()) {
-            // TODO: use only the dispatcher once all operators have been ported
-            binary::call_context context{
-                _context,
-                operation.operator_,
-                ast::context{
-                    operation.operator_position,
-                    lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
-                    left_context.tree
-                },
-                left,
-                left_context,
-                right,
-                operation.operand.context()
-            };
-            left = _context.dispatcher().dispatch(context);
-            return;
-        }
-
-        operators::binary_operator_context context{ _context, left, left_context, right, operation.operand.context() };
-        left = it->second(context);
+        left = _context.dispatcher().dispatch(context);
     }
 
 }}}  // namespace puppet::compiler::evaluation

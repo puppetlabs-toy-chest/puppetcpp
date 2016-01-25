@@ -48,6 +48,7 @@
 #include <puppet/compiler/evaluation/operators/binary/out_edge.hpp>
 #include <puppet/compiler/evaluation/operators/binary/out_edge_subscribe.hpp>
 #include <puppet/compiler/evaluation/operators/binary/plus.hpp>
+#include <puppet/compiler/evaluation/operators/binary/right_shift.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/logical_not.hpp>
 #include <puppet/compiler/evaluation/operators/unary/negate.hpp>
@@ -112,6 +113,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(binary::out_edge::create_descriptor());
         add(binary::out_edge_subscribe::create_descriptor());
         add(binary::plus::create_descriptor());
+        add(binary::right_shift::create_descriptor());
 
         // Add the built-in unary operators
         add(unary::logical_not::create_descriptor());
