@@ -17410,3 +17410,381 @@ statements:
               offset: 11100
               line: 756
             value: incorrect
+  - kind: if
+    begin:
+      offset: 11104
+      line: 759
+    end:
+      offset: 11142
+      line: 761
+    conditional:
+      kind: binary
+      first:
+        kind: unary
+        operator_position:
+          offset: 11107
+          line: 759
+        operator: "*"
+        operand:
+          kind: undef
+          begin:
+            offset: 11108
+            line: 759
+          end:
+            offset: 11113
+            line: 759
+      operations:
+        - operator_position:
+            offset: 11114
+            line: 759
+          operator: "!="
+          operand:
+            kind: array
+            begin:
+              offset: 11117
+              line: 759
+            end:
+              offset: 11119
+              line: 759
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11126
+            line: 760
+          end:
+            offset: 11130
+            line: 760
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11131
+              line: 760
+            end:
+              offset: 11140
+              line: 760
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 11143
+      line: 762
+    end:
+      offset: 11178
+      line: 764
+    conditional:
+      kind: binary
+      first:
+        kind: unary
+        operator_position:
+          offset: 11146
+          line: 762
+        operator: "*"
+        operand:
+          kind: number
+          begin:
+            offset: 11147
+            line: 762
+          end:
+            offset: 11148
+            line: 762
+          base: decimal
+          value: 3
+      operations:
+        - operator_position:
+            offset: 11149
+            line: 762
+          operator: "!="
+          operand:
+            kind: array
+            begin:
+              offset: 11152
+              line: 762
+            end:
+              offset: 11155
+              line: 762
+            elements:
+              - kind: number
+                begin:
+                  offset: 11153
+                  line: 762
+                end:
+                  offset: 11154
+                  line: 762
+                base: decimal
+                value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11162
+            line: 763
+          end:
+            offset: 11166
+            line: 763
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11167
+              line: 763
+            end:
+              offset: 11176
+              line: 763
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 11179
+      line: 765
+    end:
+      offset: 11228
+      line: 767
+    conditional:
+      kind: binary
+      first:
+        kind: unary
+        operator_position:
+          offset: 11182
+          line: 765
+        operator: "*"
+        operand:
+          kind: array
+          begin:
+            offset: 11183
+            line: 765
+          end:
+            offset: 11192
+            line: 765
+          elements:
+            - kind: number
+              begin:
+                offset: 11184
+                line: 765
+              end:
+                offset: 11185
+                line: 765
+              base: decimal
+              value: 1
+            - kind: number
+              begin:
+                offset: 11187
+                line: 765
+              end:
+                offset: 11188
+                line: 765
+              base: decimal
+              value: 2
+            - kind: number
+              begin:
+                offset: 11190
+                line: 765
+              end:
+                offset: 11191
+                line: 765
+              base: decimal
+              value: 3
+      operations:
+        - operator_position:
+            offset: 11193
+            line: 765
+          operator: "!="
+          operand:
+            kind: array
+            begin:
+              offset: 11196
+              line: 765
+            end:
+              offset: 11205
+              line: 765
+            elements:
+              - kind: number
+                begin:
+                  offset: 11197
+                  line: 765
+                end:
+                  offset: 11198
+                  line: 765
+                base: decimal
+                value: 1
+              - kind: number
+                begin:
+                  offset: 11200
+                  line: 765
+                end:
+                  offset: 11201
+                  line: 765
+                base: decimal
+                value: 2
+              - kind: number
+                begin:
+                  offset: 11203
+                  line: 765
+                end:
+                  offset: 11204
+                  line: 765
+                base: decimal
+                value: 3
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11212
+            line: 766
+          end:
+            offset: 11216
+            line: 766
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11217
+              line: 766
+            end:
+              offset: 11226
+              line: 766
+            value: incorrect
+  - kind: if
+    begin:
+      offset: 11229
+      line: 768
+    end:
+      offset: 11292
+      line: 770
+    conditional:
+      kind: binary
+      first:
+        kind: unary
+        operator_position:
+          offset: 11232
+          line: 768
+        operator: "*"
+        operand:
+          kind: hash
+          begin:
+            offset: 11233
+            line: 768
+          end:
+            offset: 11249
+            line: 768
+          elements:
+            - first:
+                kind: name
+                begin:
+                  offset: 11234
+                  line: 768
+                end:
+                  offset: 11235
+                  line: 768
+                value: a
+              second:
+                kind: name
+                begin:
+                  offset: 11239
+                  line: 768
+                end:
+                  offset: 11240
+                  line: 768
+                value: b
+            - first:
+                kind: name
+                begin:
+                  offset: 11242
+                  line: 768
+                end:
+                  offset: 11243
+                  line: 768
+                value: c
+              second:
+                kind: name
+                begin:
+                  offset: 11247
+                  line: 768
+                end:
+                  offset: 11248
+                  line: 768
+                value: d
+      operations:
+        - operator_position:
+            offset: 11250
+            line: 768
+          operator: "!="
+          operand:
+            kind: array
+            begin:
+              offset: 11253
+              line: 768
+            end:
+              offset: 11269
+              line: 768
+            elements:
+              - kind: array
+                begin:
+                  offset: 11254
+                  line: 768
+                end:
+                  offset: 11260
+                  line: 768
+                elements:
+                  - kind: name
+                    begin:
+                      offset: 11255
+                      line: 768
+                    end:
+                      offset: 11256
+                      line: 768
+                    value: a
+                  - kind: name
+                    begin:
+                      offset: 11258
+                      line: 768
+                    end:
+                      offset: 11259
+                      line: 768
+                    value: b
+              - kind: array
+                begin:
+                  offset: 11262
+                  line: 768
+                end:
+                  offset: 11268
+                  line: 768
+                elements:
+                  - kind: name
+                    begin:
+                      offset: 11263
+                      line: 768
+                    end:
+                      offset: 11264
+                      line: 768
+                    value: c
+                  - kind: name
+                    begin:
+                      offset: 11266
+                      line: 768
+                    end:
+                      offset: 11267
+                      line: 768
+                    value: d
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11276
+            line: 769
+          end:
+            offset: 11280
+            line: 769
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11281
+              line: 769
+            end:
+              offset: 11290
+              line: 769
+            value: incorrect

@@ -755,3 +755,16 @@ unless 1 >> -3 == 8 {
 unless -8 >> 3 == -1 {
     fail incorrect
 }
+
+if *undef != [] {
+    fail incorrect
+}
+if *3 != [3] {
+    fail incorrect
+}
+if *[1, 2, 3] != [1, 2, 3] {
+    fail incorrect
+}
+if *{a => b, c => d} != [[a, b], [c, d]] {
+    fail incorrect
+}

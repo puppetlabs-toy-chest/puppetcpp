@@ -6,7 +6,6 @@
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
-#include <puppet/compiler/evaluation/operators/splat.hpp>
 #include <puppet/compiler/exceptions.hpp>
 
 using namespace std;
@@ -512,33 +511,21 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(unary_expression const& expression)
     {
-        static const unordered_map<ast::unary_operator, function<value(operators::unary_operator_context const&)>, boost::hash<unary_operator>> unary_operators = {
-            { ast::unary_operator::splat,       operators::splat() }
-        };
-
         auto operand = evaluate(expression.operand);
+        auto operand_context = expression.operand.context();
 
-        auto it = unary_operators.find(expression.operator_);
-        if (it == unary_operators.end()) {
-            auto operand_context = expression.operand.context();
-
-            // TODO: use only the dispatcher once all operators have been ported
-            unary::call_context context{
-                _context,
-                expression.operator_,
-                ast::context{
-                    expression.operator_position,
-                    lexer::position{ expression.operator_position.offset() + 1, expression.operator_position.line() },
-                    operand_context.tree
-                },
-                operand,
-                operand_context
-            };
-            return _context.dispatcher().dispatch(context);
-        }
-
-        operators::unary_operator_context context{ _context, operand, expression.operand.context() };
-        return it->second(context);
+        unary::call_context context{
+            _context,
+            expression.operator_,
+            ast::context{
+                expression.operator_position,
+                lexer::position{ expression.operator_position.offset() + 1, expression.operator_position.line() },
+                operand_context.tree
+            },
+            operand,
+            operand_context
+        };
+        return _context.dispatcher().dispatch(context);
     }
 
     value evaluator::operator()(epp_render_expression const& expression)

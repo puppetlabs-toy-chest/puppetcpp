@@ -73,8 +73,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/unary/descriptor.cc
     src/compiler/evaluation/operators/unary/logical_not.cc
     src/compiler/evaluation/operators/unary/negate.cc
-    src/compiler/evaluation/operators/splat.cc
-    src/compiler/evaluation/operators/unary_operator_context.cc
+    src/compiler/evaluation/operators/unary/splat.cc
     src/compiler/evaluation/access_evaluator.cc
     src/compiler/evaluation/call_evaluator.cc
     src/compiler/evaluation/context.cc

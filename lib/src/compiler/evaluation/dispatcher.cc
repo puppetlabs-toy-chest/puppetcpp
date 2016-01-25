@@ -52,6 +52,7 @@
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/logical_not.hpp>
 #include <puppet/compiler/evaluation/operators/unary/negate.hpp>
+#include <puppet/compiler/evaluation/operators/unary/splat.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
 
@@ -118,6 +119,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Add the built-in unary operators
         add(unary::logical_not::create_descriptor());
         add(unary::negate::create_descriptor());
+        add(unary::splat::create_descriptor());
     }
 
     void dispatcher::add(functions::descriptor descriptor)
