@@ -62,6 +62,7 @@ namespace puppet { namespace runtime { namespace types {
     /**
      * Stream insertion operator for float type.
      * @param os The output stream to write the type to.
+     * @param type The type to write.
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, floating const& type);

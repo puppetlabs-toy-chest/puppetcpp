@@ -48,7 +48,7 @@ namespace puppet { namespace runtime { namespace types {
      * @param right The right type to compare.
      * @return Returns true if the two types are equal or false if not.
      */
-    bool operator==(numeric const&, numeric const&);
+    bool operator==(numeric const& left, numeric const& right);
 
     /**
      * Inequality operator for numeric.

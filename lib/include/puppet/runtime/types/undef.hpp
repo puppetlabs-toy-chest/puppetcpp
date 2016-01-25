@@ -59,7 +59,6 @@ namespace puppet { namespace runtime { namespace types {
 
     /**
      * Hashes the undef type.
-     * @param type The undef type to hash.
      * @return Returns the hash value for the type.
      */
     size_t hash_value(undef const&);

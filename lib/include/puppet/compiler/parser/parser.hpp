@@ -26,6 +26,7 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Parses the given string into a syntax tree.
      * @param source The puppet source code to parse.
+     * @param path The path to the file being parsed.
      * @param module The module where the parsing is taking place.
      * @param epp True if the string is in EPP format or false if not.
      * @return Returns the parsed syntax tree.

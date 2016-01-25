@@ -2048,7 +2048,7 @@ namespace puppet { namespace compiler { namespace ast {
 
     /**
      * Hashes a unary operator.
-     * @param operator_ The operator to hash.
+     * @param oper The operator to hash.
      * @return Returns the hash value for the unary operator.
      */
     size_t hash_value(unary_operator const& oper);

@@ -36,7 +36,6 @@ namespace puppet { namespace runtime { namespace values {
 
     /**
      * Hashes the undef value.
-     * @param variable The undef value to hash.
      * @return Returns the hash value for the value.
      */
     size_t hash_value(values::undef const&);
