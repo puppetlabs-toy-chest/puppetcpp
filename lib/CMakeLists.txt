@@ -52,6 +52,8 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/binary/greater.cc
     src/compiler/evaluation/operators/binary/greater_equal.cc
     src/compiler/evaluation/operators/binary/in.cc
+    src/compiler/evaluation/operators/binary/in_edge.cc
+    src/compiler/evaluation/operators/binary/in_edge_subscribe.cc
     src/compiler/evaluation/operators/binary/left_shift.cc
     src/compiler/evaluation/operators/binary/less.cc
     src/compiler/evaluation/operators/binary/less_equal.cc
@@ -63,6 +65,8 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/binary/multiply.cc
     src/compiler/evaluation/operators/binary/not_equals.cc
     src/compiler/evaluation/operators/binary/not_match.cc
+    src/compiler/evaluation/operators/binary/out_edge.cc
+    src/compiler/evaluation/operators/binary/out_edge_subscribe.cc
     src/compiler/evaluation/operators/binary/plus.cc
     src/compiler/evaluation/operators/unary/call_context.cc
     src/compiler/evaluation/operators/unary/descriptor.cc
@@ -70,7 +74,6 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/unary/negate.cc
     src/compiler/evaluation/operators/binary_operator_context.cc
     src/compiler/evaluation/operators/right_shift.cc
-    src/compiler/evaluation/operators/relationship.cc
     src/compiler/evaluation/operators/splat.cc
     src/compiler/evaluation/operators/unary_operator_context.cc
     src/compiler/evaluation/access_evaluator.cc

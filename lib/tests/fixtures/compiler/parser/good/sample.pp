@@ -733,3 +733,12 @@ if {a => b, c => d, e => f} + [[g, h]] != {a => b, c => d, e => f, g => h} {
 if {a => b, c => d, e => f} + [g, h] != {a => b, c => d, e => f, g => h} {
     fail incorrect
 }
+
+file {
+    [a, b, c, d, e, f, g, h]:
+}
+
+File[a] -> File[b]
+File[c] ~> File[d]
+File[e] <- File[f]
+File[g] <~ File[h]

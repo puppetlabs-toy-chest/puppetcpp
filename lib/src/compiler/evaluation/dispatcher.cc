@@ -32,6 +32,8 @@
 #include <puppet/compiler/evaluation/operators/binary/greater.hpp>
 #include <puppet/compiler/evaluation/operators/binary/greater_equal.hpp>
 #include <puppet/compiler/evaluation/operators/binary/in.hpp>
+#include <puppet/compiler/evaluation/operators/binary/in_edge.hpp>
+#include <puppet/compiler/evaluation/operators/binary/in_edge_subscribe.hpp>
 #include <puppet/compiler/evaluation/operators/binary/left_shift.hpp>
 #include <puppet/compiler/evaluation/operators/binary/less.hpp>
 #include <puppet/compiler/evaluation/operators/binary/less_equal.hpp>
@@ -43,6 +45,8 @@
 #include <puppet/compiler/evaluation/operators/binary/multiply.hpp>
 #include <puppet/compiler/evaluation/operators/binary/not_equals.hpp>
 #include <puppet/compiler/evaluation/operators/binary/not_match.hpp>
+#include <puppet/compiler/evaluation/operators/binary/out_edge.hpp>
+#include <puppet/compiler/evaluation/operators/binary/out_edge_subscribe.hpp>
 #include <puppet/compiler/evaluation/operators/binary/plus.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/logical_not.hpp>
@@ -92,6 +96,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(binary::greater::create_descriptor());
         add(binary::greater_equal::create_descriptor());
         add(binary::in::create_descriptor());
+        add(binary::in_edge::create_descriptor());
+        add(binary::in_edge_subscribe::create_descriptor());
         add(binary::left_shift::create_descriptor());
         add(binary::less::create_descriptor());
         add(binary::less_equal::create_descriptor());
@@ -103,6 +109,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(binary::multiply::create_descriptor());
         add(binary::not_equals::create_descriptor());
         add(binary::not_match::create_descriptor());
+        add(binary::out_edge::create_descriptor());
+        add(binary::out_edge_subscribe::create_descriptor());
         add(binary::plus::create_descriptor());
 
         // Add the built-in unary operators

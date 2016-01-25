@@ -16763,3 +16763,342 @@ statements:
               offset: 10808
               line: 734
             value: incorrect
+  - kind: resource
+    begin:
+      offset: 10812
+      line: 737
+    end:
+      offset: 10850
+      line: 739
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 10812
+        line: 737
+      end:
+        offset: 10816
+        line: 737
+      value: file
+    bodies:
+      - title:
+          kind: array
+          begin:
+            offset: 10823
+            line: 738
+          end:
+            offset: 10847
+            line: 738
+          elements:
+            - kind: name
+              begin:
+                offset: 10824
+                line: 738
+              end:
+                offset: 10825
+                line: 738
+              value: a
+            - kind: name
+              begin:
+                offset: 10827
+                line: 738
+              end:
+                offset: 10828
+                line: 738
+              value: b
+            - kind: name
+              begin:
+                offset: 10830
+                line: 738
+              end:
+                offset: 10831
+                line: 738
+              value: c
+            - kind: name
+              begin:
+                offset: 10833
+                line: 738
+              end:
+                offset: 10834
+                line: 738
+              value: d
+            - kind: name
+              begin:
+                offset: 10836
+                line: 738
+              end:
+                offset: 10837
+                line: 738
+              value: e
+            - kind: name
+              begin:
+                offset: 10839
+                line: 738
+              end:
+                offset: 10840
+                line: 738
+              value: f
+            - kind: name
+              begin:
+                offset: 10842
+                line: 738
+              end:
+                offset: 10843
+                line: 738
+              value: g
+            - kind: name
+              begin:
+                offset: 10845
+                line: 738
+              end:
+                offset: 10846
+                line: 738
+              value: h
+  - kind: binary
+    first:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 10852
+          line: 741
+        end:
+          offset: 10856
+          line: 741
+        name: File
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 10856
+            line: 741
+          end:
+            offset: 10859
+            line: 741
+          arguments:
+            - kind: name
+              begin:
+                offset: 10857
+                line: 741
+              end:
+                offset: 10858
+                line: 741
+              value: a
+    operations:
+      - operator_position:
+          offset: 10860
+          line: 741
+        operator: ->
+        operand:
+          kind: postfix
+          primary:
+            kind: type
+            begin:
+              offset: 10863
+              line: 741
+            end:
+              offset: 10867
+              line: 741
+            name: File
+          subexpressions:
+            - kind: access
+              begin:
+                offset: 10867
+                line: 741
+              end:
+                offset: 10870
+                line: 741
+              arguments:
+                - kind: name
+                  begin:
+                    offset: 10868
+                    line: 741
+                  end:
+                    offset: 10869
+                    line: 741
+                  value: b
+  - kind: binary
+    first:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 10871
+          line: 742
+        end:
+          offset: 10875
+          line: 742
+        name: File
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 10875
+            line: 742
+          end:
+            offset: 10878
+            line: 742
+          arguments:
+            - kind: name
+              begin:
+                offset: 10876
+                line: 742
+              end:
+                offset: 10877
+                line: 742
+              value: c
+    operations:
+      - operator_position:
+          offset: 10879
+          line: 742
+        operator: ~>
+        operand:
+          kind: postfix
+          primary:
+            kind: type
+            begin:
+              offset: 10882
+              line: 742
+            end:
+              offset: 10886
+              line: 742
+            name: File
+          subexpressions:
+            - kind: access
+              begin:
+                offset: 10886
+                line: 742
+              end:
+                offset: 10889
+                line: 742
+              arguments:
+                - kind: name
+                  begin:
+                    offset: 10887
+                    line: 742
+                  end:
+                    offset: 10888
+                    line: 742
+                  value: d
+  - kind: binary
+    first:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 10890
+          line: 743
+        end:
+          offset: 10894
+          line: 743
+        name: File
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 10894
+            line: 743
+          end:
+            offset: 10897
+            line: 743
+          arguments:
+            - kind: name
+              begin:
+                offset: 10895
+                line: 743
+              end:
+                offset: 10896
+                line: 743
+              value: e
+    operations:
+      - operator_position:
+          offset: 10898
+          line: 743
+        operator: <-
+        operand:
+          kind: postfix
+          primary:
+            kind: type
+            begin:
+              offset: 10901
+              line: 743
+            end:
+              offset: 10905
+              line: 743
+            name: File
+          subexpressions:
+            - kind: access
+              begin:
+                offset: 10905
+                line: 743
+              end:
+                offset: 10908
+                line: 743
+              arguments:
+                - kind: name
+                  begin:
+                    offset: 10906
+                    line: 743
+                  end:
+                    offset: 10907
+                    line: 743
+                  value: f
+  - kind: binary
+    first:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 10909
+          line: 744
+        end:
+          offset: 10913
+          line: 744
+        name: File
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 10913
+            line: 744
+          end:
+            offset: 10916
+            line: 744
+          arguments:
+            - kind: name
+              begin:
+                offset: 10914
+                line: 744
+              end:
+                offset: 10915
+                line: 744
+              value: g
+    operations:
+      - operator_position:
+          offset: 10917
+          line: 744
+        operator: <~
+        operand:
+          kind: postfix
+          primary:
+            kind: type
+            begin:
+              offset: 10920
+              line: 744
+            end:
+              offset: 10924
+              line: 744
+            name: File
+          subexpressions:
+            - kind: access
+              begin:
+                offset: 10924
+                line: 744
+              end:
+                offset: 10927
+                line: 744
+              arguments:
+                - kind: name
+                  begin:
+                    offset: 10925
+                    line: 744
+                  end:
+                    offset: 10926
+                    line: 744
+                  value: h
