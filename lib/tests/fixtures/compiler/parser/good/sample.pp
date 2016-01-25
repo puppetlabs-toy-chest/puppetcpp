@@ -684,3 +684,52 @@ if 2.0 * 5 != 10.0 {
 if 3.0 * 5.0 != 15.0 {
     fail incorrect
 }
+
+if 5 + 3 != 8 {
+    fail incorrect
+}
+if 5 + 3.0 != 8.0 {
+    fail incorrect
+}
+if 5.0 + 3 != 8.0 {
+    fail incorrect
+}
+if -5 + 3 != -2 {
+    fail incorrect
+}
+if 5 + -3 != 2 {
+    fail incorrect
+}
+if -5 + -3 != -8 {
+    fail incorrect
+}
+if 5.0 + 3.0 != 8.0 {
+    fail incorrect
+}
+if -5.0 + 3.0 != -2.0 {
+    fail incorrect
+}
+if 5.0 + -3.0 != 2.0 {
+    fail incorrect
+}
+if -5.0 + -3.0 != -8.0 {
+    fail incorrect
+}
+if [1, 2, 3] + [4] != [1, 2, 3, 4] {
+    fail incorrect
+}
+if [1, 2] + { 3 => 4} != [1, 2, [3, 4]] {
+    fail incorrect
+}
+if [1, 2, 3] + 4 != [1, 2, 3, 4] {
+    fail incorrect
+}
+if {a => b, c => d, e => f} + { g => h} != {a => b, c => d, e => f, g => h} {
+    fail incorrect
+}
+if {a => b, c => d, e => f} + [[g, h]] != {a => b, c => d, e => f, g => h} {
+    fail incorrect
+}
+if {a => b, c => d, e => f} + [g, h] != {a => b, c => d, e => f, g => h} {
+    fail incorrect
+}

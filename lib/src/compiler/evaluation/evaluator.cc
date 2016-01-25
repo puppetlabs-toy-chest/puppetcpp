@@ -6,7 +6,6 @@
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
-#include <puppet/compiler/evaluation/operators/plus.hpp>
 #include <puppet/compiler/evaluation/operators/relationship.hpp>
 #include <puppet/compiler/evaluation/operators/right_shift.hpp>
 #include <puppet/compiler/evaluation/operators/splat.hpp>
@@ -916,7 +915,6 @@ namespace puppet { namespace compiler { namespace evaluation {
             { ast::binary_operator::in_edge_subscribe,  operators::in_edge_subscribe() },
             { ast::binary_operator::out_edge,           operators::out_edge() },
             { ast::binary_operator::out_edge_subscribe, operators::out_edge_subscribe() },
-            { ast::binary_operator::plus,               operators::plus() },
             { ast::binary_operator::right_shift,        operators::right_shift() }
         };
 
