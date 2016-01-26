@@ -37,7 +37,6 @@ namespace puppet { namespace runtime { namespace values {
 
     /**
      * Hashes the default value.
-     * @param variable The default value to hash.
      * @return Returns the hash value for the value.
      */
     size_t hash_value(defaulted const&);

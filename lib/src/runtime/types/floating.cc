@@ -54,7 +54,7 @@ namespace puppet { namespace runtime { namespace types {
     {
         os << floating::name();
         // BUG: fix direct floating point comparison
-        bool from_default = type.from() == numeric_limits<double>::min();
+        bool from_default = type.from() == numeric_limits<double>::lowest();
         bool to_default = type.to() == numeric_limits<double>::max();
         if (from_default && to_default) {
             // Only output the type name

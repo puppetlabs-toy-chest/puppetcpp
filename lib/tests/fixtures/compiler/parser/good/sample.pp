@@ -284,3 +284,487 @@ include param_math_scope
 unless $param_math_scope::a == true and $param_math_scope::b == undef {
     fail incorrect
 }
+
+# Operator tests
+if 2 / 2 != 1 {
+    fail incorrect
+}
+if 1 / 2 != 0 {
+    fail incorrect
+}
+if 1 / 2.0 != 0.5 {
+    fail incorrect
+}
+if 2.0 / 1.0 != 2.0 {
+    fail incorrect
+}
+if 1.0 / 5.0 != 0.2 {
+    fail incorrect
+}
+if 1.0 / 5 != 0.2 {
+    fail incorrect
+}
+
+if 1 > 2 {
+    fail incorrect
+}
+unless 2 > 1 {
+    fail incorrect
+}
+if 1 > 1 {
+    fail incorrect
+}
+if 3.0 > 4 {
+    fail incorrect
+}
+unless 4 > 3.0 {
+    fail incorrect
+}
+if 3.0 > 3 {
+    fail incorrect
+}
+if 3.0 > 4.0 {
+    fail incorrect
+}
+unless 4.0 > 3.0 {
+    fail incorrect
+}
+if 3.0 > 3.0 {
+    fail incorrect
+}
+if bar > foo {
+    fail incorrect
+}
+unless foo > bar {
+    fail incorrect
+}
+if foo > foo {
+    fail incorrect
+}
+if String > String[0, 0] {
+    fail incorrect
+}
+unless String[0, 0] > String {
+    fail incorrect
+}
+if String[0, 0] > String[0, 0] {
+    fail incorrect
+}
+
+if 1 >= 2 {
+    fail incorrect
+}
+unless 2 >= 1 {
+    fail incorrect
+}
+unless 1 >= 1 {
+    fail incorrect
+}
+if 3.0 >= 4 {
+    fail incorrect
+}
+unless 4 >= 3.0 {
+    fail incorrect
+}
+unless 3.0 >= 3 {
+    fail incorrect
+}
+if 3.0 >= 4.0 {
+    fail incorrect
+}
+unless 4.0 >= 3.0 {
+    fail incorrect
+}
+unless 3.0 >= 3.0 {
+    fail incorrect
+}
+if bar >= foo {
+    fail incorrect
+}
+unless foo >= bar {
+    fail incorrect
+}
+unless foo >= foo {
+    fail incorrect
+}
+if String >= String[0, 0] {
+    fail incorrect
+}
+unless String[0, 0] >= String {
+    fail incorrect
+}
+unless String[0, 0] >= String[0, 0] {
+    fail incorrect
+}
+
+unless foo in foobar {
+    fail incorrect
+}
+if bar in baz {
+    fail incorrect
+}
+unless /.*oo.*/ in foobar {
+    fail incorrect
+}
+if /.*oo.*/ in baz {
+    fail incorrect
+}
+unless String in [1, foo, 3] {
+    fail incorrect
+}
+if String in [1, 2, 3] {
+    fail incorrect
+}
+unless foo in [1, foo, 3] {
+    fail incorrect
+}
+if foo in [1, 2, 3] {
+    fail incorrect
+}
+unless String in { 1 => 2, foo => bar, 5 => 6 } {
+    fail incorrect
+}
+if String in { 1 => 2, 3 => 4, 5 => 6 } {
+    fail incorrect
+}
+unless foo in { 1 => 2, foo => bar, 5 => 6 } {
+    fail incorrect
+}
+if foo in { 1 => 2, 3 => 4, 5 => 6 } {
+    fail incorrect
+}
+if 5 in 2 {
+    fail incorrect
+}
+
+unless 1 << 3 == 8 {
+    fail incorrect
+}
+unless -8 << -3 == -1 {
+    fail incorrect
+}
+unless 8 << -3 == 1 {
+    fail incorrect
+}
+unless -1 << 3 == -8 {
+    fail incorrect
+}
+unless [1, 2] << 3 == [1, 2, 3] {
+    fail incorrect
+}
+
+unless 1 < 2 {
+    fail incorrect
+}
+if 2 < 1 {
+    fail incorrect
+}
+if 1 < 1 {
+    fail incorrect
+}
+unless 3.0 < 4 {
+    fail incorrect
+}
+if 4 < 3.0 {
+    fail incorrect
+}
+if 3.0 < 3 {
+    fail incorrect
+}
+unless 3.0 < 4.0 {
+    fail incorrect
+}
+if 4.0 < 3.0 {
+    fail incorrect
+}
+if 3.0 < 3.0 {
+    fail incorrect
+}
+unless bar < foo {
+    fail incorrect
+}
+if foo < bar {
+    fail incorrect
+}
+if foo < foo {
+    fail incorrect
+}
+unless String < String[0, 0] {
+    fail incorrect
+}
+if String[0, 0] < String {
+    fail incorrect
+}
+if String[0, 0] < String[0, 0] {
+    fail incorrect
+}
+
+unless 1 <= 2 {
+    fail incorrect
+}
+if 2 <= 1 {
+    fail incorrect
+}
+unless 1 <= 1 {
+    fail incorrect
+}
+unless 3.0 <= 4 {
+    fail incorrect
+}
+if 4 <= 3.0 {
+    fail incorrect
+}
+unless 3.0 <= 3 {
+    fail incorrect
+}
+unless 3.0 <= 4.0 {
+    fail incorrect
+}
+if 4.0 <= 3.0 {
+    fail incorrect
+}
+unless 3.0 <= 3.0 {
+    fail incorrect
+}
+unless bar <= foo {
+    fail incorrect
+}
+if foo <= bar {
+    fail incorrect
+}
+unless foo <= foo {
+    fail incorrect
+}
+unless String <= String[0, 0] {
+    fail incorrect
+}
+if String[0, 0] <= String {
+    fail incorrect
+}
+unless String[0, 0] <= String[0, 0] {
+    fail incorrect
+}
+
+if false and false {
+    fail incorrect
+}
+if false and true {
+    fail incorrect
+}
+if true and false {
+    fail incorrect
+}
+unless true and true {
+    fail incorrect
+}
+
+if !true {
+    fail incorrect
+}
+unless !false {
+    fail incorrect
+}
+
+if false or false {
+    fail incorrect
+}
+unless false or true {
+    fail incorrect
+}
+unless true or false {
+    fail incorrect
+}
+unless true or true {
+    fail incorrect
+}
+
+unless foobar =~ foo {
+    fail incorrect
+}
+if baz =~ foo {
+    fail incorrect
+}
+unless foobar =~ /foo/ {
+    fail incorrect
+}
+if baz =~ /foo/ {
+    fail incorrect
+}
+if 5 =~ String {
+    fail incorrect
+}
+unless foo =~ String {
+    fail incorrect
+}
+
+if foobar !~ foo {
+    fail incorrect
+}
+unless baz !~ foo {
+    fail incorrect
+}
+if foobar !~ /foo/ {
+    fail incorrect
+}
+unless baz !~ /foo/ {
+    fail incorrect
+}
+unless 5 !~ String {
+    fail incorrect
+}
+if foo !~ String {
+    fail incorrect
+}
+
+if 5 - 3 != 2 {
+    fail incorrect
+}
+if 5 - 3.0 != 2.0 {
+    fail incorrect
+}
+if 5.0 - 3 != 2.0 {
+    fail incorrect
+}
+if -5 - 3 != -8 {
+    fail incorrect
+}
+if 5 - -3 != 8 {
+    fail incorrect
+}
+if -5 - -3 != -2 {
+    fail incorrect
+}
+if 5.0 - 3.0 != 2.0 {
+    fail incorrect
+}
+if -5.0 - 3.0 != -8.0 {
+    fail incorrect
+}
+if 5.0 - -3.0 != 8.0 {
+    fail incorrect
+}
+if -5.0 - -3.0 != -2.0 {
+    fail incorrect
+}
+if [1, 2, 3] - [2] != [1, 3] {
+    fail incorrect
+}
+if [[1, 2], [3, 4], [5, 6]] - { 3 => 4} != [[1, 2], [5, 6]] {
+    fail incorrect
+}
+if [1, 2, 3] - 2 != [1, 3] {
+    fail incorrect
+}
+if {a => b, c => d, e => f} - { c => z} != {a => b, e => f} {
+    fail incorrect
+}
+if {a => b, c => d, e => f} - [c, e] != {a => b} {
+    fail incorrect
+}
+
+if 10 % 2 != 0 {
+    fail incorrect
+}
+if 13 % 9 != 4 {
+    fail incorrect
+}
+if 1044 % 22 != 10 {
+    fail incorrect
+}
+
+if 2 * 2 != 4 {
+    fail incorrect
+}
+if 2 * 3.0 != 6.0 {
+    fail incorrect
+}
+if 2.0 * 5 != 10.0 {
+    fail incorrect
+}
+if 3.0 * 5.0 != 15.0 {
+    fail incorrect
+}
+
+if 5 + 3 != 8 {
+    fail incorrect
+}
+if 5 + 3.0 != 8.0 {
+    fail incorrect
+}
+if 5.0 + 3 != 8.0 {
+    fail incorrect
+}
+if -5 + 3 != -2 {
+    fail incorrect
+}
+if 5 + -3 != 2 {
+    fail incorrect
+}
+if -5 + -3 != -8 {
+    fail incorrect
+}
+if 5.0 + 3.0 != 8.0 {
+    fail incorrect
+}
+if -5.0 + 3.0 != -2.0 {
+    fail incorrect
+}
+if 5.0 + -3.0 != 2.0 {
+    fail incorrect
+}
+if -5.0 + -3.0 != -8.0 {
+    fail incorrect
+}
+if [1, 2, 3] + [4] != [1, 2, 3, 4] {
+    fail incorrect
+}
+if [1, 2] + { 3 => 4} != [1, 2, [3, 4]] {
+    fail incorrect
+}
+if [1, 2, 3] + 4 != [1, 2, 3, 4] {
+    fail incorrect
+}
+if {a => b, c => d, e => f} + { g => h} != {a => b, c => d, e => f, g => h} {
+    fail incorrect
+}
+if {a => b, c => d, e => f} + [[g, h]] != {a => b, c => d, e => f, g => h} {
+    fail incorrect
+}
+if {a => b, c => d, e => f} + [g, h] != {a => b, c => d, e => f, g => h} {
+    fail incorrect
+}
+
+file {
+    [a, b, c, d, e, f, g, h]:
+}
+
+File[a] -> File[b]
+File[c] ~> File[d]
+File[e] <- File[f]
+File[g] <~ File[h]
+
+unless 8 >> 3 == 1 {
+    fail incorrect
+}
+unless -1 >> -3 == -8 {
+    fail incorrect
+}
+unless 1 >> -3 == 8 {
+    fail incorrect
+}
+unless -8 >> 3 == -1 {
+    fail incorrect
+}
+
+if *undef != [] {
+    fail incorrect
+}
+if *3 != [3] {
+    fail incorrect
+}
+if *[1, 2, 3] != [1, 2, 3] {
+    fail incorrect
+}
+if *{a => b, c => d} != [[a, b], [c, d]] {
+    fail incorrect
+}

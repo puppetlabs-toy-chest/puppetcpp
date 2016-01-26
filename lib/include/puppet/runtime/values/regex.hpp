@@ -69,7 +69,7 @@ namespace puppet { namespace runtime { namespace values {
 
     /**
      * Hashes the regex value.
-     * @param variable The regex value to hash.
+     * @param regex The regex value to hash.
      * @return Returns the hash value for the value.
      */
     size_t hash_value(values::regex const& regex);

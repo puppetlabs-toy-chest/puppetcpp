@@ -22,7 +22,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         /**
          * The callback type to call when the function call is dispatched.
          */
-        using callback_type = std::function<runtime::values::value(functions::call_context&)>;
+        using callback_type = std::function<runtime::values::value(call_context&)>;
 
         /**
          * Constructs a function descriptor.

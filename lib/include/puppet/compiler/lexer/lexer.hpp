@@ -651,7 +651,7 @@ namespace puppet { namespace compiler { namespace lexer {
                     throw lexer_exception<input_iterator_type>(
                         (boost::format("'%1%' is not in the range of %2% to %3%.") %
                             token %
-                            numeric_limits<double>::min() %
+                            numeric_limits<double>::lowest() %
                             numeric_limits<double>::max()
                         ).str(),
                         start);
@@ -918,7 +918,7 @@ namespace puppet { namespace compiler { namespace lexer {
 
     /**
      * Gets the last position for the given input string iterator range.
-     * @param input The input string iterator range.
+     * @param range The input string iterator range.
      * @return Returns the last position in the iterator range.
      */
     position get_last_position(boost::iterator_range<lexer_string_iterator> const& range);

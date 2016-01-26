@@ -4,33 +4,13 @@
 #include <puppet/compiler/evaluation/interpolator.hpp>
 #include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
-#include <puppet/compiler/evaluation/operators/assignment.hpp>
-#include <puppet/compiler/evaluation/operators/divide.hpp>
-#include <puppet/compiler/evaluation/operators/equals.hpp>
-#include <puppet/compiler/evaluation/operators/greater.hpp>
-#include <puppet/compiler/evaluation/operators/greater_equal.hpp>
-#include <puppet/compiler/evaluation/operators/in.hpp>
-#include <puppet/compiler/evaluation/operators/left_shift.hpp>
-#include <puppet/compiler/evaluation/operators/less.hpp>
-#include <puppet/compiler/evaluation/operators/less_equal.hpp>
-#include <puppet/compiler/evaluation/operators/logical_and.hpp>
-#include <puppet/compiler/evaluation/operators/logical_not.hpp>
-#include <puppet/compiler/evaluation/operators/logical_or.hpp>
-#include <puppet/compiler/evaluation/operators/match.hpp>
-#include <puppet/compiler/evaluation/operators/minus.hpp>
-#include <puppet/compiler/evaluation/operators/modulo.hpp>
-#include <puppet/compiler/evaluation/operators/multiply.hpp>
-#include <puppet/compiler/evaluation/operators/negate.hpp>
-#include <puppet/compiler/evaluation/operators/not_equals.hpp>
-#include <puppet/compiler/evaluation/operators/not_match.hpp>
-#include <puppet/compiler/evaluation/operators/plus.hpp>
-#include <puppet/compiler/evaluation/operators/relationship.hpp>
-#include <puppet/compiler/evaluation/operators/right_shift.hpp>
-#include <puppet/compiler/evaluation/operators/splat.hpp>
+#include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
+#include <puppet/compiler/evaluation/operators/unary/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 
 using namespace std;
 using namespace puppet::compiler::ast;
+using namespace puppet::compiler::evaluation::operators;
 using namespace puppet::runtime;
 using namespace puppet::runtime::values;
 
@@ -100,8 +80,21 @@ namespace puppet { namespace compiler { namespace evaluation {
         if (regex) {
             // Only match against strings
             if (actual.as<std::string>()) {
-                operators::binary_operator_context context{ _context, actual, actual_context, expected, expected_context };
-                if (operators::match()(context).is_truthy()) {
+                // Dispatch a match operator
+                binary::call_context context{
+                    _context,
+                    ast::binary_operator::match,
+                    ast::context{
+                        actual_context.begin,
+                        lexer::position{ actual_context.begin.offset() + 1, actual_context.begin.line() },
+                        actual_context.tree
+                    },
+                    actual,
+                    actual_context,
+                    expected,
+                    expected_context
+                };
+                if (_context.dispatcher().dispatch(context).is_truthy()) {
                     return true;
                 }
             }
@@ -518,28 +511,21 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(unary_expression const& expression)
     {
-        static const unordered_map<ast::unary_operator, function<value(operators::unary_operator_context const&)>, boost::hash<unary_operator>> unary_operators = {
-            { ast::unary_operator::negate,      operators::negate() },
-            { ast::unary_operator::logical_not, operators::logical_not() },
-            { ast::unary_operator::splat,       operators::splat() }
-        };
-
-        auto it = unary_operators.find(expression.operator_);
-        if (it == unary_operators.end()) {
-            throw evaluation_exception(
-                (boost::format("unspported unary operator '%1%'.") %
-                 expression.operator_
-                ).str(),
-                ast::context{
-                    expression.operator_position,
-                    lexer::position{expression.operator_position.offset() + 1, expression.operator_position.line()},
-                    expression.context().tree
-                });
-        }
-
         auto operand = evaluate(expression.operand);
-        operators::unary_operator_context context{ _context, operand, expression.operand.context() };
-        return it->second(context);
+        auto operand_context = expression.operand.context();
+
+        unary::call_context context{
+            _context,
+            expression.operator_,
+            ast::context{
+                expression.operator_position,
+                lexer::position{ expression.operator_position.offset() + 1, expression.operator_position.line() },
+                operand_context.tree
+            },
+            operand,
+            operand_context
+        };
+        return _context.dispatcher().dispatch(context);
     }
 
     value evaluator::operator()(epp_render_expression const& expression)
@@ -909,47 +895,20 @@ namespace puppet { namespace compiler { namespace evaluation {
         value& right,
         ast::binary_operation const& operation)
     {
-        static const unordered_map<binary_operator, function<value(operators::binary_operator_context const&)>, boost::hash<binary_operator>> binary_operators = {
-            { ast::binary_operator::assignment,         operators::assignment() },
-            { ast::binary_operator::divide,             operators::divide() },
-            { ast::binary_operator::equals,             operators::equals() },
-            { ast::binary_operator::greater_than,       operators::greater() },
-            { ast::binary_operator::greater_equals,     operators::greater_equal() },
-            { ast::binary_operator::in,                 operators::in() },
-            { ast::binary_operator::in_edge,            operators::in_edge() },
-            { ast::binary_operator::in_edge_subscribe,  operators::in_edge_subscribe() },
-            { ast::binary_operator::left_shift,         operators::left_shift() },
-            { ast::binary_operator::less_than,          operators::less() },
-            { ast::binary_operator::less_equals,        operators::less_equal() },
-            { ast::binary_operator::logical_and,        operators::logical_and() },
-            { ast::binary_operator::logical_or,         operators::logical_or() },
-            { ast::binary_operator::match,              operators::match() },
-            { ast::binary_operator::minus,              operators::minus() },
-            { ast::binary_operator::modulo,             operators::modulo() },
-            { ast::binary_operator::multiply,           operators::multiply() },
-            { ast::binary_operator::not_equals,         operators::not_equals() },
-            { ast::binary_operator::not_match,          operators::not_match() },
-            { ast::binary_operator::out_edge,           operators::out_edge() },
-            { ast::binary_operator::out_edge_subscribe, operators::out_edge_subscribe() },
-            { ast::binary_operator::plus,               operators::plus() },
-            { ast::binary_operator::right_shift,        operators::right_shift() }
+        binary::call_context context{
+            _context,
+            operation.operator_,
+            ast::context{
+                operation.operator_position,
+                lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
+                left_context.tree
+            },
+            left,
+            left_context,
+            right,
+            operation.operand.context()
         };
-
-        auto it = binary_operators.find(operation.operator_);
-        if (it == binary_operators.end()) {
-            throw evaluation_exception(
-                (boost::format("unsupported binary operator '%1%' in binary expression.") %
-                 operation.operator_
-                ).str(),
-                ast::context{
-                    operation.operator_position,
-                    lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
-                    left_context.tree
-                });
-        }
-
-        operators::binary_operator_context context{ _context, left, left_context, right, operation.operand.context() };
-        left = it->second(context);
+        left = _context.dispatcher().dispatch(context);
     }
 
 }}}  // namespace puppet::compiler::evaluation

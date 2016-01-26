@@ -21,7 +21,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
          * @param context The current evaluation context.
          * @param expression The function call expression.
          */
-        explicit call_context(evaluation::context& context, ast::function_call_expression const& expression);
+        call_context(evaluation::context& context, ast::function_call_expression const& expression);
 
         /**
          * Constructs a function call context from a method call expression.
@@ -31,7 +31,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
          * @param instance_context The AST context for the instance.
          * @param splat True if splatting of the instance value is supported or false if not.
          */
-        explicit call_context(evaluation::context& context, ast::method_call_expression const& expression, runtime::values::value& instance, ast::context const& instance_context, bool splat);
+        call_context(evaluation::context& context, ast::method_call_expression const& expression, runtime::values::value& instance, ast::context const& instance_context, bool splat);
 
         /**
          * Gets the current evaluation context.

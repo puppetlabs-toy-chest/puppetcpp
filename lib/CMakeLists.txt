@@ -44,31 +44,36 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/versioncmp.cc
     src/compiler/evaluation/functions/warning.cc
     src/compiler/evaluation/functions/with.cc
-    src/compiler/evaluation/operators/assignment.cc
-    src/compiler/evaluation/operators/binary_operator_context.cc
-    src/compiler/evaluation/operators/divide.cc
-    src/compiler/evaluation/operators/equals.cc
-    src/compiler/evaluation/operators/greater.cc
-    src/compiler/evaluation/operators/greater_equal.cc
-    src/compiler/evaluation/operators/in.cc
-    src/compiler/evaluation/operators/left_shift.cc
-    src/compiler/evaluation/operators/less.cc
-    src/compiler/evaluation/operators/less_equal.cc
-    src/compiler/evaluation/operators/logical_and.cc
-    src/compiler/evaluation/operators/logical_not.cc
-    src/compiler/evaluation/operators/logical_or.cc
-    src/compiler/evaluation/operators/match.cc
-    src/compiler/evaluation/operators/minus.cc
-    src/compiler/evaluation/operators/modulo.cc
-    src/compiler/evaluation/operators/multiply.cc
-    src/compiler/evaluation/operators/negate.cc
-    src/compiler/evaluation/operators/not_equals.cc
-    src/compiler/evaluation/operators/not_match.cc
-    src/compiler/evaluation/operators/plus.cc
-    src/compiler/evaluation/operators/right_shift.cc
-    src/compiler/evaluation/operators/relationship.cc
-    src/compiler/evaluation/operators/splat.cc
-    src/compiler/evaluation/operators/unary_operator_context.cc
+    src/compiler/evaluation/operators/binary/assignment.cc
+    src/compiler/evaluation/operators/binary/call_context.cc
+    src/compiler/evaluation/operators/binary/descriptor.cc
+    src/compiler/evaluation/operators/binary/divide.cc
+    src/compiler/evaluation/operators/binary/equals.cc
+    src/compiler/evaluation/operators/binary/greater.cc
+    src/compiler/evaluation/operators/binary/greater_equal.cc
+    src/compiler/evaluation/operators/binary/in.cc
+    src/compiler/evaluation/operators/binary/in_edge.cc
+    src/compiler/evaluation/operators/binary/in_edge_subscribe.cc
+    src/compiler/evaluation/operators/binary/left_shift.cc
+    src/compiler/evaluation/operators/binary/less.cc
+    src/compiler/evaluation/operators/binary/less_equal.cc
+    src/compiler/evaluation/operators/binary/logical_and.cc
+    src/compiler/evaluation/operators/binary/logical_or.cc
+    src/compiler/evaluation/operators/binary/match.cc
+    src/compiler/evaluation/operators/binary/minus.cc
+    src/compiler/evaluation/operators/binary/modulo.cc
+    src/compiler/evaluation/operators/binary/multiply.cc
+    src/compiler/evaluation/operators/binary/not_equals.cc
+    src/compiler/evaluation/operators/binary/not_match.cc
+    src/compiler/evaluation/operators/binary/out_edge.cc
+    src/compiler/evaluation/operators/binary/out_edge_subscribe.cc
+    src/compiler/evaluation/operators/binary/plus.cc
+    src/compiler/evaluation/operators/binary/right_shift.cc
+    src/compiler/evaluation/operators/unary/call_context.cc
+    src/compiler/evaluation/operators/unary/descriptor.cc
+    src/compiler/evaluation/operators/unary/logical_not.cc
+    src/compiler/evaluation/operators/unary/negate.cc
+    src/compiler/evaluation/operators/unary/splat.cc
     src/compiler/evaluation/access_evaluator.cc
     src/compiler/evaluation/call_evaluator.cc
     src/compiler/evaluation/context.cc

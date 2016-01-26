@@ -272,7 +272,7 @@ namespace puppet { namespace compiler { namespace evaluation {
          * @param node The node being compiled.
          * @param catalog The catalog being compiled.
          */
-        explicit context(compiler::node& node, compiler::catalog& catalog);
+        context(compiler::node& node, compiler::catalog& catalog);
 
         /**
          * Default move constructor for context.

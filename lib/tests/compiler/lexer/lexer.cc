@@ -535,7 +535,7 @@ SCENARIO("lexing numbers", "[lexer]")
     lex_bad_string("123.0e-", 0, 1, "'123.0e-' is not a valid number.");
     lex_bad_string("123.0ebad", 0, 1, "'123.0ebad' is not a valid number.");
     lex_bad_string("123bad.2bad2e-bad", 0, 1, "'123bad.2bad2e-bad' is not a valid number.");
-    lex_bad_string("1e100000", 0, 1, (boost::format("'1e100000' is not in the range of %1% to %2%.") % numeric_limits<double>::min() % numeric_limits<double>::max()).str());
+    lex_bad_string("1e100000", 0, 1, (boost::format("'1e100000' is not in the range of %1% to %2%.") % numeric_limits<double>::lowest() % numeric_limits<double>::max()).str());
 }
 
 SCENARIO("lexing tokens with values", "[lexer]")

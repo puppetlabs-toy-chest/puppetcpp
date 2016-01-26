@@ -33,6 +33,8 @@
 #include "../types/undef.hpp"
 #include "../types/variant.hpp"
 #include "../../cast.hpp"
+#include <vector>
+#include <unordered_set>
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
 #include <boost/mpl/contains.hpp>
@@ -257,6 +259,67 @@ namespace puppet { namespace runtime { namespace values {
      * @return Returns the hash value for the type.
      */
     size_t hash_value(values::type const& type);
+
+    /**
+     * Utility class for printing a set of types.
+     */
+    struct type_set
+    {
+        /**
+         * Adds a type to the set.
+         * The types will appear in the order they were added.
+         * Duplicate types will be ignored.
+         * Note: a pointer to the given type is stored internally; the type is expected to outlive the set.
+         * @param type The type to add to the set.
+         */
+        void add(values::type const& type);
+
+        /**
+         * Clears the set.
+         */
+        void clear();
+
+        /**
+         * Determines if the set is empty.
+         * @return Returns true if the set is empty or false if not.
+         */
+        bool empty() const;
+
+        /**
+         * Gets the size of the set.
+         * @return Returns the size of the set.
+         */
+        size_t size() const;
+
+        /**
+         * Gets the type at the given index.
+         * @param index The index to get the type at.
+         * @return Returns the type at the given index.
+         */
+        values::type const& operator[](size_t index) const;
+
+     private:
+        struct indirect_hasher
+        {
+            size_t operator()(values::type const* type) const;
+        };
+
+        struct indirect_comparer
+        {
+            bool operator()(type const* right, type const* left) const;
+        };
+
+        std::vector<type const*> _types;
+        std::unordered_set<type const*, indirect_hasher, indirect_comparer> _set;
+    };
+
+    /**
+     * Stream insertion operator for type set.
+     * @param os The output stream to write the set to.
+     * @param set The type set to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, type_set const& set);
 
 }}}  // puppet::runtime::values
 
