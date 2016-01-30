@@ -176,7 +176,7 @@ Build the compiler (note: replace the `-j 2` below with the appropriate job coun
 
 Run the compiler:
 
-    $ bin/puppetcpp --help
+    $ bin/puppetcpp
 
 Build Requirements
 ------------------

@@ -101,9 +101,4 @@ namespace puppet { namespace compiler {
         return _text;
     }
 
-    settings_exception::settings_exception(string const& message) :
-        runtime_error(message)
-    {
-    }
-
 }}  // namespace puppet::compiler

@@ -5,7 +5,6 @@
 #pragma once
 
 #include "ast/ast.hpp"
-#include "settings.hpp"
 #include "registry.hpp"
 #include "module.hpp"
 #include "finder.hpp"
@@ -32,18 +31,11 @@ namespace puppet { namespace compiler {
     {
         /**
          * Constructs a new environment.
-         * @param logger The logger to use while loading modules.
-         * @param settings The compiler settings.
-         * @param name The name of the environment (e.g. 'production').
-         * @param directory The directory for the environment.
+         * @param name The environment's name.
+         * @param directory The base directory for the environment.
+         * @param manifests The manifests to compile for the environment; if empty, manifests will be searched for.
          */
-        environment(logging::logger& logger, compiler::settings const& settings, std::string name, std::string directory);
-
-        /**
-         * Gets the associated compiler settings.
-         * @return Returns the associated compiler settings.
-         */
-        compiler::settings const& settings() const;
+        environment(std::string name, std::string directory, std::vector<std::string> manifests = {});
 
         /**
          * Gets the name of the environment.
@@ -70,6 +62,13 @@ namespace puppet { namespace compiler {
         evaluation::dispatcher const& dispatcher() const;
 
         /**
+         * Loads the modules into the environment.
+         * @param logger The logger to use for logging output.
+         * @param directories The additional directories to search for modules.
+         */
+        void load_modules(logging::logger& logger, std::vector<std::string> const& directories = {});
+
+        /**
          * Compiles the environment's manifests for the given evaluation context.
          * @param context The current evaluation context.
          */
@@ -94,8 +93,8 @@ namespace puppet { namespace compiler {
         void load_modules(logging::logger& logger, std::string const& directory);
         std::shared_ptr<ast::syntax_tree> import(logging::logger& logger, std::string const& path, compiler::module const* module = nullptr);
 
-        compiler::settings const& _settings;
         std::string _name;
+        std::vector<std::string> _manifests;
         compiler::registry _registry;
         evaluation::dispatcher _dispatcher;
         std::unordered_map<std::string, std::shared_ptr<ast::syntax_tree>> _parsed;
