@@ -27,7 +27,7 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 
-find_package(Boost 1.59.0 REQUIRED COMPONENTS program_options filesystem system)
+find_package(Boost 1.60.0 REQUIRED COMPONENTS program_options filesystem system)
 find_package(Facter REQUIRED)
 find_package(YAMLCPP REQUIRED)
 

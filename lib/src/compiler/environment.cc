@@ -14,27 +14,13 @@ namespace sys = boost::system;
 
 namespace puppet { namespace compiler {
 
-    environment::environment(logging::logger& logger, compiler::settings const& settings, string name, string directory) :
+    environment::environment(string name, string directory, vector<string> manifests) :
         finder(rvalue_cast(directory)),
-        _settings(settings),
-        _name(rvalue_cast(name))
+        _name(rvalue_cast(name)),
+        _manifests(rvalue_cast(manifests))
     {
         // Add the built-in functions and operators to the dispatcher
         _dispatcher.add_builtins();
-
-        // First load this module's directories
-        // TODO: the modules subdirectory can come from an environment configuration file
-        load_modules(logger, (fs::path{ this->directory() } / "modules").string());
-
-        // Next load global modules
-        for (auto const& directory : _settings.module_directories()) {
-            load_modules(logger, directory);
-        }
-    }
-
-    compiler::settings const& environment::settings() const
-    {
-        return _settings;
     }
 
     string const& environment::name() const
@@ -57,15 +43,27 @@ namespace puppet { namespace compiler {
         return _dispatcher;
     }
 
+    void environment::load_modules(logging::logger& logger, vector<string> const& directories)
+    {
+        // First load this module's directories
+        // TODO: the modules subdirectory can come from an environment configuration file
+        load_modules(logger, (fs::path{ this->directory() } / "modules").string());
+
+        // Next load modules in the given directories
+        for (auto const& directory : directories) {
+            load_modules(logger, directory);
+        }
+    }
+
     void environment::compile(evaluation::context& context)
     {
         auto& logger = context.node().logger();
 
         // If files to compile were explicitly specified, load those files only
         vector<shared_ptr<ast::syntax_tree>> trees;
-        if (!_settings.manifests().empty()) {
+        if (!_manifests.empty()) {
             // Treat the files as if they come from the environment
-            for (auto const& manifest : _settings.manifests()) {
+            for (auto const& manifest : _manifests) {
                 try {
                     trees.emplace_back(import(logger, manifest));
                 } catch (parse_exception const& ex) {
@@ -111,7 +109,7 @@ namespace puppet { namespace compiler {
         if (trees.empty()) {
             throw compiler::compilation_exception(
                 (boost::format("no manifests were found for environment '%1%': expected at least one manifest to compile as an argument.") %
-                 _name
+                 name()
                 ).str());
         }
 
@@ -263,11 +261,11 @@ namespace puppet { namespace compiler {
             // Check for a already parsed AST
             auto it = _parsed.find(path);
             if (it != _parsed.end()) {
-                LOG(debug, "using cached AST for '%1%' in environment '%2%'.", path, _name);
+                LOG(debug, "using cached AST for '%1%' in environment '%2%'.", path, name());
                 tree = it->second;
             } else {
                 // Parse the file
-                LOG(debug, "loading '%1%' into environment '%2%'.", path, _name);
+                LOG(debug, "loading '%1%' into environment '%2%'.", path, name());
                 tree = parser::parse_file(path, module);
                 LOG(debug, "parsed AST for '%1%':\n-----\n%2%\n-----", path, *tree);
                 _parsed.emplace(path, tree);
