@@ -12,5 +12,3 @@
  has a
  break!
 '
-
-    'missing endquote\'

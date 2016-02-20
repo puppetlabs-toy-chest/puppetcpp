@@ -6,19 +6,10 @@
  */
 #pragma once
 
-#include "token_id.hpp"
-#include "string_token.hpp"
-#include "number_token.hpp"
+#include "tokens.hpp"
+#include "../exceptions.hpp"
+#include "../../logging/logger.hpp"
 #include "../../cast.hpp"
-#include <string>
-#include <locale>
-#include <iostream>
-#include <fstream>
-#include <iterator>
-#include <sstream>
-#include <exception>
-#include <tuple>
-#include <regex>
 #include <limits>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/spirit/include/lex_lexer.hpp>
@@ -27,8 +18,23 @@
 #include <boost/spirit/include/lex_static_lexertl.hpp>
 #include <boost/spirit/include/support_multi_pass.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/utility/string_ref.hpp>
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
+#include <utf8.h>
+#include <string>
+#include <stack>
+#include <memory>
+#include <locale>
+#include <iostream>
+#include <fstream>
+#include <iterator>
+#include <sstream>
+#include <exception>
+#include <tuple>
+#include <regex>
+#include <functional>
+#include <array>
 
 namespace puppet { namespace compiler { namespace lexer {
     /**
@@ -38,38 +44,22 @@ namespace puppet { namespace compiler { namespace lexer {
     constexpr const int LEXER_TAB_WIDTH = 4;
 
     /**
-     * Exception for lexer errors.
-     * @tparam Iterator The location iterator type.
+     * The lexer state for EPP lexing.
      */
-    template <typename Iterator>
-    struct lexer_exception : std::runtime_error
-    {
-        /**
-         * Constructs a lexer exception.
-         * @param message The lexer exception message.
-         * @param location The location where lexing failed.
-         */
-        lexer_exception(std::string const& message, Iterator location) :
-            std::runtime_error(message),
-            _location(location)
-        {
-        }
-
-        /**
-         * Gets the location where lexing failed.
-         * @return Returns the location where lexing failed.
-         */
-        Iterator const& location() const
-        {
-            return _location;
-        }
-
-     private:
-        Iterator _location;
-    };
+    extern const char* const EPP_STATE;
 
     /**
-     * Lexer iterator type used to support heredoc parsing.
+     * The escapes for single quoted strings.
+     */
+    extern const char* const SQ_ESCAPES;
+
+    /**
+     * The escapes for double quoted strings.
+     */
+    extern const char* const DQ_ESCAPES;
+
+    /**
+     * Lexer iterator type used to support interpolated strings and heredoc parsing.
      * Heredocs require a more complicated iterator type due to the fact heredoc lines are parsed out-of-order.
      * This iterator supports skipping over lines that have already been parsed for a heredoc token.
      * This iterator also keeps track of position in the input.
@@ -89,10 +79,11 @@ namespace puppet { namespace compiler { namespace lexer {
         /**
          * Type conversion from the underlying iterator type.
          * @param iter The underlying iterator instance.
+         * @param position The position for the iterator.
          */
-        explicit lexer_iterator(Iterator const& iter) :
+        explicit lexer_iterator(Iterator const& iter, lexer::position position = { 0, 1}) :
             boost::iterator_adaptor<lexer_iterator<Iterator>, Iterator>(iter),
-            _position { 0, 1 }
+            _position(rvalue_cast(position))
         {
         }
 
@@ -123,55 +114,48 @@ namespace puppet { namespace compiler { namespace lexer {
             return _epp_end;
         }
 
-    private:
+     private:
         friend class boost::iterator_core_access;
         template <typename Base> friend struct lexer;
 
-        void set_next(lexer_iterator<Iterator> const& next)
+        boost::optional<lexer_iterator<Iterator>> next() const
         {
-            // Set the next underlying iterator
-            _next_iter = next.base_reference();
-            _next_position = next._position;
+            boost::optional<lexer_iterator<Iterator>> next;
+            if (_next) {
+                next = lexer_iterator<Iterator>{ _next->first, _next->second };
+            }
+            return next;
         }
 
-        bool get_next(lexer_iterator<Iterator>& next) const
+        void next(lexer_iterator<Iterator> const& next)
         {
-            if (!_next_iter) {
-                return false;
-            }
-
-            // Return the next iterator data
-            next.base_reference() = *_next_iter;
-            next._position = _next_position;
-            return true;
+            _next = std::make_pair(next.base(), next.position());
         }
 
         void increment()
         {
             auto& base = this->base_reference();
-
             auto current = *base;
 
-            // If there is a next and we've reach the end of the line, "skip" to next
-            // This will effectively skip over any heredoc lines that were parsed
-            if (_next_iter && current == '\n') {
-                base = *_next_iter;
-                _next_iter = boost::none;
-
-                _position = _next_position;
-                _next_position = lexer::position();
-            } else {
-                // Otherwise, check for a new line and increment the line counter
-                _position.increment(current == '\n');
-                ++base;
+            // If there is a next iterator and we encounter a newline, move to that iterator
+            // This will effectively skip over any heredoc lines that were already lexed
+            if (_next && current == '\n') {
+                base = _next->first;
+                _position = _next->second;
+                _next = boost::none;
+                return;
             }
+
+            // Otherwise, check for a new line and increment the line counter
+            _position.increment(current == '\n');
+            ++base;
         }
 
         lexer::position _position;
-        boost::optional<Iterator> _next_iter;
-        lexer::position _next_position;
+        boost::optional<std::pair<Iterator, lexer::position>> _next;
         bool _ignore_epp_end = true;
         bool _epp_end = true;
+        bool _heredoc_end_tag = true;
     };
 
     /**
@@ -218,14 +202,11 @@ namespace puppet { namespace compiler { namespace lexer {
         using input_iterator_type = typename token_type::iterator_type;
 
         /**
-         * The string token type.
-         */
-        using string_token_type = string_token<input_iterator_type>;
-
-        /**
          * Constructs a new lexer.
+         * @param log The callback to use to log messages.
          */
-        lexer()
+        explicit lexer(std::function<void(logging::level, std::string const&, position const&, size_t)> log = nullptr) :
+            _log(rvalue_cast(log))
         {
             namespace lex = boost::spirit::lex;
 
@@ -233,17 +214,33 @@ namespace puppet { namespace compiler { namespace lexer {
             // When in the EPP state, a match of an opening tag will transition to the normal lexer state.
             // When in the normal state, a match of a closing tag will transition to the EPP state.
             this->self(EPP_STATE) =
-                lex::token_def<>(R"(<%#[^%]*%+([^%>]*%+)*>)",    static_cast<id_type>(token_id::comment))               [ epp_comment ] |
-                lex::token_def<>(R"(<%#)",                       static_cast<id_type>(token_id::unclosed_comment))                      |
-                lex::token_def<>(R"(<%=)",                       static_cast<id_type>(token_id::epp_render_expression)) [ epp_render ]  |
-                lex::token_def<>(R"([\t ]*<%-)",                 static_cast<id_type>(token_id::epp_start_trim))        [ epp_start ]   |
-                lex::token_def<>(R"(<%%)",                       static_cast<id_type>(token_id::epp_render_string))     [ escape_epp ]  |
-                lex::token_def<>(R"(<%)",                        static_cast<id_type>(token_id::epp_start))             [ epp_start ]   |
-                lex::token_def<>(R"([^<]*)",                     static_cast<id_type>(token_id::epp_render_string))     [ string_trim ] |
+                lex::token_def<>(R"(<%#[^%]*%+([^%>]*%+)*>)",    static_cast<id_type>(token_id::comment))               [ epp_comment ]     |
+                lex::token_def<>(R"(<%#)",                       static_cast<id_type>(token_id::unclosed_comment))                          |
+                lex::token_def<>(R"(<%=)",                       static_cast<id_type>(token_id::epp_render_expression)) [ epp_render ]      |
+                lex::token_def<>(R"([\t ]*<%-)",                 static_cast<id_type>(token_id::epp_start_trim))        [ epp_start ]       |
+                lex::token_def<>(R"(<%%)",                       static_cast<id_type>(token_id::epp_render_string))     [ epp_escape ]      |
+                lex::token_def<>(R"(<%)",                        static_cast<id_type>(token_id::epp_start))             [ epp_start ]       |
+                lex::token_def<>(R"([^<]*)",                     static_cast<id_type>(token_id::epp_render_string))     [ epp_string_trim ] |
                 lex::token_def<>(R"(.)",                         static_cast<id_type>(token_id::epp_render_string));
             this->self(base_type::initial_state(), EPP_STATE) =
                 lex::token_def<>(R"(%>)",                        static_cast<id_type>(token_id::epp_end))               [ epp_end ] |
                 lex::token_def<>(R"(-%>)",                       static_cast<id_type>(token_id::epp_end_trim))          [ epp_end ];
+
+            // String interpolation support
+            this->self(DQ_STRING_STATE) =
+                lex::token_def<>(R"(\$\{)",                           static_cast<id_type>(token_id::interpolation_start)) [ action(&lexer::interpolation_start) ] |
+                lex::token_def<>(VALID_VARIABLE_PATTERN,              static_cast<id_type>(token_id::variable))                                                    |
+                lex::token_def<>(R"(\")",                             static_cast<id_type>(token_id::string_end))          [ action(&lexer::string_end) ]          |
+                lex::token_def<>(R"(.)",                              static_cast<id_type>(token_id::string_text))         [ action(&lexer::string_text) ];
+            this->self(VARIABLE_CHECK_STATE) =
+                lex::token_def<>(VALID_VARIABLE_WITHOUT_SIGN_PATTERN, static_cast<id_type>(token_id::variable))            [ variable_check ] |
+                lex::token_def<>(R"(.)",                              static_cast<id_type>(token_id::string_end))          [ end_variable_check ];
+            this->self(HEREDOC_STATE) =
+                lex::token_def<>(R"(\$\{)",                           static_cast<id_type>(token_id::interpolation_start)) [ action(&lexer::interpolation_start) ] |
+                lex::token_def<>(VALID_VARIABLE_PATTERN,              static_cast<id_type>(token_id::variable))                                                    |
+                lex::token_def<>(R"(.)",                              static_cast<id_type>(token_id::string_text))         [ action(&lexer::heredoc_text) ];
+            this->self(HEREDOC_END_STATE) =
+                lex::token_def<>(R"(.)",                              static_cast<id_type>(token_id::string_end))          [ action(&lexer::heredoc_end) ];
 
             // The following are lexer states that are used to parse regular expressions.
             // This solves the ambiguity between having multiple division operators on a single line (e.g. "1 / 2 / 3")
@@ -261,7 +258,7 @@ namespace puppet { namespace compiler { namespace lexer {
             this->self +=
                 lex::token_def<>(R"(\s+)",                                        static_cast<id_type>(token_id::whitespace))       [ lex::_pass = lex::pass_flags::pass_ignore ] |
                 lex::token_def<>(R"((#[^\n]*)|(\/\*[^*]*\*+([^/*][^*]*\*+)*\/))", static_cast<id_type>(token_id::comment))          [ lex::_pass = lex::pass_flags::pass_ignore ] |
-                lex::token_def<>(R"(\/([^\\/\n]|\\[^\n])*\/)",                    static_cast<id_type>(token_id::regex))            [ parse_regex ] |
+                lex::token_def<>(R"(\/([^\\/\n]|\\[^\n])*\/)",                    static_cast<id_type>(token_id::regex))            [ lex_regex ] |
                 lex::token_def<>(R"(\/\*)",                                       static_cast<id_type>(token_id::unclosed_comment));
 
             // Add the three-character operators
@@ -292,30 +289,34 @@ namespace puppet { namespace compiler { namespace lexer {
             this->self +=
                 lex::token_def<>("\\|>", static_cast<id_type>(token_id::right_collect)) [ no_regex ];
 
-            // Add single character operators
-            // The ids for these tokens are the characters themselves
-            this->self += lex::token_def<>('[') |
-                 lex::token_def<>(']') [ no_regex ] |
-                '{' |
-                '}' |
-                '(' |
-                 lex::token_def<>(')') [ no_regex ] |
-                '=' |
-                '>' |
-                '<' |
-                '+' |
-                '-' |
-                '/' |
-                '*' |
-                '%' |
-                '!' |
-                '.' |
-                '|' |
-                '@' |
-                ':' |
-                ',' |
-                ';' |
-                '?' |
+            // Add single character tokens
+            // The ids for these tokens are the characters themselves (escape for the quotes, which start strings)
+            this->self +=
+                lex::token_def<>('[')                                            |
+                lex::token_def<>(']')  [ no_regex ]                              |
+                lex::token_def<>('{')  [ action(&lexer::increment_brace_count) ] |
+                lex::token_def<>('}')  [ action(&lexer::decrement_brace_count) ] |
+                lex::token_def<>('"')  [ action(&lexer::string_start) ]          |
+                lex::token_def<>('\'') [ action(&lexer::lex_sq_string) ]         |
+                '('                                                              |
+                lex::token_def<>(')')  [ no_regex ]                              |
+                '='                                                              |
+                '>'                                                              |
+                '<'                                                              |
+                '+'                                                              |
+                '-'                                                              |
+                '/'                                                              |
+                '*'                                                              |
+                '%'                                                              |
+                '!'                                                              |
+                '.'                                                              |
+                '|'                                                              |
+                '@'                                                              |
+                ':'                                                              |
+                ','                                                              |
+                ';'                                                              |
+                '?'                                                              |
+                '$'                                                              |
                 '~';
 
             // Add the keywords
@@ -363,67 +364,40 @@ namespace puppet { namespace compiler { namespace lexer {
 
             // Variables, types, names, bare words
             this->self +=
-                lex::token_def<>(R"(\$(::)?(\w+::)*\w+)",                         static_cast<id_type>(token_id::variable))             [ no_regex ] |
-                lex::token_def<>(R"(\s+\[)",                                      static_cast<id_type>(token_id::array_start))          [ use_last ] |
-                lex::token_def<>(R"(((::)?[A-Z][\w]*)+)",                         static_cast<id_type>(token_id::type))                 [ no_regex ] |
-                lex::token_def<>(R"(((::)?[a-z][\w]*)(::[a-z][\w]*)*)",           static_cast<id_type>(token_id::name))                 [ no_regex ] |
-                lex::token_def<>(R"([a-z_]([\w\-]*[\w])?)",                       static_cast<id_type>(token_id::bare_word))            [ no_regex ] |
-                lex::token_def<>(R"('([^\\']|\\.)*')",                            static_cast<id_type>(token_id::single_quoted_string)) [ parse_single_quoted_string ] |
-                lex::token_def<>(R"(\"([^\\"]|\\.)*\")",                          static_cast<id_type>(token_id::double_quoted_string)) [ parse_double_quoted_string ] |
-                lex::token_def<>(HEREDOC_PATTERN,                                 static_cast<id_type>(token_id::heredoc))              [ parse_heredoc ] |
-                lex::token_def<>(R"(\d\w*(\.\d\w*)?([eE]-?\w*)?)",                static_cast<id_type>(token_id::number))               [ parse_number ];
+                lex::token_def<>(VALID_VARIABLE_PATTERN,   static_cast<id_type>(token_id::variable))                                    |
+                lex::token_def<>(GENERAL_VARIABLE_PATTERN, static_cast<id_type>(token_id::variable))    [ invalid_variable ]            |
+                lex::token_def<>(R"(\s+\[)",               static_cast<id_type>(token_id::array_start)) [ use_last ]                    |
+                lex::token_def<>(R"(((::)?[A-Z][\w]*)+)",  static_cast<id_type>(token_id::type))        [ no_regex ]                    |
+                lex::token_def<>(NAME_PATTERN,             static_cast<id_type>(token_id::name))        [ no_regex ]                    |
+                lex::token_def<>(BARE_WORD_PATTERN,        static_cast<id_type>(token_id::bare_word))   [ no_regex ]                    |
+                lex::token_def<>(HEREDOC_PATTERN,          static_cast<id_type>(token_id::string))      [ action(&lexer::lex_heredoc) ] |
+                lex::token_def<>(NUMBER_PATTERN,           static_cast<id_type>(token_id::number))      [ lex_number ];
 
             // Lastly, catch unclosed quotes, invalid variables, and unknown tokens
             this->self.add
-                (R"(['"])", static_cast<id_type>(token_id::unclosed_quote))
-                (R"(\$)",   static_cast<id_type>(token_id::invalid_variable))
                 (R"(.)",    static_cast<id_type>(token_id::unknown));
         }
-
-        /**
-         * The state for EPP lexing.
-         */
-        static const char* const EPP_STATE;
 
     private:
         using context_type = typename iterator_type::shared_functor_type;
 
-        static void parse_heredoc(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        void lex_heredoc(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             using namespace std;
 
             static const regex pattern(HEREDOC_PATTERN);
 
-            // Force any following '/' to be interpreted as a '/' token
-            force_slash(context);
-
-            // Helper functions
-            static auto is_space = [](char c) { return c == ' ' || c == '\t'; };
-            static auto throw_not_found = [](input_iterator_type const& location, std::string const& tag) {
-                throw lexer_exception<input_iterator_type>((boost::format("unexpected end of input while looking for heredoc end tag '%1%'.") % tag).str(), location);
-            };
-            static auto move_next_line = [](input_iterator_type& begin, input_iterator_type const& end) -> bool {
-                for (; begin != end && *begin != '\n'; ++begin);
-                if (begin == end) {
-                    return false;
-                }
-
-                // Move past the newline
-                ++begin;
-                return true;
-            };
-
             // regex needs bi-directional iterators, so we need to copy the token range (just the @(...) part)
-            string_type token(start, end);
+            string_type token{ begin, end };
 
             // Extract the tag, format, and escapes from the token
             match_results<typename string_type::const_iterator> match;
             if (!regex_match(token, match, pattern) || match.size() != 6) {
-                throw lexer_exception<input_iterator_type>("unexpected heredoc format.", start);
+                throw lexer_exception<input_iterator_type>("internal error: unexpected heredoc format.", begin, end);
             }
 
             // Trim the tag
-            string_type tag(match[1].first, match[1].second);
+            string_type tag{ match[1].first, match[1].second };
             boost::trim(tag);
 
             // Check for interpolation
@@ -442,16 +416,30 @@ namespace puppet { namespace compiler { namespace lexer {
             // Check for optional escapes
             string_type escapes;
             if (match[4].first != match[4].second) {
+                static char const HEREDOC_ESCAPES[] = R"(trnsuL$)";
+
                 escapes.assign(match[5].first, match[5].second);
                 if (escapes.empty()) {
                     // Enable all heredoc escapes
                     escapes = HEREDOC_ESCAPES;
                 } else {
                     // Verify the escapes
-                    if (!boost::all(escapes, boost::is_any_of(HEREDOC_ESCAPES))) {
-                        throw lexer_exception<input_iterator_type>((boost::format("invalid heredoc escapes '%1%': only t, r, n, s, u, L, and $ are allowed.") % escapes).str(), start);
+                    static_assert(sizeof(HEREDOC_ESCAPES) > 1, "expected at least one escape in the list.");
+                    bool seen[sizeof(HEREDOC_ESCAPES) - 1] = {};
+                    for (char c : escapes) {
+                        char const* escape = HEREDOC_ESCAPES;
+                        for (; *escape && *escape != c; ++escape);
+
+                        size_t index = static_cast<size_t>(escape - HEREDOC_ESCAPES);
+                        if (*escape == 0 || index >= sizeof(seen)) {
+                            throw lexer_exception<input_iterator_type>((boost::format("invalid heredoc escape '%1%': only t, r, n, s, u, L, and $ are allowed.") % c).str(), begin, end);
+                        }
+                        // Can only be seen once, otherwise it is an error
+                        if (seen[index]) {
+                            throw lexer_exception<input_iterator_type>((boost::format("heredoc escape '%1%' may only appear once in the list.") % c).str(), begin, end);
+                        }
+                        seen[index] = true;
                     }
-                    // TODO: verify uniqueness of each character (i.e. is this really important)?
                 }
 
                 // Treat L as "escaping newlines"
@@ -464,130 +452,601 @@ namespace puppet { namespace compiler { namespace lexer {
             auto& eoi = context.get_eoi();
 
             // Move to the next line to process, skipping over any previous heredoc on the token's line
-            input_iterator_type value_begin;
-            if (!start.get_next(value_begin)) {
-                value_begin = end;
-                if (!move_next_line(value_begin, eoi)) {
-                    throw_not_found(start, tag);
+            auto value_begin = end.next();
+            if (!value_begin) {
+                auto next_line = end;
+                for (; next_line != eoi && *next_line != '\n'; ++next_line);
+
+                // Move past the newline
+                if (next_line == eoi) {
+                    throw lexer_exception<input_iterator_type>((boost::format("could not find a matching heredoc end tag '%1%'.") % tag).str(), begin, end);
                 }
+                ++next_line;
+                value_begin = next_line;
             }
 
-            bool remove_break = false;
-            int margin = 0;
-            auto value_end = value_begin;
+            // If interpolated, emit a start string token and change lexer states
+            if (interpolated) {
+                string_lex_info info;
+                info.string_start = std::make_pair(begin, end);
+                info.escapes = rvalue_cast(escapes);
+                info.tag = rvalue_cast(tag);
+                _strings.emplace(rvalue_cast(info));
 
-            // Search for the end tag
-            while (value_end != eoi) {
-                auto line_end = value_end;
-                for (; line_end != end && is_space(*line_end); ++line_end) {
-                    margin += (*line_end == ' ') ? 1 : LEXER_TAB_WIDTH;
-                }
-                if (line_end == eoi) {
-                    throw_not_found(start, tag);
-                }
-                if (*line_end == '|') {
-                    for (++line_end; line_end != end && is_space(*line_end); ++line_end);
-                }
-                if (line_end == eoi) {
-                    throw_not_found(start, tag);
-                }
-                if (*line_end == '-') {
-                    remove_break = true;
-                    for (++line_end; line_end != end && is_space(*line_end); ++line_end);
-                }
-                if (line_end == eoi) {
-                    throw_not_found(start, tag);
-                }
+                context.set_state(context.get_state_id(HEREDOC_STATE));
 
-                // Look for the end tag
-                auto search_it = tag.begin();
-                for (; line_end != eoi && search_it != tag.end() && *search_it == *line_end; ++search_it, ++line_end);
-                if (search_it == tag.end()) {
-                    // Possibly found the tag; ensure the remainder of the line is whitespace
-                    for (; line_end != eoi && is_space(*line_end); ++line_end);
-                    if (line_end != eoi && *line_end == '\r') {
-                        ++line_end;
+                id = static_cast<id_type>(token_id::string_start);
+                context.set_value(string_start_token{ begin.position(), end.position(), rvalue_cast(format) });
+
+                end = rvalue_cast(*value_begin);
+                return;
+            }
+
+            size_t margin = 0;
+            std::string text;
+            std::string line;
+
+            auto value_end = *value_begin;
+            for (auto current = value_end; current != eoi; value_end = current) {
+                read_heredoc_line(line, current, eoi, escapes);
+
+                // Check for end tag
+                bool trim = false;
+                if (is_heredoc_end_tag(line, tag, margin, trim)) {
+                    if (trim) {
+                        if (!text.empty()) {
+                            if (text.back() == '\n') {
+                                text.pop_back();
+                            }
+                            if (text.back() == '\r') {
+                                text.pop_back();
+                            }
+                        }
                     }
-                    if (line_end == eoi || *line_end == '\n') {
-                        break;
+                    context.set_value(string_token{ value_begin->position(), value_end.position(), rvalue_cast(text), rvalue_cast(format), margin });
+                    if (current != eoi) {
+                        ++current;
                     }
-
-                    // Not found
+                    end.next(current);
+                    break;
                 }
 
-                // Move to the next line
-                move_next_line(line_end, eoi);
-                value_end = line_end;
-                margin = 0;
+                // Append the line
+                text += line;
+                if (current != eoi) {
+                    ++current;
+                }
             }
 
             if (value_end == eoi) {
-                throw_not_found(start, tag);
+                throw lexer_exception<input_iterator_type>((boost::format("could not find a matching heredoc end tag '%1%'.") % tag).str(), begin, end);
             }
-
-            auto next = value_end;
-            move_next_line(next, eoi);
-            end.set_next(next);
-            context.set_value(
-                string_token_type(
-                    range{ start.position(), end.position() },
-                    boost::make_iterator_range(rvalue_cast(value_begin), rvalue_cast(value_end)),
-                    rvalue_cast(escapes),
-                    0,
-                    interpolated,
-                    rvalue_cast(format),
-                    margin,
-                    remove_break
-                )
-            );
         }
 
-        static void parse_single_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        void lex_sq_string(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags const& matched, id_type& id, context_type& context)
         {
+            static const std::string escapes = SQ_ESCAPES;
+
+            auto const& eoi = context.get_eoi();
+
+            auto string_start_end = end;
+
+            // Look for the closing quote, copying any characters into a value, unescaping along the way
+            // Start from the current end because it is past the opening ' character
+            std::string value;
+            bool found_close = false;
+            for (; !found_close && end != eoi; ++end) {
+                if (*end == '\'') {
+                    found_close = true;
+                    // Continue to move past the closing ' for the exclusive end of the string
+                    continue;
+                }
+
+                if (unescape(value, end, eoi, escapes, false)) {
+                    continue;
+                }
+
+                value += *end;
+            }
+
+            // Ensure a closing quote was found
+            if (!found_close) {
+                throw lexer_exception<input_iterator_type>("could not find a matching closing quote.", begin, string_start_end);
+            }
+
+            id = static_cast<id_type>(token_id::string);
+            context.set_value(string_token{ begin.position(), end.position(), rvalue_cast(value) });
+
+            // Force any following '/' to be interpreted as a '/' token
+            context.set_end(end);
+            force_slash(context);
+        }
+
+        bool unescape(std::string& output, input_iterator_type& begin, input_iterator_type const& end, std::string const& escapes, bool warn_invalid_escape = true)
+        {
+            if (begin == end) {
+                return false;
+            }
+
+            if (*begin != '\\') {
+                return false;
+            }
+
+            auto next = begin;
+            ++next;
+            if (next != end && *next == '\r') {
+                ++next;
+            }
+            if (next == end) {
+                return false;
+            }
+            if (escapes.find(*next) == std::string::npos) {
+                if (warn_invalid_escape && _log) {
+                    _log(logging::level::warning, (boost::format("invalid escape sequence '\\%1%'.") % *next).str(), begin.position(), 2u);
+                }
+                return false;
+            }
+
+            switch (*next) {
+                case 'r':
+                    output += '\r';
+                    break;
+
+                case 'n':
+                    output += '\n';
+                    break;
+
+                case 't':
+                    output += '\t';
+                    break;
+
+                case 's':
+                    output += ' ';
+                    break;
+
+                case 'u':
+                    ++next;
+                    if (!write_unicode_escape_sequence(output, next, end)) {
+                        return false;
+                    }
+                    break;
+
+                case '\n':
+                    // Eat the new line
+                    break;
+
+                default:
+                    output += *next;
+                    break;
+            }
+
+            begin = next;
+            return true;
+        }
+
+        template <typename Value>
+        struct hex_to
+        {
+            operator Value() const
+            {
+                return value;
+            }
+
+            friend std::istream& operator>>(std::istream& in, hex_to& out)
+            {
+                in >> std::hex >> out.value;
+                return in;
+            }
+
+         private:
+            Value value;
+        };
+
+        bool write_unicode_escape_sequence(std::string& output, input_iterator_type& begin, input_iterator_type const& end)
+        {
+            // Check for a variable length unicode escape sequence
+            bool variable_length = false;
+
+            auto start_position = begin.position();
+            if (begin != end && *begin == '{') {
+                ++begin;
+                variable_length = true;
+            }
+
+            std::string digits;
+            digits.reserve(6);
+            for (; begin != end; ++begin) {
+                // Break on '}' for variable length
+                if (variable_length && *begin == '}') {
+                    break;
+                }
+                // Check for valid hex digit
+                if (!isxdigit(*begin)) {
+                    if (_log) {
+                        if (variable_length) {
+                            _log(logging::level::warning, "a closing '}' was not found before encountering a non-hexadecimal character in unicode escape sequence.", start_position, 1);
+                        } else {
+                            _log(logging::level::warning, (boost::format("unicode escape sequence contains non-hexadecimal character '%1%'.") % *begin).str(), begin.position(), 1);
+                        }
+                    }
+                    return false;
+                }
+
+                digits.push_back(*begin);
+
+                // Break on 4 digits for fixed length
+                if (!variable_length && digits.size() == 4) {
+                    break;
+                }
+            }
+
+            if (variable_length) {
+                if (begin == end || *begin != '}') {
+                    if (_log) {
+                        _log(logging::level::warning, "a closing '}' was not found for unicode escape sequence.", start_position, 1);
+                    }
+                    return false;
+                }
+                if (digits.empty() || digits.size() > 6) {
+                    if (_log) {
+                        _log(logging::level::warning, "expected at least 1 and at most 6 hexadecimal digits for unicode escape sequence.", start_position, begin.position().offset() - start_position.offset() + 1);
+                    }
+                    return false;
+                }
+            }
+
+            // Convert the input to a unicode character
+            try {
+                char32_t character = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(digits));
+                utf8::utf32to8(&character, &character + 1, std::back_inserter(output));
+                return true;
+            } catch (boost::bad_lexical_cast const&) {
+            } catch (utf8::invalid_code_point const&) {
+            }
+            if (_log) {
+                start_position.increment(false);
+                _log(logging::level::warning, (boost::format("'%1%' is not a valid unicode codepoint.") % digits).str(), start_position, begin.position().offset() - start_position.offset());
+            }
+            return false;
+        }
+
+        void increment_brace_count(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags const& matched, id_type const& id, context_type const& context)
+        {
+            auto info = current_string_info();
+            if (info) {
+                ++info->brace_count;
+            }
+        }
+
+        void decrement_brace_count(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags const& matched, id_type& id, context_type& context)
+        {
+            auto info = current_string_info();
+            if (info && info->brace_count && (--info->brace_count == 0)) {
+                id = static_cast<id_type>(token_id::interpolation_end);
+                context.set_state(context.get_state_id(!info->tag.empty() ? HEREDOC_STATE : DQ_STRING_STATE));
+            }
+        }
+
+        void string_start(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags const& matched, id_type& id, context_type& context)
+        {
+            // Start a new string
+            string_lex_info info;
+            info.string_start = std::make_pair(begin, end);
+            _strings.emplace(rvalue_cast(info));
+
+            context.set_state(context.get_state_id(DQ_STRING_STATE));
+
+            // Emit a string start token with empty (normal string) format
+            id = static_cast<id_type>(token_id::string_start);
+            context.set_value(string_start_token{ begin.position(), end.position() });
+        }
+
+        void interpolation_start(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags const& matched, id_type const& id, context_type& context)
+        {
+            auto info = current_string_info();
+            if (!info) {
+                throw lexer_exception<input_iterator_type>("internal error: unexpected interpolation start when not lexing a string.", begin, end);
+            }
+
+            // Treat the opening ${ as a brace
+            ++info->brace_count;
+
+            // For heredocs, don't check the end tag on this line
+            info->check_end_tag = false;
+
+            // Transition to the variable check state
+            context.set_state(context.get_state_id(VARIABLE_CHECK_STATE));
+        }
+
+        void string_text(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type const& id, context_type& context)
+        {
+            static const std::string escapes = DQ_ESCAPES;
+
+            auto info = current_string_info();
+            if (!info || !info->tag.empty()) {
+                throw lexer_exception<input_iterator_type>("internal error: unexpected string text when not lexing a string.", begin, end);
+            }
+
+            auto const& eoi = context.get_eoi();
+
+            // Eat everything up to $ or ", unescaping any escape sequences
+            std::string text;
+            auto current = begin;
+
+            // If starting with $, it's not an interpolation sequence because it failed to match the interpolation rules
+            if (current != eoi && *current == '$') {
+                text += '$';
+                ++current;
+            }
+
+            for (; current != eoi; ++current) {
+                if (*current == '$' || *current == '"') {
+                    break;
+                }
+
+                if (unescape(text, current, eoi, escapes)) {
+                    continue;
+                }
+
+                text += *current;
+            }
+
+            if (current == eoi) {
+                throw lexer_exception<input_iterator_type>("could not find a matching closing quote.", info->string_start.first, info->string_start.second);
+            }
+
+            end = current;
+
+            // Ignore empty text spans
+            if (text.empty()) {
+                matched = boost::spirit::lex::pass_flags::pass_ignore;
+                return;
+            }
+
+            context.set_value(string_text_token{ begin.position(), end.position(), rvalue_cast(text) });
+        }
+
+        static void string_variable(input_iterator_type const& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags const& matched, id_type const& id, context_type const& context)
+        {
+            validate_variable(begin, end);
+        }
+
+        void string_end(input_iterator_type const& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags const& matched, id_type const& id, context_type& context)
+        {
+            auto info = current_string_info();
+            if (!info || !info->tag.empty()) {
+                throw lexer_exception<input_iterator_type>("internal error: unexpected string end when not lexing a string.", begin, end);
+            }
+
+            if (info->brace_count != 0) {
+                throw lexer_exception<input_iterator_type>("internal error: mismatched interpolation brace count before end of string.", begin, end);
+            }
+
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
 
-            // Find the end of the string, not including the quote
-            auto value_start = start;
-            ++value_start;
-            input_iterator_type value_end;
-            for (auto current = value_start; current != end; ++current) {
-                value_end = current;
-            }
-            context.set_value(
-                string_token_type(
-                    range{ start.position(), end.position() },
-                    boost::make_iterator_range(rvalue_cast(value_start), rvalue_cast(value_end)),
-                    "\\'",
-                    '\'',
-                    false
-                )
-            );
+            _strings.pop();
+
+            context.set_value(string_end_token{ begin.position(), end.position() });
+
+            // Transition to the initial state to lex the interpolation expression
+            context.set_state(context.get_state_id("INITIAL"));
         }
 
-        static void parse_double_quoted_string(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void variable_check(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
+            // If the next token is not }, '.', or '[', then this token cannot be a variable
+            auto state = context.get_state_id("INITIAL");
+            if (!context.lookahead('}', state) && !context.lookahead('.', state) && !context.lookahead('[', state)) {
+                end_variable_check(begin, end, matched, id, context);
+                return;
+            }
+        }
+
+        static void end_variable_check(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type const& id, context_type& context)
+        {
+            // Move back to the start to retry the lexing
+            end = begin;
+            matched = boost::spirit::lex::pass_flags::pass_ignore;
+
+            // Transition to the initial state to lex the interpolation expression
+            context.set_state(context.get_state_id("INITIAL"));
+        }
+
+        void heredoc_text(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type const& id, context_type& context)
+        {
+            auto info = current_string_info();
+            if (!info || info->tag.empty()) {
+                throw lexer_exception<input_iterator_type>("internal error: unexpected heredoc text when not lexing a heredoc.", begin, end);
+            }
+
+            auto const& eoi = context.get_eoi();
+
+            bool found_end_tag = false;
+            std::string text;
+            std::string line;
+
+            // Read as many lines of the heredoc as possible
+            end = begin;
+            for (auto current = end; current != eoi; end = current) {
+                read_heredoc_line(line, current, eoi, info->escapes, true);
+                if (current != eoi && current != begin && *current == '$') {
+                    // Encountered a possible interpolation
+                    info->check_end_tag = false;
+                    text += line;
+                    end = current;
+                    break;
+                }
+
+                // Check for end tag
+                bool trim = false;
+                if (info->check_end_tag && is_heredoc_end_tag(line, info->tag, info->margin, trim)) {
+                    if (trim) {
+                        if (!text.empty()) {
+                            if (text.back() == '\n') {
+                                text.pop_back();
+                            }
+                            if (text.back() == '\r') {
+                                text.pop_back();
+                            }
+                        }
+                    }
+                    found_end_tag = true;
+                    break;
+                }
+
+                info->check_end_tag = true;
+
+                // Append the line
+                text += line;
+                if (current != eoi) {
+                    ++current;
+                }
+            }
+
+            if (end == eoi && !found_end_tag) {
+                throw lexer_exception<input_iterator_type>(
+                    (boost::format("could not find a matching heredoc end tag '%1%'.") % info->tag).str(),
+                    info->string_start.first,
+                    info->string_start.second
+                );
+            }
+
+            // Ignore empty text spans
+            if (text.empty()) {
+                matched = boost::spirit::lex::pass_flags::pass_ignore;
+            }  else {
+                context.set_value(string_text_token{ begin.position(), end.position(), rvalue_cast(text) });
+            }
+
+            if (found_end_tag) {
+                context.set_state(context.get_state_id(HEREDOC_END_STATE));
+            }
+        }
+
+        void heredoc_variable(input_iterator_type const& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags const& matched, id_type const& id, context_type const& context)
+        {
+            auto info = current_string_info();
+            if (!info || info->tag.empty()) {
+                throw lexer_exception<input_iterator_type>("internal error: unexpected heredoc variable when not lexing a heredoc.", begin, end);
+            }
+
+            validate_variable(begin, end);
+
+            // Don't check for an end tag after a variable
+            info->check_end_tag = false;
+        }
+
+        void heredoc_end(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags const& matched, id_type const& id, context_type& context)
+        {
+            auto info = current_string_info();
+            if (!info || info->tag.empty()) {
+                throw lexer_exception<input_iterator_type>("internal error: unexpected heredoc end when not lexing a heredoc.", begin, end);
+            }
+
+            if (info->brace_count != 0) {
+                throw lexer_exception<input_iterator_type>("internal error: mismatched interpolation brace count before end of heredoc.", begin, end);
+            }
+
+            auto const& eoi = context.get_eoi();
+
+            // Eat the rest of the line
+            for (; end != eoi; ++end) {
+                if (*end == '\n') {
+                    ++end;
+                    break;
+                }
+            }
+
+            // Set up where the iterator should jump to
+            info->string_start.second.next(end);
+            end = rvalue_cast(info->string_start.second);
+
             // Force any following '/' to be interpreted as a '/' token
+            context.set_end(end);
             force_slash(context);
 
-            /// Find the end of the string, not including the quote
-            auto value_start = start;
-            ++value_start;
-            input_iterator_type value_end;
-            for (auto current = value_start; current != end; ++current) {
-                value_end = current;
-            }
-            context.set_value(
-                string_token_type(
-                    range{ start.position(), end.position() },
-                    boost::make_iterator_range(rvalue_cast(value_start), rvalue_cast(value_end)),
-                    "\\\"'nrtsu$",
-                    '"'
-                )
-            );
+            context.set_value(string_end_token{ begin.position(), end.position(), info->margin });
+
+            _strings.pop();
+
+            // Transition to the initial state to lex the interpolation expression
+            context.set_state(context.get_state_id("INITIAL"));
         }
 
-        static void parse_number(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        void read_heredoc_line(std::string& line, input_iterator_type& begin, input_iterator_type const& end, std::string const& escapes, bool interpolated = false)
+        {
+            line.clear();
+            for (; begin != end; ++begin) {
+                if (interpolated && *begin == '$') {
+                    break;
+                }
+
+                if (unescape(line, begin, end, escapes, false)) {
+                    continue;
+                }
+
+                line += *begin;
+
+                if (*begin == '\n') {
+                    break;
+                }
+            }
+        }
+
+        static bool is_heredoc_end_tag(std::string const& line, std::string const& tag, size_t& margin, bool& trim)
+        {
+            static auto is_space = [](char c) { return c == ' ' || c == '\t'; };
+
+            auto size = line.size();
+            size_t pos = 0;
+
+            margin = 0;
+            trim = false;
+
+            // Determine the margin by counting whitespace (tabs and spaces are treated the same)
+            for (; pos < size && is_space(line[pos]); ++pos, ++margin);
+
+            if (pos == size) {
+                return false;
+            }
+
+            if (line[pos] == '|') {
+                for (++pos; pos < size && is_space(line[pos]); ++pos);
+                if (pos == size) {
+                    return false;
+                }
+            } else {
+                margin = 0;
+            }
+
+            if (line[pos] == '-') {
+                trim = true;
+                for (++pos; pos < size && is_space(line[pos]); ++pos);
+            }
+
+            // Ensure there's enough space for the tag and the tags are equal
+            if ((pos + tag.size()) > size) {
+                return false;
+            }
+            boost::string_ref candidate{ &line[pos], tag.size() };
+            if (candidate != tag) {
+                return false;
+            }
+
+            // Ensure the rest of the string is whitespace followed by an optional newline
+            for (pos += tag.size(); pos < size && is_space(line[pos]); ++pos);
+            if (pos < size && line[pos] == '\r') {
+                ++pos;
+            }
+            if (pos < size && line[pos] == '\n') {
+                ++pos;
+            }
+            // The string must be exhausted to be an end tag
+            return pos == size;
+        }
+
+        static void lex_number(input_iterator_type const& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             using namespace std;
 
@@ -601,7 +1060,7 @@ namespace puppet { namespace compiler { namespace lexer {
             force_slash(context);
 
             // regex needs bi-directional iterators, so we need to copy the token range
-            string_type token(start, end);
+            string_type token{ begin, end };
 
             // Match integral numbers
             int base = 0;
@@ -610,7 +1069,7 @@ namespace puppet { namespace compiler { namespace lexer {
             } else if (regex_match(token, octal_pattern)) {
                 // Make sure the number is valid for an octal
                 if (!regex_match(token, valid_octal_pattern)) {
-                    throw lexer_exception<input_iterator_type>((boost::format("'%1%' is not a valid number.") % token).str(), start);
+                    throw lexer_exception<input_iterator_type>((boost::format("'%1%' is not a valid number.") % token).str(), begin, end);
                 }
                 base = 8;
             } else if (regex_match(token, decimal_pattern)) {
@@ -620,11 +1079,12 @@ namespace puppet { namespace compiler { namespace lexer {
             if (base != 0) {
                 try {
                     context.set_value(
-                        number_token(
-                            range{ start.position(), end.position() },
-                            stoll(token, 0, base),
+                        number_token{
+                            begin.position(),
+                            end.position(),
+                            static_cast<std::int64_t>(stoll(token, 0, base)),
                             base == 16 ? numeric_base::hexadecimal : (base == 8 ? numeric_base::octal : numeric_base::decimal)
-                        )
+                        }
                     );
                 } catch (out_of_range const& ex) {
                     throw lexer_exception<input_iterator_type>(
@@ -633,7 +1093,9 @@ namespace puppet { namespace compiler { namespace lexer {
                             numeric_limits<int64_t>::min() %
                             numeric_limits<int64_t>::max()
                         ).str(),
-                        start);
+                        begin,
+                        end
+                    );
                 }
                 return;
             }
@@ -641,12 +1103,7 @@ namespace puppet { namespace compiler { namespace lexer {
             // Match double
             if (regex_match(token, double_pattern)) {
                 try {
-                    context.set_value(
-                        number_token(
-                            range{ start.position(), end.position() },
-                            stold(token, 0)
-                        )
-                    );
+                    context.set_value(number_token{ begin.position(), end.position(), stod(token, 0) });
                 } catch (out_of_range const& ex) {
                     throw lexer_exception<input_iterator_type>(
                         (boost::format("'%1%' is not in the range of %2% to %3%.") %
@@ -654,25 +1111,27 @@ namespace puppet { namespace compiler { namespace lexer {
                             numeric_limits<double>::lowest() %
                             numeric_limits<double>::max()
                         ).str(),
-                        start);
+                        begin,
+                        end
+                    );
                 }
                 return;
             }
 
             // Not a valid number
-            throw lexer_exception<input_iterator_type>((boost::format("'%1%' is not a valid number.") % token).str(), start);
+            throw lexer_exception<input_iterator_type>((boost::format("'%1%' is not a valid number.") % token).str(), begin, end);
         }
 
-        static void parse_regex(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void lex_regex(input_iterator_type const& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            auto begin = start;
-            if (begin != end) {
-                ++begin;
+            auto next = begin;
+            if (next != end) {
+                ++next;
                 // Regex literals cannot start with /*
-                if (begin != end && *begin == '*') {
+                if (next != end && *next == '*') {
                     // Since we failed to match a multiline comment, treat this as a unclosed comment instead
                     id = static_cast<id_type>(token_id::unclosed_comment);
-                    context.set_value(boost::make_iterator_range(start, ++begin));
+                    context.set_value(boost::make_iterator_range(begin, ++next));
                     return;
                 }
             }
@@ -681,7 +1140,7 @@ namespace puppet { namespace compiler { namespace lexer {
             force_slash(context);
         }
 
-        static void no_regex(input_iterator_type const& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void no_regex(input_iterator_type const& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags const& matched, id_type const& id, context_type& context)
         {
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
@@ -697,27 +1156,27 @@ namespace puppet { namespace compiler { namespace lexer {
             context.set_state(context.get_state_id(FORCE_SLASH_STATE));
         }
 
-        static void use_last(input_iterator_type& start, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void use_last(input_iterator_type& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             // Use the last character in the range
-            auto last = start;
-            for (auto current = start; current != end; ++current) {
+            auto last = begin;
+            for (auto current = begin; current != end; ++current) {
                 last = current;
             }
-            start = last;
+            begin = last;
         }
 
-        static void epp_comment(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void epp_comment(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             matched = boost::spirit::lex::pass_flags::pass_ignore;
 
             // Check if the comment ends with a trim specifier
-            if (boost::ends_with(boost::make_iterator_range(start, end), "-%>")) {
-                trim_right(start, end, matched, id, context);
+            if (boost::ends_with(boost::make_iterator_range(begin, end), "-%>")) {
+                epp_trim_right(begin, end, matched, id, context);
             }
         }
 
-        static void string_trim(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void epp_string_trim(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             // If rendering a string, ensure the next token is an epp start trim token
             if (!context.lookahead(static_cast<size_t>(token_id::epp_start_trim))) {
@@ -725,7 +1184,7 @@ namespace puppet { namespace compiler { namespace lexer {
             }
 
             // Because input iterators are forward only, we have to scan all the way from the beginning for the trim
-            auto new_end = start;
+            auto new_end = begin;
             boost::optional<input_iterator_type> start_space;
             while (new_end != end) {
                 bool space = ::isspace(*new_end) && *new_end != '\n';
@@ -741,7 +1200,7 @@ namespace puppet { namespace compiler { namespace lexer {
             }
         }
 
-        static void trim_right(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void epp_trim_right(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             auto const& eoi = context.get_eoi();
             auto new_end = end;
@@ -756,56 +1215,140 @@ namespace puppet { namespace compiler { namespace lexer {
             }
         }
 
-        static void escape_epp(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void epp_escape(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            auto value_end = start;
+            auto value_end = begin;
             ++value_end;
             ++value_end;
-            context.set_value(boost::make_iterator_range(start, value_end));
+            context.set_value(boost::make_iterator_range(begin, value_end));
         }
 
-        static void epp_start(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void epp_start(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             matched = boost::spirit::lex::pass_flags::pass_ignore;
             context.set_state(context.get_state_id("INITIAL"));
             end._epp_end = false;
         }
 
-        static void epp_render(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void epp_render(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
             context.set_state(context.get_state_id("INITIAL"));
             end._ignore_epp_end = false;
         }
 
-        static void epp_end(input_iterator_type const& start, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
+        static void epp_end(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            if (start._ignore_epp_end) {
+            if (begin._ignore_epp_end) {
                 matched = boost::spirit::lex::pass_flags::pass_ignore;
             }
             end._ignore_epp_end = true;
             end._epp_end = true;
 
             if (id == static_cast<size_t>(token_id::epp_end_trim)) {
-                trim_right(start, end, matched, id, context);
+                epp_trim_right(begin, end, matched, id, context);
             }
         }
 
-        static const char* const HEREDOC_PATTERN;
-        static const char* const HEREDOC_ESCAPES;
-        static const char* const FORCE_SLASH_STATE;
-        static const char* const SLASH_CHECK_STATE;
+        static void invalid_variable(input_iterator_type const& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags const& matched, id_type const& id, context_type const& context)
+        {
+            auto name_begin = begin;
+            if (name_begin != end && *name_begin == '$') {
+                ++name_begin;
+            }
+
+            throw lexer_exception<input_iterator_type>(
+                (boost::format("'%1%' is not a valid variable name: the name must conform to /%2%/.") %
+                 boost::make_iterator_range(name_begin, end) %
+                 VALID_VARIABLE_WITHOUT_SIGN_PATTERN
+                ).str(),
+                begin,
+                end
+            );
+        }
+
+        struct string_lex_info
+        {
+            // Iterators for the string start
+            std::pair<input_iterator_type, input_iterator_type> string_start;
+
+            // Escapes for string (heredoc only)
+            std::string escapes;
+
+            // End tag for string (heredoc only)
+            std::string tag;
+
+            // Count of braces encountered during interpolation
+            unsigned int brace_count = 0;
+
+            // The string's margin (heredoc only)
+            size_t margin = 0;
+
+            // Keeps track of whether or not a heredoc tag should be checked for (heredoc only)
+            bool check_end_tag = true;
+        };
+
+        string_lex_info* current_string_info()
+        {
+            return const_cast<string_lex_info*>(static_cast<lexer<Base> const*>(this)->current_string_info());
+        }
+
+        string_lex_info const* current_string_info() const
+        {
+            return !_strings.empty() ? &_strings.top() : nullptr;
+        }
+
+        template <typename Func>
+        auto action(Func func)
+        {
+            using namespace std::placeholders;
+            return std::bind(func, this, _1, _2, _3, _4, _5);
+        }
+
+        std::stack<string_lex_info> _strings;
+        std::function<void(logging::level, std::string const&, position const&, size_t)> _log;
+
+        static char const* const GENERAL_VARIABLE_PATTERN;
+        static char const* const VALID_VARIABLE_PATTERN;
+        static char const* const VALID_VARIABLE_WITHOUT_SIGN_PATTERN;
+        static char const* const NAME_PATTERN;
+        static char const* const BARE_WORD_PATTERN;
+        static char const* const NUMBER_PATTERN;
+        static char const* const HEREDOC_PATTERN;
+        static char const* const FORCE_SLASH_STATE;
+        static char const* const SLASH_CHECK_STATE;
+        static char const* const DQ_STRING_STATE;
+        static char const* const HEREDOC_STATE;
+        static char const* const HEREDOC_END_STATE;
+        static char const* const VARIABLE_CHECK_STATE;
     };
 
     template<typename Base>
-    char const* const lexer<Base>::HEREDOC_PATTERN = R"(@\(\s*([^):/\r\n]+)\s*(:\s*([a-z][a-zA-Z0-9_+]+))?\s*(\/\s*([\w|$]*)\s*)?\))";
+    char const* const lexer<Base>::GENERAL_VARIABLE_PATTERN = R"(\$(::)?(\w+::)*\w+)";
     template<typename Base>
-    char const* const lexer<Base>::HEREDOC_ESCAPES = "trnsuL$";
+    char const* const lexer<Base>::VALID_VARIABLE_PATTERN = R"(\$(0|[1-9]\d*|(::)?[a-z_]\w*(::\w*)*))";
+    template<typename Base>
+    char const* const lexer<Base>::VALID_VARIABLE_WITHOUT_SIGN_PATTERN = R"(0|[1-9]\d*|(::)?[a-z_]\w*(::\w*)*)";
+    template<typename Base>
+    char const* const lexer<Base>::NAME_PATTERN = R"(((::)?[a-z][\w]*)(::[a-z][\w]*)*)";
+    template<typename Base>
+    char const* const lexer<Base>::BARE_WORD_PATTERN = R"([a-z_]([\w\-]*[\w])?)";
+    template<typename Base>
+    char const* const lexer<Base>::NUMBER_PATTERN = R"(\d\w*(\.\d\w*)?([eE]-?\w*)?)";
+
+    template<typename Base>
+    char const* const lexer<Base>::HEREDOC_PATTERN = R"(@\(\s*([^):/\r\n]+)\s*(:\s*([a-z][a-zA-Z0-9_+]+))?\s*(\/\s*([\w|$]*)\s*)?\))";
     template<typename Base>
     char const* const lexer<Base>::FORCE_SLASH_STATE = "FS";
     template<typename Base>
     char const* const lexer<Base>::SLASH_CHECK_STATE = "SC";
     template<typename Base>
-    char const* const lexer<Base>::EPP_STATE = "EPP";
+    char const* const lexer<Base>::DQ_STRING_STATE = "DQS";
+    template<typename Base>
+    char const* const lexer<Base>::HEREDOC_STATE = "HD";
+    template<typename Base>
+    char const* const lexer<Base>::HEREDOC_END_STATE = "HDE";
+    template<typename Base>
+    char const* const lexer<Base>::VARIABLE_CHECK_STATE = "VC";
 
     /**
      * The input iterator for files.
@@ -821,7 +1364,7 @@ namespace puppet { namespace compiler { namespace lexer {
      * @tparam Iterator The input iterator for the token.
      */
     template <typename Iterator>
-    using lexer_token = boost::spirit::lex::lexertl::token<Iterator, boost::mpl::vector<string_token<Iterator>, number_token>>;
+    using lexer_token = boost::spirit::lex::lexertl::token<Iterator, boost::mpl::vector<string_token, string_start_token, string_text_token, string_end_token, number_token>>;
 
     /**
      * The lexer to use for files.
@@ -922,52 +1465,5 @@ namespace puppet { namespace compiler { namespace lexer {
      * @return Returns the last position in the iterator range.
      */
     position get_last_position(boost::iterator_range<lexer_string_iterator> const& range);
-
-    /**
-     * Utility visitor for obtaining token range information.
-     */
-    struct token_range_visitor : boost::static_visitor<range>
-    {
-        /**
-         * Gets the beginning position and length of a token.
-         * @tparam Token The type of token.
-         * @param token The token to get the position and length of.
-         * @return Returns the token range.
-         */
-        template <typename Iterator>
-        result_type operator()(boost::iterator_range<Iterator> const& token) const
-        {
-            return range{ token.begin().position(), token.end().position() };
-        }
-
-        /**
-         * Gets the beginning position and length of a token.
-         * @tparam Token The type of token.
-         * @param token The token to get the position and length of.
-         * @return Returns the token range.
-         */
-        template <typename Token>
-        result_type operator()(Token const& token) const
-        {
-            return token.range();
-        }
-    };
-
-    /**
-     * Gets the given token's range.
-     * @tparam Input The input type.
-     * @tparam Token The type of token.
-     * @param input The input to use when calculating the last token position.
-     * @param token The token to get the position for.
-     * @return Returns the token's range (pair of position and length).
-     */
-    template <typename Input, typename Token>
-    range get_range(Input& input, Token const& token)
-    {
-        if (token == Token()) {
-            return range{ get_last_position(input), 1 };
-        }
-        return boost::apply_visitor(token_range_visitor(), token.value());
-    }
 
 }}}  // namespace puppet::compiler::lexer

@@ -79,6 +79,16 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::interpolated_string,
+    begin,
+    format,
+    parts,
+    margin,
+    end,
+    tree
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::array,
     begin,
     elements,
@@ -400,6 +410,5 @@ BOOST_FUSION_ADAPT_STRUCT(
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::syntax_tree,
     parameters,
-    statements,
-    end
+    statements
 )

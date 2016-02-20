@@ -86,21 +86,21 @@ namespace puppet { namespace compiler { namespace evaluation {
     };
 
     /**
-     * Helper for setting a local EPP stream.
+     * Helper for setting a local output stream.
      */
-    struct local_epp_stream
+    struct local_output_stream
     {
         /**
-         * Constructs a local EPP stream.
+         * Constructs a local output stream.
          * @param context The current evaluation context.
          * @param stream The stream to set in the evaluation context.
          */
-        local_epp_stream(evaluation::context& context, std::ostream& stream);
+        local_output_stream(evaluation::context& context, std::ostream& stream);
 
         /**
-         * Destructs the local EPP stream.
+         * Destructs the local output stream.
          */
-        ~local_epp_stream();
+        ~local_output_stream();
 
      private:
         evaluation::context& _context;
@@ -383,18 +383,19 @@ namespace puppet { namespace compiler { namespace evaluation {
         local_scope create_local_scope(std::shared_ptr<evaluation::scope> scope = nullptr);
 
         /**
-         * Writes the given value to the EPP stream.
+         * Writes the given value to the output stream.
          * @param value The value to write.
          * @return Returns true if there is a stream to write to or false if not.
          */
-        bool epp_write(runtime::values::value const& value);
+        bool write(runtime::values::value const& value);
 
         /**
-         * Writes the given string to the EPP stream.
-         * @param string The string to write.
+         * Writes the given string data to the output stream.
+         * @param ptr The pointer to the string data.
+         * @param size The size of the data to write.
          * @return Returns true if there is a stream to write to or false if not.
          */
-        bool epp_write(std::string const& string);
+        bool write(char const* ptr, size_t size);
 
         /**
          * Logs a message.
@@ -481,7 +482,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         friend struct match_scope;
         friend struct local_scope;
         friend struct node_scope;
-        friend struct local_epp_stream;
+        friend struct local_output_stream;
 
         context(context&) = delete;
         context& operator=(context&) = delete;

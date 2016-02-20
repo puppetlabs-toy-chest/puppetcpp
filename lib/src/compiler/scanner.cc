@@ -106,7 +106,9 @@ namespace puppet { namespace compiler {
                  expression.name %
                  valid_variable_pattern
                 ).str(),
-                lexer::range(expression.begin, expression.end));
+                expression.begin,
+                expression.end
+            );
         }
     }
 
@@ -120,6 +122,17 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::type const& expression)
     {
+    }
+
+    void scanner::operator()(ast::literal_string_text const& expression)
+    {
+    }
+
+    void scanner::operator()(ast::interpolated_string const& expression)
+    {
+        for (auto const& part : expression.parts) {
+            boost::apply_visitor(*this, part);
+        }
     }
 
     void scanner::operator()(ast::array const& expression)
@@ -290,7 +303,8 @@ namespace puppet { namespace compiler {
                          existing.tree->path() %
                          existing.begin.line()
                         ).str(),
-                        lexer::range(expression.parent->begin, expression.parent->end)
+                        expression.parent->begin,
+                        expression.parent->end
                     );
                 }
             }
@@ -336,7 +350,9 @@ namespace puppet { namespace compiler {
                  existing->expression().tree->path() %
                  existing->expression().begin.line()
                 ).str(),
-                lexer::range(expression.begin, expression.end));
+                expression.begin,
+                expression.end
+            );
         }
 
         // Add the defined type for later registration
@@ -359,7 +375,7 @@ namespace puppet { namespace compiler {
     void scanner::operator()(ast::node_expression const& expression)
     {
         if (!can_define()) {
-            throw parse_exception("node definitions can only be defined at top-level or inside a class.", lexer::range(expression.begin, expression.end));
+            throw parse_exception("node definitions can only be defined at top-level or inside a class.", expression.begin, expression.end);
         }
 
         // Check for valid host names
@@ -370,7 +386,9 @@ namespace puppet { namespace compiler {
                     (boost::format("hostname '%1%' is not valid: only letters, digits, '_', '-', and '.' are allowed.") %
                      hostname.to_string()
                     ).str(),
-                    lexer::range(context.begin, context.end));
+                    context.begin,
+                    context.end
+                );
             }
         }
 
@@ -381,7 +399,9 @@ namespace puppet { namespace compiler {
                     existing->expression().tree->path() %
                     existing->expression().begin.line()
                 ).str(),
-                lexer::range(expression.begin, expression.end));
+                expression.begin,
+                expression.end
+            );
         }
 
         // Add it for later registration
@@ -437,7 +457,7 @@ namespace puppet { namespace compiler {
     void scanner::operator()(ast::function_expression const& expression)
     {
         if (!can_define()) {
-            throw parse_exception("function definitions can only be defined at top-level or inside a class.", lexer::range(expression.begin, expression.end));
+            throw parse_exception("function definitions can only be defined at top-level or inside a class.", expression.begin, expression.end);
         }
 
         // TODO: register the function
@@ -610,22 +630,22 @@ namespace puppet { namespace compiler {
     string scanner::validate_name(bool is_class, ast::name const& name) const
     {
         if (!can_define()) {
-            throw parse_exception((boost::format("%1% can only be defined at top-level or inside a class.") % (is_class ? "classes" : "defined types")).str(), lexer::range(name.begin, name.end));
+            throw parse_exception((boost::format("%1% can only be defined at top-level or inside a class.") % (is_class ? "classes" : "defined types")).str(), name.begin, name.end);
         }
 
         if (name.value.empty()) {
-            throw parse_exception((boost::format("a %1% cannot have an empty name.") % (is_class ? "class" : "defined type")).str(), lexer::range(name.begin, name.end));
+            throw parse_exception((boost::format("a %1% cannot have an empty name.") % (is_class ? "class" : "defined type")).str(), name.begin, name.end);
         }
 
         // Ensure the name is valid
         if (boost::starts_with(name.value, "::")) {
-            throw parse_exception((boost::format("'%1%' is not a valid %2% name.") % name % (is_class ? "class" : "defined type")).str(), lexer::range(name.begin, name.end));
+            throw parse_exception((boost::format("'%1%' is not a valid %2% name.") % name % (is_class ? "class" : "defined type")).str(), name.begin, name.end);
         }
 
         // Cannot define a class called "main" or "settings" because they are built-in objects
         auto qualified_name = qualify(name.value);
         if (qualified_name == "main" || qualified_name == "settings") {
-            throw parse_exception((boost::format("'%1%' is the name of a built-in class and cannot be used.") % qualified_name).str(), lexer::range(name.begin, name.end));
+            throw parse_exception((boost::format("'%1%' is the name of a built-in class and cannot be used.") % qualified_name).str(), name.begin, name.end);
         }
 
         // Check for conflicts between defined types and classes
@@ -638,7 +658,9 @@ namespace puppet { namespace compiler {
                      type->expression().tree->path() %
                      type->expression().begin.line()
                     ).str(),
-                    lexer::range(name.begin, name.end));
+                    name.begin,
+                    name.end
+                );
             }
         } else {
             auto definitions = _registry.find_class(qualified_name);
@@ -650,7 +672,9 @@ namespace puppet { namespace compiler {
                      first.expression().tree->path() %
                      first.expression().begin.line()
                     ).str(),
-                    lexer::range(name.begin, name.end));
+                    name.begin,
+                    name.end
+                );
             }
         }
         return qualified_name;
@@ -666,17 +690,17 @@ namespace puppet { namespace compiler {
 
             // Check for reserved names
             if (name == "title" || name == "name") {
-                throw parse_exception((boost::format("parameter $%1% is reserved and cannot be used.") % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
+                throw parse_exception((boost::format("parameter $%1% is reserved and cannot be used.") % name).str(), parameter.variable.begin, parameter.variable.end);
             }
 
             // Check for capture parameters
             if (parameter.captures) {
-                throw parse_exception((boost::format("%1% parameter $%2% cannot \"captures rest\".") % type % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
+                throw parse_exception((boost::format("%1% parameter $%2% cannot \"captures rest\".") % type % name).str(), parameter.variable.begin, parameter.variable.end);
             }
 
             // Check for metaparameter names
             if (resource::is_metaparameter(name)) {
-                throw parse_exception((boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str(), lexer::range(parameter.variable.begin, parameter.variable.end));
+                throw parse_exception((boost::format("parameter $%1% is reserved for resource metaparameter '%1%'.") % name).str(), parameter.variable.begin, parameter.variable.end);
             }
         }
     }
@@ -692,7 +716,8 @@ namespace puppet { namespace compiler {
                  parameter.variable.name %
                  valid_name_pattern
                 ).str(),
-                lexer::range(parameter.variable.begin, parameter.variable.end)
+                parameter.variable.begin,
+                parameter.variable.end
             );
         }
     }

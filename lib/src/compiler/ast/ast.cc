@@ -1,4 +1,5 @@
 #include <puppet/compiler/ast/ast.hpp>
+#include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/cast.hpp>
 #include <boost/lexical_cast.hpp>
 #include <yaml-cpp/yaml.h>
@@ -67,16 +68,52 @@ namespace puppet { namespace compiler { namespace ast {
         }
     }
 
-    void print_string(ostream& os, std::string const& s)
+    static void escape(ostream& os, std::string const& text, char const* escapes = nullptr)
     {
-        for (char c : s) {
-            if (c == '\n') {
-                os << "\\n";
-            } else if (c == '\r') {
-                os << "\\r";
+        for (auto c : text) {
+            char replacement = 0;
+            for (auto ptr = escapes; ptr && *ptr && !replacement; ++ptr) {
+                switch (*ptr) {
+                    case 'r':
+                        if (c == '\r') {
+                            replacement = 'r';
+                        }
+                        break;
+
+                    case 'n':
+                        if (c == '\n') {
+                            replacement = 'n';
+                        }
+                        break;
+
+                    case 't':
+                        if (c == '\t') {
+                            replacement = 't';
+                        }
+                        break;
+
+                    case 's':
+                        // Keep the space as is
+                        break;
+
+                    case 'u':
+                        // Keep any unicode characters as is
+                        break;
+
+                    default:
+                        if (c == *ptr) {
+                            replacement = c;
+                        }
+                        break;
+                }
+            }
+
+            if (replacement) {
+                os << '\\' << replacement;
             } else {
                 os << c;
             }
+
         }
     }
 
@@ -140,23 +177,17 @@ namespace puppet { namespace compiler { namespace ast {
 
     ostream& operator<<(ostream& os, ast::string const& node)
     {
-        os << (node.quote ? node.quote : (node.interpolated ? '"' : '\''));
-        print_string(os, node.value);
-        os << (node.quote ? node.quote : (node.interpolated ? '"' : '\''));
+        os << '\'';
+        escape(os, node.value, lexer::SQ_ESCAPES);
+        os << '\'';
         return os;
     }
 
     bool operator==(string const& left, string const& right)
     {
         return static_cast<context const&>(left) == static_cast<context const&>(right) &&
-               left.value_range == right.value_range &&
                left.value == right.value &&
-               left.escapes == right.escapes &&
-               left.format == right.format &&
-               left.margin == right.margin &&
-               left.quote == right.quote &&
-               left.interpolated == right.interpolated &&
-               left.remove_break == right.remove_break;
+               left.format == right.format;
     }
 
     bool operator!=(string const& left, string const& right)
@@ -631,6 +662,58 @@ namespace puppet { namespace compiler { namespace ast {
     {
         os << '(' << node.expression << ')';
         return os;
+    }
+
+    ostream& operator<<(ostream& os, literal_string_text const& node)
+    {
+        escape(os, node.text, lexer::DQ_ESCAPES);
+        return os;
+    }
+
+    bool operator==(literal_string_text const& left, literal_string_text const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right) &&
+               left.text == right.text;
+    }
+
+    bool operator!=(literal_string_text const& left, literal_string_text const& right)
+    {
+        return !(left == right);
+    }
+
+    ast::context interpolated_string_part::context() const
+    {
+        return boost::apply_visitor(context_visitor(), *this);
+    }
+
+    ostream& operator<<(ostream& os, interpolated_string const& node)
+    {
+        printer visitor{ os };
+
+        os << "\"";
+        for (auto& part : node.parts) {
+            bool is_expression = boost::get<x3::forward_ast<expression>>(&part);
+            if (is_expression) {
+                os << "${";
+            }
+            boost::apply_visitor(visitor, part);
+            if (is_expression) {
+                os << "}";
+            }
+        }
+        os << "\"";
+        return os;
+    }
+
+    bool operator==(interpolated_string const& left, interpolated_string const& right)
+    {
+        return static_cast<context const&>(left) == static_cast<context const&>(right);
+               //left.text == right.text;
+    }
+
+    bool operator!=(interpolated_string const& left, interpolated_string const& right)
+    {
+        return !(left == right);
     }
 
     ostream& operator<<(ostream& os, array const& node)
@@ -1335,7 +1418,7 @@ namespace puppet { namespace compiler { namespace ast {
     ostream& operator<<(ostream& os, epp_render_string const& node)
     {
         os << "render('";
-        print_string(os, node.string);
+        escape(os, node.string, lexer::SQ_ESCAPES);
         os << "')";
         return os;
     }
@@ -1448,9 +1531,6 @@ namespace puppet { namespace compiler { namespace ast {
             _emitter << YAML::BeginMap;
             write("parameters", tree.parameters);
             write("statements", tree.statements);
-            if (tree.end.line() != 0) {
-                write("end", tree.end);
-            }
             if (_include_path) {
                 write("path", tree.path());
             }
@@ -1463,14 +1543,6 @@ namespace puppet { namespace compiler { namespace ast {
             _emitter << YAML::BeginMap;
             write("offset", position.offset());
             write("line", position.line());
-            _emitter << YAML::EndMap;
-        }
-
-        void write(lexer::range const& range)
-        {
-            _emitter << YAML::BeginMap;
-            write("begin", range.begin());
-            write("end", range.end());
             _emitter << YAML::EndMap;
         }
 
@@ -1567,14 +1639,13 @@ namespace puppet { namespace compiler { namespace ast {
             _emitter << YAML::BeginMap;
             write("kind", "string");
             write(static_cast<context const&>(node));
-            write("value_range", node.value_range);
             write("value", node.value);
-            write("escapes", node.escapes);
-            write("format", node.format);
-            write("margin", node.margin);
-            write("quote", std::string(1, node.quote));
-            write("interpolated", node.interpolated);
-            write("remove_break", node.remove_break);
+            if (!node.format.empty()) {
+                write("format", node.format);
+            }
+            if (node.margin > 0) {
+                write("margin", node.margin);
+            }
             _emitter << YAML::EndMap;
         }
 
@@ -1629,6 +1700,37 @@ namespace puppet { namespace compiler { namespace ast {
             write("kind", "nested expression");
             write(static_cast<context const&>(node));
             write("expression", node.expression);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(literal_string_text const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "literal text");
+            write(static_cast<context const&>(node));
+            write("text", node.text);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(interpolated_string_part const& part)
+        {
+            boost::apply_visitor([this](auto const& node) {
+                this->write(node);
+            }, part);
+        }
+
+        void write(interpolated_string const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "interpolated string");
+            write(static_cast<context const&>(node));
+            write("parts", node.parts);
+            if (!node.format.empty()) {
+                write("format", node.format);
+            }
+            if (node.margin > 0) {
+                write("margin", node.margin);
+            }
             _emitter << YAML::EndMap;
         }
 

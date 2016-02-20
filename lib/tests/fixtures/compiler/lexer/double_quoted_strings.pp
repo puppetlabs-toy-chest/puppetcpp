@@ -27,4 +27,12 @@
 
 "this \f is not a valid escape"
 
-"missing endquote\"
+"$hello \$world"
+
+"1 + 1 = ${1 + 1}!"
+
+"\$foo = ${foo}!"
+
+"\$foo[0] = ${foo[0]}!"
+
+"\$foo.bar = ${foo.bar}!"

@@ -4,8 +4,7 @@
  */
 #pragma once
 
-#include "../lexer/position.hpp"
-#include "../lexer/number_token.hpp"
+#include "../lexer/tokens.hpp"
 #include <boost/optional.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/range/iterator_range_core.hpp>
@@ -26,6 +25,7 @@ namespace puppet { namespace compiler { namespace ast {
     // Forward declarations of recursive expressions
     // These expressions hold expressions themselves
     struct nested_expression;
+    struct interpolated_string;
     struct array;
     struct hash;
     struct case_expression;
@@ -224,9 +224,9 @@ namespace puppet { namespace compiler { namespace ast {
     struct string : context
     {
         /**
-         * Stores the range of the value.
+         * Stores the data format of the string (heredocs only).
          */
-        lexer::range value_range;
+        std::string format;
 
         /**
          * Stores the value of the literal string.
@@ -234,35 +234,9 @@ namespace puppet { namespace compiler { namespace ast {
         std::string value;
 
         /**
-         * Stores the valid escape characters for the string.
+         * Stores the string's margin (heredoc only).
          */
-        std::string escapes;
-
-        /**
-         * Stores the data format of the string (heredocs only).
-         */
-        std::string format;
-
-        /**
-         * Stores the margin of the string (heredoc only).
-         */
-        int margin = 0;
-
-        /**
-         * Stores the opening quote character for the string.
-         * For heredoc strings, this will be a null character.
-         */
-        char quote = '\'';
-
-        /**
-         * Stores whether or not the string is interpolated.
-         */
-        bool interpolated = false;
-
-        /**
-         * Stores whether or not a trailing break should be removed (heredoc only).
-         */
-        bool remove_break = false;
+        size_t margin = 0;
     };
 
     /**
@@ -479,6 +453,7 @@ namespace puppet { namespace compiler { namespace ast {
         bare_word,
         type,
         boost::spirit::x3::forward_ast<nested_expression>,
+        boost::spirit::x3::forward_ast<interpolated_string>,
         boost::spirit::x3::forward_ast<array>,
         boost::spirit::x3::forward_ast<hash>,
         boost::spirit::x3::forward_ast<case_expression>,
@@ -906,6 +881,133 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, nested_expression const& node);
+
+    /**
+     * Represents literal string text in an interpolated string.
+     */
+    struct literal_string_text : context
+    {
+        /**
+         * Stores the literal string text to render.
+         */
+        std::string text;
+    };
+
+    /**
+     * Stream insertion operator for literal string text.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, literal_string_text const& node);
+
+    /**
+     * Equality operator for literal string text.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two strings are equal or false if not.
+     */
+    bool operator==(literal_string_text const& left, literal_string_text const& right);
+
+    /**
+     * Inequality operator for literal string text.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two strings are not equal or false if they are equal.
+     */
+    bool operator!=(literal_string_text const& left, literal_string_text const& right);
+
+    /**
+     * Represents part of an interpolated string.
+     */
+    struct interpolated_string_part : boost::spirit::x3::variant<
+        literal_string_text,
+        variable,
+        boost::spirit::x3::forward_ast<expression>
+    >
+    {
+        // Use the base's construction and assignment semantics
+        using base_type::base_type;
+        using base_type::operator=;
+
+        /**
+         * Default constructor for interpolated string part.
+         */
+        interpolated_string_part() = default;
+
+        /**
+         * Default copy constructor for interpolated string part.
+         */
+        interpolated_string_part(interpolated_string_part const&) = default;
+
+        /**
+         * Default move constructor for interpolated string part.
+         */
+        interpolated_string_part(interpolated_string_part&&) = default;
+
+        /**
+         * Default copy assignment operator for interpolated string part.
+         * @return Returns this interpolated string part.
+         */
+        interpolated_string_part& operator=(interpolated_string_part const&) = default;
+
+        /**
+         * Default move assignment operator for interpolated string part.
+         * @return Returns this interpolated string part.
+         */
+        interpolated_string_part& operator=(interpolated_string_part&&) = default;
+
+        /**
+         * Get the context of the interpolated string part.
+         * @return Returns the context of the interpolated string part.
+         */
+        ast::context context() const;
+    };
+
+    /**
+     * Represents an interpolated string.
+     */
+    struct interpolated_string : context
+    {
+        /**
+         * Stores the data format of the string (heredocs only).
+         */
+        std::string format;
+
+        /**
+         * Stores the parts that comprised the interpolated string.
+         */
+        std::vector<interpolated_string_part> parts;
+
+        /**
+         * Stores the string's margin (heredoc only).
+         */
+        size_t margin = 0;
+    };
+
+    /**
+     * Stream insertion operator for interpolated string.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, interpolated_string const& node);
+
+    /**
+     * Equality operator for interpolated string.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two strings are equal or false if not.
+     */
+    bool operator==(interpolated_string const& left, interpolated_string const& right);
+
+    /**
+     * Inequality operator for interpolated string.
+     * @param left The left operand.
+     * @param right The right operand.
+     * @return Returns true of the two strings are not equal or false if they are equal.
+     */
+    bool operator!=(interpolated_string const& left, interpolated_string const& right);
 
     /**
      * Represents an array literal.
@@ -1454,7 +1556,7 @@ namespace puppet { namespace compiler { namespace ast {
         /**
          * Stores the resource title.
          */
-        primary_expression title;
+        expression title;
 
         /**
          * Stores the resource attribute operations.
@@ -2305,12 +2407,6 @@ namespace puppet { namespace compiler { namespace ast {
          * Stores the statements that make up the syntax tree.
          */
         std::vector<expression> statements;
-
-        /**
-         * Stores the ending position for string interpolation.
-         * This member will be default constructed if not parsed for string interpolation.
-         */
-        lexer::position end;
 
         /**
          * Gets the path to the file represented by the syntax tree.

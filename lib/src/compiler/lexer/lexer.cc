@@ -6,6 +6,10 @@ using namespace boost::spirit;
 
 namespace puppet { namespace compiler { namespace lexer {
 
+    char const* const EPP_STATE = "EPP";
+    char const* const SQ_ESCAPES = R"(\')";
+    char const* const DQ_ESCAPES = "\\\"'nrtsu$\n";
+
     lexer_istreambuf_iterator lex_begin(ifstream& file)
     {
         return lexer_istreambuf_iterator(typename lexer_istreambuf_iterator::base_type(make_default_multi_pass(istreambuf_iterator<char>(file))));

@@ -75,12 +75,20 @@ this is interpolated
 $hello \$world
 this is interpolated
 
-@( "this is interpolated" / $ )
-$hello \$world
+@( "this is interpolated")
+1 + 1 = ${1 + 1}
 this is interpolated
 
-@( "this is interpolated" / t )
-$hello \$world
+@( "this is interpolated"/)
+\$foo = ${foo}
+this is interpolated
+
+@( "this is interpolated"/)
+\$foo[0] = ${foo[0]}
+this is interpolated
+
+@( "this is interpolated"/)
+\$foo.bar = ${foo.bar}
 this is interpolated
 
 @(NOT)

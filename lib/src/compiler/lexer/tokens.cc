@@ -1,4 +1,5 @@
-#include <puppet/compiler/lexer/token_id.hpp>
+#include <puppet/compiler/lexer/tokens.hpp>
+#include <iomanip>
 #include <map>
 
 using namespace std;
@@ -54,14 +55,17 @@ namespace puppet { namespace compiler { namespace lexer {
             { token_id::keyword_application,    "application keyword" },
             { token_id::keyword_site,           "site keyword" },
             { token_id::statement_call,         "name" },  // Statement calls are technically names
-            { token_id::single_quoted_string,   "string" },
-            { token_id::double_quoted_string,   "string" },
+            { token_id::string,                 "string" },
+            { token_id::string_start,           "interpolated string" },
+            { token_id::string_end,             "\"" },
+            { token_id::string_text,            "string" },
+            { token_id::interpolation_start,    "${" },
+            { token_id::interpolation_end,      "}" },
             { token_id::bare_word,              "bare word" },
             { token_id::variable,               "variable" },
             { token_id::type,                   "type" },
             { token_id::name,                   "name" },
             { token_id::regex,                  "regular expression" },
-            { token_id::heredoc,                "heredoc" },
             { token_id::number,                 "number" },
             { token_id::array_start,            "'['" },
             { token_id::epp_start,              "'<%'" },
@@ -72,9 +76,7 @@ namespace puppet { namespace compiler { namespace lexer {
             { token_id::epp_render_expression,  "EPP render expression" },
             { token_id::comment,                "comment" },
             { token_id::whitespace,             "whitespace" },
-            { token_id::unclosed_quote,         "unclosed quote" },
             { token_id::unclosed_comment,       "unclosed comment" },
-            { token_id::invalid_variable,       "invalid variable"},
         };
 
         if (static_cast<size_t>(id) == boost::lexer::npos) {
@@ -102,6 +104,95 @@ namespace puppet { namespace compiler { namespace lexer {
     {
         return static_cast<size_t>(id) > static_cast<size_t>(token_id::first_keyword) &&
                static_cast<size_t>(id) < static_cast<size_t>(token_id::last_keyword);
+    }
+
+    ostream& operator<<(ostream& os, string_token const& token)
+    {
+        os << '\'' << token.value << '\'';
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, string_start_token const& token)
+    {
+        os << '"';
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, string_text_token const& token)
+    {
+        os << token.text;
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, string_end_token const& token)
+    {
+        os << '"';
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, numeric_base base)
+    {
+        switch (base) {
+            case numeric_base::decimal:
+                os << "decimal";
+                break;
+
+            case numeric_base::octal:
+                os << "octal";
+                break;
+
+            case lexer::numeric_base::hexadecimal:
+                os << "hexadecimal";
+                break;
+
+            default:
+                throw runtime_error("unexpected numeric base.");
+        }
+        return os;
+    }
+
+    struct insertion_visitor : boost::static_visitor<ostream&>
+    {
+        insertion_visitor(ostream& os, numeric_base base) :
+            _os(os),
+            _base(base)
+        {
+        }
+
+        result_type operator()(int64_t value) const
+        {
+            switch (_base) {
+                case numeric_base::decimal:
+                    _os << value;
+                    break;
+
+                case numeric_base::octal:
+                    _os << "0" << oct << value << dec;
+                    break;
+
+                case numeric_base::hexadecimal:
+                    _os << "0x" << hex << value << dec;
+                    break;
+
+                default:
+                    throw runtime_error("unexpected numeric base for number token.");
+            }
+            return _os;
+        }
+
+        result_type operator()(double value) const
+        {
+            return (_os << value);
+        }
+
+     private:
+        ostream& _os;
+        numeric_base _base;
+    };
+
+    ostream& operator<<(ostream& os, number_token const& token)
+    {
+        return boost::apply_visitor(insertion_visitor(os, token.base), token.value);
     }
 
 }}}  // namespace puppet::compiler::lexer

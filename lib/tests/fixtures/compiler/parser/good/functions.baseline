@@ -258,20 +258,7 @@ statements:
           end:
             offset: 219
             line: 20
-          value_range:
-            begin:
-              offset: 217
-              line: 20
-            end:
-              offset: 218
-              line: 20
           value: X
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
       - captures:
           offset: 221
           line: 20

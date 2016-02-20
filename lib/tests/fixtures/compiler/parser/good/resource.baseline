@@ -399,20 +399,7 @@ statements:
           end:
             offset: 303
             line: 29
-          value_range:
-            begin:
-              offset: 294
-              line: 29
-            end:
-              offset: 302
-              line: 29
           value: my_class
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
         operations:
           - name:
               kind: name

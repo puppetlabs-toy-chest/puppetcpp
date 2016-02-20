@@ -1,6 +1,7 @@
 #include <puppet/compiler/parser/parser.hpp>
 #include <puppet/compiler/parser/rules.hpp>
 #include <puppet/compiler/lexer/static_lexer.hpp>
+#include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
 #include <sstream>
@@ -19,19 +20,14 @@ namespace puppet { namespace compiler { namespace parser {
         if (!iterator.epp_end()) {
             throw parse_exception(
                 "expected '%>' or '-%>' but found end of input.",
-                lexer::range{
-                    iterator.position(),
-                    lexer::position{
-                        iterator.position().offset() + 1,
-                        iterator.position().line()
-                    }
-                }
+                iterator.position(),
+                position{ iterator.position().offset() + 1, iterator.position().line() }
             );
         }
     }
 
     template <typename Lexer, typename Input>
-    void parse(Lexer const& lexer, Input& input, ast::syntax_tree& tree, bool epp = false, bool interpolation = false)
+    void parse(Lexer const& lexer, Input& input, ast::syntax_tree& tree, bool epp = false)
     {
         namespace x3 = boost::spirit::x3;
 
@@ -41,7 +37,7 @@ namespace puppet { namespace compiler { namespace parser {
             auto end = lex_end(input);
 
             // Get the token iterators from the lexer
-            auto token_begin = lexer.begin(begin, end, epp ? Lexer::EPP_STATE : nullptr);
+            auto token_begin = lexer.begin(begin, end, epp ? EPP_STATE : nullptr);
             auto token_end = lexer.end();
 
             // Check for "semantically empty" input
@@ -54,10 +50,7 @@ namespace puppet { namespace compiler { namespace parser {
 
             // Parse the input
             bool success = false;
-            if (interpolation) {
-                auto parser = x3::with<tree_context_tag>(&tree)[interpolated_syntax_tree];
-                success = x3::parse(token_begin, token_end, parser, tree);
-            } else if (epp) {
+            if (epp) {
                 auto parser = x3::with<tree_context_tag>(&tree)[epp_syntax_tree];
                 success = x3::parse(token_begin, token_end, parser, tree);
             } else {
@@ -66,7 +59,7 @@ namespace puppet { namespace compiler { namespace parser {
             }
 
             // Check for success; for interpolation, it is not required to exhaust all tokens
-            if (success && (token_begin == token_end || token_begin->id() == boost::lexer::npos || interpolation)) {
+            if (success && (token_begin == token_end || token_begin->id() == boost::lexer::npos)) {
                 if (epp) {
                     check_missing_epp_end(begin);
                 }
@@ -75,7 +68,14 @@ namespace puppet { namespace compiler { namespace parser {
 
             // If not all tokens were processed and the iterator points at a valid token, handle unexpected token
             if (token_begin != token_end && token_is_valid(*token_begin)) {
-                throw parse_exception((boost::format("syntax error: unexpected %1%.") % static_cast<token_id>(token_begin->id())).str(), get_range(input, *token_begin));
+                position begin;
+                position end;
+                tie(begin, end) = boost::apply_visitor(token_range_visitor(), token_begin->value());
+                throw parse_exception(
+                    (boost::format("syntax error: unexpected %1%.") % static_cast<token_id>(token_begin->id())).str(),
+                    begin,
+                    end
+                );
             }
 
             // Unexpected character in the input
@@ -93,72 +93,80 @@ namespace puppet { namespace compiler { namespace parser {
             }
             throw parse_exception(
                 message.str(),
-                lexer::range{
-                    begin.position(),
-                    lexer::position{
-                        begin.position().offset() + 1,
-                        begin.position().line()
-                    }
-                }
+                begin.position(),
+                lexer::position{ begin.position().offset() + 1, begin.position().line() }
             );
         } catch (lexer_exception<typename Lexer::input_iterator_type> const& ex) {
-            auto& location = ex.location().position();
-            throw parse_exception(
-                ex.what(),
-                lexer::range{
-                    location,
-                    lexer::position{
-                        location.offset() + 1,
-                        location.line()
-                    }
-                }
-            );
+            throw parse_exception(ex.what(), ex.begin().position(), ex.end().position());
         } catch (x3::expectation_failure<typename Lexer::iterator_type> const& ex) {
+            position begin;
+            position end;
+
+            if (ex.where()->id() == boost::lexer::npos) {
+                begin = get_last_position(input);
+                end = position{ begin.offset() + 1, begin.line() };
+            } else {
+                tie(begin, end) = boost::apply_visitor(token_range_visitor(), ex.where()->value());
+            }
             throw parse_exception(
                 (boost::format("expected %1% but found %2%.") %
                  ex.which() %
                  static_cast<token_id>(ex.where()->id())
                 ).str(),
-                get_range(input, *ex.where()));
+                begin,
+                end
+            );
         }
     }
 
-    shared_ptr<ast::syntax_tree> parse_file(std::string path, compiler::module const* module, bool epp)
+    shared_ptr<ast::syntax_tree> parse_file(logging::logger& logger, std::string path, compiler::module const* module, bool epp)
     {
-        static file_static_lexer lexer;
-
-        ifstream input(path);
+        auto tree = ast::syntax_tree::create(rvalue_cast(path), module);
+        ifstream input(tree->path());
         if (!input) {
-            throw compilation_exception((boost::format("file '%1%' does not exist or cannot be read.") % path).str());
+            throw compilation_exception((boost::format("file '%1%' does not exist or cannot be read.") % tree->path()).str());
         }
 
-        auto tree = ast::syntax_tree::create(rvalue_cast(path), module);
+        file_static_lexer lexer{ [&](logging::level level, std::string const& message, lexer::position const& position, size_t length) {
+            if (!logger.would_log(level)) {
+                return;
+            }
+
+            size_t column = 0;
+            std::string text;
+            tie(text, column) = lexer::get_text_and_column(input, position.offset());
+
+            logger.log(level, position.line(), column, length, text, tree->path(), message);
+        }};
+
         parse(lexer, input, *tree, epp);
         return tree;
     }
 
-    shared_ptr<ast::syntax_tree> parse_string(std::string source, std::string path, compiler::module const* module, bool epp)
+    shared_ptr<ast::syntax_tree> parse_string(logging::logger& logger, std::string source, std::string path, compiler::module const* module, bool epp)
     {
-        static string_static_lexer lexer;
-
         auto tree = ast::syntax_tree::create(rvalue_cast(path), module);
+
+        string_static_lexer lexer{ [&](logging::level level, std::string const& message, lexer::position const& position, size_t length) {
+            if (!logger.would_log(level)) {
+                return;
+            }
+
+            size_t column = 0;
+            std::string text;
+            tie(text, column) = lexer::get_text_and_column(source, position.offset());
+
+            logger.log(level, position.line(), column, length, text, tree->path(), message);
+        }};
+
         parse(lexer, source, *tree, epp);
         tree->source(rvalue_cast(source));
         return tree;
     }
 
-    shared_ptr<ast::syntax_tree> interpolate(boost::iterator_range<lexer_string_iterator> range, compiler::module const* module)
-    {
-        static string_static_lexer lexer;
-
-        auto tree = ast::syntax_tree::create("<string>", module);
-        parse(lexer, range, *tree, false, true);
-        return tree;
-    }
-
     boost::optional<ast::postfix_expression> parse_postfix(std::string const& source)
     {
-        static string_static_lexer lexer;
+        string_static_lexer lexer;
 
         try {
             // Get lexer iterators

@@ -51,13 +51,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         _context._node_scope.reset();
     }
 
-    local_epp_stream::local_epp_stream(evaluation::context& context, ostream& stream) :
+    local_output_stream::local_output_stream(evaluation::context& context, ostream& stream) :
         _context(context)
     {
         _context._stream_stack.push_back(&stream);
     }
 
-    local_epp_stream::~local_epp_stream()
+    local_output_stream::~local_output_stream()
     {
         _context._stream_stack.pop_back();
     }
@@ -425,7 +425,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return local_scope { *this, rvalue_cast(scope) };
     }
 
-    bool context::epp_write(values::value const& value)
+    bool context::write(values::value const& value)
     {
         if (_stream_stack.empty()) {
             return false;
@@ -434,12 +434,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         return true;
     }
 
-    bool context::epp_write(std::string const& string)
+    bool context::write(char const* ptr, size_t size)
     {
         if (_stream_stack.empty()) {
             return false;
         }
-        *_stream_stack.back() << string;
+        _stream_stack.back()->write(ptr, size);
         return true;
     }
 
@@ -447,7 +447,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         auto& logger = node().logger();
 
-        // Do nothing if not warn level
+        // Do nothing if the logger would not log at this level
         if (!logger.would_log(level)) {
             return;
         }
