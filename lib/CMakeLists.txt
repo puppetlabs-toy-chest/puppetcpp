@@ -140,12 +140,14 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/values/value.cc
     src/runtime/values/variable.cc
     src/runtime/values/wrapper.cc
+    src/utility/filesystem/helpers.cc
 )
 
 # Set platform-specific sources
 if (UNIX)
     set(PUPPET_PLATFORM_SOURCES
         src/options/posix/defaults.cc
+        src/utility/filesystem/posix/helpers.cc
     )
 elseif(WIN32)
     set(PUPPET_PLATFORM_SOURCES

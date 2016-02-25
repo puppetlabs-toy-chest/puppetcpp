@@ -6,6 +6,7 @@
 #include <puppet/facts/facter.hpp>
 #include <puppet/facts/yaml.hpp>
 #include <puppet/logging/logger.hpp>
+#include <puppet/utility/filesystem/helpers.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/optional.hpp>
 #include <boost/algorithm/string.hpp>
@@ -15,6 +16,7 @@ using namespace std;
 using namespace puppet::facts;
 using namespace puppet::runtime;
 using namespace puppet::compiler;
+using namespace puppet::utility::filesystem;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 namespace sys = boost::system;
@@ -43,19 +45,6 @@ namespace puppet { namespace options { namespace commands {
     static char const* const OUTPUT_OPTION = "output";
     static char const* const OUTPUT_OPTION_FULL = "output,o";
     static char const* const VERBOSE_OPTION = "verbose";
-
-    static string make_absolute(string const& path)
-    {
-        auto absolute_path = fs::absolute(path);
-
-        // Convert to a canonical path if we're able to
-        sys::error_code ec;
-        auto canonical = fs::weakly_canonical(absolute_path, ec);
-        if (ec) {
-            return absolute_path.string();
-        }
-        return canonical.string();
-    }
 
     static logging::level get_level(options::command const& command, po::variables_map const& options)
     {
