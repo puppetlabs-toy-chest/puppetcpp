@@ -24,7 +24,7 @@ extern char const* const COMPILE_COMMAND_HELP =
     "  -d [ --debug ]                        Enable debug output.\n"
     "  -e [ --environment ] arg (=production)\n"
     "                                        The environment to compile for.\n"
-    "  --environment-dir arg                 Specifies a directory to search for \n"
+    "  --environment-path arg                The search path to use for finding \n"
     "                                        environments.\n"
     "  -f [ --facts ] arg                    The path to the YAML facts file to use.\n"
     "                                        Defaults to the current system's facts.\n"

@@ -29,7 +29,7 @@ namespace puppet { namespace options { namespace commands {
     static char const* const DEBUG_OPTION_FULL = "debug,d";
     static char const* const ENVIRONMENT_OPTION = "environment";
     static char const* const ENVIRONMENT_OPTION_FULL = "environment,e";
-    static char const* const ENVIRONMENT_DIRECTORY_OPTION = "environment-dir";
+    static char const* const ENVIRONMENT_PATH_OPTION = "environment-path";
     static char const* const FACTS_OPTION = "facts";
     static char const* const FACTS_OPTION_FULL = "facts,f";
     static char const* const GRAPH_OPTION = "graph";
@@ -222,33 +222,47 @@ namespace puppet { namespace options { namespace commands {
     static string get_environment_directory(options::command const& command, po::variables_map const& options, string const& code_directory, string const& environment)
     {
         bool specified = false;
-        vector<string> directories;
-        if (options.count(ENVIRONMENT_DIRECTORY_OPTION)) {
-            directories = options[ENVIRONMENT_DIRECTORY_OPTION].as<vector<string>>();
+        string search_path;
+        if (options.count(ENVIRONMENT_PATH_OPTION)) {
+            search_path = options[ENVIRONMENT_PATH_OPTION].as<string>();
             specified = true;
         } else {
-            directories = defaults::environment_directories();
+            search_path = defaults::environment_path();
         }
 
-        for (auto& directory : directories) {
-            // Replace all references to $codedir with the code directory
-            boost::replace_all(directory, "$codedir", code_directory);
-            fs::path path = make_absolute(directory);
+        string default_directory;
+        boost::split_iterator<string::iterator> end;
+        for (auto it = boost::make_split_iterator(search_path, boost::first_finder(path_separator(), boost::is_equal())); it != end; ++it) {
+            if (!*it) {
+                continue;
+            }
 
-            path /= environment;
+            string directory{ it->begin(), it->end() };
+            boost::replace_all(directory, "$codedir", code_directory);
+            auto path = fs::path{ make_absolute(directory) } / environment;
+
             sys::error_code ec;
             if (fs::is_directory(path, ec)) {
                 return path.string();
             }
+
+            if (default_directory.empty()) {
+                default_directory = path.string();
+            }
         }
 
         // If directories were specified, it's an error if the environment's directory cannot be found
-        if (specified) {
-            throw option_exception((boost::format("could not locate an environment directory for environment '%1%'.") % environment).str(), &command);
+        if (specified || default_directory.empty()) {
+            throw option_exception(
+                (boost::format("could not locate an environment directory for environment '%1%' using search path '%2%'.") %
+                 environment %
+                 search_path
+                ).str(),
+                &command);
         }
 
-        // Use the default
-        return (fs::path(directories.back()) / environment).string();
+        // Return the first directory that would have been in the path
+        return default_directory;
     }
 
     static vector<string> get_module_directories(po::variables_map const& options, string const& code_directory)
@@ -326,9 +340,9 @@ namespace puppet { namespace options { namespace commands {
                 "The environment to compile for."
             )
             (
-                ENVIRONMENT_DIRECTORY_OPTION,
-                po::value<vector<string>>(),
-                "Specifies a directory to search for environments."
+                ENVIRONMENT_PATH_OPTION,
+                po::value<string>(),
+                "The search path to use for finding environments."
             )
             (
                 FACTS_OPTION_FULL,

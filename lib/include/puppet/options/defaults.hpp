@@ -21,10 +21,10 @@ namespace puppet { namespace options {
         static std::string code_directory();
 
         /**
-         * Gets the default environment directories for the current platform.
-         * @return Returns the default environment directories.
+         * Gets the default environment path for the current platform.
+         * @return Returns the default environment path.
          */
-        static std::vector<std::string> environment_directories();
+        static std::string environment_path();
 
         /**
          * Gets the default global module directories for the current platform.

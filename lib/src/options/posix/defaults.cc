@@ -21,12 +21,9 @@ namespace puppet { namespace options {
         return (fs::path(home) / ".puppetlabs" / "etc" / "code").string();
     }
 
-    vector<string> defaults::environment_directories()
+    string defaults::environment_path()
     {
-        vector<string> directories = {
-            "$codedir/environments",
-        };
-        return directories;
+        return "$codedir/environments";
     }
 
     vector<string> defaults::module_directories()
