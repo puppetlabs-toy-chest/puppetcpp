@@ -79,13 +79,11 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/context.cc
     src/compiler/evaluation/dispatcher.cc
     src/compiler/evaluation/evaluator.cc
-    src/compiler/evaluation/interpolator.cc
     src/compiler/evaluation/postfix_evaluator.cc
     src/compiler/evaluation/scope.cc
     src/compiler/lexer/lexer.cc
-    src/compiler/lexer/number_token.cc
     src/compiler/lexer/position.cc
-    src/compiler/lexer/token_id.cc
+    src/compiler/lexer/tokens.cc
     src/compiler/parser/parser.cc
     src/compiler/attribute.cc
     src/compiler/catalog.cc
@@ -158,9 +156,9 @@ endif()
 add_executable(
     generate_static_lexer
     src/compiler/lexer/generate_static_lexer.cc
-    src/compiler/lexer/number_token.cc
+    src/compiler/lexer/lexer.cc
     src/compiler/lexer/position.cc
-    src/compiler/lexer/token_id.cc
+    src/compiler/lexer/tokens.cc
 )
 target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
 

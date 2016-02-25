@@ -768,3 +768,24 @@ if *[1, 2, 3] != [1, 2, 3] {
 if *{a => b, c => d} != [[a, b], [c, d]] {
     fail incorrect
 }
+
+/* String interpolation tests */
+$interpolated = foo
+unless "1 + 1 = ${1 + 1}" == "1 + 1 = 2" {
+    fail incorrect
+}
+unless "\$interpolated = $interpolated" == "\$interpolated = foo" {
+    fail incorrect
+}
+unless "\$interpolated = ${interpolated}" == "\$interpolated = foo" {
+    fail incorrect
+}
+unless "\$interpolated[0] = ${interpolated[0]}" == "\$interpolated[0] = f" {
+    fail incorrect
+}
+unless "\$interpolated.split('') = ${interpolated.split('')}" == "\$interpolated.split('') = [f, o, o]" {
+    fail incorrect
+}
+unless foo =~ /f(o)o/ or "match group 1 = '${1}'" == "match group 1 = 'o'" {
+    fail incorrect
+}

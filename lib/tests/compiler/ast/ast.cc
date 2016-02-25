@@ -72,15 +72,37 @@ static number create_number(int64_t value)
     return node;
 }
 
-static ast::string create_string(std::string value)
+static ast::string create_string(std::string value, std::string format = {}, size_t margin = 0)
 {
     ast::string node;
     set_dummy_context(node);
-    node.value_range = range(node.begin, node.end);
     node.value = rvalue_cast(value);
-    node.escapes = "\\\"'nrtsu$";
-    node.quote = '"';
-    node.interpolated = true;
+    node.format = rvalue_cast(format);
+    node.margin = margin;
+    return node;
+}
+
+static literal_string_text create_literal_string_text(std::string text)
+{
+    literal_string_text node;
+    set_dummy_context(node);
+    node.text = rvalue_cast(text);
+    return node;
+}
+
+template <typename T>
+static interpolated_string_part string_part(T&& node)
+{
+    return interpolated_string_part(std::forward<T>(node));
+}
+
+static ast::interpolated_string create_interpolated_string(vector<interpolated_string_part> parts, std::string format = {}, size_t margin = 0)
+{
+    ast::interpolated_string node;
+    set_dummy_context(node);
+    node.parts = rvalue_cast(parts);
+    node.format = rvalue_cast(format);
+    node.margin = margin;
     return node;
 }
 
@@ -220,7 +242,7 @@ static attribute_operation create_attribute(std::string name, attribute_operator
     return node;
 }
 
-static resource_body create_resource_body(primary_expression title, vector<attribute_operation> operations = {})
+static resource_body create_resource_body(expression title, vector<attribute_operation> operations = {})
 {
     resource_body node;
     node.title = rvalue_cast(title);
@@ -523,7 +545,6 @@ static shared_ptr<syntax_tree> create_syntax_tree(std::string path, boost::optio
     auto tree = syntax_tree::create(rvalue_cast(path), create_dummy_module());
     tree->parameters = rvalue_cast(parameters);
     tree->statements = rvalue_cast(statements);
-    tree->end = create_position();
     return tree;
 }
 
@@ -672,25 +693,57 @@ SCENARIO("string", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "\"hello\"");
-            node.quote = '\'';
-            REQUIRE(lexical_cast<std::string>(node) == "'hello'");
-            node.quote = 0;
-            REQUIRE(lexical_cast<std::string>(node) == "\"hello\"");
-            node.interpolated = false;
             REQUIRE(lexical_cast<std::string>(node) == "'hello'");
         }
-        WHEN("the value contains a carriage return character") {
-            node.value = "hello\rworld";
+        WHEN("the value contains a quote") {
+            node.value = "hello'world";
             THEN("it should be escaped when output") {
-                REQUIRE(lexical_cast<std::string>(node) == "\"hello\\rworld\"");
+                REQUIRE(lexical_cast<std::string>(node) == "'hello\\'world'");
             }
         }
-        WHEN("the value contains a newline character") {
-            node.value = "hello\nworld";
-            THEN("it should be escaped when output") {
-                REQUIRE(lexical_cast<std::string>(node) == "\"hello\\nworld\"");
+        GIVEN("another non-equal object") {
+            decltype(node) other;
+            THEN("the objects should not be equal") {
+                REQUIRE(node != other);
             }
+        }
+    }
+}
+
+SCENARIO("interpolated string", "[ast]")
+{
+    auto node = create_interpolated_string({
+        string_part(create_literal_string_text("hello \"")),
+        string_part(create_variable("world")),
+        string_part(create_literal_string_text("\"\n1 + 1 = ")),
+        string_part(create_expression(
+            create_postfix(primary(create_number(1))),
+                {
+                    create_binary(
+                        binary_operator::plus,
+                        create_postfix(primary(create_number(1)))
+                    )
+                }
+            )
+        )
+    });
+
+    WHEN("using interpolated string") {
+        THEN("it should be copy constructible") {
+            auto node2 = node;
+            REQUIRE(node2 == node);
+        }
+        THEN("it should be movable") {
+            auto node2 = node;
+            auto node3 = rvalue_cast(node2);
+            REQUIRE(node3 == node);
+        }
+        THEN("it should be convertible to context") {
+            context ctx = node;
+            REQUIRE(ctx == node);
+        }
+        THEN("it should output the expected format") {
+            REQUIRE(lexical_cast<std::string>(node) == "\"hello \\\"$world\\\"\\n1 + 1 = ${1 + 1}\"");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -855,7 +908,7 @@ SCENARIO("primary expression", "[ast]")
 {
     primary_expression node;
     THEN("it should have the expected number of types") {
-        REQUIRE(boost::mpl::size<primary_expression::types>::value == 33);
+        REQUIRE(boost::mpl::size<primary_expression::types>::value == 34);
     }
     WHEN("using a primary expression") {
         GIVEN("an undef") {
@@ -950,7 +1003,7 @@ SCENARIO("primary expression", "[ast]")
                 REQUIRE_FALSE(node.is_splat());
             }
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "\"foobar\"");
+                REQUIRE(lexical_cast<std::string>(node) == "'foobar'");
             }
         }
         GIVEN("a regex") {
@@ -1150,7 +1203,7 @@ SCENARIO("primary expression", "[ast]")
                 REQUIRE_FALSE(node.is_splat());
             }
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "{\"foo\" => 1, \"bar\" => 2, \"baz\" => 3}");
+                REQUIRE(lexical_cast<std::string>(node) == "{'foo' => 1, 'bar' => 2, 'baz' => 3}");
             }
         }
         GIVEN("a case expression") {
@@ -1255,7 +1308,7 @@ SCENARIO("primary expression", "[ast]")
                 create_postfix(primary(create_name("foo"))),
                 {
                     create_resource_body(
-                        primary(create_name("bar")),
+                        create_expression(primary(create_name("bar"))),
                         {
                             create_attribute(
                                 "baz",
@@ -1280,7 +1333,7 @@ SCENARIO("primary expression", "[ast]")
                 REQUIRE_FALSE(node.is_splat());
             }
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "@foo { bar: baz => \"jam\" }");
+                REQUIRE(lexical_cast<std::string>(node) == "@foo { bar: baz => 'jam' }");
             }
         }
         GIVEN("a resource override expression") {
@@ -1308,7 +1361,7 @@ SCENARIO("primary expression", "[ast]")
                 REQUIRE_FALSE(node.is_splat());
             }
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "$foo { baz => \"jam\" }");
+                REQUIRE(lexical_cast<std::string>(node) == "$foo { baz => 'jam' }");
             }
         }
         GIVEN("a resource defaults expression") {
@@ -1336,7 +1389,7 @@ SCENARIO("primary expression", "[ast]")
                 REQUIRE_FALSE(node.is_splat());
             }
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "Foo::Bar { baz => \"jam\" }");
+                REQUIRE(lexical_cast<std::string>(node) == "Foo::Bar { baz => 'jam' }");
             }
         }
         GIVEN("a class expression") {
@@ -1658,7 +1711,7 @@ SCENARIO("primary expression", "[ast]")
                             create_postfix(primary(create_name("foo"))),
                             {
                                 create_resource_body(
-                                    primary(create_name("something")),
+                                    create_expression(primary(create_name("something"))),
                                     {
                                         create_attribute(
                                             "bar",
@@ -2196,7 +2249,7 @@ SCENARIO("array", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "[1 + 1, \"foo\", /^.*bar$/]");
+            REQUIRE(lexical_cast<std::string>(node) == "[1 + 1, 'foo', /^.*bar$/]");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -2249,7 +2302,7 @@ SCENARIO("hash", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "{\"foo\" => 1 + 1, 1234 => \"foo\", \"bar\" => /^.*bar$/}");
+            REQUIRE(lexical_cast<std::string>(node) == "{'foo' => 1 + 1, 1234 => 'foo', 'bar' => /^.*bar$/}");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -2302,7 +2355,7 @@ SCENARIO("selector expression", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == " ? { \"foo\" => 1 + 1, 1234 => \"foo\", \"bar\" => /^.*bar$/ }");
+            REQUIRE(lexical_cast<std::string>(node) == " ? { 'foo' => 1 + 1, 1234 => 'foo', 'bar' => /^.*bar$/ }");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -2364,7 +2417,7 @@ SCENARIO("case expression", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "case $foo { \"foo\", \"bar\", \"baz\": { foo() } true, false, undef: { bar() } default: { baz() } }");
+            REQUIRE(lexical_cast<std::string>(node) == "case $foo { 'foo', 'bar', 'baz': { foo() } true, false, undef: { bar() } default: { baz() } }");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -2449,7 +2502,7 @@ SCENARIO("if expression", "[ast]")
             }
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "if \"foo\" in \"foobar\" { foo(); bar() } elsif $jam { \"baz\" } elsif $snapple { } else { snausage() }");
+            REQUIRE(lexical_cast<std::string>(node) == "if 'foo' in 'foobar' { foo(); bar() } elsif $jam { 'baz' } elsif $snapple { } else { snausage() }");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -2545,7 +2598,7 @@ SCENARIO("access expression", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "[Foo, 1, \"bar\"]");
+            REQUIRE(lexical_cast<std::string>(node) == "[Foo, 1, 'bar']");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -2793,7 +2846,7 @@ SCENARIO("method call expression", "[ast]")
             }
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == ".foo(1, \"bar\", []) |$foo, $bar| { }");
+            REQUIRE(lexical_cast<std::string>(node) == ".foo(1, 'bar', []) |$foo, $bar| { }");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -2872,7 +2925,7 @@ SCENARIO("function call expression", "[ast]")
             }
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "foo(1, \"bar\", []) |$foo, $bar| { }");
+            REQUIRE(lexical_cast<std::string>(node) == "foo(1, 'bar', []) |$foo, $bar| { }");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -2927,7 +2980,7 @@ SCENARIO("attribute operation") {
 
 SCENARIO("resource body") {
     auto node = create_resource_body(
-        primary(create_name("foo")),
+        create_expression(primary(create_name("foo"))),
         {
             create_attribute(
                 "bar",
@@ -2980,7 +3033,7 @@ SCENARIO("resource expression", "[ast]")
         create_postfix(primary(create_name("foo"))),
         {
             create_resource_body(
-                primary(create_name("bar")),
+                create_expression(primary(create_name("bar"))),
                 {
                     create_attribute(
                         "foo",
@@ -2995,7 +3048,7 @@ SCENARIO("resource expression", "[ast]")
                 }
             ),
             create_resource_body(
-                primary(create_name("baz")),
+                create_expression(primary(create_name("baz"))),
                 {
                     create_attribute(
                         "jam",
@@ -3023,19 +3076,19 @@ SCENARIO("resource expression", "[ast]")
         }
         WHEN("the resource is realized") {
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "foo { bar: foo => bar, baz +> \"cake\"; baz: jam => 9876 }");
+                REQUIRE(lexical_cast<std::string>(node) == "foo { bar: foo => bar, baz +> 'cake'; baz: jam => 9876 }");
             }
         }
         WHEN("the resource is virtualized") {
             node.status = resource_status::virtualized;
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "@foo { bar: foo => bar, baz +> \"cake\"; baz: jam => 9876 }");
+                REQUIRE(lexical_cast<std::string>(node) == "@foo { bar: foo => bar, baz +> 'cake'; baz: jam => 9876 }");
             }
         }
         WHEN("the resource is exported") {
             node.status = resource_status::exported;
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "@@foo { bar: foo => bar, baz +> \"cake\"; baz: jam => 9876 }");
+                REQUIRE(lexical_cast<std::string>(node) == "@@foo { bar: foo => bar, baz +> 'cake'; baz: jam => 9876 }");
             }
         }
         GIVEN("another non-equal object") {
@@ -3087,7 +3140,7 @@ SCENARIO("resource override expression", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "Foo[bar] { foo => bar, baz +> \"jam\" }");
+            REQUIRE(lexical_cast<std::string>(node) == "Foo[bar] { foo => bar, baz +> 'jam' }");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -3131,7 +3184,7 @@ SCENARIO("resource defaults expression", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "Foo { foo => bar, baz +> \"jam\" }");
+            REQUIRE(lexical_cast<std::string>(node) == "Foo { foo => bar, baz +> 'jam' }");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -3355,7 +3408,7 @@ SCENARIO("hostname", "[ast]")
             auto subnode = create_string("foo.bar.baz");
             node = subnode;
             AND_THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "\"foo.bar.baz\"");
+                REQUIRE(lexical_cast<std::string>(node) == "'foo.bar.baz'");
             }
             AND_THEN("the context should be the same as the default") {
                 REQUIRE(node.context() == subnode);
@@ -3468,12 +3521,12 @@ SCENARIO("node expression", "[ast]")
         WHEN("given no body") {
             node.body.clear();
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "node \"foo.bar.baz\", default, /.*/ { }");
+                REQUIRE(lexical_cast<std::string>(node) == "node 'foo.bar.baz', default, /.*/ { }");
             }
         }
         WHEN("given a body") {
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "node \"foo.bar.baz\", default, /.*/ { foo() }");
+                REQUIRE(lexical_cast<std::string>(node) == "node 'foo.bar.baz', default, /.*/ { foo() }");
             }
         }
         GIVEN("another non-equal object") {
@@ -3545,7 +3598,7 @@ SCENARIO("primary query expression", "[ast]")
                 REQUIRE(node.context() == subnode);
             }
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "(foo == \"bar\" and baz != jam)");
+                REQUIRE(lexical_cast<std::string>(node) == "(foo == 'bar' and baz != jam)");
             }
         }
     }
@@ -3621,7 +3674,7 @@ SCENARIO("query expression", "[ast]")
         );
         THEN("it should output the expected format") {
             THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "foo != bar and baz == 1234 or cake == \"jam\"");
+                REQUIRE(lexical_cast<std::string>(node) == "foo != bar and baz == 1234 or cake == 'jam'");
             }
         }
         THEN("the context should end with the last binary operation") {
@@ -3673,7 +3726,7 @@ SCENARIO("nested query expression", "[ast]")
             REQUIRE(ctx == node);
         }
         THEN("it should output the expected format") {
-            REQUIRE(lexical_cast<std::string>(node) == "(foo == \"bar\" or baz != cakes)");
+            REQUIRE(lexical_cast<std::string>(node) == "(foo == 'bar' or baz != cakes)");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -4195,7 +4248,7 @@ SCENARIO("site expression", "[ast]")
                     create_postfix(primary(create_name("app"))),
                     {
                         create_resource_body(
-                            primary(create_name("lamp")),
+                            create_expression(primary(create_name("lamp"))),
                             {
                                 create_attribute(
                                     "nodes",

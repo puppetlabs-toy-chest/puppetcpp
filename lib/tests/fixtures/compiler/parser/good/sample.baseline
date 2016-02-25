@@ -181,20 +181,7 @@ statements:
           end:
             offset: 117
             line: 6
-          value_range:
-            begin:
-              offset: 103
-              line: 6
-            end:
-              offset: 116
-              line: 6
           value: ¯\_(ツ)_/¯
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
   - kind: binary
     first:
       kind: variable
@@ -211,27 +198,22 @@ statements:
           line: 7
         operator: =
         operand:
-          kind: string
+          kind: interpolated string
           begin:
             offset: 127
             line: 7
           end:
             offset: 136
             line: 7
-          value_range:
-            begin:
-              offset: 128
-              line: 7
-            end:
-              offset: 135
-              line: 7
-          value: ${name}
-          escapes: \"'nrtsu$
-          format: ""
-          margin: 0
-          quote: "\""
-          interpolated: true
-          remove_break: false
+          parts:
+            - kind: variable
+              begin:
+                offset: 130
+                line: 7
+              end:
+                offset: 134
+                line: 7
+              name: name
   - kind: binary
     first:
       kind: variable
@@ -1526,20 +1508,7 @@ statements:
             end:
               offset: 1300
               line: 93
-            value_range:
-              begin:
-                offset: 1289
-                line: 93
-              end:
-                offset: 1299
-                line: 93
             value: Integer[1]
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
           - kind: number
             begin:
               offset: 1302
@@ -1615,20 +1584,7 @@ statements:
             end:
               offset: 1362
               line: 96
-            value_range:
-              begin:
-                offset: 1349
-                line: 96
-              end:
-                offset: 1361
-                line: 96
             value: String[4, 4]
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
           - kind: string
             begin:
               offset: 1364
@@ -1636,20 +1592,7 @@ statements:
             end:
               offset: 1369
               line: 96
-            value_range:
-              begin:
-                offset: 1365
-                line: 96
-              end:
-                offset: 1368
-                line: 96
             value: foo
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
         lambda:
           begin:
             offset: 1371
@@ -1688,27 +1631,46 @@ statements:
                   line: 97
                 value: warning
               arguments:
-                - kind: string
+                - kind: interpolated string
                   begin:
                     offset: 1406
                     line: 97
                   end:
                     offset: 1448
                     line: 97
-                  value_range:
-                    begin:
-                      offset: 1407
-                      line: 97
-                    end:
-                      offset: 1447
-                      line: 97
-                  value: expected $expected but was given $actual
-                  escapes: \"'nrtsu$
-                  format: ""
-                  margin: 0
-                  quote: "\""
-                  interpolated: true
-                  remove_break: false
+                  parts:
+                    - kind: literal text
+                      begin:
+                        offset: 1407
+                        line: 97
+                      end:
+                        offset: 1416
+                        line: 97
+                      text: "expected "
+                    - kind: variable
+                      begin:
+                        offset: 1416
+                        line: 97
+                      end:
+                        offset: 1425
+                        line: 97
+                      name: expected
+                    - kind: literal text
+                      begin:
+                        offset: 1425
+                        line: 97
+                      end:
+                        offset: 1440
+                        line: 97
+                      text: " but was given "
+                    - kind: variable
+                      begin:
+                        offset: 1440
+                        line: 97
+                      end:
+                        offset: 1447
+                        line: 97
+                      name: actual
             - kind: name
               begin:
                 offset: 1453
@@ -1930,20 +1892,7 @@ statements:
           end:
             offset: 1662
             line: 117
-          value_range:
-            begin:
-              offset: 1656
-              line: 117
-            end:
-              offset: 1661
-              line: 117
           value: $type
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
       end:
         offset: 1663
         line: 117
@@ -1993,20 +1942,7 @@ statements:
           end:
             offset: 1711
             line: 120
-          value_range:
-            begin:
-              offset: 1699
-              line: 120
-            end:
-              offset: 1710
-              line: 120
           value: $notdefined
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
       end:
         offset: 1712
         line: 120
@@ -2752,25 +2688,13 @@ statements:
         operand:
           kind: string
           begin:
-            offset: 2087
-            line: 147
+            offset: 2099
+            line: 148
           end:
-            offset: 2098
-            line: 147
-          value_range:
-            begin:
-              offset: 2099
-              line: 148
-            end:
-              offset: 2138
-              line: 150
-          value: "    <%| $param |-%>\n    <%= $param -%>\n"
-          escapes: ""
-          format: ""
+            offset: 2138
+            line: 150
+          value: "    <%| $param |-%>\n    <%= $param -%>"
           margin: 4
-          quote: "\x00"
-          interpolated: false
-          remove_break: true
   - kind: if
     begin:
       offset: 2154
@@ -2884,27 +2808,38 @@ statements:
             line: 154
           value: inline_epp
         arguments:
-          - kind: string
+          - kind: interpolated string
             begin:
               offset: 2249
               line: 154
             end:
               offset: 2266
               line: 154
-            value_range:
-              begin:
-                offset: 2250
-                line: 154
-              end:
-                offset: 2265
-                line: 154
-            value: <%= $default %>
-            escapes: \"'nrtsu$
-            format: ""
-            margin: 0
-            quote: "\""
-            interpolated: true
-            remove_break: false
+            parts:
+              - kind: literal text
+                begin:
+                  offset: 2250
+                  line: 154
+                end:
+                  offset: 2254
+                  line: 154
+                text: "<%= "
+              - kind: variable
+                begin:
+                  offset: 2254
+                  line: 154
+                end:
+                  offset: 2262
+                  line: 154
+                name: default
+              - kind: literal text
+                begin:
+                  offset: 2262
+                  line: 154
+                end:
+                  offset: 2265
+                  line: 154
+                text: " %>"
         end:
           offset: 2267
           line: 154
@@ -2921,20 +2856,7 @@ statements:
             end:
               offset: 2280
               line: 154
-            value_range:
-              begin:
-                offset: 2272
-                line: 154
-              end:
-                offset: 2279
-                line: 154
             value: default
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
     body:
       - kind: function call
         function:
@@ -3723,20 +3645,7 @@ statements:
           end:
             offset: 2704
             line: 181
-          value_range:
-            begin:
-              offset: 2699
-              line: 181
-            end:
-              offset: 2703
-              line: 181
           value: virt
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
   - kind: function call
     function:
       kind: name
@@ -4262,20 +4171,7 @@ statements:
                 end:
                   offset: 2958
                   line: 196
-                value_range:
-                  begin:
-                    offset: 2957
-                    line: 196
-                  end:
-                    offset: 2957
-                    line: 196
                 value: ""
-                escapes: \'
-                format: ""
-                margin: 0
-                quote: "'"
-                interpolated: false
-                remove_break: false
             end:
               offset: 2959
               line: 196
@@ -4306,27 +4202,50 @@ statements:
                       line: 196
                     name: x
               body:
-                - kind: string
+                - kind: interpolated string
                   begin:
                     offset: 2978
                     line: 197
                   end:
                     offset: 2992
                     line: 197
-                  value_range:
-                    begin:
-                      offset: 2979
-                      line: 197
-                    end:
-                      offset: 2991
-                      line: 197
-                  value: $memo${x[0]}
-                  escapes: \"'nrtsu$
-                  format: ""
-                  margin: 0
-                  quote: "\""
-                  interpolated: true
-                  remove_break: false
+                  parts:
+                    - kind: variable
+                      begin:
+                        offset: 2979
+                        line: 197
+                      end:
+                        offset: 2984
+                        line: 197
+                      name: memo
+                    - kind: postfix
+                      primary:
+                        kind: variable
+                        begin:
+                          offset: 2986
+                          line: 197
+                        end:
+                          offset: 2987
+                          line: 197
+                        name: x
+                      subexpressions:
+                        - kind: access
+                          begin:
+                            offset: 2987
+                            line: 197
+                          end:
+                            offset: 2990
+                            line: 197
+                          arguments:
+                            - kind: number
+                              begin:
+                                offset: 2988
+                                line: 197
+                              end:
+                                offset: 2989
+                                line: 197
+                              base: decimal
+                              value: 0
       operations:
         - operator_position:
             offset: 2995
@@ -4397,20 +4316,7 @@ statements:
             end:
               offset: 3042
               line: 202
-            value_range:
-              begin:
-                offset: 3041
-                line: 202
-              end:
-                offset: 3041
-                line: 202
             value: ""
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
         end:
           offset: 3043
           line: 202
@@ -4500,20 +4406,7 @@ statements:
             end:
               offset: 3096
               line: 205
-            value_range:
-              begin:
-                offset: 3090
-                line: 205
-              end:
-                offset: 3095
-                line: 205
             value: a b c
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
           - kind: string
             begin:
               offset: 3098
@@ -4521,20 +4414,7 @@ statements:
             end:
               offset: 3101
               line: 205
-            value_range:
-              begin:
-                offset: 3099
-                line: 205
-              end:
-                offset: 3100
-                line: 205
             value: " "
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
         end:
           offset: 3102
           line: 205
@@ -4722,20 +4602,7 @@ statements:
             end:
               offset: 3210
               line: 212
-            value_range:
-              begin:
-                offset: 3204
-                line: 212
-              end:
-                offset: 3209
-                line: 212
             value: a b c
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
           - kind: regex
             begin:
               offset: 3212
@@ -4931,20 +4798,7 @@ statements:
             end:
               offset: 3328
               line: 219
-            value_range:
-              begin:
-                offset: 3322
-                line: 219
-              end:
-                offset: 3327
-                line: 219
             value: a b c
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
           - kind: postfix
             primary:
               kind: type
@@ -4971,20 +4825,7 @@ statements:
                     end:
                       offset: 3340
                       line: 219
-                    value_range:
-                      begin:
-                        offset: 3338
-                        line: 219
-                      end:
-                        offset: 3339
-                        line: 219
                     value: " "
-                    escapes: \'
-                    format: ""
-                    margin: 0
-                    quote: "'"
-                    interpolated: false
-                    remove_break: false
         end:
           offset: 3342
           line: 219
@@ -5193,20 +5034,7 @@ statements:
             end:
               offset: 3510
               line: 233
-            value_range:
-              begin:
-                offset: 3504
-                line: 233
-              end:
-                offset: 3509
-                line: 233
             value: 2.6-1
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
           - kind: string
             begin:
               offset: 3512
@@ -5214,20 +5042,7 @@ statements:
             end:
               offset: 3519
               line: 233
-            value_range:
-              begin:
-                offset: 3513
-                line: 233
-              end:
-                offset: 3518
-                line: 233
             value: 2.4.5
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
         end:
           offset: 3520
           line: 233
@@ -5294,20 +5109,7 @@ statements:
             end:
               offset: 3571
               line: 236
-            value_range:
-              begin:
-                offset: 3564
-                line: 236
-              end:
-                offset: 3570
-                line: 236
             value: 2.4.5a
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
           - kind: string
             begin:
               offset: 3573
@@ -5315,20 +5117,7 @@ statements:
             end:
               offset: 3580
               line: 236
-            value_range:
-              begin:
-                offset: 3574
-                line: 236
-              end:
-                offset: 3579
-                line: 236
             value: 2.6.5
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
         end:
           offset: 3581
           line: 236
@@ -5395,20 +5184,7 @@ statements:
             end:
               offset: 3631
               line: 239
-            value_range:
-              begin:
-                offset: 3625
-                line: 239
-              end:
-                offset: 3630
-                line: 239
             value: 1.2.3
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
           - kind: string
             begin:
               offset: 3633
@@ -5416,20 +5192,7 @@ statements:
             end:
               offset: 3640
               line: 239
-            value_range:
-              begin:
-                offset: 3634
-                line: 239
-              end:
-                offset: 3639
-                line: 239
             value: 1.2.3
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
         end:
           offset: 3641
           line: 239
@@ -5517,20 +5280,7 @@ statements:
         end:
           offset: 3695
           line: 245
-        value_range:
-          begin:
-            offset: 3693
-            line: 245
-          end:
-            offset: 3694
-            line: 245
         value: 2
-        escapes: \'
-        format: ""
-        margin: 0
-        quote: "'"
-        interpolated: false
-        remove_break: false
       - kind: array
         begin:
           offset: 3697
@@ -5705,20 +5455,7 @@ statements:
                   end:
                     offset: 3802
                     line: 249
-                  value_range:
-                    begin:
-                      offset: 3800
-                      line: 249
-                    end:
-                      offset: 3801
-                      line: 249
                   value: 2
-                  escapes: \'
-                  format: ""
-                  margin: 0
-                  quote: "'"
-                  interpolated: false
-                  remove_break: false
           body:
             - kind: function call
               function:
@@ -5911,27 +5648,30 @@ statements:
             line: 260
           name: param2
         default_value:
-          kind: string
+          kind: interpolated string
           begin:
             offset: 3989
             line: 260
           end:
             offset: 4003
             line: 260
-          value_range:
-            begin:
-              offset: 3990
-              line: 260
-            end:
-              offset: 4002
-              line: 260
-          value: ${param1}bar
-          escapes: \"'nrtsu$
-          format: ""
-          margin: 0
-          quote: "\""
-          interpolated: true
-          remove_break: false
+          parts:
+            - kind: variable
+              begin:
+                offset: 3992
+                line: 260
+              end:
+                offset: 3998
+                line: 260
+              name: param1
+            - kind: literal text
+              begin:
+                offset: 3999
+                line: 260
+              end:
+                offset: 4002
+                line: 260
+              text: bar
   - kind: resource
     begin:
       offset: 4010
@@ -6013,20 +5753,7 @@ statements:
             end:
               offset: 4099
               line: 267
-            value_range:
-              begin:
-                offset: 4092
-                line: 267
-              end:
-                offset: 4098
-                line: 267
             value: foobar
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
     body:
       - kind: function call
         function:
@@ -6083,27 +5810,30 @@ statements:
             line: 271
           name: param2
         default_value:
-          kind: string
+          kind: interpolated string
           begin:
             offset: 4163
             line: 271
           end:
             offset: 4177
             line: 271
-          value_range:
-            begin:
-              offset: 4164
-              line: 271
-            end:
-              offset: 4176
-              line: 271
-          value: ${param1}bar
-          escapes: \"'nrtsu$
-          format: ""
-          margin: 0
-          quote: "\""
-          interpolated: true
-          remove_break: false
+          parts:
+            - kind: variable
+              begin:
+                offset: 4166
+                line: 271
+              end:
+                offset: 4172
+                line: 271
+              name: param1
+            - kind: literal text
+              begin:
+                offset: 4173
+                line: 271
+              end:
+                offset: 4176
+                line: 271
+              text: bar
     body:
       - kind: function call
         function:
@@ -17787,4 +17517,536 @@ statements:
             end:
               offset: 11290
               line: 769
+            value: incorrect
+  - kind: binary
+    first:
+      kind: variable
+      begin:
+        offset: 11327
+        line: 773
+      end:
+        offset: 11340
+        line: 773
+      name: interpolated
+    operations:
+      - operator_position:
+          offset: 11341
+          line: 773
+        operator: =
+        operand:
+          kind: name
+          begin:
+            offset: 11343
+            line: 773
+          end:
+            offset: 11346
+            line: 773
+          value: foo
+  - kind: unless
+    begin:
+      offset: 11347
+      line: 774
+    end:
+      offset: 11410
+      line: 776
+    conditional:
+      kind: binary
+      first:
+        kind: interpolated string
+        begin:
+          offset: 11354
+          line: 774
+        end:
+          offset: 11372
+          line: 774
+        parts:
+          - kind: literal text
+            begin:
+              offset: 11355
+              line: 774
+            end:
+              offset: 11363
+              line: 774
+            text: "1 + 1 = "
+          - kind: binary
+            first:
+              kind: number
+              begin:
+                offset: 11365
+                line: 774
+              end:
+                offset: 11366
+                line: 774
+              base: decimal
+              value: 1
+            operations:
+              - operator_position:
+                  offset: 11367
+                  line: 774
+                operator: +
+                operand:
+                  kind: number
+                  begin:
+                    offset: 11369
+                    line: 774
+                  end:
+                    offset: 11370
+                    line: 774
+                  base: decimal
+                  value: 1
+      operations:
+        - operator_position:
+            offset: 11373
+            line: 774
+          operator: ==
+          operand:
+            kind: string
+            begin:
+              offset: 11376
+              line: 774
+            end:
+              offset: 11387
+              line: 774
+            value: 1 + 1 = 2
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11394
+            line: 775
+          end:
+            offset: 11398
+            line: 775
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11399
+              line: 775
+            end:
+              offset: 11408
+              line: 775
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 11411
+      line: 777
+    end:
+      offset: 11499
+      line: 779
+    conditional:
+      kind: binary
+      first:
+        kind: interpolated string
+        begin:
+          offset: 11418
+          line: 777
+        end:
+          offset: 11450
+          line: 777
+        parts:
+          - kind: literal text
+            begin:
+              offset: 11419
+              line: 777
+            end:
+              offset: 11436
+              line: 777
+            text: "$interpolated = "
+          - kind: variable
+            begin:
+              offset: 11436
+              line: 777
+            end:
+              offset: 11449
+              line: 777
+            name: interpolated
+      operations:
+        - operator_position:
+            offset: 11451
+            line: 777
+          operator: ==
+          operand:
+            kind: string
+            begin:
+              offset: 11454
+              line: 777
+            end:
+              offset: 11476
+              line: 777
+            value: $interpolated = foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11483
+            line: 778
+          end:
+            offset: 11487
+            line: 778
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11488
+              line: 778
+            end:
+              offset: 11497
+              line: 778
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 11500
+      line: 780
+    end:
+      offset: 11590
+      line: 782
+    conditional:
+      kind: binary
+      first:
+        kind: interpolated string
+        begin:
+          offset: 11507
+          line: 780
+        end:
+          offset: 11541
+          line: 780
+        parts:
+          - kind: literal text
+            begin:
+              offset: 11508
+              line: 780
+            end:
+              offset: 11525
+              line: 780
+            text: "$interpolated = "
+          - kind: variable
+            begin:
+              offset: 11527
+              line: 780
+            end:
+              offset: 11539
+              line: 780
+            name: interpolated
+      operations:
+        - operator_position:
+            offset: 11542
+            line: 780
+          operator: ==
+          operand:
+            kind: string
+            begin:
+              offset: 11545
+              line: 780
+            end:
+              offset: 11567
+              line: 780
+            value: $interpolated = foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11574
+            line: 781
+          end:
+            offset: 11578
+            line: 781
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11579
+              line: 781
+            end:
+              offset: 11588
+              line: 781
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 11591
+      line: 783
+    end:
+      offset: 11688
+      line: 785
+    conditional:
+      kind: binary
+      first:
+        kind: interpolated string
+        begin:
+          offset: 11598
+          line: 783
+        end:
+          offset: 11638
+          line: 783
+        parts:
+          - kind: literal text
+            begin:
+              offset: 11599
+              line: 783
+            end:
+              offset: 11619
+              line: 783
+            text: "$interpolated[0] = "
+          - kind: postfix
+            primary:
+              kind: variable
+              begin:
+                offset: 11621
+                line: 783
+              end:
+                offset: 11633
+                line: 783
+              name: interpolated
+            subexpressions:
+              - kind: access
+                begin:
+                  offset: 11633
+                  line: 783
+                end:
+                  offset: 11636
+                  line: 783
+                arguments:
+                  - kind: number
+                    begin:
+                      offset: 11634
+                      line: 783
+                    end:
+                      offset: 11635
+                      line: 783
+                    base: decimal
+                    value: 0
+      operations:
+        - operator_position:
+            offset: 11639
+            line: 783
+          operator: ==
+          operand:
+            kind: string
+            begin:
+              offset: 11642
+              line: 783
+            end:
+              offset: 11665
+              line: 783
+            value: $interpolated[0] = f
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11672
+            line: 784
+          end:
+            offset: 11676
+            line: 784
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11677
+              line: 784
+            end:
+              offset: 11686
+              line: 784
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 11689
+      line: 786
+    end:
+      offset: 11815
+      line: 788
+    conditional:
+      kind: binary
+      first:
+        kind: interpolated string
+        begin:
+          offset: 11696
+          line: 786
+        end:
+          offset: 11750
+          line: 786
+        parts:
+          - kind: literal text
+            begin:
+              offset: 11697
+              line: 786
+            end:
+              offset: 11724
+              line: 786
+            text: "$interpolated.split('') = "
+          - kind: postfix
+            primary:
+              kind: variable
+              begin:
+                offset: 11726
+                line: 786
+              end:
+                offset: 11738
+                line: 786
+              name: interpolated
+            subexpressions:
+              - kind: method call
+                begin:
+                  offset: 11738
+                  line: 786
+                method:
+                  kind: name
+                  begin:
+                    offset: 11739
+                    line: 786
+                  end:
+                    offset: 11744
+                    line: 786
+                  value: split
+                arguments:
+                  - kind: string
+                    begin:
+                      offset: 11745
+                      line: 786
+                    end:
+                      offset: 11747
+                      line: 786
+                    value: ""
+                end:
+                  offset: 11748
+                  line: 786
+      operations:
+        - operator_position:
+            offset: 11751
+            line: 786
+          operator: ==
+          operand:
+            kind: string
+            begin:
+              offset: 11754
+              line: 786
+            end:
+              offset: 11792
+              line: 786
+            value: $interpolated.split('') = [f, o, o]
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11799
+            line: 787
+          end:
+            offset: 11803
+            line: 787
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11804
+              line: 787
+            end:
+              offset: 11813
+              line: 787
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 11816
+      line: 789
+    end:
+      offset: 11913
+      line: 791
+    conditional:
+      kind: binary
+      first:
+        kind: name
+        begin:
+          offset: 11823
+          line: 789
+        end:
+          offset: 11826
+          line: 789
+        value: foo
+      operations:
+        - operator_position:
+            offset: 11827
+            line: 789
+          operator: =~
+          operand:
+            kind: regex
+            begin:
+              offset: 11830
+              line: 789
+            end:
+              offset: 11837
+              line: 789
+            value: f(o)o
+        - operator_position:
+            offset: 11838
+            line: 789
+          operator: or
+          operand:
+            kind: interpolated string
+            begin:
+              offset: 11841
+              line: 789
+            end:
+              offset: 11865
+              line: 789
+            parts:
+              - kind: literal text
+                begin:
+                  offset: 11842
+                  line: 789
+                end:
+                  offset: 11859
+                  line: 789
+                text: match group 1 = '
+              - kind: variable
+                begin:
+                  offset: 11861
+                  line: 789
+                end:
+                  offset: 11862
+                  line: 789
+                name: 1
+              - kind: literal text
+                begin:
+                  offset: 11863
+                  line: 789
+                end:
+                  offset: 11864
+                  line: 789
+                text: "'"
+        - operator_position:
+            offset: 11866
+            line: 789
+          operator: ==
+          operand:
+            kind: string
+            begin:
+              offset: 11869
+              line: 789
+            end:
+              offset: 11890
+              line: 789
+            value: match group 1 = 'o'
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11897
+            line: 790
+          end:
+            offset: 11901
+            line: 790
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11902
+              line: 790
+            end:
+              offset: 11911
+              line: 790
             value: incorrect

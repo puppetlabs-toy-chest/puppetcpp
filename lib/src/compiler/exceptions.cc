@@ -7,15 +7,21 @@ using namespace std;
 
 namespace puppet { namespace compiler {
 
-    parse_exception::parse_exception(string const& message, lexer::range range) :
+    parse_exception::parse_exception(string const& message, lexer::position begin, lexer::position end) :
         runtime_error(message),
-        _range(rvalue_cast(range))
+        _begin(rvalue_cast(begin)),
+        _end(rvalue_cast(end))
     {
     }
 
-    lexer::range const& parse_exception::range() const
+    lexer::position const& parse_exception::begin() const
     {
-        return _range;
+        return _begin;
+    }
+
+    lexer::position const& parse_exception::end() const
+    {
+        return _end;
     }
 
     evaluation_exception::evaluation_exception(string const& message) :
@@ -52,12 +58,12 @@ namespace puppet { namespace compiler {
     compilation_exception::compilation_exception(parse_exception const& ex, string const& path) :
         runtime_error(ex.what()),
         _path(path),
-        _line(ex.range().begin().line()),
-        _length(ex.range().length())
+        _line(ex.begin().line()),
+        _length(ex.end().offset() - ex.begin().offset())
     {
         ifstream input{path};
         if (input) {
-            tie(_text, _column) = lexer::get_text_and_column(input, ex.range().begin().offset());
+            tie(_text, _column) = lexer::get_text_and_column(input, ex.begin().offset());
         }
     }
 

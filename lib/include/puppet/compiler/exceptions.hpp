@@ -22,6 +22,49 @@ namespace puppet { namespace compiler {
     }
 
     /**
+     * Exception for lexer errors.
+     * @tparam Iterator The iterator type.
+     */
+    template <typename Iterator>
+    struct lexer_exception : std::runtime_error
+    {
+        /**
+         * Constructs a lexer exception.
+         * @param message The lexer exception message.
+         * @param begin The beginning iterator where lexing failed.
+         * @param end The ending iterator (exclusive) where lexing failed.
+         */
+        lexer_exception(std::string const& message, Iterator begin, Iterator end) :
+            std::runtime_error(message),
+            _begin(rvalue_cast(begin)),
+            _end(rvalue_cast(end))
+        {
+        }
+
+        /**
+         * Gets the beginning iterator where lexing failed.
+         * @return Returns the beginning iterator where lexing failed.
+         */
+        Iterator const& begin() const
+        {
+            return _begin;
+        }
+
+        /**
+         * Gets the ending iterator where lexing failed.
+         * @return Returns the ending iterator where lexing failed.
+         */
+        Iterator const& end() const
+        {
+            return _end;
+        }
+
+     private:
+        Iterator _begin;
+        Iterator _end;
+    };
+
+    /**
      * Exception for parse errors.
      */
     struct parse_exception : std::runtime_error
@@ -29,18 +72,26 @@ namespace puppet { namespace compiler {
         /**
          * Constructs a parse exception.
          * @param message The exception message.
-         * @param range The range where parsing failed.
+         * @param begin The beginning position for the parse exception.
+         * @param end The ending position for the parse exception.
          */
-        parse_exception(std::string const& message, lexer::range range);
+        parse_exception(std::string const& message, lexer::position begin, lexer::position end);
 
         /**
-         * Gets the range where parsing failed.
-         * @return Returns the range where parsing failed.
+         * Gets the beginning position for the parse exception.
+         * @return Returns the beginning position for the parse exception.
          */
-        lexer::range const& range() const;
+        lexer::position const& begin() const;
+
+        /**
+         * Gets the ending position for the parse exception.
+         * @return Returns the ending position for the parse exception.
+         */
+        lexer::position const& end() const;
 
     private:
-        lexer::range _range;
+        lexer::position _begin;
+        lexer::position _end;
     };
 
     /**

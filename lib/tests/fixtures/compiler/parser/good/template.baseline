@@ -273,20 +273,7 @@ statements:
                       end:
                         offset: 379
                         line: 15
-                      value_range:
-                        begin:
-                          offset: 377
-                          line: 15
-                        end:
-                          offset: 378
-                          line: 15
                       value: " "
-                      escapes: \'
-                      format: ""
-                      margin: 0
-                      quote: "'"
-                      interpolated: false
-                      remove_break: false
                   end:
                     offset: 380
                     line: 15

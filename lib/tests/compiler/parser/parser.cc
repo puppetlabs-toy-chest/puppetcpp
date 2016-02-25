@@ -1,5 +1,6 @@
 #include <catch.hpp>
 #include <puppet/compiler/parser/parser.hpp>
+#include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/filesystem.hpp>
 #include <dtl/dtl.hpp>
@@ -54,6 +55,8 @@ SCENARIO("parsing files", "[parser]")
     auto begin = fs::directory_iterator{FIXTURES_DIR "compiler/parser/good", ec};
     REQUIRE_FALSE(ec);
 
+    puppet::logging::console_logger logger;
+
     auto end = fs::directory_iterator{};
     for (; begin != end; ++begin) {
         auto& path = begin->path();
@@ -79,7 +82,7 @@ SCENARIO("parsing files", "[parser]")
         try {
             if (generate) {
                 WARN("generating baseline file " << baseline_path);
-                auto tree = parse_file(path.string(), nullptr, is_epp);
+                auto tree = parse_file(logger, path.string(), nullptr, is_epp);
                 ofstream stream(baseline_path.string());
                 REQUIRE(stream);
                 tree->write(format::yaml, stream, false /* don't include paths */);
@@ -96,7 +99,7 @@ SCENARIO("parsing files", "[parser]")
             auto lines = read_lines(baseline);
 
             // First parse the file
-            auto tree = parse_file(path.string(), dummy_module, is_epp);
+            auto tree = parse_file(logger, path.string(), dummy_module, is_epp);
             REQUIRE(tree);
             REQUIRE(tree->module() == dummy_module);
             REQUIRE(tree->path() == path.string());
@@ -112,7 +115,7 @@ SCENARIO("parsing files", "[parser]")
             ostringstream buffer;
             buffer << file.rdbuf();
             auto source = buffer.str();
-            tree = parse_string(source, path.string(), dummy_module, is_epp);
+            tree = parse_string(logger, source, path.string(), dummy_module, is_epp);
             REQUIRE(tree);
             REQUIRE(tree->module() == dummy_module);
             REQUIRE(tree->path() == path.string());
@@ -125,8 +128,8 @@ SCENARIO("parsing files", "[parser]")
             std::string text;
             size_t column;
             ifstream stream(path.string());
-            tie(text, column) = get_text_and_column(stream, ex.range().begin().offset());
-            FAIL("parse error: " << path << ":" << ex.range().begin().line() << ":" << column << ": " << ex.what() << "\ntext: " << text);
+            tie(text, column) = get_text_and_column(stream, ex.begin().offset());
+            FAIL("parse error: " << path << ":" << ex.begin().line() << ":" << column << ": " << ex.what() << "\ntext: " << text);
         }
     }
 }

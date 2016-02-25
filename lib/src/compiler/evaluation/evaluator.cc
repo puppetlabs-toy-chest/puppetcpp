@@ -1,7 +1,6 @@
 #include <puppet/compiler/evaluation/evaluator.hpp>
 #include <puppet/compiler/evaluation/collectors/query_collector.hpp>
 #include <puppet/compiler/evaluation/postfix_evaluator.hpp>
-#include <puppet/compiler/evaluation/interpolator.hpp>
 #include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
@@ -13,6 +12,7 @@ using namespace puppet::compiler::ast;
 using namespace puppet::compiler::evaluation::operators;
 using namespace puppet::runtime;
 using namespace puppet::runtime::values;
+namespace x3 = boost::spirit::x3;
 
 namespace puppet { namespace compiler { namespace evaluation {
 
@@ -137,8 +137,16 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(ast::string const& expression)
     {
-        evaluation::interpolator interpolator{_context};
-        return interpolator.interpolate(expression);
+        if (expression.margin == 0) {
+            return expression.value;
+        }
+
+        auto current_margin = expression.margin;
+        std::string text;
+        align_text(expression.value, expression.margin, current_margin, [&](char const* ptr, size_t size) {
+            text.append(ptr, size);
+        });
+        return text;
     }
 
     value evaluator::operator()(ast::regex const& expression)
@@ -216,6 +224,31 @@ namespace puppet { namespace compiler { namespace evaluation {
             return types::resource(expression.name);
         }
         return it->second;
+    }
+
+    value evaluator::operator()(interpolated_string const& expression)
+    {
+        ostringstream os;
+        local_output_stream output{ _context, os };
+
+        size_t current_margin = expression.margin;
+
+        for (auto const& part : expression.parts) {
+            if (auto ptr = boost::get<literal_string_text>(&part)) {
+                align_text(ptr->text, expression.margin, current_margin, [this](char const* ptr, size_t size) {
+                    _context.write(ptr, size);
+                });
+            } else if (auto ptr = boost::get<ast::variable>(&part)) {
+                current_margin = 0;
+                _context.write(operator()(*ptr));
+            } else if (auto ptr = boost::get<x3::forward_ast<ast::expression>>(&part)) {
+                current_margin = 0;
+                _context.write(evaluate(*ptr));
+            } else {
+                throw evaluation_exception("unsupported interpolation part.", part.context());
+            }
+        }
+        return os.str();
     }
 
     value evaluator::operator()(ast::array const& expression)
@@ -530,7 +563,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(epp_render_expression const& expression)
     {
-        if (!_context.epp_write(evaluate(expression.expression))) {
+        if (!_context.write(evaluate(expression.expression))) {
             throw evaluation_exception("EPP expressions are not supported.", expression);
         }
         return values::undef();
@@ -538,7 +571,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(epp_render_block const& expression)
     {
-        if (!_context.epp_write(evaluate_body(expression.block))) {
+        if (!_context.write(evaluate_body(expression.block))) {
             throw evaluation_exception("EPP expressions are not supported.", expression);
         }
         return values::undef();
@@ -546,7 +579,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(epp_render_string const& expression)
     {
-        if (!_context.epp_write(expression.string)) {
+        if (!_context.write(expression.string)) {
             throw evaluation_exception("EPP expressions are not supported.", expression);
         }
         return values::undef();
@@ -909,6 +942,38 @@ namespace puppet { namespace compiler { namespace evaluation {
             operation.operand.context()
         };
         left = _context.dispatcher().dispatch(context);
+    }
+
+    void evaluator::align_text(std::string const& text, size_t margin, size_t& current_margin, function<void(char const*, size_t)> const& callback)
+    {
+        auto begin = text.begin();
+        auto end = text.end();
+
+        while (begin != end) {
+            if (current_margin > 0) {
+                // Eat any leading whitespace, up-to the margin (spaces and tabs are treated the same)
+                for (; current_margin > 0 && begin != end && (*begin == ' ' || *begin == '\t'); ++begin, --current_margin);
+                current_margin = 0;
+                if (begin == end) {
+                    continue;
+                }
+            }
+
+            // Seek to the end of the line
+            auto line_end = begin;
+            for (; line_end != end && *line_end != '\n'; ++line_end);
+            if (line_end == end) {
+                // Write the rest of the text
+                callback(&*begin, distance(begin, end));
+                break;
+            }
+
+            // Write the current line only and reset the margin
+            ++line_end;
+            callback(&*begin, distance(begin, line_end));
+            begin = line_end;
+            current_margin = margin;
+        }
     }
 
 }}}  // namespace puppet::compiler::evaluation

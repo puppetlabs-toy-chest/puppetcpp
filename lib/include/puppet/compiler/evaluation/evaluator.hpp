@@ -84,6 +84,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::name const& expression);
         runtime::values::value operator()(ast::bare_word const& expression);
         runtime::values::value operator()(ast::type const& expression);
+        runtime::values::value operator()(ast::interpolated_string const& expression);
         runtime::values::value operator()(ast::array const& expression);
         runtime::values::value operator()(ast::hash const& expression);
         runtime::values::value operator()(ast::nested_expression const& expression);
@@ -129,6 +130,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             ast::context const& left_context,
             runtime::values::value& right,
             ast::binary_operation const& operation);
+
+        void align_text(std::string const& text, size_t margin, size_t& current_margin, std::function<void(char const*, size_t)> const& callback);
 
         evaluation::context& _context;
     };

@@ -34,20 +34,7 @@ statements:
             end:
               offset: 165
               line: 3
-            value_range:
-              begin:
-                offset: 86
-                line: 3
-              end:
-                offset: 164
-                line: 3
             value: Tried to include class ntp on virtual machine; this node may be misclassified.
-            escapes: \'
-            format: ""
-            margin: 0
-            quote: "'"
-            interpolated: false
-            remove_break: false
         end:
           offset: 167
           line: 3
@@ -79,20 +66,7 @@ statements:
                 end:
                   offset: 204
                   line: 5
-                value_range:
-                  begin:
-                    offset: 197
-                    line: 5
-                  end:
-                    offset: 203
-                    line: 5
                 value: Darwin
-                escapes: \'
-                format: ""
-                margin: 0
-                quote: "'"
-                interpolated: false
-                remove_break: false
         body:
           - kind: function call
             function:
@@ -112,20 +86,7 @@ statements:
                 end:
                   offset: 273
                   line: 6
-                value_range:
-                  begin:
-                    offset: 219
-                    line: 6
-                  end:
-                    offset: 272
-                    line: 6
                 value: This NTP module does not yet work on our Mac laptops.
-                escapes: \'
-                format: ""
-                margin: 0
-                quote: "'"
-                interpolated: false
-                remove_break: false
             end:
               offset: 275
               line: 6

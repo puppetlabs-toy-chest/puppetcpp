@@ -258,20 +258,7 @@ statements:
           end:
             offset: 201
             line: 20
-          value_range:
-            begin:
-              offset: 199
-              line: 20
-            end:
-              offset: 200
-              line: 20
           value: X
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
       - captures:
           offset: 203
           line: 20
@@ -374,20 +361,7 @@ statements:
           end:
             offset: 262
             line: 24
-          value_range:
-            begin:
-              offset: 260
-              line: 24
-            end:
-              offset: 261
-              line: 24
           value: X
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
       - captures:
           offset: 264
           line: 24

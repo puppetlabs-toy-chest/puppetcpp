@@ -5,9 +5,7 @@
 #pragma once
 
 #include "../ast/ast.hpp"
-#include "../lexer/lexer.hpp"
-#include "../lexer/number_token.hpp"
-#include "../lexer/string_token.hpp"
+#include "../lexer/tokens.hpp"
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/nonterminal/simple_trace.hpp>
 #include <tuple>
@@ -123,7 +121,7 @@ namespace puppet { namespace compiler { namespace parser {
         template <typename Iterator, typename Context, typename Attribute>
         void assign(Iterator const& iterator, Context& context, Attribute& attr) const
         {
-            attr = boost::apply_visitor(lexer::token_range_visitor(), iterator->value()).begin();
+            attr = boost::apply_visitor(lexer::token_range_visitor(), iterator->value()).first;
         }
     };
 
@@ -146,7 +144,7 @@ namespace puppet { namespace compiler { namespace parser {
         template <typename Iterator, typename Context, typename Attribute>
         void assign(Iterator const& iterator, Context& context, Attribute& attr) const
         {
-            attr = boost::apply_visitor(lexer::token_range_visitor(), iterator->value()).end();
+            attr = boost::apply_visitor(lexer::token_range_visitor(), iterator->value()).second;
         }
     };
 
@@ -221,13 +219,13 @@ namespace puppet { namespace compiler { namespace parser {
     {
         /**
          * Constructs a value parser that will match the given token identifier.
-         * @param remove_front True to remove the first character of the string or false if not.
-         * @param remove_back True to remove the last character of the string or false if not.
+         * @param front The character to trim from the front.
+         * @param back The character to trim from the front.
          */
-        explicit value_parser(bool remove_front, bool remove_back) :
+        explicit value_parser(char front = 0, char back = 0) :
             base_type(false),
-            _remove_front(remove_front),
-            _remove_back(remove_back)
+            _front(front),
+            _back(back)
         {
         }
 
@@ -239,49 +237,35 @@ namespace puppet { namespace compiler { namespace parser {
         {
             // Get the range and copy the entire thing if not removing any characters
             auto& range = boost::get<boost::iterator_range<typename Iterator::value_type::iterator_type>>(iterator->value());
-            if (!_remove_front && !_remove_back) {
-                attr.assign(range.begin(), range.end());
-                return;
-            }
 
-            // Move past the front
+            // Move past the front character if it matches
             auto start = range.begin();
-            if (start != range.end()) {
+            if (_front && start != range.end() && *start == _front) {
                 ++start;
             }
 
-            // If not removing back, copy from the new front to the end
-            if (!_remove_back) {
-                attr.assign(start, range.end());
-                return;
-            }
+            // Assign the string
+            attr.assign(start, range.end());
 
-            // Iterate to the input before the range's end
-            auto end = start;
-            for (auto current = start; current != range.end(); ++current) {
-                end = current;
+            // Pop the back if it matches
+            if (_back && !attr.empty() && attr.back() == _back) {
+                attr.pop_back();
             }
-            attr.assign(start, end);
         }
 
-        bool _remove_front;
-        bool _remove_back;
+        char _front;
+        char _back;
     };
 
     /**
-     * Responsible for parsing the current token's value and trimming the first and last characters.
+     * Responsible for parsing the regex values.
      */
-    auto const trim_value = value_parser(true, true);
+    auto const regex_value = value_parser('/', '/');
 
     /**
-     * Responsible for parsing the current token's value and trimming the first character.
+     * Responsible for parsing variable values.
      */
-    auto const ltrim_value = value_parser(true, false);
-
-    /**
-     * Responsible for parsing the current token's value and trimming the first character.
-     */
-    auto const rtrim_value = value_parser(false, true);
+    auto const variable_value = value_parser('$');
 
     /**
      * Responsible for parsing the current token's value.
@@ -305,16 +289,16 @@ namespace puppet { namespace compiler { namespace parser {
         friend struct token_parser<number_parser, ast::number>;
 
         template <typename Iterator, typename Context, typename Attribute>
-        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
+        void assign(Iterator& iterator, Context& context, Attribute& attr) const
         {
             namespace x3 = boost::spirit::x3;
 
             auto& token = boost::get<lexer::number_token>(iterator->value());
-            attr.begin = token.range().begin();
-            attr.end = token.range().end();
+            attr.begin = token.begin;
+            attr.end = token.end;
             attr.tree = x3::get<tree_context_tag>(context);
-            attr.base = token.base();
-            attr.value = token.value();
+            attr.base = token.base;
+            attr.value = token.value;
         }
     };
 
@@ -324,43 +308,184 @@ namespace puppet { namespace compiler { namespace parser {
     auto const number_token = number_parser();
 
     /**
-     * Responsible for parsing a string token.
+     * Responsible for parsing literal strings.
      */
-    struct string_parser : token_parser<string_parser, ast::string>
+    struct string_parser : boost::spirit::x3::parser<string_parser>
     {
-        // Use base constructors
-        using base_type::base_type;
+        /**
+         * The parser attribute type.
+         */
+        using attribute_type = ast::string;
 
-     private:
-        friend struct token_parser<string_parser, ast::string>;
-
-        template <typename Iterator, typename Context, typename Attribute>
-        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
+        /**
+         * Parses the input.
+         * @tparam Iterator The iterator type.
+         * @tparam Context The context type.
+         * @tparam Parsed The parsed attribute type.
+         * @param first The first iterator.
+         * @param last The last iterator.
+         * @param context The parse context.
+         * @param attr The output attribute resulting from the parse.
+         * @return Returns true if the parse is successful or false if it is not.
+         */
+        template <typename Iterator, typename Context, typename Parsed>
+        bool parse(Iterator& first, Iterator const& last, Context const& context, boost::spirit::x3::unused_type, Parsed& attr) const
         {
             namespace x3 = boost::spirit::x3;
 
-            auto& token = boost::get<lexer::string_token<typename Iterator::value_type::iterator_type>>(iterator->value());
-            auto& value = token.value();
-            attr.tree = x3::get<tree_context_tag>(context);
-            attr.begin = token.range().begin();
-            attr.end = token.range().end();
-            attr.value_range = lexer::range(value.begin().position(), value.end().position());
-            attr.value = std::string(value.begin(), value.end());
-            attr.escapes = token.escapes();
-            attr.quote = token.quote();
-            attr.interpolated = token.interpolated();
-            attr.format = token.format();
-            attr.margin = token.margin();
-            attr.remove_break = token.remove_break();
+            x3::skip_over(first, last, context);
+            if (first == last) {
+                return false;
+            }
+            // Check for simple string token
+            if (static_cast<lexer::token_id>(first->id()) == lexer::token_id::string) {
+                auto& token = boost::get<lexer::string_token>(first->value());
+                attr.begin = token.begin;
+                attr.end = token.end;
+                attr.tree = x3::get<tree_context_tag>(context);
+                attr.format = token.format;
+                attr.value = token.value;
+                attr.margin = token.margin;
+                ++first;
+                return true;
+            }
+            // Check for interpolating strings containing no interpolations (only one literal text token)
+            if (static_cast<lexer::token_id>(first->id()) == lexer::token_id::string_start) {
+                auto current = first;
+                auto start_token = current;
+                ++current;
+                if (current == last || static_cast<lexer::token_id>(current->id()) != lexer::token_id::string_text) {
+                    return false;
+                }
+                auto text_token = current;
+                ++current;
+                if (current == last || static_cast<lexer::token_id>(current->id()) != lexer::token_id::string_end) {
+                    return false;
+                }
+                auto end_token = current;
+                ++current;
+                {
+                    auto& token = boost::get<lexer::string_start_token>(start_token->value());
+                    attr.begin = token.begin;
+                    attr.tree = x3::get<tree_context_tag>(context);
+                    attr.format = token.format;
+                }
+                {
+                    auto& token = boost::get<lexer::string_text_token>(text_token->value());
+                    attr.value = token.text;
+                }
+                {
+                    auto& token = boost::get<lexer::string_end_token>(end_token->value());
+                    attr.end = token.end;
+                    attr.margin = token.margin;
+                }
+                first = current;
+                return true;
+            }
+            return false;
         }
     };
 
     /**
      * Responsible for parsing string tokens.
      */
-    auto const string_token = string_parser(lexer::token_id::single_quoted_string) |
-                              string_parser(lexer::token_id::double_quoted_string) |
-                              string_parser(lexer::token_id::heredoc);
+    auto const string_token = string_parser();
+
+    /**
+     * Responsible for parsing string format information from string start tokens.
+     */
+    struct string_format_parser : token_parser<string_format_parser, std::string>
+    {
+        /**
+         * Default constructor for string format parser.
+         */
+        string_format_parser() :
+            base_type(lexer::token_id::string_start)
+        {
+        }
+
+     private:
+        friend struct token_parser<string_format_parser, std::string>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
+        {
+            namespace x3 = boost::spirit::x3;
+
+            auto& token = boost::get<lexer::string_start_token>(iterator->value());
+            attr = token.format;
+        }
+    };
+
+    /**
+     * Responsible for parsing string format information from string start tokens.
+     */
+    auto const string_format = string_format_parser();
+
+    /**
+     * Responsible for parsing interpolated string text.
+     */
+    struct string_text_parser : token_parser<string_text_parser, ast::literal_string_text>
+    {
+        /**
+         * Default constructor for string text parser.
+         */
+        string_text_parser() :
+            base_type(lexer::token_id::string_text)
+        {
+        }
+
+     private:
+        friend struct token_parser<string_text_parser, ast::literal_string_text>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
+        {
+            namespace x3 = boost::spirit::x3;
+
+            auto& token = boost::get<lexer::string_text_token>(iterator->value());
+            attr.begin = token.begin;
+            attr.end = token.end;
+            attr.tree = x3::get<tree_context_tag>(context);
+            attr.text = token.text;
+        }
+    };
+
+    /**
+     * Responsible for parsing string text tokens.
+     */
+    auto const string_text = string_text_parser();
+
+    /**
+     * Responsible for parsing string margin information from string end tokens.
+     */
+    struct string_margin_parser : token_parser<string_margin_parser, size_t>
+    {
+        /**
+         * Default constructor for string margin parser.
+         */
+        string_margin_parser() :
+            base_type(lexer::token_id::string_end, false)
+        {
+        }
+
+     private:
+        friend struct token_parser<string_margin_parser, size_t>;
+
+        template <typename Iterator, typename Context, typename Attribute>
+        void assign(Iterator const& iterator, Context& context, Attribute& attr) const
+        {
+            namespace x3 = boost::spirit::x3;
+
+            auto& token = boost::get<lexer::string_end_token>(iterator->value());
+            attr = token.margin;
+        }
+    };
+
+    /**
+     * Responsible for parsing string margin information from string end tokens.
+     */
+    auto const string_margin = string_margin_parser();
 
 }}} // namespace puppet::compiler::parser
 

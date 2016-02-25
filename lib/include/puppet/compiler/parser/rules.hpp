@@ -33,6 +33,9 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(literal_false,                 "false",                         ast::boolean)
     DECLARE_RULE(number,                        "number",                        ast::number)
     DECLARE_RULE(string,                        "string",                        ast::string)
+    DECLARE_RULE(literal_string_text,           "string text",                   ast::literal_string_text)
+    DECLARE_RULE(interpolated_string,           "string",                        ast::interpolated_string)
+    DECLARE_RULE(interpolated_string_part,      "string part",                   ast::interpolated_string_part)
     DECLARE_RULE(regex,                         "regex",                         ast::regex)
     DECLARE_RULE(variable,                      "variable",                      ast::variable)
     DECLARE_RULE(name,                          "name",                          ast::name)
@@ -105,7 +108,6 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(primary_expression,            "primary expression",            ast::primary_expression)
     DECLARE_RULE(nested_expression,             "nested expression",             ast::nested_expression)
     DECLARE_RULE(syntax_tree,                   "syntax tree",                   ast::syntax_tree)
-    DECLARE_RULE(interpolated_syntax_tree,      "syntax tree",                   ast::syntax_tree)
     DECLARE_RULE(epp_render_expression,         "render expression",             ast::epp_render_expression)
     DECLARE_RULE(epp_render_block,              "render expression",             ast::epp_render_block)
     DECLARE_RULE(epp_render_string,             "render string",                 ast::epp_render_string)
@@ -145,12 +147,24 @@ namespace puppet { namespace compiler { namespace parser {
         string_token
     )
     DEFINE_RULE(
+        literal_string_text,
+        string_text
+    )
+    DEFINE_RULE(
+        interpolated_string,
+        begin(lexer::token_id::string_start, false) > string_format > *interpolated_string_part > string_margin > end(lexer::token_id::string_end) > tree
+    )
+    DEFINE_RULE(
+        interpolated_string_part,
+        literal_string_text | variable | (raw(lexer::token_id::interpolation_start) > expression > raw(lexer::token_id::interpolation_end))
+    )
+    DEFINE_RULE(
         regex,
-        begin(lexer::token_id::regex, false) > trim_value > end() > tree
+        begin(lexer::token_id::regex, false) > regex_value > end() > tree
     )
     DEFINE_RULE(
         variable,
-        begin(lexer::token_id::variable, false) > ltrim_value > end() > tree
+        begin(lexer::token_id::variable, false) > variable_value > end() > tree
     )
     DEFINE_RULE(
         name,
@@ -265,7 +279,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         resource_body,
-        (primary_expression >> raw(':')) > (attributes | boost::spirit::x3::eps)
+        (expression >> raw(':')) > (attributes | boost::spirit::x3::eps)
     )
     DEFINE_RULE(
         attributes,
@@ -354,9 +368,9 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         hostname,
-        string    |
-        defaulted |
-        regex     |
+        string              |
+        defaulted           |
+        regex               |
         ((name | bare_word | number) % raw('.'))
     )
     DEFINE_RULE(
@@ -390,17 +404,18 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         attribute_query_value,
-        undef     |
-        defaulted |
-        boolean   |
-        number    |
-        string    |
-        regex     |
-        variable  |
-        name      |
-        bare_word |
-        type      |
-        array     |
+        undef               |
+        defaulted           |
+        boolean             |
+        number              |
+        string              |
+        interpolated_string |
+        regex               |
+        variable            |
+        name                |
+        bare_word           |
+        type                |
+        array               |
         hash
     )
     DEFINE_RULE(
@@ -471,7 +486,6 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         primary_statement,
-        statement_call_expression    |
         resource_expression          |
         resource_override_expression |
         resource_defaults_expression |
@@ -483,6 +497,7 @@ namespace puppet { namespace compiler { namespace parser {
         consumes_expression          |
         application_expression       |
         site_expression              |
+        statement_call_expression    |
         primary_expression
     )
     DEFINE_RULE(
@@ -549,6 +564,7 @@ namespace puppet { namespace compiler { namespace parser {
         boolean                       |
         number                        |
         string                        |
+        interpolated_string           |
         regex                         |
         variable                      |
         name                          |
@@ -563,11 +579,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         syntax_tree,
-        boost::spirit::x3::attr(boost::none) > statements > boost::spirit::x3::attr(lexer::position())
-    )
-    DEFINE_RULE(
-        interpolated_syntax_tree,
-        boost::spirit::x3::attr(boost::none) > raw('{') > statements > end('}')
+        boost::spirit::x3::attr(boost::none) > statements
     )
 
     // EPP rules
@@ -585,7 +597,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         epp_syntax_tree,
-        -(raw('|') > (raw('|', false) | parameters) > raw('|')) > statements > boost::spirit::x3::attr(lexer::position())
+        -(raw('|') > (raw('|', false) | parameters) > raw('|')) > statements
     )
 
     // Application orchestration
@@ -619,6 +631,9 @@ namespace puppet { namespace compiler { namespace parser {
         literal_false,
         number,
         string,
+        literal_string_text,
+        interpolated_string,
+        interpolated_string_part,
         regex,
         variable,
         name,
@@ -699,8 +714,7 @@ namespace puppet { namespace compiler { namespace parser {
         binary_expression,
         primary_expression,
         nested_expression,
-        syntax_tree,
-        interpolated_syntax_tree
+        syntax_tree
     );
 
     BOOST_SPIRIT_DEFINE(

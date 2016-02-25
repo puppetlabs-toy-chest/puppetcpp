@@ -405,20 +405,7 @@ statements:
           end:
             offset: 362
             line: 32
-          value_range:
-            begin:
-              offset: 360
-              line: 32
-            end:
-              offset: 361
-              line: 32
           value: X
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
       - captures:
           offset: 364
           line: 32
@@ -679,20 +666,7 @@ statements:
           end:
             offset: 677
             line: 44
-          value_range:
-            begin:
-              offset: 671
-              line: 44
-            end:
-              offset: 676
-              line: 44
           value: mysql
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
     end:
       offset: 680
       line: 45
@@ -748,20 +722,7 @@ statements:
           end:
             offset: 757
             line: 50
-          value_range:
-            begin:
-              offset: 743
-              line: 50
-            end:
-              offset: 756
-              line: 50
           value: /var/www/html
-          escapes: \'
-          format: ""
-          margin: 0
-          quote: "'"
-          interpolated: false
-          remove_break: false
     body:
       - kind: resource
         begin:
@@ -846,27 +807,30 @@ statements:
                         offset: 845
                         line: 55
                       arguments:
-                        - kind: string
+                        - kind: interpolated string
                           begin:
                             offset: 830
                             line: 55
                           end:
                             offset: 844
                             line: 55
-                          value_range:
-                            begin:
-                              offset: 831
-                              line: 55
-                            end:
-                              offset: 843
-                              line: 55
-                          value: lamp-${name}
-                          escapes: \"'nrtsu$
-                          format: ""
-                          margin: 0
-                          quote: "\""
-                          interpolated: true
-                          remove_break: false
+                          parts:
+                            - kind: literal text
+                              begin:
+                                offset: 831
+                                line: 55
+                              end:
+                                offset: 836
+                                line: 55
+                              text: lamp-
+                            - kind: variable
+                              begin:
+                                offset: 838
+                                line: 55
+                              end:
+                                offset: 842
+                                line: 55
+                              name: name
       - kind: resource
         begin:
           offset: 854
@@ -950,27 +914,30 @@ statements:
                         offset: 932
                         line: 60
                       arguments:
-                        - kind: string
+                        - kind: interpolated string
                           begin:
                             offset: 917
                             line: 60
                           end:
                             offset: 931
                             line: 60
-                          value_range:
-                            begin:
-                              offset: 918
-                              line: 60
-                            end:
-                              offset: 930
-                              line: 60
-                          value: lamp-${name}
-                          escapes: \"'nrtsu$
-                          format: ""
-                          margin: 0
-                          quote: "\""
-                          interpolated: true
-                          remove_break: false
+                          parts:
+                            - kind: literal text
+                              begin:
+                                offset: 918
+                                line: 60
+                              end:
+                                offset: 923
+                                line: 60
+                              text: lamp-
+                            - kind: variable
+                              begin:
+                                offset: 925
+                                line: 60
+                              end:
+                                offset: 929
+                                line: 60
+                              name: name
       - kind: resource
         begin:
           offset: 941
@@ -1076,27 +1043,30 @@ statements:
                         offset: 1059
                         line: 66
                       arguments:
-                        - kind: string
+                        - kind: interpolated string
                           begin:
                             offset: 1044
                             line: 66
                           end:
                             offset: 1058
                             line: 66
-                          value_range:
-                            begin:
-                              offset: 1045
-                              line: 66
-                            end:
-                              offset: 1057
-                              line: 66
-                          value: lamp-${name}
-                          escapes: \"'nrtsu$
-                          format: ""
-                          margin: 0
-                          quote: "\""
-                          interpolated: true
-                          remove_break: false
+                          parts:
+                            - kind: literal text
+                              begin:
+                                offset: 1045
+                                line: 66
+                              end:
+                                offset: 1050
+                                line: 66
+                              text: lamp-
+                            - kind: variable
+                              begin:
+                                offset: 1052
+                                line: 66
+                              end:
+                                offset: 1056
+                                line: 66
+                              name: name
   - kind: site
     begin:
       offset: 1069
@@ -1233,20 +1203,7 @@ statements:
                                 end:
                                   offset: 1209
                                   line: 79
-                                value_range:
-                                  begin:
-                                    offset: 1197
-                                    line: 79
-                                  end:
-                                    offset: 1208
-                                    line: 79
                                 value: database.vm
-                                escapes: \'
-                                format: ""
-                                margin: 0
-                                quote: "'"
-                                interpolated: false
-                                remove_break: false
                       second:
                         kind: array
                         begin:
@@ -1310,20 +1267,7 @@ statements:
                                 end:
                                   offset: 1260
                                   line: 80
-                                value_range:
-                                  begin:
-                                    offset: 1247
-                                    line: 80
-                                  end:
-                                    offset: 1259
-                                    line: 80
                                 value: appserver.vm
-                                escapes: \'
-                                format: ""
-                                margin: 0
-                                quote: "'"
-                                interpolated: false
-                                remove_break: false
                       second:
                         kind: array
                         begin:

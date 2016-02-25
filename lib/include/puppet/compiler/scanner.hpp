@@ -43,6 +43,8 @@ namespace puppet { namespace compiler {
         void operator()(ast::name const& expression);
         void operator()(ast::bare_word const& expression);
         void operator()(ast::type const& expression);
+        void operator()(ast::literal_string_text const& expression);
+        void operator()(ast::interpolated_string const& expression);
         void operator()(ast::array const& expression);
         void operator()(ast::hash const& expression);
         void operator()(ast::expression const& expression);

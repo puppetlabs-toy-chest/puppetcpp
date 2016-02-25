@@ -28,12 +28,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         try {
             // Parse the string as an EPP template
-            auto tree = parser::parse_string(input, path, nullptr, true);
+            auto tree = parser::parse_string(logger, input, path, nullptr, true);
             LOG(debug, "parsed inline EPP AST:\n-----\n%1%\n-----", *tree);
 
-            // Create a local EPP stream
+            // Create a local output stream
             ostringstream os;
-            local_epp_stream epp_stream{ evaluation_context, os };
+            local_output_stream epp_stream{ evaluation_context, os };
 
             // Evaluate the syntax tree
             evaluation::evaluator evaluator{ evaluation_context };
@@ -43,9 +43,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             // Log the underlying problem and then throw an error pointing at the argument
             size_t column;
             string text;
-            auto& begin = ex.range().begin();
-            tie(text, column) = lexer::get_text_and_column(input, begin.offset());
-            evaluation_context.node().logger().log(logging::level::error, begin.line(), column, ex.range().length(), text, path, ex.what());
+            tie(text, column) = lexer::get_text_and_column(input, ex.begin().offset());
+            evaluation_context.node().logger().log(logging::level::error, ex.begin().line(), column, ex.end().offset() - ex.begin().offset(), text, path, ex.what());
             throw evaluation_exception("parsing of EPP template failed.", context.argument_context(0));
         } catch (argument_exception const& ex) {
             throw evaluation_exception((boost::format("EPP template argument error: %1%") % ex.what()).str(), context.argument_context(1));

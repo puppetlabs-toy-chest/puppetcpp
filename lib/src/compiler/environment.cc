@@ -266,7 +266,7 @@ namespace puppet { namespace compiler {
             } else {
                 // Parse the file
                 LOG(debug, "loading '%1%' into environment '%2%'.", path, name());
-                tree = parser::parse_file(path, module);
+                tree = parser::parse_file(logger, path, module);
                 LOG(debug, "parsed AST for '%1%':\n-----\n%2%\n-----", path, *tree);
                 _parsed.emplace(path, tree);
             }
