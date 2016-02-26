@@ -26,13 +26,9 @@ namespace puppet { namespace options {
         return "$codedir/environments";
     }
 
-    vector<string> defaults::module_directories()
+    string defaults::module_path()
     {
-        vector<string> directories = {
-            "$codedir/modules",
-            "/opt/puppetlabs/puppet/modules",
-        };
-        return directories;
+        return "$codedir/modules:/opt/puppetlabs/puppet/modules";
     }
 
 }}  // namespace puppet::options

@@ -38,7 +38,7 @@ namespace puppet { namespace options { namespace commands {
     static char const* const LOG_LEVEL_OPTION = "log-level";
     static char const* const LOG_LEVEL_OPTION_FULL = "log-level,l";
     static char const* const MANIFESTS_OPTION = "manifests";
-    static char const* const MODULE_DIRECTORY_OPTION = "module-dir";
+    static char const* const MODULE_PATH_OPTION = "module-path";
     static char const* const NODE_OPTION = "node";
     static char const* const NODE_OPTION_FULL = "node,n";
     static char const* const NO_COLOR_OPTION = "no-color";
@@ -189,21 +189,7 @@ namespace puppet { namespace options { namespace commands {
 
     static vector<string> get_manifests(options::command const& command, po::variables_map const& options)
     {
-        vector<string> manifests;
-        if (options.count(MANIFESTS_OPTION)) {
-            manifests = options[MANIFESTS_OPTION].as<vector<string>>();
-            for (auto& manifest : manifests) {
-                auto absolute_path = make_absolute(manifest);
-
-                // Ensure the manifest is a file (TODO: remove this check when we support directories from the command line)
-                sys::error_code ec;
-                if (!fs::is_regular_file(absolute_path, ec) || ec) {
-                    throw option_exception((boost::format("path '%1%' is not a manifest file.") % manifest).str(), &command);
-                }
-                manifest = rvalue_cast(absolute_path);
-            }
-        }
-        return manifests;
+        return options.count(MANIFESTS_OPTION) ? options[MANIFESTS_OPTION].as<vector<string>>() : vector<string>{};
     }
 
     static string get_output_file(po::variables_map const& options)
@@ -265,31 +251,13 @@ namespace puppet { namespace options { namespace commands {
         return default_directory;
     }
 
-    static vector<string> get_module_directories(po::variables_map const& options, string const& code_directory)
+    static string get_module_path(po::variables_map const& options)
     {
-        vector<string> directories;
-        if (options.count(MODULE_DIRECTORY_OPTION)) {
-            directories = options[MODULE_DIRECTORY_OPTION].as<vector<string>>();
-        } else {
-            directories = defaults::module_directories();
+        if (options.count(MODULE_PATH_OPTION)) {
+            return options[MODULE_PATH_OPTION].as<string>();
         }
 
-        for (auto& directory : directories) {
-            // Replace all references to $codedir with the code directory
-            boost::replace_all(directory, "$codedir", code_directory);
-            directory = make_absolute(directory);
-
-            sys::error_code ec;
-            if (!fs::is_directory(directory, ec) || ec) {
-                directory.clear();
-            }
-        }
-
-        // Remove all empty directories
-        directories.erase(
-            remove_if(directories.begin(), directories.end(), [](string const& directory) { return directory.empty(); }),
-            directories.end());
-        return directories;
+        return defaults::module_path();
     }
 
     char const* compile::name() const
@@ -305,15 +273,16 @@ namespace puppet { namespace options { namespace commands {
     char const* compile::summary() const
     {
         return
-            "Compiles a Puppet manifest into a Puppet catalog. When invoked with no options, "
-            "the compiler will compile the manifest for the 'production' environment."
+            "Compiles one or more Puppet manifests, or directories containing manifests, into a Puppet catalog."
+            " <p> "
+            "When invoked with no options, the compiler will compile a catalog for the 'production' environment."
             " <p> "
             "Manifests will be evaluated in the order they are presented on the command line.";
     }
 
     char const* compile::arguments() const
     {
-        return "[[manifest] [manifest] ...]";
+        return "[[manifest | directory] ...]";
     }
 
     po::options_description compile::create_options() const
@@ -342,7 +311,7 @@ namespace puppet { namespace options { namespace commands {
             (
                 ENVIRONMENT_PATH_OPTION,
                 po::value<string>(),
-                "The search path to use for finding environments."
+                "The list of paths to use for finding environments."
             )
             (
                 FACTS_OPTION_FULL,
@@ -364,9 +333,9 @@ namespace puppet { namespace options { namespace commands {
                 "Set logging level.\nSupported levels: debug, info, notice, warning, error, alert, emergency, critical."
             )
             (
-                MODULE_DIRECTORY_OPTION,
-                po::value<vector<string>>(),
-                "Specifies a directory to search for global modules."
+                MODULE_PATH_OPTION,
+                po::value<string>(),
+                "The list of paths to use for finding modules."
             )
             (
                 NODE_OPTION_FULL,
@@ -420,7 +389,7 @@ namespace puppet { namespace options { namespace commands {
         auto facts = get_facts(options);
         auto node_name = get_node(*this, options, *facts);
         auto code_directory = get_code_directory(*this, options);
-        auto module_directories = get_module_directories(options, code_directory);
+        auto module_path = get_module_path(options);
         auto environment_name = get_environment(options);
         auto environment_directory = get_environment_directory(*this, options, code_directory, environment_name);
         auto manifests = get_manifests(*this, options);
@@ -433,7 +402,7 @@ namespace puppet { namespace options { namespace commands {
                 code_directory = rvalue_cast(code_directory),
                 environment_name = rvalue_cast(environment_name),
                 environment_directory = rvalue_cast(environment_directory),
-                module_directories = rvalue_cast(module_directories),
+                module_path = rvalue_cast(module_path),
                 manifests = rvalue_cast(manifests),
                 node_name = rvalue_cast(node_name),
                 facts = rvalue_cast(facts),
@@ -448,20 +417,22 @@ namespace puppet { namespace options { namespace commands {
 
                     // TODO: support color/no-color options
 
-                    // Create an environment
-                    auto environment = make_shared<compiler::environment>(environment_name, environment_directory, manifests);
-
                     // Log some useful information for debugging purposes before doing anything
                     if (logger.would_log(logging::level::debug)) {
                         LOG(debug, "using directory '%1%' as the code directory.", code_directory);
-                        LOG(debug, "using directory '%1%' as the environment directory.", environment->directory());
-                        for (auto const& directory : module_directories) {
-                            LOG(debug, "using directory '%1%' to search for global modules.", directory);
-                        }
+                        LOG(debug, "using directory '%1%' as the environment directory.", environment_directory);
                     }
 
-                    // Load the modules into the environment
-                    environment->load_modules(logger, module_directories);
+                    // Create a new environment
+                    auto environment = make_shared<compiler::environment>(environment_name, environment_directory);
+
+                    // Load the environment; this will load the settings, modules, and main manifests
+                    environment->load(
+                        logger,
+                        code_directory,
+                        module_path,
+                        manifests
+                    );
 
                     // Construct a node
                     compiler::node node{logger, node_name, environment, facts};
@@ -501,6 +472,8 @@ namespace puppet { namespace options { namespace commands {
                     } catch (resource_cycle_exception const& ex) {
                         LOG(error, ex.what());
                     }
+                } catch (compilation_exception const& ex) {
+                    LOG(error, ex.line(), ex.column(), ex.length(), ex.text(), ex.path(), ex.what());
                 } catch (yaml_parse_exception const& ex) {
                     LOG(error, ex.line(), 1, ex.column(), ex.text(), ex.path(), ex.what());
                 } catch (exception const& ex) {

@@ -10,7 +10,7 @@ using namespace puppet::options;
 
 extern char const* const COMPILE_COMMAND_HELP =
     "\n"
-    "Usage: puppetcpp compile [options] [[manifest] [manifest] ...]\n"
+    "Usage: puppetcpp compile [options] [[manifest | directory] ...]\n"
     "\n"
     "Compile Puppet manifests into a Puppet catalog.\n"
     "\n"
@@ -24,7 +24,7 @@ extern char const* const COMPILE_COMMAND_HELP =
     "  -d [ --debug ]                        Enable debug output.\n"
     "  -e [ --environment ] arg (=production)\n"
     "                                        The environment to compile for.\n"
-    "  --environment-path arg                The search path to use for finding \n"
+    "  --environment-path arg                The list of paths to use for finding \n"
     "                                        environments.\n"
     "  -f [ --facts ] arg                    The path to the YAML facts file to use.\n"
     "                                        Defaults to the current system's facts.\n"
@@ -36,8 +36,8 @@ extern char const* const COMPILE_COMMAND_HELP =
     "                                        Supported levels: debug, info, notice, \n"
     "                                        warning, error, alert, emergency, \n"
     "                                        critical.\n"
-    "  --module-dir arg                      Specifies a directory to search for \n"
-    "                                        global modules.\n"
+    "  --module-path arg                     The list of paths to use for finding \n"
+    "                                        modules.\n"
     "  -n [ --node ] arg                     The node name to use. Defaults to the \n"
     "                                        'fqdn' fact.\n"
     "  --no-color                            Disables color output.\n"
@@ -45,10 +45,14 @@ extern char const* const COMPILE_COMMAND_HELP =
     "                                        catalog.\n"
     "  --verbose                             Enable verbose (info) output.\n"
     "\n"
-    "Compiles a Puppet manifest into a Puppet catalog. When invoked with no options,\n"
-    "the compiler will compile the manifest for the 'production' environment.\n"
+    "Compiles one or more Puppet manifests, or directories containing manifests, into\n"
+    "a Puppet catalog.\n"
     "\n"
-    "Manifests will be evaluated in the order they are presented on the command line.\n";
+    "When invoked with no options, the compiler will compile a catalog for the\n"
+    "'production' environment.\n"
+    "\n"
+    "Manifests will be evaluated in the order they are presented on the command line.\n"
+    ;
 
 SCENARIO("using the compile command", "[options]")
 {

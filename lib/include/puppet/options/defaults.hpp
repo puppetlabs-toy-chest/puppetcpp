@@ -27,10 +27,10 @@ namespace puppet { namespace options {
         static std::string environment_path();
 
         /**
-         * Gets the default global module directories for the current platform.
-         * @return Returns the default global modules directories.
+         * Gets the default module path for the current platform.
+         * @return Returns the default module path.
          */
-        static std::vector<std::string> module_directories();
+        static std::string module_path();
     };
 
 }}  // namespace puppet::options

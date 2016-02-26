@@ -33,9 +33,8 @@ namespace puppet { namespace compiler {
          * Constructs a new environment.
          * @param name The environment's name.
          * @param directory The base directory for the environment.
-         * @param manifests The manifests to compile for the environment; if empty, manifests will be searched for.
          */
-        environment(std::string name, std::string directory, std::vector<std::string> manifests = {});
+        environment(std::string name, std::string directory);
 
         /**
          * Gets the name of the environment.
@@ -62,11 +61,18 @@ namespace puppet { namespace compiler {
         evaluation::dispatcher const& dispatcher() const;
 
         /**
-         * Loads the modules into the environment.
+         * Loads the environment's settings, modules, and main manifests.
          * @param logger The logger to use for logging output.
-         * @param directories The additional directories to search for modules.
+         * @param code_directory The path to the code directory.
+         * @param base_module_path The base list of paths to search for modules.
+         * @param manifests The main manifests to use; if empty, the manifests will be searched for based on the environment's settings.
          */
-        void load_modules(logging::logger& logger, std::vector<std::string> const& directories = {});
+        void load(
+            logging::logger& logger,
+            std::string const& code_directory,
+            std::string const& base_module_path,
+            std::vector<std::string> const& manifests
+        );
 
         /**
          * Compiles the environment's manifests for the given evaluation context.
@@ -91,6 +97,7 @@ namespace puppet { namespace compiler {
 
      private:
         void load_modules(logging::logger& logger, std::string const& directory);
+        void add_manifests(logging::logger& logger, std::string const& directory, bool throw_if_missing = false);
         std::shared_ptr<ast::syntax_tree> import(logging::logger& logger, std::string const& path, compiler::module const* module = nullptr);
 
         std::string _name;

@@ -3,21 +3,22 @@
 #include <puppet/compiler/evaluation/evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/logging/logger.hpp>
+#include <puppet/utility/filesystem/helpers.hpp>
 #include <puppet/cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
+using namespace puppet::utility::filesystem;
 namespace fs = boost::filesystem;
 namespace sys = boost::system;
 
 namespace puppet { namespace compiler {
 
-    environment::environment(string name, string directory, vector<string> manifests) :
+    environment::environment(string name, string directory) :
         finder(rvalue_cast(directory)),
-        _name(rvalue_cast(name)),
-        _manifests(rvalue_cast(manifests))
+        _name(rvalue_cast(name))
     {
         // Add the built-in functions and operators to the dispatcher
         _dispatcher.add_builtins();
@@ -43,15 +44,76 @@ namespace puppet { namespace compiler {
         return _dispatcher;
     }
 
-    void environment::load_modules(logging::logger& logger, vector<string> const& directories)
+    void environment::load(
+        logging::logger& logger,
+        string const& code_directory,
+        string const& base_module_path,
+        vector<string> const& manifests
+    )
     {
-        // First load this module's directories
-        // TODO: the modules subdirectory can come from an environment configuration file
-        load_modules(logger, (fs::path{ this->directory() } / "modules").string());
+        // TODO: load settings from environment.conf (the below should be the defaults)
+        string module_path = string("modules") + path_separator() + base_module_path;
+        string main_manifest = "manifests";
 
-        // Next load modules in the given directories
-        for (auto const& directory : directories) {
-            load_modules(logger, directory);
+        // Replace base module path and code dir settings in the module path
+        boost::replace_all(module_path, "$basemodulepath", base_module_path);
+        boost::replace_all(module_path, "$codedir", code_directory);
+        LOG(debug, "searching for modules using '%1%' for the module path.", module_path);
+
+        // Go through each module directory to load modules
+        boost::split_iterator<string::iterator> end;
+        for (auto it = boost::make_split_iterator(module_path, boost::first_finder(path_separator(), boost::is_equal())); it != end; ++it) {
+            if (!*it) {
+                continue;
+            }
+
+            string directory{ it->begin(), it->end() };
+            auto path = make_absolute(directory, this->directory());
+
+            sys::error_code ec;
+            if (!fs::is_directory(path, ec)) {
+                LOG(debug, "skipping module directory '%1%' because it is not a directory.", path);
+                continue;
+            }
+
+            load_modules(logger, path);
+        }
+
+        // If given manifests, use those; otherwise, fall back to the main manifest setting
+        if (!manifests.empty()) {
+            for (auto const& manifest : manifests) {
+                auto path = make_absolute(manifest);
+
+                sys::error_code ec;
+                if (fs::is_regular_file(path, ec)) {
+                    _manifests.emplace_back(rvalue_cast(path));
+                    continue;
+                }
+
+                add_manifests(logger, path, true);
+            }
+        } else {
+            auto path = make_absolute(main_manifest, this->directory());
+
+            sys::error_code ec;
+            if (fs::is_regular_file(path, ec)) {
+                LOG(debug, "using '%1%' as the main manifest.", path);
+                _manifests.emplace_back(rvalue_cast(path));
+            } else {
+                ec.clear();
+                if (fs::is_directory(path, ec)) {
+                    LOG(debug, "searching '%1%' for main manifests.", path);
+                    add_manifests(logger, path);
+                }
+            }
+        }
+
+        if (_manifests.empty()) {
+            throw compilation_exception(
+                (boost::format("no manifests were found for environment '%1%': expected at least one manifest as an argument.") %
+                 name()
+                ).str()
+            );
         }
     }
 
@@ -59,58 +121,14 @@ namespace puppet { namespace compiler {
     {
         auto& logger = context.node().logger();
 
-        // If files to compile were explicitly specified, load those files only
+        // Load all the main manifests
         vector<shared_ptr<ast::syntax_tree>> trees;
-        if (!_manifests.empty()) {
-            // Treat the files as if they come from the environment
-            for (auto const& manifest : _manifests) {
-                try {
-                    trees.emplace_back(import(logger, manifest));
-                } catch (parse_exception const& ex) {
-                    throw compilation_exception(ex, manifest);
-                }
+        for (auto const& manifest : _manifests) {
+            try {
+                trees.emplace_back(import(logger, manifest));
+            } catch (parse_exception const& ex) {
+                throw compilation_exception(ex, manifest);
             }
-        } else {
-            // TODO: the "manifests" directory is a configuration setting; should not be hard coded
-            auto manifests_directory = fs::path{ directory() } / "manifests";
-
-            sys::error_code ec;
-            if (!fs::is_directory(manifests_directory, ec) || ec) {
-                // Base directory doesn't exist
-                LOG(debug, "manifest directory does not exist '%1%'.", manifests_directory.string());
-            } else {
-                LOG(debug, "loading manifests in '%1%'.", manifests_directory.string());
-
-                fs::directory_iterator it{manifests_directory};
-                fs::directory_iterator end{};
-
-                // Add the files to a vector
-                vector<string> manifests;
-                for (; it != end; ++it) {
-                    if (fs::is_regular_file(it->status()) && it->path().extension() == ".pp") {
-                        manifests.emplace_back(it->path().string());
-                    }
-                }
-
-                // Sort the paths so they are in a deterministic order
-                sort(manifests.begin(), manifests.end());
-
-                // Load the manifests
-                for (auto const& manifest : manifests) {
-                    try {
-                        trees.emplace_back(import(logger, manifest));
-                    } catch (parse_exception const& ex) {
-                        throw compilation_exception(ex, manifest);
-                    }
-                }
-            }
-        }
-
-        if (trees.empty()) {
-            throw compiler::compilation_exception(
-                (boost::format("no manifests were found for environment '%1%': expected at least one manifest to compile as an argument.") %
-                 name()
-                ).str());
         }
 
         evaluation::evaluator evaluator{ context };
@@ -213,8 +231,8 @@ namespace puppet { namespace compiler {
     void environment::load_modules(logging::logger& logger, string const& directory)
     {
         sys::error_code ec;
-        if (!fs::is_directory(directory, ec) || ec) {
-            LOG(debug, "modules directory '%1%' does not exist.", directory);
+        if (!fs::is_directory(directory, ec)) {
+            LOG(debug, "skipping module directory '%1%' because it is not a directory.", directory);
             return;
         }
 
@@ -248,6 +266,38 @@ namespace puppet { namespace compiler {
             LOG(debug, "found module '%1%' at '%2%'.", name, module_directory);
             module mod{ *this, module_directory, name };
             _modules.emplace(rvalue_cast(name), rvalue_cast(mod));
+        }
+    }
+
+    void environment::add_manifests(logging::logger& logger, string const& directory, bool throw_if_missing)
+    {
+        sys::error_code ec;
+        if (!fs::is_directory(directory, ec) || ec) {
+            if (throw_if_missing) {
+                throw compilation_exception((boost::format("'%1%' is not a manifest file or a directory containing manifests.") % directory).str());
+            }
+            LOG(debug, "skipping manifest directory '%1%' because it is not a directory.", directory);
+            return;
+        }
+        LOG(debug, "searching for manifests in '%1%'.", directory);
+
+        fs::directory_iterator it{ directory };
+        fs::directory_iterator end{};
+
+        // Add the files to a vector so we can sort them first
+        vector<string> manifests;
+        for (; it != end; ++it) {
+            if (fs::is_regular_file(it->status()) && it->path().extension() == ".pp") {
+                manifests.emplace_back(it->path().string());
+            }
+        }
+
+        // Sort the paths so they are in a deterministic order
+        sort(manifests.begin(), manifests.end());
+
+        for (auto& manifest : manifests) {
+            LOG(debug, "found main manifest '%1%'.", manifest);
+            _manifests.emplace_back(rvalue_cast(manifest));
         }
     }
 
