@@ -53,7 +53,7 @@ namespace puppet { namespace options {
             throw option_exception((boost::format("the '%1%' command expects at most %2% arguments.") % name() % positional.max_total_count()).str(), this);
         } catch (po::unknown_option const& ex) {
             throw option_exception((boost::format("unrecognized option '%1%' for command '%2%'.") % ex.get_option_name() % name()).str(), this);
-        }  catch (po::error const& ex) {
+        } catch (po::error const& ex) {
             throw option_exception(ex.what(), this);
         } catch (runtime_error const& ex) {
             throw option_exception(ex.what(), this);

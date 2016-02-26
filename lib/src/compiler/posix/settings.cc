@@ -1,4 +1,4 @@
-#include <puppet/options/defaults.hpp>
+#include <puppet/compiler/settings.hpp>
 #include <boost/filesystem.hpp>
 #include <unistd.h>
 
@@ -6,9 +6,9 @@ using namespace std;
 namespace fs = boost::filesystem;
 namespace sys = boost::system;
 
-namespace puppet { namespace options {
+namespace puppet { namespace compiler {
 
-    string defaults::code_directory()
+    static string default_code_directory()
     {
         auto home = getenv("HOME");
 
@@ -21,14 +21,14 @@ namespace puppet { namespace options {
         return (fs::path(home) / ".puppetlabs" / "etc" / "code").string();
     }
 
-    string defaults::environment_path()
+    settings::settings()
     {
-        return "$codedir/environments";
-    }
-
-    string defaults::module_path()
-    {
-        return "$codedir/modules:/opt/puppetlabs/puppet/modules";
+        set(base_module_path, "$codedir/modules:/opt/puppetlabs/puppet/modules");
+        set(code_directory, default_code_directory());
+        set(environment, "production");
+        set(environment_path, "$codedir/environments");
+        set(manifest, "manifests");
+        set(module_path, "modules:$basemodulepath");
     }
 
 }}  // namespace puppet::options

@@ -7,26 +7,76 @@
 #include <puppet/cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
 using namespace puppet::utility::filesystem;
 namespace fs = boost::filesystem;
 namespace sys = boost::system;
+namespace po = boost::program_options;
 
 namespace puppet { namespace compiler {
 
-    environment::environment(string name, string directory) :
-        finder(rvalue_cast(directory)),
-        _name(rvalue_cast(name))
+    shared_ptr<environment> environment::create(logging::logger& logger, compiler::settings settings, vector<string> const& manifests)
     {
-        // Add the built-in functions and operators to the dispatcher
-        _dispatcher.add_builtins();
+        // Get the name from the settings
+        string name = boost::lexical_cast<string>(settings.get(settings::environment, false));
+        if (name.empty()) {
+            throw compilation_exception("cannot create an environment with an empty name.");
+        }
+
+        // Search for the environment's directory
+        string base_directory;
+        auto environment_path = settings.get(settings::environment_path);
+        LOG(debug, "searching for environment '%1%' using environment path '%2%'.", name, environment_path);
+        if (environment_path.as<string>()) {
+            boost::split_iterator<string::const_iterator> end;
+            for (auto it = boost::make_split_iterator(*environment_path.as<string>(), boost::first_finder(path_separator(), boost::is_equal())); it != end; ++it) {
+                if (!*it) {
+                    continue;
+                }
+
+                auto path = fs::path{ make_absolute({ it->begin(), it->end() }) } / name;
+
+                sys::error_code ec;
+                if (fs::is_directory(path, ec)) {
+                    base_directory = path.string();
+                    break;
+                }
+            }
+        }
+        if (base_directory.empty()) {
+            throw compilation_exception(
+                (boost::format("could not locate an environment directory for environment '%1%' using search path '%2%'.") %
+                 name %
+                 environment_path
+                ).str());
+        }
+
+        LOG(debug, "found environment directory '%1%' for environment '%2%'.", base_directory, name);
+
+        struct make_shared_enabler : environment
+        {
+            explicit make_shared_enabler(string name, string base, compiler::settings settings) :
+                environment(rvalue_cast(name), rvalue_cast(base), rvalue_cast(settings))
+            {
+            }
+        };
+
+        auto environment = make_shared<make_shared_enabler>(rvalue_cast(name), rvalue_cast(base_directory), rvalue_cast(settings));
+        environment->populate(logger, manifests);
+        return environment;
     }
 
     string const& environment::name() const
     {
         return _name;
+    }
+
+    compiler::settings const& environment::settings() const
+    {
+        return _settings;
     }
 
     compiler::registry const& environment::registry() const
@@ -44,77 +94,14 @@ namespace puppet { namespace compiler {
         return _dispatcher;
     }
 
-    void environment::load(
-        logging::logger& logger,
-        string const& code_directory,
-        string const& base_module_path,
-        vector<string> const& manifests
-    )
+    deque<module> const& environment::modules() const
     {
-        // TODO: load settings from environment.conf (the below should be the defaults)
-        string module_path = string("modules") + path_separator() + base_module_path;
-        string main_manifest = "manifests";
+        return _modules;
+    }
 
-        // Replace base module path and code dir settings in the module path
-        boost::replace_all(module_path, "$basemodulepath", base_module_path);
-        boost::replace_all(module_path, "$codedir", code_directory);
-        LOG(debug, "searching for modules using '%1%' for the module path.", module_path);
-
-        // Go through each module directory to load modules
-        boost::split_iterator<string::iterator> end;
-        for (auto it = boost::make_split_iterator(module_path, boost::first_finder(path_separator(), boost::is_equal())); it != end; ++it) {
-            if (!*it) {
-                continue;
-            }
-
-            string directory{ it->begin(), it->end() };
-            auto path = make_absolute(directory, this->directory());
-
-            sys::error_code ec;
-            if (!fs::is_directory(path, ec)) {
-                LOG(debug, "skipping module directory '%1%' because it is not a directory.", path);
-                continue;
-            }
-
-            load_modules(logger, path);
-        }
-
-        // If given manifests, use those; otherwise, fall back to the main manifest setting
-        if (!manifests.empty()) {
-            for (auto const& manifest : manifests) {
-                auto path = make_absolute(manifest);
-
-                sys::error_code ec;
-                if (fs::is_regular_file(path, ec)) {
-                    _manifests.emplace_back(rvalue_cast(path));
-                    continue;
-                }
-
-                add_manifests(logger, path, true);
-            }
-        } else {
-            auto path = make_absolute(main_manifest, this->directory());
-
-            sys::error_code ec;
-            if (fs::is_regular_file(path, ec)) {
-                LOG(debug, "using '%1%' as the main manifest.", path);
-                _manifests.emplace_back(rvalue_cast(path));
-            } else {
-                ec.clear();
-                if (fs::is_directory(path, ec)) {
-                    LOG(debug, "searching '%1%' for main manifests.", path);
-                    add_manifests(logger, path);
-                }
-            }
-        }
-
-        if (_manifests.empty()) {
-            throw compilation_exception(
-                (boost::format("no manifests were found for environment '%1%': expected at least one manifest as an argument.") %
-                 name()
-                ).str()
-            );
-        }
+    vector<string> const& environment::manifests() const
+    {
+        return _manifests;
     }
 
     void environment::compile(evaluation::context& context)
@@ -175,13 +162,16 @@ namespace puppet { namespace compiler {
 
     module* environment::find_module(string const& name)
     {
-        // TODO: this function needs to be thread safe
+        return const_cast<module*>(static_cast<environment const*>(this)->find_module(name));
+    }
 
-        auto it = _modules.find(name);
-        if (it == _modules.end()) {
+    module const* environment::find_module(string const& name) const
+    {
+        auto it = _module_map.find(name);
+        if (it == _module_map.end()) {
             return nullptr;
         }
-        return &it->second;
+        return it->second;
     }
 
     void environment::import(logging::logger& logger, find_type type, string const& name)
@@ -228,7 +218,113 @@ namespace puppet { namespace compiler {
         import(logger, path, module);
     }
 
-    void environment::load_modules(logging::logger& logger, string const& directory)
+    environment::environment(string name, string directory, compiler::settings settings) :
+        finder(rvalue_cast(directory)),
+        _name(rvalue_cast(name)),
+        _settings(rvalue_cast(settings))
+    {
+    }
+
+    void environment::populate(logging::logger& logger, vector<string> const& manifests)
+    {
+        load_environment_settings(logger);
+
+        add_modules(logger);
+
+        if (manifests.empty()) {
+            add_manifests(logger);
+        } else {
+            for (auto const& manifest : manifests) {
+                auto path = make_absolute(manifest);
+
+                sys::error_code ec;
+                if (fs::is_regular_file(path, ec)) {
+                    _manifests.emplace_back(rvalue_cast(path));
+                    continue;
+                }
+
+                add_manifests(logger, path, true);
+            }
+        }
+    }
+
+    void environment::load_environment_settings(logging::logger& logger)
+    {
+        static char const* const CONFIGURATION_FILE = "environment.conf";
+
+        string config_file_path = (fs::path{ this->directory() } / CONFIGURATION_FILE).string();
+        sys::error_code ec;
+        if (!fs::is_regular_file(config_file_path, ec)) {
+            LOG(debug, "environment configuration file '%1%' was not found; using defaults.", config_file_path);
+            return;
+        }
+
+        LOG(debug, "loading environment settings from '%1%'.", config_file_path);
+
+        try {
+            // Read the options from the config file
+            po::options_description description("");
+            description.add_options()
+                (settings::module_path.c_str(), po::value<string>(), "")
+                (settings::manifest.c_str(),    po::value<string>(), "");
+            po::variables_map vm;
+            po::store(po::parse_config_file<char>(config_file_path.c_str(), description, true), vm);
+            po::notify(vm);
+
+            if (vm.count(settings::module_path)) {
+                auto module_path = vm[settings::module_path].as<string>();
+                LOG(debug, "using module path '%1%' from environment configuration file.", module_path);
+                _settings.set(settings::module_path, rvalue_cast(module_path));
+            }
+            if (vm.count(settings::manifest)) {
+                auto manifest = vm[settings::manifest].as<string>();
+                LOG(debug, "using main manifest '%1%' from environment configuration file.", manifest);
+                _settings.set(settings::manifest, rvalue_cast(manifest));
+            }
+        } catch (po::error const& ex) {
+            throw compilation_exception(
+                (boost::format("failed to read environment configuration file '%1%': %2%.") %
+                 config_file_path %
+                 ex.what()
+                ).str()
+            );
+        }
+    }
+
+    void environment::add_modules(logging::logger& logger)
+    {
+        auto module_path = _settings.get(settings::module_path);
+        if (!module_path.as<string>()) {
+            throw compilation_exception(
+                (boost::format("expected a string for $%1% setting.") %
+                 settings::module_path
+                ).str()
+            );
+        }
+
+        LOG(debug, "searching for modules using module path '%1%'.", module_path);
+
+        // Go through each module directory to load modules
+        boost::split_iterator<string::const_iterator> end;
+        for (auto it = boost::make_split_iterator(*module_path.as<string>(), boost::first_finder(path_separator(), boost::is_equal())); it != end; ++it) {
+            if (!*it) {
+                continue;
+            }
+
+            string directory{ it->begin(), it->end() };
+            auto path = make_absolute(directory, this->directory());
+
+            sys::error_code ec;
+            if (!fs::is_directory(path, ec)) {
+                LOG(debug, "skipping module directory '%1%' because it is not a directory.", path);
+                continue;
+            }
+
+            add_modules(logger, path);
+        }
+    }
+
+    void environment::add_modules(logging::logger& logger, string const& directory)
     {
         sys::error_code ec;
         if (!fs::is_directory(directory, ec)) {
@@ -264,8 +360,35 @@ namespace puppet { namespace compiler {
             }
 
             LOG(debug, "found module '%1%' at '%2%'.", name, module_directory);
-            module mod{ *this, module_directory, name };
-            _modules.emplace(rvalue_cast(name), rvalue_cast(mod));
+            module mod{ *this, module_directory, rvalue_cast(name) };
+            _modules.emplace_back(rvalue_cast(mod));
+            _module_map.emplace(_modules.back().name(), &_modules.back());
+        }
+    }
+
+    void environment::add_manifests(logging::logger& logger)
+    {
+        auto main_manifest = _settings.get(settings::manifest);
+        if (!main_manifest.as<string>()) {
+            throw compilation_exception(
+                (boost::format("expected a string for $%1% setting.") %
+                 settings::manifest
+                ).str()
+            );
+        }
+
+        auto path = make_absolute(*main_manifest.as<string>(), this->directory());
+
+        sys::error_code ec;
+        if (fs::is_regular_file(path, ec)) {
+            LOG(debug, "using '%1%' as the main manifest.", path);
+            _manifests.emplace_back(rvalue_cast(path));
+            return;
+        }
+
+        ec.clear();
+        if (fs::is_directory(path, ec)) {
+            add_manifests(logger, path);
         }
     }
 

@@ -95,6 +95,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/registry.cc
     src/compiler/resource.cc
     src/compiler/scanner.cc
+    src/compiler/settings.cc
     src/facts/facter.cc
     src/facts/yaml.cc
     src/logging/logger.cc
@@ -146,7 +147,7 @@ set(PUPPET_COMMON_SOURCES
 # Set platform-specific sources
 if (UNIX)
     set(PUPPET_PLATFORM_SOURCES
-        src/options/posix/defaults.cc
+        src/compiler/posix/settings.cc
         src/utility/filesystem/posix/helpers.cc
     )
 elseif(WIN32)

@@ -8,10 +8,12 @@
 #include "registry.hpp"
 #include "module.hpp"
 #include "finder.hpp"
+#include "settings.hpp"
 #include "evaluation/dispatcher.hpp"
 #include "../logging/logger.hpp"
 #include <string>
 #include <vector>
+#include <deque>
 #include <memory>
 #include <unordered_map>
 
@@ -30,17 +32,25 @@ namespace puppet { namespace compiler {
     struct environment : finder
     {
         /**
-         * Constructs a new environment.
-         * @param name The environment's name.
-         * @param directory The base directory for the environment.
+         * Creates a new environment given the compiler settings.
+         * @param logger The logger to use for logging messages.
+         * @param settings The settings to use for the environment.
+         * @param manifests The main manifests to use instead of the environment's default.
+         * @return Returns the new environment.
          */
-        environment(std::string name, std::string directory);
+        static std::shared_ptr<environment> create(logging::logger& logger, compiler::settings settings, std::vector<std::string> const& manifests = {});
 
         /**
          * Gets the name of the environment.
          * @return Returns the name of the environment.
          */
         std::string const& name() const;
+
+        /**
+         * Gets the compiler settings for the environment.
+         * @return Returns the compiler settings for the environment.
+         */
+        compiler::settings const& settings() const;
 
         /**
          * Gets the environment's registry.
@@ -61,18 +71,18 @@ namespace puppet { namespace compiler {
         evaluation::dispatcher const& dispatcher() const;
 
         /**
-         * Loads the environment's settings, modules, and main manifests.
-         * @param logger The logger to use for logging output.
-         * @param code_directory The path to the code directory.
-         * @param base_module_path The base list of paths to search for modules.
-         * @param manifests The main manifests to use; if empty, the manifests will be searched for based on the environment's settings.
+         * Gets the environment's modules.
+         * Note: the module list will be empty unless load is called.
+         * @return Returns the environment's modules.
          */
-        void load(
-            logging::logger& logger,
-            std::string const& code_directory,
-            std::string const& base_module_path,
-            std::vector<std::string> const& manifests
-        );
+        std::deque<module> const& modules() const;
+
+        /**
+         * Gets the environment's main manifests.
+         * Note: the manifest list will be empty unless load is called.
+         * @return Returns the environment's main manifests.
+         */
+        std::vector<std::string> const& manifests() const;
 
         /**
          * Compiles the environment's manifests for the given evaluation context.
@@ -88,6 +98,13 @@ namespace puppet { namespace compiler {
         module* find_module(std::string const& name);
 
         /**
+         * Finds a module by name.
+         * @param name The module name to find.
+         * @return Returns a pointer to the module or nullptr if the module does not exist.
+         */
+        module const* find_module(std::string const& name) const;
+
+        /**
          * Imports a file into the environment's registry.
          * @param logger The logger to use to log messages.
          * @param type The type of file to find.
@@ -96,16 +113,23 @@ namespace puppet { namespace compiler {
         void import(logging::logger& logger, find_type type, std::string const& name);
 
      private:
-        void load_modules(logging::logger& logger, std::string const& directory);
+        environment(std::string name, std::string directory, compiler::settings settings);
+        void populate(logging::logger& logger, std::vector<std::string> const& manifests);
+        void load_environment_settings(logging::logger& logger);
+        void add_modules(logging::logger& logger);
+        void add_modules(logging::logger& logger, std::string const& directory);
+        void add_manifests(logging::logger& logger);
         void add_manifests(logging::logger& logger, std::string const& directory, bool throw_if_missing = false);
         std::shared_ptr<ast::syntax_tree> import(logging::logger& logger, std::string const& path, compiler::module const* module = nullptr);
 
         std::string _name;
-        std::vector<std::string> _manifests;
+        compiler::settings _settings;
         compiler::registry _registry;
         evaluation::dispatcher _dispatcher;
+        std::vector<std::string> _manifests;
+        std::deque<module> _modules;
+        std::unordered_map<std::string, module*> _module_map;
         std::unordered_map<std::string, std::shared_ptr<ast::syntax_tree>> _parsed;
-        std::unordered_map<std::string, module> _modules;
     };
 
 }}  // puppet::compiler

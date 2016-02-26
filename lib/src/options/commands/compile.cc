@@ -1,6 +1,5 @@
 #include <puppet/options/commands/compile.hpp>
 #include <puppet/options/parser.hpp>
-#include <puppet/options/defaults.hpp>
 #include <puppet/compiler/node.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/facts/facter.hpp>
@@ -74,31 +73,6 @@ namespace puppet { namespace options { namespace commands {
         return options.count(COLOR_OPTION) > 0;
     }
 
-    static string get_code_directory(options::command const& command, po::variables_map const& options)
-    {
-        string directory;
-        if (options.count(CODE_DIRECTORY_OPTION)) {
-            directory = options[CODE_DIRECTORY_OPTION].as<string>();
-        }
-        if (directory.empty()) {
-            directory = defaults::code_directory();
-        } else {
-            directory = make_absolute(directory);
-
-            // Ensure the directory exists
-            sys::error_code ec;
-            if (!fs::is_directory(directory, ec) || ec) {
-                throw option_exception((boost::format("code directory '%1%' does not exist or is not a directory.") % directory).str(), &command);
-            }
-        }
-        return directory;
-    }
-
-    static string get_environment(po::variables_map const& options)
-    {
-        return options[ENVIRONMENT_OPTION].as<string>();
-    }
-
     static shared_ptr<facts::provider> get_facts(po::variables_map const& options)
     {
         if (options.count(FACTS_OPTION)) {
@@ -120,9 +94,7 @@ namespace puppet { namespace options { namespace commands {
             return name;
         }
 
-        // If no node name was specified, use the FQDN fact
-        // NOTE: the following uses of boost::get are safe because facts never contain runtime variables
-        // Next try "networking" fact
+        // If no node name was specified, use the FQDN fact and fallback to "<hostname>[.<domain>]".
         auto networking = facts.lookup("networking");
         if (networking) {
             if (auto hash = networking->as<runtime::values::hash>()) {
@@ -205,59 +177,38 @@ namespace puppet { namespace options { namespace commands {
         return {};
     }
 
-    static string get_environment_directory(options::command const& command, po::variables_map const& options, string const& code_directory, string const& environment)
+    static settings create_settings(options::command const& command, po::variables_map const& options)
     {
-        bool specified = false;
-        string search_path;
-        if (options.count(ENVIRONMENT_PATH_OPTION)) {
-            search_path = options[ENVIRONMENT_PATH_OPTION].as<string>();
-            specified = true;
-        } else {
-            search_path = defaults::environment_path();
-        }
+        compiler::settings settings;
 
-        string default_directory;
-        boost::split_iterator<string::iterator> end;
-        for (auto it = boost::make_split_iterator(search_path, boost::first_finder(path_separator(), boost::is_equal())); it != end; ++it) {
-            if (!*it) {
-                continue;
-            }
-
-            string directory{ it->begin(), it->end() };
-            boost::replace_all(directory, "$codedir", code_directory);
-            auto path = fs::path{ make_absolute(directory) } / environment;
-
-            sys::error_code ec;
-            if (fs::is_directory(path, ec)) {
-                return path.string();
-            }
-
-            if (default_directory.empty()) {
-                default_directory = path.string();
-            }
-        }
-
-        // If directories were specified, it's an error if the environment's directory cannot be found
-        if (specified || default_directory.empty()) {
-            throw option_exception(
-                (boost::format("could not locate an environment directory for environment '%1%' using search path '%2%'.") %
-                 environment %
-                 search_path
-                ).str(),
-                &command);
-        }
-
-        // Return the first directory that would have been in the path
-        return default_directory;
-    }
-
-    static string get_module_path(po::variables_map const& options)
-    {
         if (options.count(MODULE_PATH_OPTION)) {
-            return options[MODULE_PATH_OPTION].as<string>();
+            settings.set(settings::base_module_path, options[MODULE_PATH_OPTION].as<string>());
         }
 
-        return defaults::module_path();
+        if (options.count(CODE_DIRECTORY_OPTION)) {
+            auto directory = make_absolute(options[CODE_DIRECTORY_OPTION].as<string>());
+
+            // Ensure the directory exists
+            sys::error_code ec;
+            if (!fs::is_directory(directory, ec) || ec) {
+                throw option_exception((boost::format("code directory '%1%' does not exist or is not a directory.") % directory).str(), &command);
+            }
+            settings.set(settings::code_directory, rvalue_cast(directory));
+        }
+
+        if (options.count(ENVIRONMENT_OPTION)) {
+            settings.set(settings::environment, options[ENVIRONMENT_OPTION].as<string>());
+        }
+
+        if (options.count(ENVIRONMENT_PATH_OPTION)) {
+            settings.set(settings::environment_path, options[ENVIRONMENT_PATH_OPTION].as<string>());
+        }
+
+        if (options.count(MODULE_PATH_OPTION)) {
+            settings.set(settings::module_path, options[MODULE_PATH_OPTION].as<string>());
+        }
+
+        return settings;
     }
 
     char const* compile::name() const
@@ -387,11 +338,8 @@ namespace puppet { namespace options { namespace commands {
         auto output_file = get_output_file(options);
         auto graph_file = get_graph_file(options);
         auto facts = get_facts(options);
+        auto settings = create_settings(*this, options);
         auto node_name = get_node(*this, options, *facts);
-        auto code_directory = get_code_directory(*this, options);
-        auto module_path = get_module_path(options);
-        auto environment_name = get_environment(options);
-        auto environment_directory = get_environment_directory(*this, options, code_directory, environment_name);
         auto manifests = get_manifests(*this, options);
 
         // Move the options into the lambda capture
@@ -399,10 +347,7 @@ namespace puppet { namespace options { namespace commands {
             *this,
             [
                 level,
-                code_directory = rvalue_cast(code_directory),
-                environment_name = rvalue_cast(environment_name),
-                environment_directory = rvalue_cast(environment_directory),
-                module_path = rvalue_cast(module_path),
+                settings = rvalue_cast(settings),
                 manifests = rvalue_cast(manifests),
                 node_name = rvalue_cast(node_name),
                 facts = rvalue_cast(facts),
@@ -417,22 +362,20 @@ namespace puppet { namespace options { namespace commands {
 
                     // TODO: support color/no-color options
 
-                    // Log some useful information for debugging purposes before doing anything
-                    if (logger.would_log(logging::level::debug)) {
-                        LOG(debug, "using directory '%1%' as the code directory.", code_directory);
-                        LOG(debug, "using directory '%1%' as the environment directory.", environment_directory);
+                    LOG(debug, "using code directory '%1%'.", settings.get(settings::code_directory));
+
+                    // Create a new environment with the builtin functions and operators
+                    auto environment = compiler::environment::create(logger, settings, manifests);
+                    environment->dispatcher().add_builtins();
+
+                    if (environment->manifests().empty()) {
+                        throw option_exception(
+                            (boost::format("no manifests were found for environment '%1%': expected at least one manifest as an argument.") %
+                             name()
+                            ).str(),
+                            this
+                        );
                     }
-
-                    // Create a new environment
-                    auto environment = make_shared<compiler::environment>(environment_name, environment_directory);
-
-                    // Load the environment; this will load the settings, modules, and main manifests
-                    environment->load(
-                        logger,
-                        code_directory,
-                        module_path,
-                        manifests
-                    );
 
                     // Construct a node
                     compiler::node node{logger, node_name, environment, facts};
