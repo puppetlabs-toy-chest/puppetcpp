@@ -91,9 +91,8 @@ namespace puppet { namespace logging {
          * Logs a message.
          * @param level The log level.
          * @param message The message to log.
-         * @param error_is_failure True to treat logged errors as a failure or false if not.
          */
-        void log(logging::level level, std::string const& message, bool error_is_failure = true);
+        void log(logging::level level, std::string const& message);
 
         /**
          * Logs a message with source context.
@@ -104,9 +103,8 @@ namespace puppet { namespace logging {
          * @param text The context text.
          * @param path The path of the source file.
          * @param message The message to log.
-         * @param error_is_failure True to treat logged errors as a failure or false if not.
          */
-        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message, bool error_is_failure = true);
+        void log(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message);
 
         /**
          * Logs a message.
@@ -164,12 +162,6 @@ namespace puppet { namespace logging {
         size_t errors() const;
 
         /**
-         * Gets whether or not a failing error was logged.
-         * @return Returns true if a failing error was logged or false if not.
-         */
-        bool failed() const;
-
-        /**
          * Gets the current logging level.
          * @return Returns the current logging level.
          */
@@ -210,7 +202,6 @@ namespace puppet { namespace logging {
         size_t _warnings;
         size_t _errors;
         logging::level _level;
-        bool _failed;
     };
 
     /**

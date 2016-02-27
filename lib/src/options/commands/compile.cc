@@ -355,6 +355,7 @@ namespace puppet { namespace options { namespace commands {
                 graph_file = rvalue_cast(graph_file),
                 this
             ] () {
+                bool failed = true;
                 logging::console_logger logger;
 
                 try {
@@ -410,6 +411,9 @@ namespace puppet { namespace options { namespace commands {
                         LOG(notice, "writing catalog to '%1%'.", output_file);
                         catalog.write(output);
 
+                        // Command succeeded
+                        failed = false;
+
                     } catch (compilation_exception const& ex) {
                         LOG(error, ex.line(), ex.column(), ex.length(), ex.text(), ex.path(), "node '%1%': %2%", node.name(), ex.what());
                     } catch (resource_cycle_exception const& ex) {
@@ -427,13 +431,13 @@ namespace puppet { namespace options { namespace commands {
                 auto warnings = logger.warnings();
 
                 LOG(notice, "compilation %1% with %2% %3% and %4% %5%.",
-                    (logger.failed() ? "failed" : "succeeded"),
+                    (failed ? "failed" : "succeeded"),
                     errors,
                     (errors != 1 ? "errors" : "error"),
                     warnings,
                     (warnings != 1 ? "warnings" : "warning")
                 );
-                return logger.failed() ? EXIT_FAILURE : EXIT_SUCCESS;
+                return failed ? EXIT_FAILURE : EXIT_SUCCESS;
             }
         };
     }

@@ -75,20 +75,19 @@ namespace puppet { namespace logging {
     logger::logger() :
         _warnings(0),
         _errors(0),
-        _level(logging::level::notice),
-        _failed(false)
+        _level(logging::level::notice)
     {
     }
 
-    void logger::log(logging::level level, string const& message, bool error_is_failure)
+    void logger::log(logging::level level, string const& message)
     {
         if (!would_log(level)) {
            return;
         }
-        log(level, 0, 0, 0, {}, {}, message, error_is_failure);
+        log(level, 0, 0, 0, {}, {}, message);
     }
 
-    void logger::log(logging::level level, size_t line, size_t column, size_t length, string const& text, string const& path, string const& message, bool error_is_failure)
+    void logger::log(logging::level level, size_t line, size_t column, size_t length, string const& text, string const& path, string const& message)
     {
         if (!would_log(level)) {
             return;
@@ -96,9 +95,6 @@ namespace puppet { namespace logging {
         if (level == logging::level::warning) {
             ++_warnings;
         } else if (level >= logging::level::error) {
-            if (error_is_failure) {
-                _failed = true;
-            }
             ++_errors;
         }
         log_message(level, line, column, length, text, path, message);
@@ -114,11 +110,6 @@ namespace puppet { namespace logging {
         return _errors;
     }
 
-    bool logger::failed() const
-    {
-        return _failed;
-    }
-
     logging::level logger::level() const
     {
         return _level;
@@ -132,7 +123,6 @@ namespace puppet { namespace logging {
     void logger::reset()
     {
         _warnings = _errors = 0;
-        _failed = false;
     }
 
     bool logger::would_log(logging::level level)
