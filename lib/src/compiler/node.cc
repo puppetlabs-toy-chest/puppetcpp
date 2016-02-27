@@ -89,7 +89,7 @@ namespace puppet { namespace compiler {
         }
     }
 
-    void node::create_initial_resources(evaluation::context& context)
+    void node::create_initial_resources(evaluation::context& context) const
     {
         auto& catalog = context.catalog();
 
@@ -106,6 +106,13 @@ namespace puppet { namespace compiler {
         }
         auto scope = make_shared<evaluation::scope>(context.top_scope(), settings);
         context.add_scope(scope);
+
+        // Set the settings in the settings scope
+        ast::context none;
+        _environment->settings().each([&](string const& name, values::value const& value) {
+            scope->set(name, std::make_shared<values::value>(value), none);
+            return true;
+        });
 
         // TODO: set settings in the scope
 

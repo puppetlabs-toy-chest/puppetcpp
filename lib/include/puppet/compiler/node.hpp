@@ -76,7 +76,7 @@ namespace puppet { namespace compiler {
         void each_name(std::function<bool(std::string const&)> const& callback) const;
 
      private:
-        static void create_initial_resources(evaluation::context& context);
+        void create_initial_resources(evaluation::context& context) const;
 
         logging::logger& _logger;
         std::set<std::string> _names;
