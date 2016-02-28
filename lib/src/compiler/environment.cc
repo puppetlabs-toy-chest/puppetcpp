@@ -336,32 +336,37 @@ namespace puppet { namespace compiler {
         fs::directory_iterator end{};
 
         // Search for modules
+        vector<pair<string, string>> modules;
         LOG(debug, "searching '%1%' for modules.", directory);
         for (; it != end; ++it) {
             // If not a directory, ignore
             if (!fs::is_directory(it->status())) {
                 continue;
             }
-            auto const& module_directory = it->path().string();
-            auto name = it->path().filename().string();
-            if (name == "lib") {
+            modules.emplace_back(it->path().string(), it->path().filename().string());
+        }
+
+        // Sort the directories to ensure a deterministic order
+        sort(modules.begin(), modules.end(), [](auto const& left, auto const& right) { return left.second < right.second; });
+
+        for (auto& module : modules) {
+            if (module.second == "lib") {
                 // Warn that the module path may not be set correctly, but add a "lib" module
-                LOG(warning, "found module named 'lib' at '%1%': this may indicate the module search path is incorrect.", module_directory);
-            }  else if (!module::is_valid_name(name)) {
+                LOG(warning, "found module named 'lib' at '%1%': this may indicate the module search path is incorrect.", module.first);
+            }  else if (!module::is_valid_name(module.second)) {
                 // Warn about an invalid name
-                LOG(warning, "found module with invalid name '%1%' at '%2%': module will be ignored.", name, module_directory);
+                LOG(warning, "found module with invalid name '%1%' at '%2%': module will be ignored.", module.second, module.first);
                 continue;
             }
 
-            auto existing = find_module(name);
+            auto existing = find_module(module.second);
             if (existing) {
-                LOG(warning, "module '%1%' at '%2%' conflicts with existing module at '%3%' and will be ignored.", name, module_directory, existing->directory());
+                LOG(warning, "module '%1%' at '%2%' conflicts with existing module at '%3%' and will be ignored.", module.second, module.first, existing->directory());
                 continue;
             }
 
-            LOG(debug, "found module '%1%' at '%2%'.", name, module_directory);
-            module mod{ *this, module_directory, rvalue_cast(name) };
-            _modules.emplace_back(rvalue_cast(mod));
+            LOG(debug, "found module '%1%' at '%2%'.", module.second, module.first);
+            _modules.emplace_back(*this, rvalue_cast(module.first), rvalue_cast(module.second));
             _module_map.emplace(_modules.back().name(), &_modules.back());
         }
     }
