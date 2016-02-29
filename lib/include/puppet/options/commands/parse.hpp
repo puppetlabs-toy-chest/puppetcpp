@@ -1,22 +1,21 @@
 /**
  * @file
- * Declares the compile command.
+ * Declares the parse command.
  */
 #pragma once
 
-#include "parse.hpp"
-#include "../../facts/provider.hpp"
-#include <memory>
+#include "../command.hpp"
+#include "../../compiler/settings.hpp"
 
 namespace puppet { namespace options { namespace commands {
 
     /**
-     * Represents the compile command.
+     * Represents the parse command.
      */
-    struct compile : parse
+    struct parse : command
     {
         // Use the base constructor
-        using parse::parse;
+        using command::command;
 
         /**
          * Gets the name of the command.
@@ -69,63 +68,78 @@ namespace puppet { namespace options { namespace commands {
         executor create_executor(boost::program_options::variables_map const& options) const override;
 
         /**
-         * Gets the facts provider from the given options.
-         * @param options The options to get the facts provider from.
-         * @return Returns the facts provider.
-         */
-        std::shared_ptr<facts::provider> get_facts(boost::program_options::variables_map const& options) const;
-
-        /**
-         * Gets the node name from the given parsed options.
+         * Gets the manifests from the given parsed options.
          * @param options The parsed options.
-         * @param facts The facts provider to fallback to.
-         * @return Returns the node name.
+         * @return Returns the manifests.
          */
-        std::string get_node(boost::program_options::variables_map const& options, facts::provider& facts) const;
+        std::vector<std::string> get_manifests(boost::program_options::variables_map const& options) const;
 
         /**
-         * Gets the graph file from the given parsed options.
+         * Gets the output file from the given parsed options.
          * @param options The parsed options.
-         * @return Returns the graph file.
+         * @return Returns the output file.
          */
-        std::string get_graph_file(boost::program_options::variables_map const& options) const;
+        std::string get_output_file(boost::program_options::variables_map const& options) const;
 
         /**
-         * The facts option name.
+         * Creates compiler settings based on the given parsed options.
+         * @param options The parsed options.
+         * @return Returns the compiler settings.
          */
-        static char const* const FACTS_OPTION;
+        compiler::settings create_settings(boost::program_options::variables_map const& options) const;
+
         /**
-         * The facts option full name.
+         * The code directory option name.
          */
-        static char const* const FACTS_OPTION_FULL;
+        static char const* const CODE_DIRECTORY_OPTION;
         /**
-         * The facts option description.
+         * The code directory option description.
          */
-        static char const* const FACTS_DESCRIPTION;
+        static char const* const CODE_DIRECTORY_DESCRIPTION;
         /**
-         * The graph file option name.
+         * The environment option name.
          */
-        static char const* const GRAPH_FILE_OPTION;
+        static char const* const ENVIRONMENT_OPTION;
         /**
-         * The graph file option full name.
+         * The environment option full name.
          */
-        static char const* const GRAPH_FILE_OPTION_FULL;
+        static char const* const ENVIRONMENT_OPTION_FULL;
         /**
-         * The graph file option description.
+         * The environment option description.
          */
-        static char const* const GRAPH_FILE_DESCRIPTION;
+        static char const* const ENVIRONMENT_DESCRIPTION;
         /**
-         * The node option name.
+         * The environment path option name.
          */
-        static char const* const NODE_OPTION;
+        static char const* const ENVIRONMENT_PATH_OPTION;
         /**
-         * The node option full name.
+         * The environment path option description.
          */
-        static char const* const NODE_OPTION_FULL;
+        static char const* const ENVIRONMENT_PATH_DESCRIPTION;
         /**
-         * The node option description.
+         * The log level option description.
          */
-        static char const* const NODE_DESCRIPTION;
+        static char const* const LOG_LEVEL_DESCRIPTION;
+        /**
+         * The manifests option name.
+         */
+        static char const* const MANIFESTS_OPTION;
+        /**
+         * The module path option name.
+         */
+        static char const* const MODULE_PATH_OPTION;
+        /**
+         * The module path option description.
+         */
+        static char const* const MODULE_PATH_DESCRIPTION;
+        /**
+        * The output option name.
+        */
+        static char const* const OUTPUT_OPTION;
+        /**
+         * The output option full name.
+         */
+        static char const* const OUTPUT_OPTION_FULL;
         /**
          * The output option description.
          */

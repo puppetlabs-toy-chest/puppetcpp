@@ -1,6 +1,7 @@
 #include <puppet/options/parser.hpp>
 #include <puppet/options/commands/compile.hpp>
 #include <puppet/options/commands/help.hpp>
+#include <puppet/options/commands/parse.hpp>
 #include <puppet/options/commands/version.hpp>
 #include <puppet/logging/logger.hpp>
 
@@ -24,6 +25,7 @@ int main(int argc, char const* argv[])
         // Add the supported commands here
         parser.add<commands::compile>();
         parser.add<commands::help>();
+        parser.add<commands::parse>();
         parser.add<commands::version>();
 
         return parser.parse(arguments).execute();

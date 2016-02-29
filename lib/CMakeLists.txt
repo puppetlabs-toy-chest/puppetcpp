@@ -101,6 +101,7 @@ set(PUPPET_COMMON_SOURCES
     src/logging/logger.cc
     src/options/commands/compile.cc
     src/options/commands/help.cc
+    src/options/commands/parse.cc
     src/options/commands/version.cc
     src/options/command.cc
     src/options/executor.cc

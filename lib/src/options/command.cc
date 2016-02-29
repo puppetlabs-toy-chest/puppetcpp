@@ -76,4 +76,47 @@ namespace puppet { namespace options {
         return {};
     }
 
+    logging::level command::get_level(po::variables_map const& options) const
+    {
+        // Check for conflicting options
+        if ((options.count(DEBUG_OPTION) + options.count(VERBOSE_OPTION) + (options[LOG_LEVEL_OPTION].defaulted() ? 0 : 1)) > 1) {
+            throw option_exception((boost::format("%1%, %2%, and %3% options conflict: please specify only one.") % DEBUG_OPTION % VERBOSE_OPTION % LOG_LEVEL_OPTION).str(), this);
+        }
+
+        // Override the log level for debug/verbose
+        if (options.count(DEBUG_OPTION)) {
+            return logging::level::debug;
+        }
+        if (options.count(VERBOSE_OPTION)) {
+            return logging::level::info;
+        }
+        return options[LOG_LEVEL_OPTION].as<logging::level>();
+    }
+
+    boost::optional<bool> command::get_colorization(po::variables_map const& options) const
+    {
+        if (options.count(COLOR_OPTION) && options.count(NO_COLOR_OPTION)) {
+            throw option_exception((boost::format("%1% and %2% options conflict: please specify only one.") % COLOR_OPTION % NO_COLOR_OPTION).str(), this);
+        }
+        if (!options.count(COLOR_OPTION) && !options.count(NO_COLOR_OPTION)) {
+            return boost::none;
+        }
+        return options.count(COLOR_OPTION) > 0;
+    }
+
+    char const* const command::COLOR_OPTION          = "color";
+    char const* const command::COLOR_DESCRIPTION     = "Force color output on platforms that support colorized output.";
+    char const* const command::DEBUG_OPTION          = "debug";
+    char const* const command::DEBUG_OPTION_FULL     = "debug,d";
+    char const* const command::DEBUG_DESCRIPTION     = "Enable debug output.";
+    char const* const command::HELP_OPTION           = "help";
+    char const* const command::HELP_DESCRIPTION      = "Display command help.";
+    char const* const command::LOG_LEVEL_OPTION      = "log-level";
+    char const* const command::LOG_LEVEL_OPTION_FULL = "log-level,l";
+    char const* const command::LOG_LEVEL_DESCRIPTION = "Set logging level.\nSupported levels: debug, info, notice, warning, error, alert, emergency, critical.";
+    char const* const command::NO_COLOR_OPTION       = "no-color";
+    char const* const command::NO_COLOR_DESCRIPTION  = "Disable color output.";
+    char const* const command::VERBOSE_OPTION        = "verbose";
+    char const* const command::VERBOSE_DESCRIPTION   = "Enable verbose output (info level).";
+
 }}  // namespace puppet::options
