@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <boost/filesystem.hpp>
 
 namespace puppet { namespace utility { namespace filesystem {
 
@@ -23,5 +24,13 @@ namespace puppet { namespace utility { namespace filesystem {
      * @return Returns the normalized absolute path.
      */
     std::string make_absolute(std::string const& path, std::string const& base = {});
+
+    /**
+     * Normalizes a relative path.
+     * @param path The relative path to normalize.
+     * @return Returns true if the path is relative and was normallized; returns false if the path was not relative.
+     */
+    bool normalize_relative_path(std::string& path);
+
 
 }}}  // namespace puppet::utility::filesystem

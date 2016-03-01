@@ -68,6 +68,14 @@ namespace puppet { namespace options { namespace commands {
         executor create_executor(boost::program_options::variables_map const& options) const override;
 
         /**
+         * Gets the logging level from the given parsed options.
+         * Note: this version only supports debug, info, warning, and error.
+         * @param options The parsed options.
+         * @return Returns the logging level.
+         */
+        logging::level get_level(boost::program_options::variables_map const& options) const;
+
+        /**
          * Gets the manifests from the given parsed options.
          * @param options The parsed options.
          * @return Returns the manifests.
@@ -82,12 +90,27 @@ namespace puppet { namespace options { namespace commands {
         std::string get_output_file(boost::program_options::variables_map const& options) const;
 
         /**
+         * Gets the output subdirectory from the given parsed options.
+         * @param options The parsed options.
+         * @return Returns the output subdirectory file.
+         */
+        std::string get_output_subdirectory(boost::program_options::variables_map const& options) const;
+
+        /**
          * Creates compiler settings based on the given parsed options.
          * @param options The parsed options.
          * @return Returns the compiler settings.
          */
         compiler::settings create_settings(boost::program_options::variables_map const& options) const;
 
+        /**
+         * The "as module" option name.
+         */
+        static char const* const AS_MODULE_OPTION;
+        /**
+         * The "as module" option description.
+         */
+        static char const* const AS_MODULE_DESCRIPTION;
         /**
          * The code directory option name.
          */
@@ -144,6 +167,15 @@ namespace puppet { namespace options { namespace commands {
          * The output option description.
          */
         static char const* const OUTPUT_DESCRIPTION;
+        /**
+         * The output sub-directory option name.
+         */
+        static char const* const OUTPUT_SUBDIR_OPTION;
+        /**
+         * The output sub-directory option description.
+         */
+        static char const* const OUTPUT_SUBDIR_DESCRIPTION;
+
     };
 
 }}}  // namespace puppet::options::commands

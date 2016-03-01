@@ -174,6 +174,16 @@ namespace puppet { namespace compiler {
         return it->second;
     }
 
+    void environment::each_module(function<bool(module const&)> const& callback) const
+    {
+        // TODO: this function needs to be thread safe
+        for (auto& module : _modules) {
+            if (!callback(module)) {
+                return;
+            }
+        }
+    }
+
     void environment::import(logging::logger& logger, find_type type, string const& name)
     {
         string path;
@@ -191,7 +201,7 @@ namespace puppet { namespace compiler {
                 LOG(debug, "could not load 'init.pp' for module '%1%' because the module does not exist.", name);
                 return;
             }
-            path = module->find(type, "init");
+            path = module->find_file(type, "init");
         } else {
             // Split into module name and subpath
             auto module_name = name.substr(0, pos);
@@ -201,7 +211,7 @@ namespace puppet { namespace compiler {
                 LOG(debug, "could not load a file for '%1%' because module '%2%' does not exist.", name, module_name);
                 return;
             }
-            path = module->find(type, qualified_name);
+            path = module->find_file(type, qualified_name);
         }
 
         if (path.empty()) {

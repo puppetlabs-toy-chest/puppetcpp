@@ -16,6 +16,7 @@
 #include <deque>
 #include <memory>
 #include <unordered_map>
+#include <functional>
 
 namespace puppet { namespace compiler {
 
@@ -103,6 +104,12 @@ namespace puppet { namespace compiler {
          * @return Returns a pointer to the module or nullptr if the module does not exist.
          */
         module const* find_module(std::string const& name) const;
+
+        /**
+         * Enumerates the modules in the environment.
+         * @param callback The callback to invoke for each module in the environment.
+         */
+        void each_module(std::function<bool(module const&)> const& callback) const;
 
         /**
          * Imports a file into the environment's registry.

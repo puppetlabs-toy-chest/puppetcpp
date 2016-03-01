@@ -91,7 +91,7 @@ namespace puppet { namespace options { namespace commands {
         }
 
         // Get the options
-        auto level = get_level(options);
+        auto level = command::get_level(options);
         auto colorization = get_colorization(options);
         auto output_file = get_output_file(options);
         auto graph_file = get_graph_file(options);
