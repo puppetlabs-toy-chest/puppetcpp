@@ -58,7 +58,7 @@ namespace puppet { namespace options { namespace commands {
             (FACTS_OPTION_FULL, po::value<string>(), FACTS_DESCRIPTION)
             (GRAPH_FILE_OPTION_FULL, po::value<string>(), GRAPH_FILE_DESCRIPTION)
             (HELP_OPTION, HELP_DESCRIPTION)
-            (LOG_LEVEL_OPTION_FULL, po::value<logging::level>()->default_value(logging::level::notice, "notice"), command::LOG_LEVEL_DESCRIPTION)
+            (LOG_LEVEL_OPTION_FULL, po::value<string>()->default_value("notice"), command::LOG_LEVEL_DESCRIPTION)
             (MODULE_PATH_OPTION, po::value<string>(), MODULE_PATH_DESCRIPTION)
             (NODE_OPTION_FULL, po::value<string>(), NODE_DESCRIPTION)
             (NO_COLOR_OPTION, NO_COLOR_DESCRIPTION)

@@ -61,15 +61,6 @@ namespace puppet { namespace logging {
     };
 
     /**
-     * Reads a log level from an input stream.
-     * This is used in boost::lexical_cast<level>.
-     * @param in The input stream.
-     * @param level The returned log level.
-     * @returns Returns the input stream.
-     */
-    std::istream& operator>>(std::istream& in, logging::level& level);
-
-    /**
      * Produces the printed representation of the logging level.
      * @param out The stream to write.
      * @param level The logging level to print.

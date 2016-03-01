@@ -10,47 +10,6 @@ using boost::format;
 
 namespace puppet { namespace logging {
 
-    istream& operator>>(istream& in, logging::level& level)
-    {
-        string value;
-        if (in >> value) {
-            boost::algorithm::to_lower(value);
-            if (value == "debug") {
-                level = logging::level::debug;
-                return in;
-            }
-            if (value == "info") {
-                level = logging::level::info;
-                return in;
-            }
-            if (value == "notice") {
-                level = logging::level::notice;
-                return in;
-            }
-            if (value == "warning") {
-                level = logging::level::warning;
-                return in;
-            }
-            if (value == "err" || value == "error") {
-                level = logging::level::error;
-                return in;
-            }
-            if (value == "alert") {
-                level = logging::level::alert;
-                return in;
-            }
-            if (value == "emerg" || value == "emergency") {
-                level = logging::level::emergency;
-                return in;
-            }
-            if (value == "crit" || value == "critical") {
-                level = logging::level::critical;
-                return in;
-            }
-        }
-        throw runtime_error((boost::format("invalid log level '%1%': expected debug, info, notice, warning, error, alert, emergency, or critical.") % value).str());
-    }
-
     ostream& operator<<(ostream& out, logging::level level)
     {
         // Keep this in sync with the definition of logging::level

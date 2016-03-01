@@ -60,7 +60,7 @@ namespace puppet { namespace options { namespace commands {
             (ENVIRONMENT_OPTION_FULL, po::value<string>()->default_value("production"), ENVIRONMENT_DESCRIPTION)
             (ENVIRONMENT_PATH_OPTION, po::value<string>(), ENVIRONMENT_PATH_DESCRIPTION)
             (HELP_OPTION, HELP_DESCRIPTION)
-            (LOG_LEVEL_OPTION_FULL, po::value<logging::level>()->default_value(logging::level::warning, "warning"), LOG_LEVEL_DESCRIPTION)
+            (LOG_LEVEL_OPTION_FULL, po::value<string>()->default_value("warning"), LOG_LEVEL_DESCRIPTION)
             (MODULE_PATH_OPTION, po::value<string>(), MODULE_PATH_DESCRIPTION)
             (NO_COLOR_OPTION, NO_COLOR_DESCRIPTION)
             (OUTPUT_OPTION_FULL, po::value<string>(), OUTPUT_DESCRIPTION)

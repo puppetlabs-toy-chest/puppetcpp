@@ -90,7 +90,34 @@ namespace puppet { namespace options {
         if (options.count(VERBOSE_OPTION)) {
             return logging::level::info;
         }
-        return options[LOG_LEVEL_OPTION].as<logging::level>();
+
+        auto value = options[LOG_LEVEL_OPTION].as<string>();
+        auto level = boost::algorithm::to_lower_copy(value);
+        if (level == "debug") {
+            return logging::level::debug;
+        }
+        if (level == "info") {
+            return logging::level::info;
+        }
+        if (level == "notice") {
+            return logging::level::notice;
+        }
+        if (level == "warning") {
+            return logging::level::warning;
+        }
+        if (level == "err" || level == "error") {
+            return logging::level::error;
+        }
+        if (level == "alert") {
+            return logging::level::alert;
+        }
+        if (level == "emerg" || level == "emergency") {
+            return logging::level::emergency;
+        }
+        if (level == "crit" || level == "critical") {
+            return logging::level::critical;
+        }
+        throw option_exception((boost::format("invalid log level '%1%': expected debug, info, notice, warning, error, alert, emergency, or critical.") % value).str(), this);
     }
 
     boost::optional<bool> command::get_colorization(po::variables_map const& options) const
