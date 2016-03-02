@@ -12,6 +12,7 @@ add_executable(puppet_test
     compiler/environment.cc
     options/commands/compile.cc
     options/commands/help.cc
+    options/commands/parse.cc
     options/commands/version.cc
     options/parser.cc
     main.cc

@@ -80,6 +80,11 @@ SCENARIO("using the compile command", "[options]")
             REQUIRE_THROWS_AS(parser.parse({ "compile", "--verbose", "--loglevel=debug" }), option_exception);
         }
     }
+    WHEN("given an invalid log level") {
+        THEN("it should throw an exception") {
+            REQUIRE_THROWS_AS(parser.parse({ "parse", "--loglevel=notvalid" }), option_exception);
+        }
+    }
     WHEN("given conflicting colorization options") {
         THEN("it should throw an exception") {
             REQUIRE_THROWS_AS(parser.parse({ "compile", "--color", "--no-color" }), option_exception);
