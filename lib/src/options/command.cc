@@ -53,7 +53,7 @@ namespace puppet { namespace options {
             throw option_exception((boost::format("the '%1%' command expects at most %2% arguments.") % name() % positional.max_total_count()).str(), this);
         } catch (po::unknown_option const& ex) {
             throw option_exception((boost::format("unrecognized option '%1%' for command '%2%'.") % ex.get_option_name() % name()).str(), this);
-        }  catch (po::error const& ex) {
+        } catch (po::error const& ex) {
             throw option_exception(ex.what(), this);
         } catch (runtime_error const& ex) {
             throw option_exception(ex.what(), this);
@@ -75,5 +75,75 @@ namespace puppet { namespace options {
     {
         return {};
     }
+
+    logging::level command::get_level(po::variables_map const& options) const
+    {
+        // Check for conflicting options
+        if ((options.count(DEBUG_OPTION) + options.count(VERBOSE_OPTION) + (options[LOG_LEVEL_OPTION].defaulted() ? 0 : 1)) > 1) {
+            throw option_exception((boost::format("%1%, %2%, and %3% options conflict: please specify only one.") % DEBUG_OPTION % VERBOSE_OPTION % LOG_LEVEL_OPTION).str(), this);
+        }
+
+        // Override the log level for debug/verbose
+        if (options.count(DEBUG_OPTION)) {
+            return logging::level::debug;
+        }
+        if (options.count(VERBOSE_OPTION)) {
+            return logging::level::info;
+        }
+
+        auto value = options[LOG_LEVEL_OPTION].as<string>();
+        auto level = boost::algorithm::to_lower_copy(value);
+        if (level == "debug") {
+            return logging::level::debug;
+        }
+        if (level == "info") {
+            return logging::level::info;
+        }
+        if (level == "notice") {
+            return logging::level::notice;
+        }
+        if (level == "warning") {
+            return logging::level::warning;
+        }
+        if (level == "err" || level == "error") {
+            return logging::level::error;
+        }
+        if (level == "alert") {
+            return logging::level::alert;
+        }
+        if (level == "emerg" || level == "emergency") {
+            return logging::level::emergency;
+        }
+        if (level == "crit" || level == "critical") {
+            return logging::level::critical;
+        }
+        throw option_exception((boost::format("invalid log level '%1%': expected debug, info, notice, warning, error, alert, emergency, or critical.") % value).str(), this);
+    }
+
+    boost::optional<bool> command::get_colorization(po::variables_map const& options) const
+    {
+        if (options.count(COLOR_OPTION) && options.count(NO_COLOR_OPTION)) {
+            throw option_exception((boost::format("%1% and %2% options conflict: please specify only one.") % COLOR_OPTION % NO_COLOR_OPTION).str(), this);
+        }
+        if (!options.count(COLOR_OPTION) && !options.count(NO_COLOR_OPTION)) {
+            return boost::none;
+        }
+        return options.count(COLOR_OPTION) > 0;
+    }
+
+    char const* const command::COLOR_OPTION          = "color";
+    char const* const command::COLOR_DESCRIPTION     = "Force color output on platforms that support colorized output.";
+    char const* const command::DEBUG_OPTION          = "debug";
+    char const* const command::DEBUG_OPTION_FULL     = "debug,d";
+    char const* const command::DEBUG_DESCRIPTION     = "Enable debug output.";
+    char const* const command::HELP_OPTION           = "help";
+    char const* const command::HELP_DESCRIPTION      = "Display command help.";
+    char const* const command::LOG_LEVEL_OPTION      = "log-level";
+    char const* const command::LOG_LEVEL_OPTION_FULL = "log-level,l";
+    char const* const command::LOG_LEVEL_DESCRIPTION = "Set logging level.\nSupported levels: debug, info, notice, warning, error, alert, emergency, critical.";
+    char const* const command::NO_COLOR_OPTION       = "no-color";
+    char const* const command::NO_COLOR_DESCRIPTION  = "Disable color output.";
+    char const* const command::VERBOSE_OPTION        = "verbose";
+    char const* const command::VERBOSE_DESCRIPTION   = "Enable verbose output (info level).";
 
 }}  // namespace puppet::options

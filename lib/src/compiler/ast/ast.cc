@@ -1529,11 +1529,11 @@ namespace puppet { namespace compiler { namespace ast {
         void write(syntax_tree const& tree)
         {
             _emitter << YAML::BeginMap;
-            write("parameters", tree.parameters);
-            write("statements", tree.statements);
             if (_include_path) {
                 write("path", tree.path());
             }
+            write("parameters", tree.parameters);
+            write("statements", tree.statements);
             _emitter << YAML::EndMap;
         }
 

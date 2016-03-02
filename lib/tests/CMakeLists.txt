@@ -9,8 +9,10 @@ add_executable(puppet_test
     compiler/ast/ast.cc
     compiler/lexer/lexer.cc
     compiler/parser/parser.cc
+    compiler/environment.cc
     options/commands/compile.cc
     options/commands/help.cc
+    options/commands/parse.cc
     options/commands/version.cc
     options/parser.cc
     main.cc

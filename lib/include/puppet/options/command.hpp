@@ -5,7 +5,9 @@
 #pragma once
 
 #include "executor.hpp"
+#include "../logging/logger.hpp"
 #include <boost/program_options.hpp>
+#include <boost/optional.hpp>
 #include <vector>
 #include <string>
 
@@ -92,6 +94,77 @@ namespace puppet { namespace options {
          * @return Returns the command executor.
          */
         virtual executor create_executor(boost::program_options::variables_map const& options) const = 0;
+
+        /**
+         * Gets the logging level from the given parsed options.
+         * @param options The parsed options.
+         * @return Returns the logging level.
+         */
+        logging::level get_level(boost::program_options::variables_map const& options) const;
+
+        /**
+         * Gets the colorization option from the given parsed options.
+         * @param options The parsed options.
+         * @return Returns the colorization option.
+         */
+        boost::optional<bool> get_colorization(boost::program_options::variables_map const& options) const;
+
+        /**
+         * The debug option name.
+         */
+        static char const* const DEBUG_OPTION;
+        /**
+         * The debug option full name.
+         */
+        static char const* const DEBUG_OPTION_FULL;
+        /**
+         * The debug option description.
+         */
+        static char const* const DEBUG_DESCRIPTION;
+        /**
+         * The color option name.
+         */
+        static char const* const COLOR_OPTION;
+        /**
+         * The color option description.
+         */
+        static char const* const COLOR_DESCRIPTION;
+        /**
+         * The help option name.
+         */
+        static char const* const HELP_OPTION;
+        /**
+         * The help option description.
+         */
+        static char const* const HELP_DESCRIPTION;
+        /**
+         * The log level option name.
+         */
+        static char const* const LOG_LEVEL_OPTION;
+        /**
+         * The log level option full name.
+         */
+        static char const* const LOG_LEVEL_OPTION_FULL;
+        /**
+         * The log level option description.
+         */
+        static char const* const LOG_LEVEL_DESCRIPTION;
+        /**
+         * The no color option name.
+         */
+        static char const* const NO_COLOR_OPTION;
+        /**
+         * The no color option description.
+         */
+        static char const* const NO_COLOR_DESCRIPTION;
+        /**
+         * The verbose option name.
+         */
+        static char const* const VERBOSE_OPTION;
+        /**
+         * The verbose option description.
+         */
+        static char const* const VERBOSE_DESCRIPTION;
 
      private:
         options::parser const& _parser;

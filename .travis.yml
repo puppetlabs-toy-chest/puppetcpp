@@ -10,7 +10,9 @@ script:
     cd /puppetcpp &&
     cmake . -DTEST_COVERAGE=$TEST_COVERAGE -DCMAKE_BUILD_TYPE=$BUILD &&
     make -j 2 &&
+    mkdir -p /etc/puppetlabs/code/environments/production &&
     bin/puppetcpp help &&
+    bin/puppetcpp parse lib/tests/fixtures/compiler/parser/good/sample.pp &&
     bin/puppetcpp compile lib/tests/fixtures/compiler/parser/good/sample.pp &&
     cat catalog.json &&
     ctest -V &&
