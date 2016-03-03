@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "settings.hpp"
 #include <string>
 #include <memory>
 #include <functional>
@@ -29,8 +30,9 @@ namespace puppet { namespace compiler {
         /**
          * Constructs a new finder.
          * @param directory The directory for the finder to use.
+         * @param settings The settings to initialize with or nullptr to use default locations.
          */
-        explicit finder(std::string directory);
+        explicit finder(std::string directory, compiler::settings const* settings = nullptr);
 
         /**
          * Gets the directory used by the finder.
@@ -55,7 +57,10 @@ namespace puppet { namespace compiler {
         void each_file(find_type type, std::function<bool(std::string const&)> const& callback) const;
 
      private:
+        std::string const& base_path(find_type type) const;
+
         std::string _directory;
+        std::string _manifests_path;
     };
 
 }}  // puppet::compiler

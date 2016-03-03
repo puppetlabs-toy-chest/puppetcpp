@@ -68,22 +68,6 @@ namespace puppet { namespace options { namespace commands {
         return options;
     }
 
-    po::options_description compile::create_hidden_options() const
-    {
-        po::options_description options;
-        options.add_options()
-            (MANIFESTS_OPTION, po::value<vector<string>>())
-            ;
-        return options;
-    }
-
-    po::positional_options_description compile::create_positional_options() const
-    {
-        po::positional_options_description options;
-        options.add(MANIFESTS_OPTION, -1);
-        return options;
-    }
-
     executor compile::create_executor(po::variables_map const& options) const
     {
         if (options.count(HELP_OPTION)) {
@@ -124,17 +108,8 @@ namespace puppet { namespace options { namespace commands {
                     LOG(debug, "using code directory '%1%'.", settings.get(settings::code_directory));
 
                     // Create a new environment with the builtin functions and operators
-                    auto environment = compiler::environment::create(logger, settings, manifests);
+                    auto environment = compiler::environment::create(logger, settings);
                     environment->dispatcher().add_builtins();
-
-                    if (environment->manifests().empty()) {
-                        throw option_exception(
-                            (boost::format("no manifests were found for environment '%1%': expected at least one manifest as an argument.") %
-                             name()
-                            ).str(),
-                            this
-                        );
-                    }
 
                     // Construct a node
                     compiler::node node{logger, node_name, environment, facts};
@@ -149,7 +124,7 @@ namespace puppet { namespace options { namespace commands {
                         LOG(notice, "compiling for node '%1%' with environment '%2%'.", node.name(), node.environment().name());
 
                         // Compile the node
-                        auto catalog = node.compile();
+                        auto catalog = node.compile(manifests);
 
                         // Write the graph file if given one
                         if (!graph_file.empty()) {

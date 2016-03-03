@@ -30,7 +30,11 @@ SCENARIO("environment with only manifests", "[environment]")
     auto& modules = environment->modules();
     REQUIRE(modules.empty());
 
-    auto& manifests = environment->manifests();
+    vector<string> manifests;
+    environment->each_file(find_type::manifest, [&](auto& path) {
+        manifests.emplace_back(path);
+        return true;
+    });
     REQUIRE(manifests.size() == 2);
     REQUIRE(manifests[0] == (manifests_dir / "bar.pp").string());
     REQUIRE(manifests[1] == (manifests_dir / "foo.pp").string());
@@ -65,7 +69,11 @@ SCENARIO("environment with modules", "[environment]")
     REQUIRE(modules[2].name() == "foo");
     REQUIRE(modules[2].directory() == (modules_dir / "foo").string());
 
-    auto& manifests = environment->manifests();
+    vector<string> manifests;
+    environment->each_file(find_type::manifest, [&](auto& path) {
+        manifests.emplace_back(path);
+        return true;
+    });
     REQUIRE(manifests.size() == 1);
     REQUIRE(manifests[0] == (manifests_dir / "site.pp").string());
 }
@@ -98,7 +106,11 @@ SCENARIO("environment with configuration file", "[environment]")
     REQUIRE(modules[2].name() == "zed");
     REQUIRE(modules[2].directory() == (modules_dir / "zed").string());
 
-    auto& manifests = environment->manifests();
+    vector<string> manifests;
+    environment->each_file(find_type::manifest, [&](auto& path) {
+        manifests.emplace_back(path);
+        return true;
+    });
     REQUIRE(manifests.size() == 1);
     REQUIRE(manifests[0] == (environment_dir / "site.pp").string());
 }
