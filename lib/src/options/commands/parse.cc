@@ -103,27 +103,21 @@ namespace puppet { namespace options { namespace commands {
         auto base_path = fs::path{ directory };
         auto output_directory = fs::path{ make_absolute(output_subdirectory, base_path.string()) };
 
+        compiler::settings temp;
+
         if (as_module) {
             // Treat the directory as a module using a finder
             LOG(info, "parsing directory '%1%' as module '%2%'.", directory, base_path.filename().string());
-            compiler::finder finder{ directory };
-            finder.each_file(find_type::manifest, [&](auto const& manifest) {
-                parse_manifest(logger, manifest, get_output_path(manifest, output_directory, base_path), stats);
-                return true;
-            });
-
         } else {
             LOG(info, "parsing directory '%1%'.", directory);
-
-            fs::recursive_directory_iterator end;
-            for (fs::recursive_directory_iterator it{directory}; it != end; ++it) {
-                if (!fs::is_regular_file(it->status()) || it->path().extension() != ".pp") {
-                    continue;
-                }
-                auto& manifest = it->path().string();
-                parse_manifest(logger, manifest, get_output_path(manifest, output_directory, base_path), stats);
-            }
+            temp.set(settings::manifest, ".");
         }
+
+        compiler::finder finder{ directory, as_module ? nullptr : &temp };
+        finder.each_file(find_type::manifest, [&](auto const& manifest) {
+            parse_manifest(logger, manifest, get_output_path(manifest, output_directory, base_path), stats);
+            return true;
+        });
     }
 
     static void parse_module(logging::logger& logger, compiler::module const& module, string const& output_subdirectory, parse_stats& stats)
@@ -248,16 +242,6 @@ namespace puppet { namespace options { namespace commands {
         auto output_subdirectory = get_output_subdirectory(options);
         bool as_module = options.count(AS_MODULE_OPTION);
 
-        // Validate any manifests given
-        for (auto& manifest : manifests) {
-            manifest = make_absolute(manifest);
-
-            sys::error_code ec;
-            if (!fs::is_regular_file(manifest, ec) && !fs::is_directory(manifest, ec)) {
-                throw option_exception((boost::format("'%1%' is not a manifest file or directory.") % manifest).str(), this);
-            }
-        }
-
         // Validate the output option
         if (!output.empty()) {
             if (manifests.size() != 1) {
@@ -292,7 +276,7 @@ namespace puppet { namespace options { namespace commands {
 
                     if (manifests.empty()) {
                         // Create a new environment
-                        auto environment = compiler::environment::create(logger, settings, manifests);
+                        auto environment = compiler::environment::create(logger, settings);
                         parse_environment(logger, *environment, output_subdirectory, stats);
                     } else {
                         if (manifests.size() == 1 && !output.empty()) {
@@ -364,7 +348,17 @@ namespace puppet { namespace options { namespace commands {
 
     vector<string> parse::get_manifests(po::variables_map const& options) const
     {
-        return options.count(MANIFESTS_OPTION) ? options[MANIFESTS_OPTION].as<vector<string>>() : vector<string>{};
+        vector<string> manifests;
+        if (options.count(MANIFESTS_OPTION)) {
+            for (auto& manifest : options[MANIFESTS_OPTION].as<vector<string>>()) {
+                sys::error_code ec;
+                if (!fs::is_regular_file(manifest, ec) && !fs::is_directory(manifest, ec)) {
+                    throw option_exception((boost::format("'%1%' is not a file or directory.") % manifest).str(), this);
+                }
+                manifests.emplace_back(make_absolute(manifest));
+            }
+        }
+        return manifests;
     }
 
     string parse::get_output_file(po::variables_map const& options) const

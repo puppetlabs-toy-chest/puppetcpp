@@ -36,10 +36,9 @@ namespace puppet { namespace compiler {
          * Creates a new environment given the compiler settings.
          * @param logger The logger to use for logging messages.
          * @param settings The settings to use for the environment.
-         * @param manifests The main manifests to use instead of the environment's default.
          * @return Returns the new environment.
          */
-        static std::shared_ptr<environment> create(logging::logger& logger, compiler::settings settings, std::vector<std::string> const& manifests = {});
+        static std::shared_ptr<environment> create(logging::logger& logger, compiler::settings settings);
 
         /**
          * Gets the name of the environment.
@@ -79,17 +78,11 @@ namespace puppet { namespace compiler {
         std::deque<module> const& modules() const;
 
         /**
-         * Gets the environment's main manifests.
-         * Note: the manifest list will be empty unless load is called.
-         * @return Returns the environment's main manifests.
-         */
-        std::vector<std::string> const& manifests() const;
-
-        /**
          * Compiles the environment's manifests for the given evaluation context.
          * @param context The current evaluation context.
+         * @param manifests The main manifests to use instead of the environment's manifests.
          */
-        void compile(evaluation::context& context);
+        void compile(evaluation::context& context, std::vector<std::string> const& manifests = {});
 
         /**
          * Finds a module by name.
@@ -121,19 +114,14 @@ namespace puppet { namespace compiler {
 
      private:
         environment(std::string name, std::string directory, compiler::settings settings);
-        void populate(logging::logger& logger, std::vector<std::string> const& manifests);
-        void load_environment_settings(logging::logger& logger);
         void add_modules(logging::logger& logger);
         void add_modules(logging::logger& logger, std::string const& directory);
-        void add_manifests(logging::logger& logger);
-        void add_manifests(logging::logger& logger, std::string const& directory, bool throw_if_missing = false);
         std::shared_ptr<ast::syntax_tree> import(logging::logger& logger, std::string const& path, compiler::module const* module = nullptr);
 
         std::string _name;
         compiler::settings _settings;
         compiler::registry _registry;
         evaluation::dispatcher _dispatcher;
-        std::vector<std::string> _manifests;
         std::deque<module> _modules;
         std::unordered_map<std::string, module*> _module_map;
         std::unordered_map<std::string, std::shared_ptr<ast::syntax_tree>> _parsed;

@@ -65,9 +65,10 @@ namespace puppet { namespace compiler {
 
         /**
          * Compiles manifests into a catalog for this node.
+         * @param manifests The main manifests to use instead of the environment's manifests.
          * @return Returns the compiled catalog for the node.
          */
-        catalog compile();
+        catalog compile(std::vector<std::string> const& manifests = {});
 
         /**
          * Calls the given callback for each name associated with the node.

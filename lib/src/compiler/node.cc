@@ -52,7 +52,7 @@ namespace puppet { namespace compiler {
         return _facts;
     }
 
-    catalog node::compile()
+    catalog node::compile(vector<string> const& manifests)
     {
         try {
             compiler::catalog catalog{ name(), _environment->name() };
@@ -64,7 +64,7 @@ namespace puppet { namespace compiler {
             // TODO: set node parameters in the top scope
 
             // Compile the associated environment
-            _environment->compile(context);
+            _environment->compile(context, manifests);
 
             // TODO: evaluate node classes
 

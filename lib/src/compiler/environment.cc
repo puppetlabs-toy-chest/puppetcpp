@@ -18,7 +18,50 @@ namespace po = boost::program_options;
 
 namespace puppet { namespace compiler {
 
-    shared_ptr<environment> environment::create(logging::logger& logger, compiler::settings settings, vector<string> const& manifests)
+    static void load_environment_settings(logging::logger& logger, string const& directory, compiler::settings& settings)
+    {
+        static char const* const CONFIGURATION_FILE = "environment.conf";
+
+        string config_file_path = (fs::path{ directory } / CONFIGURATION_FILE).string();
+        sys::error_code ec;
+        if (!fs::is_regular_file(config_file_path, ec)) {
+            LOG(debug, "environment configuration file '%1%' was not found.", config_file_path);
+            return;
+        }
+
+        LOG(debug, "loading environment settings from '%1%'.", config_file_path);
+
+        try {
+            // Read the options from the config file
+            po::options_description description("");
+            description.add_options()
+                (settings::module_path.c_str(), po::value<string>(), "")
+                (settings::manifest.c_str(),    po::value<string>(), "");
+            po::variables_map vm;
+            po::store(po::parse_config_file<char>(config_file_path.c_str(), description, true), vm);
+            po::notify(vm);
+
+            if (vm.count(settings::module_path)) {
+                auto module_path = vm[settings::module_path].as<string>();
+                LOG(debug, "using module path '%1%' from environment configuration file.", module_path);
+                settings.set(settings::module_path, rvalue_cast(module_path));
+            }
+            if (vm.count(settings::manifest)) {
+                auto manifest = vm[settings::manifest].as<string>();
+                LOG(debug, "using main manifest '%1%' from environment configuration file.", manifest);
+                settings.set(settings::manifest, rvalue_cast(manifest));
+            }
+        } catch (po::error const& ex) {
+            throw compilation_exception(
+                (boost::format("failed to read environment configuration file '%1%': %2%.") %
+                 config_file_path %
+                 ex.what()
+                ).str()
+            );
+        }
+    }
+
+    shared_ptr<environment> environment::create(logging::logger& logger, compiler::settings settings)
     {
         // Get the name from the settings
         string name = boost::lexical_cast<string>(settings.get(settings::environment, false));
@@ -64,8 +107,11 @@ namespace puppet { namespace compiler {
             }
         };
 
+        // Load the environment settings
+        load_environment_settings(logger, base_directory, settings);
+
         auto environment = make_shared<make_shared_enabler>(rvalue_cast(name), rvalue_cast(base_directory), rvalue_cast(settings));
-        environment->populate(logger, manifests);
+        environment->add_modules(logger);
         return environment;
     }
 
@@ -99,22 +145,37 @@ namespace puppet { namespace compiler {
         return _modules;
     }
 
-    vector<string> const& environment::manifests() const
-    {
-        return _manifests;
-    }
-
-    void environment::compile(evaluation::context& context)
+    void environment::compile(evaluation::context& context, vector<string> const& manifests)
     {
         auto& logger = context.node().logger();
 
-        // Load all the main manifests
         vector<shared_ptr<ast::syntax_tree>> trees;
-        for (auto const& manifest : _manifests) {
+        auto parse = [&](string const& manifest) {
             try {
                 trees.emplace_back(import(logger, manifest));
             } catch (parse_exception const& ex) {
                 throw compilation_exception(ex, manifest);
+            }
+        };
+
+        // Load all the main manifests
+        if (manifests.empty()) {
+            each_file(find_type::manifest, [&](auto const& manifest) {
+                parse(manifest);
+                return true;
+            });
+        } else {
+            // Set the finder to treat the manifests base as the manifest itself
+            // This handles recursively searching for manifests if a directory
+            compiler::settings temp;
+            temp.set(settings::manifest, ".");
+
+            for (auto& manifest : manifests) {
+                compiler::finder finder{ manifest, &temp };
+                finder.each_file(find_type::manifest, [&](auto const& manifest) {
+                    parse(manifest);
+                    return true;
+                });
             }
         }
 
@@ -229,76 +290,10 @@ namespace puppet { namespace compiler {
     }
 
     environment::environment(string name, string directory, compiler::settings settings) :
-        finder(rvalue_cast(directory)),
+        finder(rvalue_cast(directory), &settings),
         _name(rvalue_cast(name)),
         _settings(rvalue_cast(settings))
     {
-    }
-
-    void environment::populate(logging::logger& logger, vector<string> const& manifests)
-    {
-        load_environment_settings(logger);
-
-        add_modules(logger);
-
-        if (manifests.empty()) {
-            add_manifests(logger);
-        } else {
-            for (auto const& manifest : manifests) {
-                auto path = make_absolute(manifest);
-
-                sys::error_code ec;
-                if (fs::is_regular_file(path, ec)) {
-                    _manifests.emplace_back(rvalue_cast(path));
-                    continue;
-                }
-
-                add_manifests(logger, path, true);
-            }
-        }
-    }
-
-    void environment::load_environment_settings(logging::logger& logger)
-    {
-        static char const* const CONFIGURATION_FILE = "environment.conf";
-
-        string config_file_path = (fs::path{ this->directory() } / CONFIGURATION_FILE).string();
-        sys::error_code ec;
-        if (!fs::is_regular_file(config_file_path, ec)) {
-            LOG(debug, "environment configuration file '%1%' was not found; using defaults.", config_file_path);
-            return;
-        }
-
-        LOG(debug, "loading environment settings from '%1%'.", config_file_path);
-
-        try {
-            // Read the options from the config file
-            po::options_description description("");
-            description.add_options()
-                (settings::module_path.c_str(), po::value<string>(), "")
-                (settings::manifest.c_str(),    po::value<string>(), "");
-            po::variables_map vm;
-            po::store(po::parse_config_file<char>(config_file_path.c_str(), description, true), vm);
-            po::notify(vm);
-
-            if (vm.count(settings::module_path)) {
-                auto module_path = vm[settings::module_path].as<string>();
-                LOG(debug, "using module path '%1%' from environment configuration file.", module_path);
-                _settings.set(settings::module_path, rvalue_cast(module_path));
-            }
-            if (vm.count(settings::manifest)) {
-                auto manifest = vm[settings::manifest].as<string>();
-                LOG(debug, "using main manifest '%1%' from environment configuration file.", manifest);
-                _settings.set(settings::manifest, rvalue_cast(manifest));
-            }
-        } catch (po::error const& ex) {
-            throw compilation_exception(
-                (boost::format("failed to read environment configuration file '%1%': %2%.") %
-                 config_file_path %
-                 ex.what()
-                ).str()
-            );
-        }
     }
 
     void environment::add_modules(logging::logger& logger)
@@ -378,64 +373,6 @@ namespace puppet { namespace compiler {
             LOG(debug, "found module '%1%' at '%2%'.", module.second, module.first);
             _modules.emplace_back(*this, rvalue_cast(module.first), rvalue_cast(module.second));
             _module_map.emplace(_modules.back().name(), &_modules.back());
-        }
-    }
-
-    void environment::add_manifests(logging::logger& logger)
-    {
-        auto main_manifest = _settings.get(settings::manifest);
-        if (!main_manifest.as<string>()) {
-            throw compilation_exception(
-                (boost::format("expected a string for $%1% setting.") %
-                 settings::manifest
-                ).str()
-            );
-        }
-
-        auto path = make_absolute(*main_manifest.as<string>(), this->directory());
-
-        sys::error_code ec;
-        if (fs::is_regular_file(path, ec)) {
-            LOG(debug, "using '%1%' as the main manifest.", path);
-            _manifests.emplace_back(rvalue_cast(path));
-            return;
-        }
-
-        ec.clear();
-        if (fs::is_directory(path, ec)) {
-            add_manifests(logger, path);
-        }
-    }
-
-    void environment::add_manifests(logging::logger& logger, string const& directory, bool throw_if_missing)
-    {
-        sys::error_code ec;
-        if (!fs::is_directory(directory, ec) || ec) {
-            if (throw_if_missing) {
-                throw compilation_exception((boost::format("'%1%' is not a manifest file or a directory containing manifests.") % directory).str());
-            }
-            LOG(debug, "skipping manifest directory '%1%' because it is not a directory.", directory);
-            return;
-        }
-        LOG(debug, "searching for manifests in '%1%'.", directory);
-
-        fs::directory_iterator it{ directory };
-        fs::directory_iterator end{};
-
-        // Add the files to a vector so we can sort them first
-        vector<string> manifests;
-        for (; it != end; ++it) {
-            if (fs::is_regular_file(it->status()) && it->path().extension() == ".pp") {
-                manifests.emplace_back(it->path().string());
-            }
-        }
-
-        // Sort the paths so they are in a deterministic order
-        sort(manifests.begin(), manifests.end());
-
-        for (auto& manifest : manifests) {
-            LOG(debug, "found main manifest '%1%'.", manifest);
-            _manifests.emplace_back(rvalue_cast(manifest));
         }
     }
 

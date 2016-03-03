@@ -50,18 +50,6 @@ namespace puppet { namespace options { namespace commands {
 
      protected:
         /**
-         * Creates the command's hidden options.
-         * @return Returns the command's hidden options.
-         */
-        boost::program_options::options_description create_hidden_options() const override;
-
-        /**
-         * Creates the command's positional options.
-         * @return Returns the command's positional options.
-         */
-        boost::program_options::positional_options_description create_positional_options() const override;
-
-        /**
          * Creates an executor for the given parsed options.
          * @param options The parsed options.
          * @return Returns the command executor.
