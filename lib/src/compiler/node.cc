@@ -55,11 +55,9 @@ namespace puppet { namespace compiler {
     catalog node::compile(vector<string> const& manifests)
     {
         try {
+            // Create the catalog and evaluation context
             compiler::catalog catalog{ name(), _environment->name() };
-
-            // Create the evaluation context
-            evaluation::context context{ *this, catalog };
-            create_initial_resources(context);
+            auto context = create_context(catalog);
 
             // TODO: set node parameters in the top scope
 
@@ -89,9 +87,9 @@ namespace puppet { namespace compiler {
         }
     }
 
-    void node::create_initial_resources(evaluation::context& context) const
+    evaluation::context node::create_context(compiler::catalog& catalog)
     {
-        auto& catalog = context.catalog();
+        evaluation::context context { *this, catalog };
 
         // Create Stage[main]
         auto main_stage = catalog.add(types::resource("stage", "main"));
@@ -114,13 +112,13 @@ namespace puppet { namespace compiler {
             return true;
         });
 
-        // TODO: set settings in the scope
-
         auto main_class = catalog.add(types::resource("class", "main"), main_stage);
         if (!main_class) {
             throw runtime_error("expected main class to not be present.");
         }
         context.top_scope()->resource(main_class);
+
+        return context;
     }
 
 }}  // namespace puppet::compiler

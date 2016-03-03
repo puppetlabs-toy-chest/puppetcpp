@@ -8,6 +8,7 @@ include_directories(
     ${Facter_INCLUDE_DIRS}
     ${RAPIDJSON_INCLUDE_DIRS}
     ${UTF8CPP_INCLUDE_DIRS}
+    ${Readline_INCLUDE_DIR}
 )
 
 # Set common sources
@@ -79,6 +80,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/dispatcher.cc
     src/compiler/evaluation/evaluator.cc
     src/compiler/evaluation/postfix_evaluator.cc
+    src/compiler/evaluation/repl.cc
     src/compiler/evaluation/scope.cc
     src/compiler/evaluation/stack_frame.cc
     src/compiler/lexer/lexer.cc
@@ -102,6 +104,7 @@ set(PUPPET_COMMON_SOURCES
     src/options/commands/compile.cc
     src/options/commands/help.cc
     src/options/commands/parse.cc
+    src/options/commands/repl.cc
     src/options/commands/version.cc
     src/options/command.cc
     src/options/executor.cc
@@ -182,6 +185,7 @@ target_link_libraries(puppet
     ${Boost_LIBRARIES}
     ${Facter_LIBRARY}
     ${YAMLCPP_LIBRARIES}
+    ${Readline_LIBRARY}
 )
 
 install(TARGETS puppet DESTINATION lib)

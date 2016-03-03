@@ -126,6 +126,11 @@ namespace puppet { namespace compiler {
         return _settings;
     }
 
+    compiler::registry& environment::registry()
+    {
+        return _registry;
+    }
+
     compiler::registry const& environment::registry() const
     {
         return _registry;

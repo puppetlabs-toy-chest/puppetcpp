@@ -68,54 +68,21 @@ namespace puppet { namespace compiler { namespace parser {
 
             // If not all tokens were processed and the iterator points at a valid token, handle unexpected token
             if (token_begin != token_end && token_is_valid(*token_begin)) {
-                position begin;
-                position end;
-                tie(begin, end) = boost::apply_visitor(token_range_visitor(), token_begin->value());
-                throw parse_exception(
-                    (boost::format("syntax error: unexpected %1%.") % static_cast<token_id>(token_begin->id())).str(),
-                    begin,
-                    end
-                );
+                throw parse_exception{ *token_begin };
             }
-
-            // Unexpected character in the input
-            ostringstream message;
-            if (begin != end) {
-                message << "unexpected character ";
-                if (isprint(*begin)) {
-                    message << '\'' << *begin << '\'';
-                } else {
-                    message << "0x" << setw(2) << setfill('0') << static_cast<int>(*begin);
-                }
-                message << ".";
-            } else {
-                message << "unexpected end of input.";
-            }
-            throw parse_exception(
-                message.str(),
-                begin.position(),
-                lexer::position{ begin.position().offset() + 1, begin.position().line() }
-            );
+            throw parse_exception{ begin, end };
         } catch (lexer_exception<typename Lexer::input_iterator_type> const& ex) {
-            throw parse_exception(ex.what(), ex.begin().position(), ex.end().position());
+            throw parse_exception{ ex };
         } catch (x3::expectation_failure<typename Lexer::iterator_type> const& ex) {
             position begin;
             position end;
-
             if (ex.where()->id() == boost::lexer::npos) {
-                begin = get_last_position(input);
-                end = position{ begin.offset() + 1, begin.line() };
+                begin = lexer::get_last_position(input);
+                end = lexer::position{ begin.offset() + 1, begin.line() };
             } else {
-                tie(begin, end) = boost::apply_visitor(token_range_visitor(), ex.where()->value());
+                tie(begin, end) = boost::apply_visitor(lexer::token_range_visitor(), ex.where()->value());
             }
-            throw parse_exception(
-                (boost::format("expected %1% but found %2%.") %
-                 ex.which() %
-                 static_cast<token_id>(ex.where()->id())
-                ).str(),
-                begin,
-                end
-            );
+            throw parse_exception{ ex, rvalue_cast(begin), rvalue_cast(end) };
         }
     }
 

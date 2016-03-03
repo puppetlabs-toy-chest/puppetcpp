@@ -7,6 +7,7 @@
 #include "lexer/position.hpp"
 #include "evaluation/stack_frame.hpp"
 #include "../cast.hpp"
+#include <boost/spirit/home/x3.hpp>
 #include <string>
 #include <exception>
 #include <memory>
@@ -92,6 +93,58 @@ namespace puppet { namespace compiler {
     struct parse_exception : std::runtime_error
     {
         /**
+         * Constructs a parse exception for the token where lexing failed.
+         * @tparam Token The token type.
+         * @param token The token where lexing failed.
+         */
+        template <typename Token>
+        explicit parse_exception(Token const& token) :
+            std::runtime_error(format_message(static_cast<lexer::token_id>(token.id())))
+        {
+            std::tie(_begin, _end) = boost::apply_visitor(lexer::token_range_visitor(), token.value());
+        }
+
+        /**
+         * Constructs a parse exception for the input iterators where lexing failed.
+         * @tparam Iterator The input iterator type.
+         * @param begin The beginning input iterator.
+         * @param end The ending input iterator.
+         */
+        template <typename Iterator>
+        parse_exception(Iterator const& begin, Iterator const& end) :
+            parse_exception(
+                format_message(begin == end ? static_cast<boost::optional<char>>(boost::none) : *begin),
+                begin.position(),
+                lexer::position{ begin.position().offset() + 1, begin.position().line() }
+            )
+        {
+        }
+
+        /**
+         * Constructs a parse exception for a lexer exception.
+         * @tparam Iterator The input iterator type.
+         * @param ex The lexer exception.
+         */
+        template <typename Iterator>
+        parse_exception(lexer_exception<Iterator> const& ex) :
+            parse_exception(ex.what(), ex.begin().position(), ex.end().position())
+        {
+        }
+
+        /**
+         * Constructs a parse exception for an expectation failure exception.
+         * @tparam Iterator The token iterator type.
+         * @param ex The expectation failure exception.
+         * @param begin The beginning position for the parse exception.
+         * @param end The ending position for the parse exception.
+         */
+        template <typename Iterator>
+        parse_exception(boost::spirit::x3::expectation_failure<Iterator> const& ex, lexer::position begin, lexer::position end) :
+            parse_exception(format_message(ex.which(), static_cast<lexer::token_id>(ex.where()->id())), rvalue_cast(begin), rvalue_cast(end))
+        {
+        }
+
+        /**
          * Constructs a parse exception.
          * @param message The exception message.
          * @param begin The beginning position for the parse exception.
@@ -112,6 +165,10 @@ namespace puppet { namespace compiler {
         lexer::position const& end() const;
 
     private:
+        static std::string format_message(lexer::token_id id);
+        static std::string format_message(boost::optional<char> character);
+        static std::string format_message(std::string const& expected, lexer::token_id found);
+
         lexer::position _begin;
         lexer::position _end;
     };
@@ -173,8 +230,9 @@ namespace puppet { namespace compiler {
          * Constructs a compilation exception from a parse exception.
          * @param ex The parse exception.
          * @param path The path to the file that was parsed.
+         * @param source The source code; if empty, the source text will be read from the file.
          */
-        compilation_exception(parse_exception const& ex, std::string const& path);
+        compilation_exception(parse_exception const& ex, std::string const& path, std::string const& source = {});
 
         /**
          * Constructs a compilation exception from an evaluation exception.

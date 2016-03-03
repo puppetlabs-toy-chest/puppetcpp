@@ -15,7 +15,7 @@ namespace puppet { namespace facts {
     facter::facter()
     {
         // Add default facts
-        _collection.add_default_facts(true);
+        _collection.add_default_facts(false);
         _collection.add_external_facts();
 
         // TODO: support additional locations for external facts?
