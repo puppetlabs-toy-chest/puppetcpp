@@ -923,21 +923,22 @@ namespace puppet { namespace compiler { namespace evaluation {
                 }
 
                 // Add the resource to the catalog
+                types::resource type{ type_name, rvalue_cast(resource_title) };
                 auto resource = catalog.add(
-                    types::resource(type_name, rvalue_cast(resource_title)),
+                    type,
                     container,
                     scope,
                     body.context(),
                     is_virtual,
                     is_exported);
                 if (!resource) {
-                    resource = catalog.find(types::resource(type_name, rvalue_cast(resource_title)));
+                    resource = catalog.find(type);
                     if (!resource) {
                         throw runtime_error("expected previous resource.");
                     }
                     throw evaluation_exception(
                         (boost::format("resource %1% was previously declared at %2%:%3%.") %
-                         resource->type() %
+                         type %
                          resource->path() %
                          resource->line()
                         ).str(),
@@ -962,7 +963,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 }
 
                 // Evaluate any existing overrides for this resource now
-                _context.evaluate_overrides(resource->type());
+                _context.evaluate_overrides(type);
 
                 // Add the resource to the list
                 resources.emplace_back(resource);
