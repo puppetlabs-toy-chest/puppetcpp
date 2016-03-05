@@ -51,9 +51,7 @@ namespace puppet { namespace compiler {
         if (!parent) {
             return context.node_or_top();
         }
-
-        context.declare_class(parent->value, *parent);
-        return context.find_scope(parent->value);
+        return context.find_scope(context.declare_class(parent->value, *parent)->type().title());
     }
 
     defined_type::defined_type(string name, ast::defined_type_expression const& expression) :
