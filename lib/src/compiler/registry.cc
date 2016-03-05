@@ -52,8 +52,12 @@ namespace puppet { namespace compiler {
             return context.node_or_top();
         }
 
-        context.declare_class(parent->value, *parent);
-        return context.find_scope(parent->value);
+        auto scope = context.find_scope(context.declare_class(parent->value, *parent)->type().title());
+        if (!scope) {
+            // Because classes are added to the catalog before the scope is added to the context, a failure to find the scope means there is a circular inheritence
+            throw evaluation_exception((boost::format("cannot evaluate parent class '%1%' because it causes a circular inheritence.") % *parent).str(), *parent);
+        }
+        return scope;
     }
 
     defined_type::defined_type(string name, ast::defined_type_expression const& expression) :
