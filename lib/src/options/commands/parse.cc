@@ -176,7 +176,7 @@ namespace puppet { namespace options { namespace commands {
             " <p> "
             "If a directory is specified as an argument, the compiler will recursively search "
             "for all Puppet manifests under the specified directory. Use the --as-module option to treat directories as "
-            "Puppet modules, which will search for files only in a ‘manifests’ subdirectory. The --output-subdir option "
+            "Puppet modules, which will search for files only in a 'manifests' subdirectory. The --output-subdir option "
             "can be used to create a subdirectory of an input directory where output files should go."
             " <p> "
             "If a single source manifest is specified, the --output option can be used to specify "
