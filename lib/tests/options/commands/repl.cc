@@ -1,5 +1,5 @@
 #include <catch.hpp>
-#include <puppet/options/commands/compile.hpp>
+#include <puppet/options/commands/repl.hpp>
 #include <puppet/options/commands/help.hpp>
 #include <puppet/options/parser.hpp>
 #include <sstream>
@@ -8,11 +8,11 @@ using namespace std;
 using namespace puppet;
 using namespace puppet::options;
 
-extern char const* const COMPILE_COMMAND_HELP =
+extern char const* const REPL_COMMAND_HELP =
     "\n"
-    "Usage: puppetcpp compile [options] [[manifest | directory] ...]\n"
+    "Usage: puppetcpp repl [options]\n"
     "\n"
-    "Compile Puppet manifests into a Puppet catalog.\n"
+    "Runs an interactive Puppet shell.\n"
     "\n"
     "Options:\n"
     "\n"
@@ -41,65 +41,64 @@ extern char const* const COMPILE_COMMAND_HELP =
     "  -n [ --node ] arg                     The node name to use. Defaults to the \n"
     "                                        'fqdn' fact.\n"
     "  --no-color                            Disable color output.\n"
-    "  -o [ --output ] arg (=catalog.json)   The output path for the compiled \n"
+    "  -o [ --output ] arg                   The output path for the compiled \n"
     "                                        catalog.\n"
-    "  --trace                               Display Puppet backtraces for \n"
-    "                                        evaluation errors.\n"
     "  --verbose                             Enable verbose output (info level).\n"
     "\n"
-    "Compiles one or more Puppet manifests, or directories containing manifests, into\n"
-    "a Puppet catalog.\n"
+    "Runs the read-evel-print-loop (REPL) shell for the Puppet language. The shell is\n"
+    "capable of interactively evaluating Puppet code as if being evaluated from a\n"
+    "manifest file.\n"
     "\n"
-    "When invoked with no options, the compiler will compile a catalog for the\n"
-    "'production' environment.\n"
+    "The REPL shell incrementally builds a resource catalog that can optionally be\n"
+    "output after the shell is exited.\n"
     "\n"
-    "Manifests will be evaluated in the order they are presented on the command line.\n"
+    "To exit the shell, type 'exit' and hit <ENTER>.\n"
     ;
 
-SCENARIO("using the compile command", "[options]")
+SCENARIO("using the repl command", "[options]")
 {
     ostringstream stream;
 
     options::parser parser;
     parser.add<commands::help>(stream);
-    parser.add<commands::compile>();
+    parser.add<commands::repl>();
 
     WHEN("given an invalid option") {
         THEN("it should throw an exception") {
-            REQUIRE_THROWS_AS(parser.parse({ "compile", "--not_valid" }), option_exception);
+            REQUIRE_THROWS_AS(parser.parse({ "repl", "--not_valid" }), option_exception);
         }
     }
-    WHEN("given help is given compile as a command") {
-        REQUIRE(parser.parse({ "help", "compile" }).execute() == EXIT_SUCCESS);
+    WHEN("repl is passed to the help commannd") {
+        REQUIRE(parser.parse({ "help", "repl" }).execute() == EXIT_SUCCESS);
         THEN("it should display the help") {
-            REQUIRE(stream.str() == COMPILE_COMMAND_HELP);
+            REQUIRE(stream.str() == REPL_COMMAND_HELP);
         }
     }
     WHEN("given conflicting logging options") {
         THEN("it should throw an exception") {
-            REQUIRE_THROWS_AS(parser.parse({ "compile", "--debug", "--verbose" }), option_exception);
-            REQUIRE_THROWS_AS(parser.parse({ "compile", "--debug", "-lverbose" }), option_exception);
-            REQUIRE_THROWS_AS(parser.parse({ "compile", "--verbose", "--loglevel=debug" }), option_exception);
+            REQUIRE_THROWS_AS(parser.parse({ "repl", "--debug", "--verbose" }), option_exception);
+            REQUIRE_THROWS_AS(parser.parse({ "repl", "--debug", "-lverbose" }), option_exception);
+            REQUIRE_THROWS_AS(parser.parse({ "repl", "--verbose", "--loglevel=debug" }), option_exception);
         }
     }
     WHEN("given an invalid log level") {
         THEN("it should throw an exception") {
-            REQUIRE_THROWS_AS(parser.parse({ "compile", "--loglevel=notvalid" }), option_exception);
+            REQUIRE_THROWS_AS(parser.parse({ "repl", "--loglevel=notvalid" }), option_exception);
         }
     }
     WHEN("given conflicting colorization options") {
         THEN("it should throw an exception") {
-            REQUIRE_THROWS_AS(parser.parse({ "compile", "--color", "--no-color" }), option_exception);
+            REQUIRE_THROWS_AS(parser.parse({ "repl", "--color", "--no-color" }), option_exception);
         }
     }
     WHEN("given a code directory that does not exist") {
         THEN("it should throw an exception") {
-            REQUIRE_THROWS_AS(parser.parse({ "compile", "--code-dir", "does_not_exist" }), option_exception);
+            REQUIRE_THROWS_AS(parser.parse({ "repl", "--code-dir", "does_not_exist" }), option_exception);
         }
     }
     WHEN("given an environment directory that does not exist") {
         THEN("it should throw an exception") {
-            REQUIRE_THROWS_AS(parser.parse({ "compile", "--environment-dir", "does_not_exist" }), option_exception);
+            REQUIRE_THROWS_AS(parser.parse({ "repl", "--environment-dir", "does_not_exist" }), option_exception);
         }
     }
 }
