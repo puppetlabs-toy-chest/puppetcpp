@@ -188,6 +188,7 @@ Build Requirements
 * Boost Libraries >= 1.60.0
 * [Facter](https://github.com/puppetlabs/facter) >= 3.0
 * yaml-cpp >= 0.5.1
+* GNU readline (optional - improves the REPL experience)
 
 Pre-Build
 ---------
@@ -226,13 +227,11 @@ Run
 
 You can run puppetcpp from its output directory:
 
-`$ release/bin/puppetcpp <manifest>`
+`$ release/bin/puppetcpp help`
 
 For a debug build:
 
-`$ debug/bin/puppetcpp <manifest>`
-
-Use the `--help` option for more options
+`$ debug/bin/puppetcpp help`
 
 Test
 ----
