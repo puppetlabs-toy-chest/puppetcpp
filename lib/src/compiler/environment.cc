@@ -384,7 +384,7 @@ namespace puppet { namespace compiler {
         try {
             shared_ptr<ast::syntax_tree> tree;
 
-            // Check for a already parsed AST
+            // Check for an already parsed AST
             auto it = _parsed.find(path);
             if (it != _parsed.end()) {
                 LOG(debug, "using cached AST for '%1%' in environment '%2%'.", path, name());

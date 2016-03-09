@@ -203,7 +203,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         if (_scope) {
             override = false;
             auto parent = _scope->parent().get();
-            while (parent) {
+            while (parent && parent->parent()) {
                 if (parent->resource() && (resource->container() == parent->resource())) {
                     override = true;
                     break;
@@ -566,16 +566,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         types::klass::normalize(name);
 
         auto definitions = registry.find_class(name);
-        if (!definitions) {
-            if (import) {
-                auto& node = this->node();
+        if (!definitions && import) {
+            auto& node = this->node();
 
-                // Attempt to import the class
-                node.environment().import(node.logger(), find_type::manifest, name);
+            // Attempt to import the class
+            node.environment().import(node.logger(), find_type::manifest, name);
 
-                // Find it again
-                definitions = registry.find_class(name);
-            }
+            // Find it again
+            definitions = registry.find_class(name);
         }
         return definitions;
     }
@@ -588,16 +586,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         types::klass::normalize(name);
 
         auto definition = registry.find_defined_type(name);
-        if (!definition) {
-            if (import) {
-                auto& node = this->node();
+        if (!definition && import) {
+            auto& node = this->node();
 
-                // Attempt to import the defined type
-                node.environment().import(node.logger(), find_type::manifest, name);
+            // Attempt to import the defined type
+            node.environment().import(node.logger(), find_type::manifest, name);
 
-                // Find it again
-                definition = registry.find_defined_type(name);
-            }
+            // Find it again
+            definition = registry.find_defined_type(name);
         }
         return definition;
     }
