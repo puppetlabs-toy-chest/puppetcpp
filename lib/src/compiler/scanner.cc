@@ -96,20 +96,6 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::variable const& expression)
     {
-        static const char* valid_variable_pattern = R"(0|[1-9]\d*|((::)?[a-z]\w*)*(::)?[a-z_]\w*)";
-        static const regex valid_variable_regex(valid_variable_pattern);
-
-        // Ensure the parameter name is valid
-        if (!regex_match(expression.name, valid_variable_regex)) {
-            throw parse_exception(
-                (boost::format("variable name '%1%' is not a valid variable name: the name must conform to /%2%/.") %
-                 expression.name %
-                 valid_variable_pattern
-                ).str(),
-                expression.begin,
-                expression.end
-            );
-        }
     }
 
     void scanner::operator()(ast::name const& expression)
