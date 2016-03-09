@@ -789,3 +789,25 @@ unless "\$interpolated.split('') = ${interpolated.split('')}" == "\$interpolated
 unless foo =~ /f(o)o/ or "match group 1 = '${1}'" == "match group 1 = 'o'" {
     fail incorrect
 }
+
+# Resource defaults
+File {
+    foo => bar
+}
+
+file { '/default/check':
+}
+
+unless File['/default/check'][foo] == bar {
+    fail incorrect
+}
+
+# Resource overrides
+
+File['/default/check'] {
+    baz => cake
+}
+
+unless File['/default/check'][baz] == cake {
+    fail incorrect
+}

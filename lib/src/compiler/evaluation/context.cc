@@ -503,7 +503,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto resource = catalog.find(type);
         if (!resource) {
             // Create the class resource
-            resource = catalog.add(rvalue_cast(type), nullptr, context);
+            resource = catalog.add(rvalue_cast(type), nullptr, nullptr, context);
         }
 
         // If the class was already declared, return it without evaluating

@@ -86,4 +86,23 @@ namespace puppet { namespace compiler {
      */
     using attributes = std::vector<std::pair<ast::attribute_operator, std::shared_ptr<attribute>>>;
 
+    /**
+     * Utility class for attribute_set.
+     */
+    struct attribute_set_less
+    {
+        /**
+         * Determines if one indirected attribute is "less than" another.
+         * @param left The left attribute to compare.
+         * @param right The right attribute to compare.
+         * @return Returns true if the left is less than the right or false if not.
+         */
+        bool operator()(attribute const* left, attribute const* right) const;
+    };
+
+    /**
+     * Represents a set of attribute pointers.
+     */
+    using attribute_set = std::set<attribute const*, attribute_set_less>;
+
 }}  // namespace puppet::compiler

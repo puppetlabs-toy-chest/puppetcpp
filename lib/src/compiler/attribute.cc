@@ -6,6 +6,11 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler {
 
+    bool attribute_set_less::operator()(attribute const* left, attribute const* right) const
+    {
+        return left->name() < right->name();
+    }
+
     attribute::attribute(string name, ast::context name_context, shared_ptr<values::value> value, ast::context value_context) :
         _name(rvalue_cast(name)),
         _name_context(rvalue_cast(name_context)),

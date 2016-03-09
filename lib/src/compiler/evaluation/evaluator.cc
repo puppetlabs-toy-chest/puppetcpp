@@ -461,16 +461,18 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Evaluate the attributes
         compiler::attributes attributes = evaluate_attributes(false, expression.operations);
         auto context = expression.reference.context();
+        auto& scope = _context.current_scope();
 
         if (auto array = reference.as<values::array>()) {
             for (auto const& element : *array) {
                 if (auto type = element->as<values::type>()) {
                     auto resource = to_resource_type(*type, context);
                     if (!resource->fully_qualified()) {
-                        // TODO: support resource defaults expression
-                        throw evaluation_exception("resource defaults expressions are not yet implemented.", context);
+                        // Treat as a defaults expression
+                        scope->add_defaults(*resource, attributes);
+                    } else {
+                        _context.add(resource_override{ *resource, expression, attributes, scope });
                     }
-                    _context.add(resource_override(*resource, expression, attributes, _context.current_scope()));
                 } else {
                     throw evaluation_exception((boost::format("expected qualified %1% for array element but found %2%.") % types::resource::name() % element->get_type()).str(), context);
                 }
@@ -489,10 +491,11 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             auto resource = to_resource_type(*type, context);
             if (!resource->fully_qualified()) {
-                // TODO: support resource defaults expression
-                throw evaluation_exception("resource defaults expressions are not yet implemented.", context);
+                // Treat as a defaults expression
+                scope->add_defaults(*resource, rvalue_cast(attributes));
+            } else {
+                _context.add(resource_override{ *resource, expression, rvalue_cast(attributes), scope });
             }
-            _context.add(resource_override(*resource, expression, rvalue_cast(attributes), _context.current_scope()));
         } else {
             throw evaluation_exception((boost::format("expected qualified %1% for resource reference but found %2%.") % types::resource::name() % reference.get_type()).str(), context);
         }
@@ -501,8 +504,29 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(resource_defaults_expression const& expression)
     {
-        // TODO: implement
-        throw evaluation_exception("resource defaults expressions are not yet implemented.", expression);
+        // Evaluate the type
+        auto value = evaluate(ast::primary_expression{expression.type});
+        auto type = value.as<values::type>();
+        if (!type) {
+            throw evaluation_exception((boost::format("expected %1% type but found %2%.") % types::resource::name() % value.get_type()).str(), expression.type);
+        }
+
+        // Make sure the type is a resource type
+        auto resource = boost::get<types::resource>(type);
+        if (!resource) {
+            throw evaluation_exception((boost::format("expected %1% type but found %2%.") % types::resource::name() % value.get_type()).str(), expression.type);
+        }
+
+        // Evaluate the attributes
+        auto attributes = evaluate_attributes(false, expression.operations);
+        for (auto& attribute : attributes) {
+            if (attribute.first == ast::attribute_operator::append) {
+                throw evaluation_exception((boost::format("expected %1% type but found %2%.") % types::resource::name() % value.get_type()).str(), expression.type);
+            }
+        }
+
+        _context.current_scope()->add_defaults(*resource, rvalue_cast(attributes));
+        return value;
     }
 
     value evaluator::operator()(class_expression const& expression)
@@ -775,6 +799,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     vector<resource*> evaluator::create_resources(bool is_class, std::string const& type_name, ast::resource_expression const& expression, attributes const& defaults)
     {
         auto& catalog = _context.catalog();
+        auto& scope = _context.current_scope();
 
         // Lookup a defined type if not a built-in or class
         defined_type const* definition = nullptr;
@@ -786,7 +811,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
 
         // If a class, don't set a container; one will be associated when the class is declared
-        resource const* container = is_class ? nullptr : _context.current_scope()->resource();
+        resource const* container = is_class ? nullptr : scope->resource();
 
         bool is_exported = expression.status == ast::resource_status::exported;
         bool is_virtual = is_exported || expression.status == ast::resource_status::virtualized;
@@ -818,6 +843,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 auto resource = catalog.add(
                     types::resource(type_name, rvalue_cast(resource_title)),
                     container,
+                    scope,
                     body.context(),
                     is_virtual,
                     is_exported);
@@ -830,10 +856,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                 }
 
                 // Set the default attributes
-                set_attributes(*resource, defaults);
+                for (auto& attribute : defaults) {
+                    resource->set(attribute.second);
+                }
 
                 // Set the resource's attributes
-                set_attributes(*resource, attributes);
+                for (auto& attribute : attributes) {
+                    resource->set(attribute.second);
+                }
 
                 // Add the declared defined type
                 if (definition) {
@@ -850,26 +880,6 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
         }
         return resources;
-    }
-
-    void evaluator::set_attributes(compiler::resource& resource, compiler::attributes const& attributes)
-    {
-        // Set the default attributes
-        for (auto& kvp : attributes) {
-            auto oper = kvp.first;
-            auto& attribute = kvp.second;
-
-            // Only support assignment
-            if (oper != ast::attribute_operator::assignment) {
-                throw evaluation_exception(
-                    (boost::format("illegal attribute operation '%1%': only '%2%' is supported in a resource expression.") %
-                     oper %
-                     ast::attribute_operator::assignment
-                    ).str(),
-                    attribute->name_context());
-            }
-            resource.set(attribute);
-        }
     }
 
     values::type evaluator::create_relationship_type()

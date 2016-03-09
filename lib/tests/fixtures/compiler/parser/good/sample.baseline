@@ -18050,3 +18050,301 @@ statements:
               offset: 11911
               line: 790
             value: incorrect
+  - kind: resource defaults
+    begin:
+      offset: 11935
+      line: 794
+    end:
+      offset: 11958
+      line: 796
+    type:
+      kind: type
+      begin:
+        offset: 11935
+        line: 794
+      end:
+        offset: 11939
+        line: 794
+      name: File
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 11946
+            line: 795
+          end:
+            offset: 11949
+            line: 795
+          value: foo
+        operator_position:
+          offset: 11950
+          line: 795
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 11953
+            line: 795
+          end:
+            offset: 11956
+            line: 795
+          value: bar
+  - kind: resource
+    begin:
+      offset: 11960
+      line: 798
+    end:
+      offset: 11986
+      line: 799
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 11960
+        line: 798
+      end:
+        offset: 11964
+        line: 798
+      value: file
+    bodies:
+      - title:
+          kind: string
+          begin:
+            offset: 11967
+            line: 798
+          end:
+            offset: 11983
+            line: 798
+          value: /default/check
+  - kind: unless
+    begin:
+      offset: 11988
+      line: 801
+    end:
+      offset: 12052
+      line: 803
+    conditional:
+      kind: binary
+      first:
+        kind: postfix
+        primary:
+          kind: type
+          begin:
+            offset: 11995
+            line: 801
+          end:
+            offset: 11999
+            line: 801
+          name: File
+        subexpressions:
+          - kind: access
+            begin:
+              offset: 11999
+              line: 801
+            end:
+              offset: 12017
+              line: 801
+            arguments:
+              - kind: string
+                begin:
+                  offset: 12000
+                  line: 801
+                end:
+                  offset: 12016
+                  line: 801
+                value: /default/check
+          - kind: access
+            begin:
+              offset: 12017
+              line: 801
+            end:
+              offset: 12022
+              line: 801
+            arguments:
+              - kind: name
+                begin:
+                  offset: 12018
+                  line: 801
+                end:
+                  offset: 12021
+                  line: 801
+                value: foo
+      operations:
+        - operator_position:
+            offset: 12023
+            line: 801
+          operator: ==
+          operand:
+            kind: name
+            begin:
+              offset: 12026
+              line: 801
+            end:
+              offset: 12029
+              line: 801
+            value: bar
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 12036
+            line: 802
+          end:
+            offset: 12040
+            line: 802
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 12041
+              line: 802
+            end:
+              offset: 12050
+              line: 802
+            value: incorrect
+  - kind: resource override
+    begin:
+      offset: 12076
+      line: 807
+    end:
+      offset: 12118
+      line: 809
+    reference:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 12076
+          line: 807
+        end:
+          offset: 12080
+          line: 807
+        name: File
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 12080
+            line: 807
+          end:
+            offset: 12098
+            line: 807
+          arguments:
+            - kind: string
+              begin:
+                offset: 12081
+                line: 807
+              end:
+                offset: 12097
+                line: 807
+              value: /default/check
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 12105
+            line: 808
+          end:
+            offset: 12108
+            line: 808
+          value: baz
+        operator_position:
+          offset: 12109
+          line: 808
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 12112
+            line: 808
+          end:
+            offset: 12116
+            line: 808
+          value: cake
+  - kind: unless
+    begin:
+      offset: 12120
+      line: 811
+    end:
+      offset: 12185
+      line: 813
+    conditional:
+      kind: binary
+      first:
+        kind: postfix
+        primary:
+          kind: type
+          begin:
+            offset: 12127
+            line: 811
+          end:
+            offset: 12131
+            line: 811
+          name: File
+        subexpressions:
+          - kind: access
+            begin:
+              offset: 12131
+              line: 811
+            end:
+              offset: 12149
+              line: 811
+            arguments:
+              - kind: string
+                begin:
+                  offset: 12132
+                  line: 811
+                end:
+                  offset: 12148
+                  line: 811
+                value: /default/check
+          - kind: access
+            begin:
+              offset: 12149
+              line: 811
+            end:
+              offset: 12154
+              line: 811
+            arguments:
+              - kind: name
+                begin:
+                  offset: 12150
+                  line: 811
+                end:
+                  offset: 12153
+                  line: 811
+                value: baz
+      operations:
+        - operator_position:
+            offset: 12155
+            line: 811
+          operator: ==
+          operand:
+            kind: name
+            begin:
+              offset: 12158
+              line: 811
+            end:
+              offset: 12162
+              line: 811
+            value: cake
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 12169
+            line: 812
+          end:
+            offset: 12173
+            line: 812
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 12174
+              line: 812
+            end:
+              offset: 12183
+              line: 812
+            value: incorrect

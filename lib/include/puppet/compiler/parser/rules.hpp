@@ -72,6 +72,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(keyword_name,                  "name",                          ast::name)
     DECLARE_RULE(resource_override_expression,  "resource override expression",  ast::resource_override_expression)
     DECLARE_RULE(resource_reference_expression, "resource reference expression", ast::postfix_expression)
+    DECLARE_RULE(attribute_override,            "attribute",                     ast::attribute_operation)
     DECLARE_RULE(resource_defaults_expression,  "resource defaults expression",  ast::resource_defaults_expression)
     DECLARE_RULE(class_expression,              "class expression",              ast::class_expression)
     DECLARE_RULE(defined_type_expression,       "defined type expression",       ast::defined_type_expression)
@@ -287,7 +288,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         attribute,
-        attribute_name > begin(false) > attribute_operator > expression
+        attribute_name > begin(false) > raw(lexer::token_id::fat_arrow) > boost::spirit::x3::attr(ast::attribute_operator::assignment) > expression
     )
     DEFINE_RULE(
         attribute_operator,
@@ -333,7 +334,7 @@ namespace puppet { namespace compiler { namespace parser {
     static_assert((static_cast<size_t>(lexer::token_id::last_keyword) - static_cast<size_t>(lexer::token_id::first_keyword)) == (24 + 1), "a keyword is missing from the keyword_name rule.");
     DEFINE_RULE(
         resource_override_expression,
-        begin(false) >> resource_reference_expression >> (raw('{') > (raw('}', false) | attributes) > end('}') > tree)
+        begin(false) >> resource_reference_expression >> (raw('{') > (raw('}', false) | ((attribute_override % raw(',') > -raw(',')))) > end('}') > tree)
     )
     DEFINE_RULE(
         resource_reference_expression,
@@ -341,6 +342,13 @@ namespace puppet { namespace compiler { namespace parser {
         (variable > *access_expression) |
         (collector_expression > boost::spirit::x3::attr(std::vector<ast::postfix_subexpression>())) |
         (exported_collector_expression > boost::spirit::x3::attr(std::vector<ast::postfix_subexpression>()))
+    )
+    DEFINE_RULE(
+        attribute_override,
+        attribute_name > begin(false) > (
+            (raw(lexer::token_id::fat_arrow)  > boost::spirit::x3::attr(ast::attribute_operator::assignment)) |
+            (raw(lexer::token_id::plus_arrow) > boost::spirit::x3::attr(ast::attribute_operator::append))
+        ) > expression
     )
     DEFINE_RULE(
         resource_defaults_expression,
@@ -679,6 +687,7 @@ namespace puppet { namespace compiler { namespace parser {
         keyword_name,
         resource_override_expression,
         resource_reference_expression,
+        attribute_override,
         resource_defaults_expression,
         class_expression,
         defined_type_expression,

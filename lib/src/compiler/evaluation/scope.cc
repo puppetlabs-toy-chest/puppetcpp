@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/scope.hpp>
+#include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
 
 using namespace std;
@@ -116,6 +117,71 @@ namespace puppet { namespace compiler { namespace evaluation {
             return nullptr;
         }
         return _facts->lookup(name);
+    }
+
+    void scope::add_defaults(types::resource const& type, compiler::attributes attributes)
+    {
+        auto it = _defaults.find(type.type_name());
+        if (it != _defaults.end()) {
+            // The defaults already exist, so ensure there are no conflicts at this scope
+            for (auto& attribute : attributes) {
+                auto previous = find_if(it->second.begin(), it->second.end(), [&](auto const& previous) { return previous.second->name() == attribute.second->name(); });
+                if (previous == it->second.end()) {
+                    continue;
+                }
+                auto& name = previous->second->name();
+                auto& current_context = attribute.second->name_context();
+                auto& previous_context = previous->second->name_context();
+                if (!previous_context.tree) {
+                    throw evaluation_exception(
+                        (boost::format("a default for '%1%' was already defined in a parent scope.") %
+                         name
+                        ).str(),
+                        current_context
+                    );
+                }
+                throw evaluation_exception(
+                    (boost::format("a default for '%1%' was already defined at %2%:%3%.") %
+                     name %
+                     previous_context.tree->path() %
+                     previous_context.begin.line()
+                    ).str(),
+                    current_context
+                );
+            }
+            it->second.insert(it->second.end(), std::make_move_iterator(attributes.begin()), std::make_move_iterator(attributes.end()));
+        } else {
+            _defaults.emplace(type.type_name(), rvalue_cast(attributes));
+        }
+    }
+
+    shared_ptr<attribute> scope::find_default(types::resource const& type, string const& name) const
+    {
+        auto it = _defaults.find(type.type_name());
+        if (it != _defaults.end()) {
+            auto attribute = find_if(it->second.begin(), it->second.end(), [&](auto const& attribute) { return attribute.second->name() == name; });
+            if (attribute != it->second.end()) {
+                return attribute->second;
+            }
+        }
+        return _parent ? _parent->find_default(type, name) : nullptr;
+    }
+
+    void scope::each_default(types::resource const& type, attribute_set& set, function<bool(attribute const&)> const& callback) const
+    {
+        auto it = _defaults.find(type.type_name());
+        if (it != _defaults.end()) {
+            for (auto& attribute : it->second) {
+                if (!set.insert(attribute.second.get()).second) {
+                    continue;
+                }
+                callback(*attribute.second);
+            }
+        }
+
+        if (_parent) {
+            _parent->each_default(type, set, callback);
+        }
     }
 
     ostream& operator<<(ostream& os, scope const& s)

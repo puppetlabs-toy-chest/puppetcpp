@@ -13,13 +13,20 @@
 
 namespace puppet { namespace compiler {
 
+    namespace evaluation {
+
+        // Forward declaration of scope
+        struct scope;
+
+    }  // namespace puppet::compiler::evaluation
+
     // Forward declaration of catalog.
     struct catalog;
 
     /**
      * Utility class for tag_set.
      */
-    struct indirect_less
+    struct tag_set_less
     {
         /**
          * Determines if one indirected string is "less than" another.
@@ -33,7 +40,7 @@ namespace puppet { namespace compiler {
     /**
      * Represents a set of tags (pointers to data stored within each resource).
      */
-    using tag_set = std::set<std::string const*, indirect_less>;
+    using tag_set = std::set<std::string const*, tag_set_less>;
 
     /**
      * Represents a declared resource in a catalog.
@@ -52,6 +59,12 @@ namespace puppet { namespace compiler {
          * @return Returns the container of the resource.
          */
         resource const* container() const;
+
+        /**
+         * Gets the scope where the resource was declared.
+         * @return Returns the scope where the resource was declared.
+         */
+        std::shared_ptr<evaluation::scope> const& scope() const;
 
         /**
          * Gets the context where the resource was declared.
@@ -139,7 +152,7 @@ namespace puppet { namespace compiler {
      private:
         friend struct catalog;
 
-        resource(runtime::types::resource type, resource const* container, boost::optional<ast::context> context, bool exported);
+        resource(runtime::types::resource type, resource const* container, std::shared_ptr<evaluation::scope> scope, boost::optional<ast::context> context, bool exported);
         runtime::values::json_value to_json(runtime::values::json_allocator& allocator, compiler::catalog const& catalog) const;
         void add_relationship_parameters(runtime::values::json_value& parameters, runtime::values::json_allocator& allocator, compiler::catalog const& catalog) const;
         void realize(size_t vertex_id);
@@ -149,6 +162,7 @@ namespace puppet { namespace compiler {
         std::shared_ptr<ast::syntax_tree> _tree;
         runtime::types::resource _type;
         resource const* _container;
+        std::shared_ptr<evaluation::scope> _scope;
         boost::optional<ast::context> _context;
         size_t _vertex_id;
         std::unordered_map<std::string, std::shared_ptr<attribute>> _attributes;
