@@ -93,10 +93,7 @@ namespace puppet { namespace logging {
     {
         ostream& stream = get_stream(level);
 
-        // Colorize the output
         colorize(level);
-
-        // Output the level
         stream << level << ": ";
 
         // If a location was given, write it out
@@ -111,52 +108,43 @@ namespace puppet { namespace logging {
             stream << ": ";
         }
 
-        // Output the message
-        if (!message.empty()) {
-            stream << message;
-        }
+        stream << message << "\n";
 
-        stream << "\n";
-
-        // Output the offending line's text
         if (!text.empty() && column > 0) {
             reset(level);
 
             // Ignore leading whitespace in the line
             size_t offset = 0;
-            size_t column_offset = 0;
-            for (; offset < text.size(); ++offset, ++column_offset) {
+            size_t leading_spaces = 0;
+            for (; offset < text.size(); ++offset, ++leading_spaces) {
                 // If the current offset into the string is not a space, break out
                 if (!isspace(text[offset])) {
                     break;
                 }
                 // If a tab, offset the column by a tab width (3 + 1)
                 if (text[offset] == '\t') {
-                    column_offset += 3;
+                    leading_spaces += 3;
                     continue;
                 }
             }
 
-            // Write the line
-            stream << "    ";
+            // Write the line starting at the whitespace offset
+            stream << "  ";
             stream.write(text.c_str() + offset, text.size() - offset);
             stream << '\n';
 
             // Write the "pointer" pointing at the column
-            fill_n(ostream_iterator<char>(stream), column - column_offset + 3, ' ');
+            fill_n(ostream_iterator<char>(stream), (leading_spaces > column ? 1 : (column - leading_spaces)) + 1, ' ');
             colorize(logging::level::info);
             stream << "^";
-            if (length > 0) {
-                length -= 1; // need to offset as the caret indicator counts as a length of 1
-                if (length > (text.size() - column)) {
-                    length = text.size() - column;
-                }
+            if (length > 1) {
+                // If the length exceeds the current line, truncate to only what's visible on this line
+                length = ((column - 1) + length > text.size()) ? (column > text.size() ? 0 : text.size() - column) : length - 1 /* caret counts as one */;
                 fill_n(ostream_iterator<char>(stream), length, '~');
             }
             stream << "\n";
         }
 
-        // Reset the colorization
         reset(level);
     }
 
