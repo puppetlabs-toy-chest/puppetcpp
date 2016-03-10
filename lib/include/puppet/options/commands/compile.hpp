@@ -118,6 +118,14 @@ namespace puppet { namespace options { namespace commands {
          * The output option description.
          */
         static char const* const OUTPUT_DESCRIPTION;
+        /**
+         * The trace option name.
+         */
+        static char const* const TRACE_OPTION;
+        /**
+         * The trace option description.
+         */
+        static char const* const TRACE_DESCRIPTION;
     };
 
 }}}  // namespace puppet::options::commands

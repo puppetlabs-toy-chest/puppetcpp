@@ -10,6 +10,8 @@ using boost::format;
 
 namespace puppet { namespace logging {
 
+    static const size_t MAX_BACKTRACE_COUNT = 25;
+
     ostream& operator<<(ostream& out, logging::level level)
     {
         // Keep this in sync with the definition of logging::level
@@ -57,6 +59,15 @@ namespace puppet { namespace logging {
             ++_errors;
         }
         log_message(level, line, column, length, text, path, message);
+    }
+
+    void logger::log(vector<compiler::evaluation::stack_frame> const& backtrace)
+    {
+        if (!would_log(logging::level::error) || backtrace.empty()) {
+            return;
+        }
+
+        log_backtrace(backtrace);
     }
 
     size_t logger::warnings() const
@@ -146,6 +157,24 @@ namespace puppet { namespace logging {
         }
 
         reset(level);
+    }
+
+    void stream_logger::log_backtrace(vector<compiler::evaluation::stack_frame> const& backtrace)
+    {
+        colorize(logging::level::error);
+
+        ostream& stream = get_stream(logging::level::error);
+
+        stream << "  backtrace:\n";
+        for (size_t i = 0; i < backtrace.size() && i < MAX_BACKTRACE_COUNT; ++i) {
+            stream << "    " << backtrace[i] << '\n';
+        }
+        if (backtrace.size() > MAX_BACKTRACE_COUNT) {
+            size_t remaining = backtrace.size() - MAX_BACKTRACE_COUNT;
+            stream << "    and " << remaining << " more frame" << ((remaining != 1) ? "s\n" : "\n");
+        }
+
+        reset(logging::level::error);
     }
 
     void stream_logger::colorize(logging::level) const
