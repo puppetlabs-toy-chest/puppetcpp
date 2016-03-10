@@ -503,3 +503,185 @@ statements:
     end:
       offset: 310
       line: 16
+  - kind: resource override
+    begin:
+      offset: 312
+      line: 18
+    end:
+      offset: 370
+      line: 21
+    reference:
+      kind: collector
+      type:
+        kind: type
+        begin:
+          offset: 312
+          line: 18
+        end:
+          offset: 316
+          line: 18
+        name: File
+      exported: false
+      query:
+        kind: attribute query
+        attribute:
+          kind: name
+          begin:
+            offset: 320
+            line: 18
+          end:
+            offset: 323
+            line: 18
+          value: foo
+        operator_position:
+          offset: 324
+          line: 18
+        operator: ==
+        value:
+          kind: name
+          begin:
+            offset: 327
+            line: 18
+          end:
+            offset: 330
+            line: 18
+          value: bar
+      end:
+        offset: 333
+        line: 18
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 340
+            line: 19
+          end:
+            offset: 344
+            line: 19
+          value: attr
+        operator_position:
+          offset: 345
+          line: 19
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 348
+            line: 19
+          end:
+            offset: 351
+            line: 19
+          value: baz
+      - name:
+          kind: name
+          begin:
+            offset: 357
+            line: 20
+          end:
+            offset: 360
+            line: 20
+          value: jam
+        operator_position:
+          offset: 361
+          line: 20
+        operator: +>
+        value:
+          kind: name
+          begin:
+            offset: 364
+            line: 20
+          end:
+            offset: 368
+            line: 20
+          value: cake
+  - kind: resource override
+    begin:
+      offset: 372
+      line: 23
+    end:
+      offset: 432
+      line: 26
+    reference:
+      kind: collector
+      type:
+        kind: type
+        begin:
+          offset: 372
+          line: 23
+        end:
+          offset: 376
+          line: 23
+        name: File
+      exported: true
+      query:
+        kind: attribute query
+        attribute:
+          kind: name
+          begin:
+            offset: 381
+            line: 23
+          end:
+            offset: 384
+            line: 23
+          value: foo
+        operator_position:
+          offset: 385
+          line: 23
+        operator: ==
+        value:
+          kind: name
+          begin:
+            offset: 388
+            line: 23
+          end:
+            offset: 391
+            line: 23
+          value: bar
+      end:
+        offset: 395
+        line: 23
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 402
+            line: 24
+          end:
+            offset: 406
+            line: 24
+          value: attr
+        operator_position:
+          offset: 407
+          line: 24
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 410
+            line: 24
+          end:
+            offset: 413
+            line: 24
+          value: baz
+      - name:
+          kind: name
+          begin:
+            offset: 419
+            line: 25
+          end:
+            offset: 422
+            line: 25
+          value: jam
+        operator_position:
+          offset: 423
+          line: 25
+        operator: +>
+        value:
+          kind: name
+          begin:
+            offset: 426
+            line: 25
+          end:
+            offset: 430
+            line: 25
+          value: cake

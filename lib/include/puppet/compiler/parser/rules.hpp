@@ -337,7 +337,10 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         resource_reference_expression,
-        (type >> +access_expression) | (variable > *access_expression)
+        (type >> +access_expression) |
+        (variable > *access_expression) |
+        (collector_expression > boost::spirit::x3::attr(std::vector<ast::postfix_subexpression>())) |
+        (exported_collector_expression > boost::spirit::x3::attr(std::vector<ast::postfix_subexpression>()))
     )
     DEFINE_RULE(
         resource_defaults_expression,
