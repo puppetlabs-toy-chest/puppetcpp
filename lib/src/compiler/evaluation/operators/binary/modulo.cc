@@ -16,7 +16,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             auto left = context.left().require<int64_t>();
             auto right = context.right().require<int64_t>();
             if (right == 0) {
-                throw evaluation_exception("cannot divide by zero.", context.right_context());
+                throw evaluation_exception("cannot divide by zero.", context.right_context(), context.context().backtrace());
             }
             return left % right;
         });

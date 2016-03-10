@@ -43,7 +43,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                          types::string::name() %
                          argument.get_type()
                         ).str(),
-                        context.argument_context(i)
+                        context.argument_context(i),
+                        evaluation_context.backtrace()
                     );
                 }
                 if (!matches) {

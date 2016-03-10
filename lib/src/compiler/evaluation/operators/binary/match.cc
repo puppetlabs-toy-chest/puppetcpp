@@ -10,13 +10,21 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     bool is_match(call_context& context, string const& left, string const& right)
     {
+        auto& evaluation_context = context.context();
+
         try {
             smatch matches;
             bool result = right.empty() || regex_search(left, matches, std::regex(right));
-            context.context().set(matches);
+            evaluation_context.set(matches);
             return result;
         } catch (regex_error const& ex) {
-            throw evaluation_exception((boost::format("invalid regular expression: %1%") % ex.what()).str(), context.right_context());
+            throw evaluation_exception(
+                (boost::format("invalid regular expression: %1%") %
+                 ex.what()
+                ).str(),
+                context.right_context(),
+                evaluation_context.backtrace()
+            );
         }
     }
 

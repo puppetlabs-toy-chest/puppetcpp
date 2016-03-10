@@ -14,6 +14,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         binary::descriptor descriptor{ ast::binary_operator::assignment };
 
         descriptor.add("Any", "Any", [](call_context& context) {
+            auto& evaluation_context = context.context();
             auto& left = context.left();
             auto& left_context = context.left_context();
             auto& right = context.right();
@@ -21,15 +22,33 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             // Ensure the left-hand side is a variable
             auto var = boost::get<variable>(&left);
             if (!var) {
-                throw evaluation_exception((boost::format("cannot assign to %1%: assignment can only be performed on variables.") % left.get_type()).str(), left_context);
+                throw evaluation_exception(
+                    (boost::format("cannot assign to %1%: assignment can only be performed on variables.") %
+                     left.get_type()
+                    ).str(),
+                    left_context,
+                    evaluation_context.backtrace()
+                );
             }
             // Ensure the variable isn't a match variable
             if (isdigit(var->name()[0])) {
-                throw evaluation_exception((boost::format("cannot assign to $%1%: the name is reserved as a match variable.") % var->name()).str(), left_context);
+                throw evaluation_exception(
+                    (boost::format("cannot assign to $%1%: the name is reserved as a match variable.") %
+                     var->name()
+                    ).str(),
+                    left_context,
+                    evaluation_context.backtrace()
+                );
             }
             // Ensure the variable is local to the current scope
             if (var->name().find(':') != string::npos) {
-                throw evaluation_exception((boost::format("cannot assign to $%1%: assignment can only be performed on variables local to the current scope.") % var->name()).str(), left_context);
+                throw evaluation_exception(
+                    (boost::format("cannot assign to $%1%: assignment can only be performed on variables local to the current scope.") %
+                     var->name()
+                    ).str(),
+                    left_context,
+                    evaluation_context.backtrace()
+                );
             }
 
             // If the right side is a variable, assign to the variable's value
@@ -41,12 +60,26 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             }
 
             // Set the variable in the current scope
-            auto previous = context.context().current_scope()->set(var->name(), value, left_context);
+            auto previous = evaluation_context.current_scope()->set(var->name(), value, left_context);
             if (previous) {
                 if (previous->path()) {
-                    throw evaluation_exception((boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") % var->name() % *previous->path() % previous->line()).str(), left_context);
+                    throw evaluation_exception(
+                        (boost::format("cannot assign to $%1%: variable was previously assigned at %2%:%3%.") %
+                         var->name() %
+                         *previous->path() %
+                         previous->line()
+                        ).str(),
+                        left_context,
+                        evaluation_context.backtrace()
+                    );
                 }
-                throw evaluation_exception((boost::format("cannot assign to $%1%: a fact or node parameter exists with the same name.") % var->name()).str(), left_context);
+                throw evaluation_exception(
+                    (boost::format("cannot assign to $%1%: a fact or node parameter exists with the same name.") %
+                     var->name()
+                    ).str(),
+                    left_context,
+                    evaluation_context.backtrace()
+                );
             }
 
             // Update the assigned variable's value

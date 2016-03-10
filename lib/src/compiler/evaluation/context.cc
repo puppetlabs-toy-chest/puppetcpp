@@ -90,7 +90,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _target_context;
     }
 
-    void resource_relationship::evaluate(compiler::catalog& catalog) const
+    void resource_relationship::evaluate(evaluation::context& context, compiler::catalog& catalog) const
     {
         // Build a list of targets
         vector<resource*> targets;
@@ -98,11 +98,17 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Locate the target in the catalog
             auto target = catalog.find(target_resource);
             if (!target || target->virtualized()) {
-                throw evaluation_exception((boost::format("cannot create relationship: resource %1% does not exist in the catalog.") % target_resource).str(), _target_context);
+                throw evaluation_exception(
+                    (boost::format("cannot create relationship: resource %1% does not exist in the catalog.") %
+                     target_resource
+                    ).str(),
+                    _target_context,
+                    context.backtrace()
+                );
             }
             targets.push_back(target);
         }, [&](string const& message) {
-            throw evaluation_exception(message, _target_context);
+            throw evaluation_exception(message, _target_context, context.backtrace());
         });
 
         // Now add a relationship from each source
@@ -110,7 +116,13 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Locate the source in the catalog
             auto source = catalog.find(source_resource);
             if (!source || source->virtualized()) {
-                throw evaluation_exception((boost::format("cannot create relationship: resource %1% does not exist in the catalog.") % source_resource).str(), _source_context);
+                throw evaluation_exception(
+                    (boost::format("cannot create relationship: resource %1% does not exist in the catalog.") %
+                     source_resource
+                    ).str(),
+                    _source_context,
+                    context.backtrace()
+                );
             }
 
             // Add a relationship to each target
@@ -120,13 +132,15 @@ namespace puppet { namespace compiler { namespace evaluation {
                         (boost::format("resource %1% cannot form a relationship with itself.") %
                          source->type()
                         ).str(),
-                        _source_context);
+                        _source_context,
+                        context.backtrace()
+                    );
                 }
 
                 catalog.relate(_relationship, *source, *target);
             }
         }, [&](string const& message) {
-            throw evaluation_exception(message, _source_context);
+            throw evaluation_exception(message, _source_context, context.backtrace());
         });
     }
 
@@ -165,7 +179,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _scope;
     }
 
-    void resource_override::evaluate(compiler::catalog& catalog) const
+    void resource_override::evaluate(evaluation::context& context, compiler::catalog& catalog) const
     {
         auto resource = catalog.find(_type);
         if (!resource) {
@@ -173,7 +187,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 (boost::format("resource %1% does not exist in the catalog.") %
                  _type
                 ).str(),
-                _context
+                _context,
+                context.backtrace()
             );
         }
 
@@ -227,7 +242,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                      name_context.tree->path() %
                      name_context.begin.line()
                     ).str(),
-                    attribute->name_context()
+                    attribute->name_context(),
+                    context.backtrace()
                 );
             }
         }
@@ -272,7 +288,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             auto context = _context._call_stack.empty() ? ast::context{} : _context._call_stack.back().current();
             throw evaluation_exception(
                 (boost::format("cannot call '%1%': maximum stack depth reached.") % frame.name()).str(),
-                rvalue_cast(context)
+                rvalue_cast(context),
+                _context.backtrace()
             );
         }
         _context._call_stack.emplace_back(rvalue_cast(frame));
@@ -543,7 +560,13 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Search again
             definitions = registry().find_class(name);
             if (!definitions) {
-                throw evaluation_exception((boost::format("cannot evaluate class '%1%' because it has not been defined.") % name).str(), context);
+                throw evaluation_exception(
+                    (boost::format("cannot evaluate class '%1%' because it has not been defined.") %
+                     name
+                    ).str(),
+                    context,
+                    backtrace()
+                );
             }
         }
 
@@ -570,7 +593,9 @@ namespace puppet { namespace compiler { namespace evaluation {
                      types::string::name() %
                      attribute->value().get_type()
                     ).str(),
-                    attribute->value_context());
+                    attribute->value_context(),
+                    backtrace()
+                );
             }
             stage = catalog.find(types::resource("stage", *ptr));
             if (!stage) {
@@ -578,7 +603,9 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("stage '%1%' does not exist in the catalog.") %
                      *ptr
                     ).str(),
-                    attribute->value_context());
+                    attribute->value_context(),
+                    backtrace()
+                );
             }
         } else {
             stage = catalog.find(types::resource("stage", "main"));
@@ -707,7 +734,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         evaluate_overrides(override.type());
 
         // Now evaluate the given override
-        override.evaluate(catalog);
+        override.evaluate(*this, catalog);
     }
 
     void context::add(declared_defined_type defined_type)
@@ -733,7 +760,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Evaluate the overrides for the given type
         auto range = _overrides.equal_range(resource);
         for (auto it = range.first; it != range.second; ++it) {
-            it->second.evaluate(catalog);
+            it->second.evaluate(*this, catalog);
         }
         _overrides.erase(resource);
     }
@@ -775,17 +802,17 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Ensure there are no uncollected resources
         for (auto const& collector : _collectors) {
-            collector->detect_uncollected();
+            collector->detect_uncollected(*this);
         }
 
         // Evaluate all resource relationships
         for (auto const& relationship : _relationships) {
-            relationship.evaluate(catalog);
+            relationship.evaluate(*this, catalog);
         }
 
         // Evaluate any remaining overrides
         for (auto& kvp : _overrides) {
-            kvp.second.evaluate(catalog);
+            kvp.second.evaluate(*this, catalog);
         }
 
         // Clear the data

@@ -56,7 +56,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 function_evaluator evaluator{ evaluation_context, *_expression };
                 return evaluator.evaluate(context.arguments(), nullptr, context.name(), false);
             } catch (argument_exception const& ex) {
-                throw evaluation_exception(ex.what(), context.argument_context(ex.index()));
+                throw evaluation_exception(ex.what(), context.argument_context(ex.index()), evaluation_context.backtrace());
             }
         }
 
@@ -85,12 +85,15 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             (boost::format("function '%1%' cannot be dispatched.") %
              _name
             ).str(),
-            context.name()
+            context.name(),
+            evaluation_context.backtrace()
         );
     }
 
     vector<descriptor::dispatch_descriptor const*> descriptor::check_argument_count(call_context const& context) const
     {
+        auto& evaluation_context = context.context();
+
         // The call could not be dispatched, determine the reason
         auto argument_count = static_cast<int64_t>(context.arguments().size());
         bool block_passed = static_cast<bool>(context.block());
@@ -133,7 +136,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                  min_arguments %
                  (min_arguments == 1 ? "argument" : "arguments")
                 ).str(),
-                (argument_count == 0 || argument_count < min_arguments) ? context.name() : context.argument_context(argument_count - 1)
+                (argument_count == 0 || argument_count < min_arguments) ? context.name() : context.argument_context(argument_count - 1),
+                evaluation_context.backtrace()
             );
         }
         if (argument_count < min_arguments) {
@@ -143,7 +147,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                  min_arguments %
                  (min_arguments == 1 ? "argument" : "arguments")
                 ).str(),
-                context.name()
+                context.name(),
+                evaluation_context.backtrace()
             );
         }
         if (argument_count > max_arguments) {
@@ -153,7 +158,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                  max_arguments %
                  (max_arguments == 1 ? "argument" : "arguments")
                 ).str(),
-                argument_count == 0 ? context.name() : context.argument_context(argument_count - 1)
+                argument_count == 0 ? context.name() : context.argument_context(argument_count - 1),
+                evaluation_context.backtrace()
             );
         }
         return invocable;
@@ -161,6 +167,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
     void descriptor::check_block_parameters(call_context const& context, vector<dispatch_descriptor const*> const& invocable) const
     {
+        auto& evaluation_context = context.context();
         auto& block = context.block();
 
         // If the invocable set is empty, then there was a block mismatch
@@ -170,14 +177,16 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                     (boost::format("function '%1%' does not accept a block.") %
                      _name
                     ).str(),
-                    *block
+                    *block,
+                    evaluation_context.backtrace()
                 );
             }
             throw evaluation_exception(
                 (boost::format("function '%1%' requires a block to be passed.") %
                  _name
                 ).str(),
-                context.name()
+                context.name(),
+                evaluation_context.backtrace()
             );
         }
 
@@ -219,7 +228,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 ).str(),
                 (block_parameter_count == 0 || block_parameter_count < min_block_parameters) ?
                 static_cast<ast::context>(*block) :
-                block->parameters[block_parameter_count - 1].context()
+                block->parameters[block_parameter_count - 1].context(),
+                evaluation_context.backtrace()
             );
         }
         if (block_parameter_count < min_block_parameters) {
@@ -229,7 +239,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                  min_block_parameters %
                  (min_block_parameters == 1 ? "parameter" : "parameters")
                 ).str(),
-                *block
+                *block,
+                evaluation_context.backtrace()
             );
         }
         if (block_parameter_count > max_block_parameters) {
@@ -241,13 +252,16 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 ).str(),
                 block_parameter_count == 0 ?
                 static_cast<ast::context>(*block) :
-                block->parameters[block_parameter_count - 1].context()
+                block->parameters[block_parameter_count - 1].context(),
+                evaluation_context.backtrace()
             );
         }
     }
 
     void descriptor::check_parameter_types(call_context const& context, vector<dispatch_descriptor const*> const& invocable) const
     {
+        auto& evaluation_context = context.context();
+
         // Determine the first (lowest index) argument with a type mismatch
         int64_t min_argument_mismatch = -1;
         for (auto descriptor : invocable) {
@@ -276,7 +290,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
              set %
              context.argument(min_argument_mismatch).get_type()
             ).str(),
-            context.argument_context(min_argument_mismatch)
+            context.argument_context(min_argument_mismatch),
+            evaluation_context.backtrace()
         );
     }
 

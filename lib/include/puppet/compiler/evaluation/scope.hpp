@@ -16,6 +16,9 @@
 
 namespace puppet { namespace compiler { namespace evaluation {
 
+    // Forward declaration of context
+    struct context;
+
     /**
      * Represents context about a variable assignment.
      */
@@ -111,10 +114,11 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         /**
          * Adds resource attribute defaults to the scope.
+         * @param context The current evaluation context.
          * @param type The resource type for the defaults.
          * @param attributes The attributes to use as defaults.
          */
-        void add_defaults(runtime::types::resource const& type, compiler::attributes attributes);
+        void add_defaults(evaluation::context& context, runtime::types::resource const& type, compiler::attributes attributes);
 
         /**
          * Finds a default attribute for the given resource type and attribute name.

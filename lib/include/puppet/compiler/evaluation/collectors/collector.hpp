@@ -31,9 +31,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
 
         /**
          * Detects uncollected resources.
+         * @param context The current evaluation context.
          * Throws an evaluation exception if there are any uncollected resources.
          */
-        virtual void detect_uncollected() const;
+        virtual void detect_uncollected(evaluation::context& context) const;
 
         /**
          * Gets the resources that have been collected by this collector.

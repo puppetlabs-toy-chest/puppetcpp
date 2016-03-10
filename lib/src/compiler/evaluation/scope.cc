@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/scope.hpp>
+#include <puppet/compiler/evaluation/context.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
 
@@ -119,7 +120,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _facts->lookup(name);
     }
 
-    void scope::add_defaults(types::resource const& type, compiler::attributes attributes)
+    void scope::add_defaults(evaluation::context& context, types::resource const& type, compiler::attributes attributes)
     {
         auto it = _defaults.find(type.type_name());
         if (it != _defaults.end()) {
@@ -137,7 +138,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                         (boost::format("a default for '%1%' was already defined in a parent scope.") %
                          name
                         ).str(),
-                        current_context
+                        current_context,
+                        context.backtrace()
                     );
                 }
                 throw evaluation_exception(
@@ -146,7 +148,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                      previous_context.tree->path() %
                      previous_context.begin.line()
                     ).str(),
-                    current_context
+                    current_context,
+                    context.backtrace()
                 );
             }
             it->second.insert(it->second.end(), std::make_move_iterator(attributes.begin()), std::make_move_iterator(attributes.end()));

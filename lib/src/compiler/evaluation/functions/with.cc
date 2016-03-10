@@ -16,7 +16,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             try {
                 return context.yield_without_catch(context.arguments());
             } catch (argument_exception const& ex) {
-                throw evaluation_exception(ex.what(), context.argument_context(ex.index()));
+                throw evaluation_exception(ex.what(), context.argument_context(ex.index()), context.context().backtrace());
             }
         });
         return descriptor;

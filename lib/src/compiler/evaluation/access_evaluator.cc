@@ -43,13 +43,27 @@ namespace puppet { namespace compiler { namespace evaluation {
         value operator()(std::string const& target)
         {
             if (_arguments.size() > 2) {
-                throw evaluation_exception((boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::string::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 2 arguments for %1% but %2% were given.") %
+                     types::string::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             // Get the index
             auto ptr = _arguments[0]->as<int64_t>();
             if (!ptr) {
-                throw evaluation_exception((boost::format("expected %1% for start index but found %2%.") % integer::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected %1% for start index but found %2%.") %
+                     integer::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
 
             // If the index is negative, it's from the end of the string
@@ -63,7 +77,14 @@ namespace puppet { namespace compiler { namespace evaluation {
             if (_arguments.size() == 2) {
                 ptr = _arguments[1]->as<int64_t>();
                 if (!ptr) {
-                    throw evaluation_exception((boost::format("expected %1% for count but found %2%.") % integer::name() % _arguments[1]->get_type()).str(), _contexts[1]);
+                    throw evaluation_exception(
+                        (boost::format("expected %1% for count but found %2%.") %
+                         integer::name() %
+                         _arguments[1]->get_type()
+                        ).str(),
+                        _contexts[1],
+                        _context.backtrace()
+                    );
                 }
                 count = *ptr;
 
@@ -98,13 +119,27 @@ namespace puppet { namespace compiler { namespace evaluation {
         value operator()(values::array const& target)
         {
             if (_arguments.size() > 2) {
-                throw evaluation_exception((boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::array::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 2 arguments for %1% but %2% were given.") %
+                     types::array::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             // Get the index
             auto ptr = _arguments[0]->as<int64_t>();
             if (!ptr) {
-                throw evaluation_exception((boost::format("expected %1% for start index but found %2%.") % integer::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected %1% for start index but found %2%.") %
+                     integer::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
 
             // If the index is negative, it's from the end of the array
@@ -118,7 +153,14 @@ namespace puppet { namespace compiler { namespace evaluation {
             if (_arguments.size() == 2) {
                 ptr = _arguments[1]->as<int64_t>();
                 if (!ptr) {
-                    throw evaluation_exception((boost::format("expected %1% for count but found %2%.") % integer::name() % _arguments[1]->get_type()).str(), _contexts[1]);
+                    throw evaluation_exception(
+                        (boost::format("expected %1% for count but found %2%.") %
+                         integer::name() %
+                         _arguments[1]->get_type()
+                        ).str(),
+                        _contexts[1],
+                        _context.backtrace()
+                    );
                 }
                 count = *ptr;
 
@@ -182,7 +224,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // At most 2 arguments to Integer
             if (_arguments.size() > 2) {
-                throw evaluation_exception((boost::format("expected at most 2 arguments for %1% but %2% were given.") % integer::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 2 arguments for %1% but %2% were given.") %
+                     integer::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             int64_t from, to;
@@ -194,7 +243,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // At most 2 arguments to Float
             if (_arguments.size() > 2) {
-                throw evaluation_exception((boost::format("expected at most 2 arguments for %1% but %2% were given.") % floating::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 2 arguments for %1% but %2% were given.") %
+                     floating::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             double from, to;
@@ -206,7 +262,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // At most 2 arguments to String
             if (_arguments.size() > 2) {
-                throw evaluation_exception((boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::string::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 2 arguments for %1% but %2% were given.") %
+                     types::string::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             int64_t from, to;
@@ -218,7 +281,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // At most 1 arguments to Regexp
             if (_arguments.size() > 1) {
-                throw evaluation_exception((boost::format("expected at most 1 arguments for %1% but %2% were given.") % regexp::name() % _arguments.size()).str(), _contexts[1]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 1 arguments for %1% but %2% were given.") %
+                     regexp::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[1],
+                    _context.backtrace()
+                );
             }
 
             // Get the pattern argument; check for regex argument first
@@ -228,7 +298,15 @@ namespace puppet { namespace compiler { namespace evaluation {
                 pattern = regex->pattern();
             } else {
                 if (!_arguments[0]->as<std::string>()) {
-                    throw evaluation_exception((boost::format("expected parameter to be %1% or %2% but found %3%.") % types::string::name() % regexp::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                    throw evaluation_exception(
+                        (boost::format("expected parameter to be %1% or %2% but found %3%.") %
+                         types::string::name() %
+                         regexp::name() %
+                         _arguments[0]->get_type()
+                        ).str(),
+                        _contexts[0],
+                        _context.backtrace()
+                    );
                 }
                 pattern = _arguments[0]->move_as<std::string>();
             }
@@ -243,7 +321,14 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             for (size_t i = 0; i < _arguments.size(); ++i) {
                 if (!_arguments[i]->as<std::string>()) {
-                    throw evaluation_exception((boost::format("expected %1% but found %2%.") % types::string::name() % _arguments[i]->get_type()).str(), _contexts[i]);
+                    throw evaluation_exception(
+                        (boost::format("expected %1% but found %2%.") %
+                         types::string::name() %
+                         _arguments[i]->get_type()
+                        ).str(),
+                        _contexts[i],
+                        _context.backtrace()
+                    );
                 }
                 strings.emplace_back(_arguments[i]->move_as<std::string>());
             }
@@ -285,12 +370,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                 }
                 throw evaluation_exception(
                     (boost::format("expected %1%, %2%, or %3% but found %4%.") %
-                         types::string::name() %
-                         regexp::name() %
-                         pattern::name() %
-                         _arguments[i]->get_type()
+                     types::string::name() %
+                     regexp::name() %
+                     pattern::name() %
+                     _arguments[i]->get_type()
                     ).str(),
-                    _contexts[i]);
+                    _contexts[i],
+                    _context.backtrace()
+                );
             }
             return pattern(rvalue_cast(patterns));
         }
@@ -299,12 +386,26 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // At most 3 arguments to Array
             if (_arguments.size() > 3) {
-                throw evaluation_exception((boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::array::name() % _arguments.size()).str(), _contexts[3]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 3 arguments for %1% but %2% were given.") %
+                     types::array::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[3],
+                    _context.backtrace()
+                );
             }
 
             // First argument should be a type
             if (!_arguments[0]->as<values::type>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::type::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
 
             // Get the optional range
@@ -317,20 +418,48 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // At least 2 and at most 4 arguments to Hash
             if (_arguments.size() < 2) {
-                throw evaluation_exception((boost::format("expected at least 2 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str(), _expression);
+                throw evaluation_exception(
+                    (boost::format("expected at least 2 arguments for %1% but %2% were given.") %
+                     types::hash::name() %
+                     _arguments.size()
+                    ).str(),
+                    _expression,
+                    _context.backtrace()
+                );
             }
             if (_arguments.size() > 4) {
-                throw evaluation_exception((boost::format("expected at most 3 arguments for %1% but %2% were given.") % types::hash::name() % _arguments.size()).str(), _contexts[4]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 3 arguments for %1% but %2% were given.") %
+                     types::hash::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[4],
+                    _context.backtrace()
+                );
             }
 
             // First argument should be a type
             if (!_arguments[0]->as<values::type>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::type::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
 
             // Second argument should be a type
             if (!_arguments[1]->as<values::type>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % _arguments[1]->get_type()).str(), _contexts[1]);
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::type::name() %
+                     _arguments[1]->get_type()
+                    ).str(),
+                    _contexts[1],
+                    _context.backtrace()
+                );
             }
 
             // Get the optional range
@@ -355,7 +484,15 @@ namespace puppet { namespace compiler { namespace evaluation {
                 if (!_arguments[i]->as<values::type>()) {
                     // There must be at most 2 more parameters (the range)
                     if ((i + 2) < _arguments.size()) {
-                        throw evaluation_exception((boost::format("expected at most %1% arguments for %2% but %3% were given.") % (i + 2) % types::tuple::name() % _arguments.size()).str(), _contexts[i + 2]);
+                        throw evaluation_exception(
+                            (boost::format("expected at most %1% arguments for %2% but %3% were given.") %
+                             (i + 2) %
+                             types::tuple::name() %
+                             _arguments.size()
+                            ).str(),
+                            _contexts[i + 2],
+                            _context.backtrace()
+                        );
                     }
                     // Get the optional range
                     tie(from, to) = get_range<int64_t, integer>(false, i, 0, numeric_limits<int64_t>::max());
@@ -364,7 +501,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                 types.emplace_back(new values::type(_arguments[i]->move_as<values::type>()));
             }
             if (types.empty()) {
-                throw evaluation_exception((boost::format("expected %1% for first argument but found %2%.") % types::type::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected %1% for first argument but found %2%.") %
+                     types::type::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
             return types::tuple(rvalue_cast(types), from, to);
         }
@@ -373,7 +517,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // Only 1 argument to Optional
             if (_arguments.size() > 1) {
-                throw evaluation_exception((boost::format("expected 1 argument for %1% but %2% were given.") % optional::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected 1 argument for %1% but %2% were given.") %
+                     optional::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             // Check for type argument
@@ -392,14 +543,23 @@ namespace puppet { namespace compiler { namespace evaluation {
                  types::string::name() %
                  _arguments[0]->get_type()
                 ).str(),
-                _contexts[0]);
+                _contexts[0],
+                _context.backtrace()
+            );
         }
 
         value operator()(not_undef const& target)
         {
             // Only 1 argument to NotUndef
             if (_arguments.size() > 1) {
-                throw evaluation_exception((boost::format("expected 1 argument for %1% but %2% were given.") % optional::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected 1 argument for %1% but %2% were given.") %
+                     optional::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             // Check for type argument
@@ -418,19 +578,35 @@ namespace puppet { namespace compiler { namespace evaluation {
                  types::string::name() %
                  _arguments[0]->get_type()
                 ).str(),
-                _contexts[0]);
+                _contexts[0],
+                _context.backtrace()
+            );
         }
 
         value operator()(types::type const& target)
         {
             // Only 1 argument to Type
             if (_arguments.size() > 1) {
-                throw evaluation_exception((boost::format("expected 1 argument for %1% but %2% were given.") % types::type::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected 1 argument for %1% but %2% were given.") %
+                     types::type::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             // First argument should be a type
             if (!_arguments[0]->as<values::type>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::type::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
 
             return types::type(make_unique<values::type>(_arguments[0]->move_as<values::type>()));
@@ -440,12 +616,26 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // Only 1 argument to Struct
             if (_arguments.size() > 1) {
-                throw evaluation_exception((boost::format("expected 1 argument for %1% but %2% were given.") % structure::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected 1 argument for %1% but %2% were given.") %
+                     structure::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             // First argument should be a hash
             if (!_arguments[0]->as<values::hash>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::hash::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::hash::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
 
             auto hash = _arguments[0]->move_as<values::hash>();
@@ -481,12 +671,21 @@ namespace puppet { namespace compiler { namespace evaluation {
                          types::not_undef::name() %
                          kvp.key().get_type()
                         ).str(),
-                        _contexts[0]);
+                        _contexts[0],
+                        _context.backtrace()
+                    );
                 }
 
                 // Ensure the value is a type
                 if (!kvp.value().as<values::type>()) {
-                    throw evaluation_exception((boost::format("expected hash values to be %1% but found %2%.") % types::type::name() % kvp.value().get_type()).str(), _contexts[0]);
+                    throw evaluation_exception(
+                        (boost::format("expected hash values to be %1% but found %2%.") %
+                         types::type::name() %
+                         kvp.value().get_type()
+                        ).str(),
+                        _contexts[0],
+                        _context.backtrace()
+                    );
                 }
                 schema.emplace_back(make_pair(rvalue_cast(key), make_unique<values::type>(kvp.value().move_as<values::type>())));
             }
@@ -500,7 +699,14 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             for (size_t i = 0; i < _arguments.size(); ++i) {
                 if (!_arguments[i]->as<values::type>()) {
-                    throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::type::name() % _arguments[i]->get_type()).str(), _contexts[i]);
+                    throw evaluation_exception(
+                        (boost::format("expected parameter to be %1% but found %2%.") %
+                         types::type::name() %
+                         _arguments[i]->get_type()
+                        ).str(),
+                        _contexts[i],
+                        _context.backtrace()
+                    );
                 }
                 types.emplace_back(make_unique<values::type>(_arguments[i]->move_as<values::type>()));
             }
@@ -528,7 +734,15 @@ namespace puppet { namespace compiler { namespace evaluation {
                 offset = 1;
             }
             if (type_name.empty()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% or typed %2% but found %3%.") % types::string::name() % types::resource::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% or typed %2% but found %3%.") %
+                     types::string::name() %
+                     types::resource::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
 
             // Check for Resource['typename']
@@ -582,7 +796,15 @@ namespace puppet { namespace compiler { namespace evaluation {
                 if (!_arguments[i]->as<values::type>()) {
                     // There must be at most 3 more parameters (min, max, and block type)
                     if ((i + 3) < _arguments.size()) {
-                        throw evaluation_exception((boost::format("expected at most %1% arguments for %2% but %3% were given.") % (i + 3) % types::callable::name() % _arguments.size()).str(), _contexts[i + 3]);
+                        throw evaluation_exception(
+                            (boost::format("expected at most %1% arguments for %2% but %3% were given.") %
+                             (i + 3) %
+                             types::callable::name() %
+                             _arguments.size()
+                            ).str(),
+                            _contexts[i + 3],
+                            _context.backtrace()
+                        );
                     }
                     // Get the optional min/max range
                     tie(min, max) = get_range<int64_t, integer>(false, i, 0, numeric_limits<int64_t>::max());
@@ -611,7 +833,15 @@ namespace puppet { namespace compiler { namespace evaluation {
                             }
                         }
                         if (!block_type) {
-                            throw evaluation_exception((boost::format("expected %1% or %2%[%1%] for last argument but found %3%.") % types::callable::name() % types::optional::name() % _arguments[i + 2]->get_type()).str(), _contexts[i + 2]);
+                            throw evaluation_exception(
+                                (boost::format("expected %1% or %2%[%1%] for last argument but found %3%.") %
+                                 types::callable::name() %
+                                 types::optional::name() %
+                                 _arguments[i + 2]->get_type()
+                                ).str(),
+                                _contexts[i + 2],
+                                _context.backtrace()
+                            );
                         }
                     }
                     break;
@@ -625,12 +855,26 @@ namespace puppet { namespace compiler { namespace evaluation {
         {
             // Ensure there are at most 2 arguments to runtime
             if (_arguments.size() > 2) {
-                throw evaluation_exception((boost::format("expected at most 2 arguments for %1% but %2% were given.") % types::runtime::name() % _arguments.size()).str(), _contexts[2]);
+                throw evaluation_exception(
+                    (boost::format("expected at most 2 arguments for %1% but %2% were given.") %
+                     types::runtime::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
             }
 
             // First argument should be a string
             if (!_arguments[0]->as<std::string>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % _arguments[0]->get_type()).str(), _contexts[0]);
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::string::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
             }
             auto runtime_name = _arguments[0]->move_as<std::string>();
 
@@ -638,7 +882,14 @@ namespace puppet { namespace compiler { namespace evaluation {
             std::string type_name;
             if (_arguments.size() > 1) {
                 if (!_arguments[1]->as<std::string>()) {
-                    throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % _arguments[1]->get_type()).str(), _contexts[1]);
+                    throw evaluation_exception(
+                        (boost::format("expected parameter to be %1% but found %2%.") %
+                         types::string::name() %
+                         _arguments[1]->get_type()
+                        ).str(),
+                        _contexts[1],
+                        _context.backtrace()
+                    );
                 }
                 type_name = _arguments[1]->move_as<std::string>();
             }
@@ -648,7 +899,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         template <typename T>
         value operator()(T const& target)
         {
-            throw evaluation_exception((boost::format("access expression is not supported for %1%.") % value(target).get_type()).str(), _expression);
+            throw evaluation_exception(
+                (boost::format("access expression is not supported for %1%.") %
+                 value(target).get_type()
+                ).str(),
+                _expression,
+                _context.backtrace()
+            );
         }
 
         template <typename Value, typename Type>
@@ -664,7 +921,13 @@ namespace puppet { namespace compiler { namespace evaluation {
                     if (auto integer = boost::get<types::integer>(type)) {
                         if ((start_index + 1) < _arguments.size()) {
                             // Ranges must be the last argument
-                            throw evaluation_exception((boost::format("an %1% range must be the last argument.") % types::integer::name()).str(), _contexts[start_index]);
+                            throw evaluation_exception(
+                                (boost::format("an %1% range must be the last argument.") %
+                                 types::integer::name()
+                                ).str(),
+                                _contexts[start_index],
+                                _context.backtrace()
+                            );
                         }
                         return make_tuple(integer->from(), integer->to());
                     }
@@ -683,7 +946,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                     } else if (auto ptr = argument->as<Value>()) {
                         from = *ptr;
                     } else {
-                        throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % Type::name() % argument->get_type()).str(), _contexts[start_index]);
+                        throw evaluation_exception(
+                            (boost::format("expected parameter to be %1% but found %2%.") %
+                             Type::name() %
+                             argument->get_type()
+                            ).str(),
+                            _contexts[start_index],
+                            _context.backtrace()
+                        );
                     }
                 }
             }
@@ -699,7 +969,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                     } else if (auto ptr = argument->as<Value>()) {
                         to = *ptr;
                     } else {
-                        throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % Type::name() % argument->get_type()).str(), _contexts[start_index + 1]);
+                        throw evaluation_exception(
+                            (boost::format("expected parameter to be %1% but found %2%.") %
+                             Type::name() %
+                             argument->get_type()
+                            ).str(),
+                            _contexts[start_index + 1],
+                            _context.backtrace()
+                        );
                     }
                 }
             }
@@ -716,7 +993,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                     add_resource_reference(result, type_name, element, context);
                 }
             } else {
-                throw evaluation_exception((boost::format("expected %1% for resource title but found %2%.") % types::string::name() % argument.get_type()).str(), context);
+                throw evaluation_exception(
+                    (boost::format("expected %1% for resource title but found %2%.") %
+                     types::string::name() %
+                     argument.get_type()
+                    ).str(),
+                    context,
+                    _context.backtrace()
+                );
             }
         }
 
@@ -730,7 +1014,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                     add_class_reference(result, element, context);
                 }
             } else {
-                throw evaluation_exception((boost::format("expected %1% for class title but found %2%.") % types::string::name() % argument.get_type()).str(), context);
+                throw evaluation_exception(
+                    (boost::format("expected %1% for class title but found %2%.") %
+                     types::string::name() %
+                     argument.get_type()
+                    ).str(),
+                    context,
+                    _context.backtrace()
+                );
             }
         }
 
@@ -741,7 +1032,13 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Find the resource
             auto resource = catalog.find(target);
             if (!resource) {
-                throw evaluation_exception((boost::format("resource %1% does not exist in the catalog.") % target).str(), _expression);
+                throw evaluation_exception(
+                    (boost::format("resource %1% does not exist in the catalog.") %
+                     target
+                    ).str(),
+                    _expression,
+                    _context.backtrace()
+                );
             }
 
             // Check for single access
@@ -760,13 +1057,27 @@ namespace puppet { namespace compiler { namespace evaluation {
         value access_attribute(compiler::resource const& resource, size_t index)
         {
             if (!_arguments[index]->as<std::string>()) {
-                throw evaluation_exception((boost::format("expected parameter to be %1% but found %2%.") % types::string::name() % _arguments[index]->get_type()).str(), _contexts[index]);
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::string::name() %
+                     _arguments[index]->get_type()
+                    ).str(),
+                    _contexts[index],
+                    _context.backtrace()
+                );
             }
             // Lookup the attribute
             auto name = _arguments[index]->move_as<std::string>();
             auto attribute = resource.get(name);
             if (!attribute) {
-                throw evaluation_exception((boost::format("resource %1% does not have an attribute named '%2%'.") % resource.type() % name).str(), _contexts[index]);
+                throw evaluation_exception(
+                    (boost::format("resource %1% does not have an attribute named '%2%'.") %
+                     resource.type() %
+                     name
+                    ).str(),
+                    _contexts[index],
+                    _context.backtrace()
+                );
             }
             // Treat the value as a variable so we don't needlessly copy the value
             return values::variable(rvalue_cast(name), attribute->shared_value());

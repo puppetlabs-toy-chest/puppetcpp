@@ -30,7 +30,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     static void each_value(call_context& context, types::integer const& range)
     {
         if (!range.enumerable()) {
-            throw evaluation_exception((boost::format("%1% is not enumerable.") % range).str(), context.argument_context(0));
+            throw evaluation_exception(
+                (boost::format("%1% is not enumerable.") %
+                 range
+                ).str(),
+                context.argument_context(0),
+                context.context().backtrace()
+            );
         }
 
         values::array block_arguments(context.block()->parameters.size());

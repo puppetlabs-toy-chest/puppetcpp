@@ -44,13 +44,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             string text;
             tie(text, column) = lexer::get_text_and_column(input, ex.begin().offset());
             evaluation_context.node().logger().log(logging::level::error, ex.begin().line(), column, ex.end().offset() - ex.begin().offset(), text, path, ex.what());
-            throw evaluation_exception("parsing of EPP template failed.", context.name());
+            throw evaluation_exception("parsing of EPP template failed.", context.name(), evaluation_context.backtrace());
         } catch (argument_exception const& ex) {
             throw evaluation_exception(
                 (boost::format("EPP template argument error: %1%") %
                  ex.what()
                 ).str(),
-                context.argument_context(1)
+                context.argument_context(1),
+                evaluation_context.backtrace()
             );
         }
     }

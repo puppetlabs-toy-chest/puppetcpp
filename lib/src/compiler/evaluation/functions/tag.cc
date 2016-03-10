@@ -22,7 +22,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             if (!resource) {
                 throw evaluation_exception(
                     "the current scope has no associated resource and cannot be tagged.",
-                    context.name()
+                    context.name(),
+                    evaluation_context.backtrace()
                 );
             }
 
@@ -40,7 +41,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                          types::array::name() %
                          argument.get_type()
                         ).str(),
-                        context.argument_context(i)
+                        context.argument_context(i),
+                        evaluation_context.backtrace()
                     );
                 }
             }

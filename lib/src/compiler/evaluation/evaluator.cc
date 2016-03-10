@@ -46,7 +46,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         _context.current_context(expression.context());
 
         if (productive && !expression.is_productive()) {
-            throw evaluation_exception("unproductive expressions may only appear last in a block.", expression.context());
+            throw evaluation_exception("unproductive expressions may only appear last in a block.", expression.context(), _context.backtrace());
         }
 
         // Climb the expression
@@ -150,7 +150,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 (boost::format("invalid regular expression: %1%") %
                  ex.what()
                 ).str(),
-                expression
+                expression,
+                _context.backtrace()
             );
         }
     }
@@ -158,7 +159,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(ast::variable const& expression)
     {
         if (expression.name.empty()) {
-            throw evaluation_exception("variable name cannot be empty.", expression);
+            throw evaluation_exception("variable name cannot be empty.", expression, _context.backtrace());
         }
 
         shared_ptr<values::value const> value;
@@ -242,7 +243,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 current_margin = 0;
                 _context.write(evaluate(*ptr));
             } else {
-                throw evaluation_exception("unsupported interpolation part.", part.context());
+                throw evaluation_exception("unsupported interpolation part.", part.context(), _context.backtrace());
             }
         }
         return os.str();
@@ -401,14 +402,15 @@ namespace puppet { namespace compiler { namespace evaluation {
                     types::resource::name() %
                     type_value.get_type()
                 ).str(),
-                expression.type.context()
+                expression.type.context(),
+                _context.backtrace()
             );
         }
 
         if (is_class && expression.status == ast::resource_status::virtualized) {
-            throw evaluation_exception("classes cannot be virtual resources.", expression.type.context());
+            throw evaluation_exception("classes cannot be virtual resources.", expression.type.context(), _context.backtrace());
         } else if (is_class && expression.status == ast::resource_status::exported) {
-            throw evaluation_exception("classes cannot be exported resources.", expression.type.context());
+            throw evaluation_exception("classes cannot be exported resources.", expression.type.context(), _context.backtrace());
         }
 
         // Get the default body attributes
@@ -441,7 +443,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         static const auto to_resource_type = [](evaluation::context& context, values::type const& type, ast::context const& resource_context) {
             // Check for Class types
             if (boost::get<types::klass>(&type)) {
-                throw evaluation_exception("cannot override attributes of a class resource.", resource_context);
+                throw evaluation_exception("cannot override attributes of a class resource.", resource_context, context.backtrace());
             }
 
             // Make sure the type is a resource type
@@ -452,13 +454,14 @@ namespace puppet { namespace compiler { namespace evaluation {
                      types::resource::name() %
                      value(type).get_type()
                     ).str(),
-                    resource_context
+                    resource_context,
+                    context.backtrace()
                 );
             }
 
             // Classes cannot be overridden
             if (resource->is_class()) {
-                throw evaluation_exception("cannot override attributes of a class resource.", resource_context);
+                throw evaluation_exception("cannot override attributes of a class resource.", resource_context, context.backtrace());
             }
             return resource;
         };
@@ -477,7 +480,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     auto resource = to_resource_type(_context, *type, context);
                     if (!resource->fully_qualified()) {
                         // Treat as a defaults expression
-                        scope->add_defaults(*resource, attributes);
+                        scope->add_defaults(_context, *resource, attributes);
                     } else {
                         _context.add(resource_override{ *resource, expression.reference.context(), attributes, scope });
                     }
@@ -487,7 +490,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                          types::resource::name() %
                          element->get_type()
                         ).str(),
-                        context
+                        context,
+                        _context.backtrace()
                     );
                 }
             }
@@ -505,7 +509,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             auto resource = to_resource_type(_context, *type, context);
             if (!resource->fully_qualified()) {
-                scope->add_defaults(*resource, rvalue_cast(attributes));
+                scope->add_defaults(_context, *resource, rvalue_cast(attributes));
             } else {
                 _context.add(resource_override{ *resource, expression.reference.context(), rvalue_cast(attributes), scope });
             }
@@ -515,7 +519,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                  types::resource::name() %
                  reference.get_type()
                 ).str(),
-                context
+                context,
+                _context.backtrace()
             );
         }
         return reference;
@@ -532,7 +537,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                  types::resource::name() %
                  value.get_type()
                 ).str(),
-                expression.type
+                expression.type,
+                _context.backtrace()
             );
         }
 
@@ -544,7 +550,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                  types::resource::name() %
                  value.get_type()
                 ).str(),
-                expression.type
+                expression.type,
+                _context.backtrace()
             );
         }
 
@@ -557,12 +564,13 @@ namespace puppet { namespace compiler { namespace evaluation {
                      types::resource::name() %
                      value.get_type()
                     ).str(),
-                    expression.type
+                    expression.type,
+                    _context.backtrace()
                 );
             }
         }
 
-        _context.current_scope()->add_defaults(*resource, rvalue_cast(attributes));
+        _context.current_scope()->add_defaults(_context, *resource, rvalue_cast(attributes));
         return value;
     }
 
@@ -623,7 +631,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(epp_render_expression const& expression)
     {
         if (!_context.write(evaluate(expression.expression))) {
-            throw evaluation_exception("EPP expressions are not supported.", expression);
+            throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
         }
         return values::undef();
     }
@@ -631,7 +639,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(epp_render_block const& expression)
     {
         if (!_context.write(evaluate_body(expression.block))) {
-            throw evaluation_exception("EPP expressions are not supported.", expression);
+            throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
         }
         return values::undef();
     }
@@ -639,7 +647,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(epp_render_string const& expression)
     {
         if (!_context.write(expression.string)) {
-            throw evaluation_exception("EPP expressions are not supported.", expression);
+            throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
         }
         return values::undef();
     }
@@ -647,25 +655,25 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(produces_expression const& expression)
     {
         // TODO: implement
-        throw evaluation_exception("produces expressions are not yet implemented.", expression.context());
+        throw evaluation_exception("produces expressions are not yet implemented.", expression.context(), _context.backtrace());
     }
 
     value evaluator::operator()(consumes_expression const& expression)
     {
         // TODO: implement
-        throw evaluation_exception("consumes expressions are not yet implemented.", expression.context());
+        throw evaluation_exception("consumes expressions are not yet implemented.", expression.context(), _context.backtrace());
     }
 
     value evaluator::operator()(application_expression const& expression)
     {
         // TODO: implement
-        throw evaluation_exception("application expressions are not yet implemented.", expression);
+        throw evaluation_exception("application expressions are not yet implemented.", expression, _context.backtrace());
     }
 
     value evaluator::operator()(site_expression const& expression)
     {
         // TODO: implement
-        throw evaluation_exception("site expressions are not yet implemented.", expression);
+        throw evaluation_exception("site expressions are not yet implemented.", expression, _context.backtrace());
     }
 
     value evaluator::evaluate_body(vector<ast::expression> const& body)
@@ -687,7 +695,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 continue;
             }
             if (default_body) {
-                throw evaluation_exception("only one default body is supported in a resource expression.", body.context());
+                throw evaluation_exception("only one default body is supported in a resource expression.", body.context(), _context.backtrace());
             }
             default_body = &body;
         }
@@ -704,7 +712,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Check for setting the title via an attribute
             if (name == "title") {
-                throw evaluation_exception("title is not a valid parameter name.", operation.name);
+                throw evaluation_exception("title is not a valid parameter name.", operation.name, _context.backtrace());
             }
 
             // Splat the attribute if named '*'
@@ -715,7 +723,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Check for the "stage" attribute for non-classes
             if (!is_class && name == "stage") {
-                throw evaluation_exception("attribute 'stage' is only valid for classes.", operation.name);
+                throw evaluation_exception("attribute 'stage' is only valid for classes.", operation.name, _context.backtrace());
             }
 
             if (!names.insert(name).second) {
@@ -723,7 +731,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("attribute '%1%' already exists in the list.") %
                      name
                     ).str(),
-                    operation.name
+                    operation.name,
+                    _context.backtrace()
                 );
             }
 
@@ -754,7 +763,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                  types::hash::name() %
                  value.get_type()
                 ).str(),
-                context
+                context,
+                _context.backtrace()
             );
         }
 
@@ -768,7 +778,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                      types::string::name() %
                      kvp.key().get_type()
                     ).str(),
-                    context
+                    context,
+                    _context.backtrace()
                 );
             }
             if (!names.insert(*name).second) {
@@ -776,7 +787,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("attribute '%1%' already exists in the list.") %
                      name
                     ).str(),
-                    context
+                    context,
+                    _context.backtrace()
                 );
             }
 
@@ -855,7 +867,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                  name %
                  (original ? original->get_type() : value.get_type())
                 ).str(),
-                context
+                context,
+                _context.backtrace()
             );
         }
     }
@@ -874,7 +887,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("type '%1%' has not been defined.") %
                      type_name
                     ).str(),
-                    expression.type.context()
+                    expression.type.context(),
+                    _context.backtrace()
                 );
             }
         }
@@ -900,7 +914,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Add each resource to the catalog
             if (!title.move_as<std::string>([&](std::string resource_title) {
                 if (resource_title.empty()) {
-                    throw evaluation_exception("resource title cannot be empty.", body.context());
+                    throw evaluation_exception("resource title cannot be empty.", body.context(), _context.backtrace());
                 }
 
                 if (is_class) {
@@ -927,7 +941,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                          resource->path() %
                          resource->line()
                         ).str(),
-                        body.title.context()
+                        body.title.context(),
+                        _context.backtrace()
                     );
                 }
 
@@ -956,7 +971,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("expected %1% or an array of %1% for resource title.") %
                      types::string::name()
                     ).str(),
-                    body.context()
+                    body.context(),
+                    _context.backtrace()
                 );
             }
         }
@@ -1086,7 +1102,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                  types::type::name() %
                  result.get_type()
                 ).str(),
-                parameter.type->context()
+                parameter.type->context(),
+                context.backtrace()
             );
         }
         if (!type->is_instance(value)) {
@@ -1148,7 +1165,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                      arguments.size() %
                      (arguments.size() != 1 ? "s" : "")
                     ).str(),
-                    call_context
+                    call_context,
+                    _context.backtrace()
                 );
             }
         }
@@ -1172,7 +1190,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                         (boost::format("parameter $%1% \"captures rest\" but is not the last parameter.") %
                          name
                         ).str(),
-                        parameter.context()
+                        parameter.context(),
+                        _context.backtrace()
                     );
                 }
                 if (parameter.type) {
@@ -1180,7 +1199,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                         (boost::format("parameter $%1% \"captures rest\" and cannot have a type specifier.") %
                          name
                         ).str(),
-                        parameter.type->context()
+                        parameter.type->context(),
+                        _context.backtrace()
                     );
                 }
                 values::array captured;
@@ -1198,7 +1218,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                         (boost::format("parameter $%1% is required but appears after optional parameters.") %
                          name
                         ).str(),
-                        parameter.context()
+                        parameter.context(),
+                        _context.backtrace()
                     );
                 }
 
@@ -1219,7 +1240,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                             (boost::format("parameter $%1% is required but no value was given.") %
                              name
                             ).str(),
-                            parameter.variable
+                            parameter.variable,
+                            _context.backtrace()
                         );
                     }
 
@@ -1227,7 +1249,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
                     // Verify the value matches the parameter type
                     validate_parameter_type(_context, parameter, value, [&](std::string message) {
-                        throw evaluation_exception(rvalue_cast(message), parameter.default_value->context());
+                        throw evaluation_exception(rvalue_cast(message), parameter.default_value->context(), _context.backtrace());
                     });
                 }
             }
@@ -1237,7 +1259,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("parameter $%1% already exists in the parameter list.") %
                      name
                     ).str(),
-                    parameter.context()
+                    parameter.context(),
+                    _context.backtrace()
                 );
             }
         }
@@ -1268,7 +1291,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("parameter $%1% is required but no value was given.") %
                      name
                     ).str(),
-                    parameter.variable
+                    parameter.variable,
+                    _context.backtrace()
                 );
             }
 
@@ -1277,7 +1301,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Verify the value matches the parameter type
             validate_parameter_type(_context, parameter, value, [&](std::string message) {
-                throw evaluation_exception(rvalue_cast(message), parameter.default_value->context());
+                throw evaluation_exception(rvalue_cast(message), parameter.default_value->context(), _context.backtrace());
             });
 
             if (scope->set(name, std::make_shared<values::value>(rvalue_cast(value)), parameter.variable)) {
@@ -1285,7 +1309,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("parameter $%1% already exists in the parameter list.") %
                      name
                     ).str(),
-                    parameter.variable
+                    parameter.variable,
+                    _context.backtrace()
                 );
             }
         }
@@ -1320,7 +1345,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("parameter $%1% cannot \"captures rest\".") %
                      *name
                     ).str(),
-                    parameter->variable
+                    parameter->variable,
+                    _context.backtrace()
                 );
             }
 
@@ -1334,7 +1360,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("parameter $%1% already exists in the parameter list.") %
                      *name
                     ).str(),
-                    parameter->variable
+                    parameter->variable,
+                    _context.backtrace()
                 );
             }
         }
@@ -1386,7 +1413,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                      attribute.name() %
                      resource.type().title()
                     ).str(),
-                    attribute.name_context()
+                    attribute.name_context(),
+                    _context.backtrace()
                 );
             }
             throw evaluation_exception(
@@ -1394,7 +1422,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                  attribute.name() %
                  resource.type()
                 ).str(),
-                attribute.name_context()
+                attribute.name_context(),
+                _context.backtrace()
             );
         });
 
@@ -1416,7 +1445,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                         (boost::format("parameter $%1% is required but no value was given.") %
                          name
                         ).str(),
-                        parameter.variable
+                        parameter.variable,
+                        _context.backtrace()
                     );
                 }
 
@@ -1435,7 +1465,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Verify the value matches the parameter type
             validate_parameter_type(_context, parameter, *value, [&](std::string message) {
-                throw evaluation_exception(rvalue_cast(message), parameter.default_value->context());
+                throw evaluation_exception(rvalue_cast(message), parameter.default_value->context(), _context.backtrace());
             });
 
             // Set the parameter in the scope
@@ -1444,7 +1474,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("parameter $%1% already exists in the parameter list.") %
                      name
                     ).str(),
-                    parameter.variable
+                    parameter.variable,
+                    _context.backtrace()
                 );
             }
         }
@@ -1491,7 +1522,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 (boost::format("cannot evaluate parent class '%1%' because it causes a circular inheritence.") %
                  *parent
                 ).str(),
-                *parent
+                *parent,
+                _context.backtrace()
             );
         }
         return scope;

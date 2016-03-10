@@ -69,7 +69,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("no matching selector case for value '%1%'.") %
                      _value
                     ).str(),
-                    expression
+                    expression,
+                    _evaluator.context().backtrace()
                 );
             }
 

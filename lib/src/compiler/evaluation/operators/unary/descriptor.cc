@@ -52,9 +52,16 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             set.add(descriptor.type);
         }
 
+        auto& evaluation_context = context.context();
         if (set.empty()) {
             // Generic error for no matched types
-            throw evaluation_exception((boost::format("unary operator '%1%' cannot be dispatched.") % _operator).str(), context.operator_context());
+            throw evaluation_exception(
+                (boost::format("unary operator '%1%' cannot be dispatched.") %
+                 _operator
+                ).str(),
+                context.operator_context(),
+                evaluation_context.backtrace()
+            );
         }
 
         throw evaluation_exception(
@@ -63,7 +70,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
              set %
              context.operand().get_type()
             ).str(),
-            context.operand_context());
+            context.operand_context(),
+            evaluation_context.backtrace()
+        );
     }
 
 }}}}}  // namespace puppet::compiler::evaluation::operators::unary

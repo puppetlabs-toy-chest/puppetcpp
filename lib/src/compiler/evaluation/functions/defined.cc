@@ -45,7 +45,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     {
         // Ensure the type isn't simply an unqualified Resource type
         if (argument.type_name().empty()) {
-            throw evaluation_exception((boost::format("expected a qualified %1%.") % types::resource::name()).str(), argument_context);
+            throw evaluation_exception((boost::format("expected a qualified %1%.") % types::resource::name()).str(), argument_context, context.backtrace());
         }
 
         // If no title, check for built-in or defined type
@@ -64,7 +64,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     {
         // Ensure the type isn't simply an unqualified Class type
         if (argument.title().empty()) {
-            throw evaluation_exception((boost::format("expected a qualified %1%.") % types::klass::name()).str(), argument_context);
+            throw evaluation_exception((boost::format("expected a qualified %1%.") % types::klass::name()).str(), argument_context, context.backtrace());
         }
 
         // Check that the class is defined
@@ -74,7 +74,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     static bool is_defined(evaluation::context& context, types::type const& argument, ast::context const& argument_context)
     {
         if (!argument.parameter()) {
-            throw evaluation_exception((boost::format("expected a parameterized %1%.") % types::type::name()).str(), argument_context);
+            throw evaluation_exception((boost::format("expected a parameterized %1%.") % types::type::name()).str(), argument_context, context.backtrace());
         }
         // For resource types, simply recurse on the nested type
         if (boost::get<types::resource>(argument.parameter().get())) {
@@ -84,7 +84,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         if (auto klass = boost::get<types::klass>(argument.parameter().get())) {
             // Ensure the type isn't simply an unqualified Class type
             if (klass->title().empty()) {
-                throw evaluation_exception((boost::format("expected a qualified %1%.") % types::klass::name()).str(), argument_context);
+                throw evaluation_exception((boost::format("expected a qualified %1%.") % types::klass::name()).str(), argument_context, context.backtrace());
             }
             return context.is_defined(klass->title(), true, false);
         }
@@ -94,7 +94,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
              types::klass::name() %
              values::value(*argument.parameter()).get_type()
             ).str(),
-            argument_context);
+            argument_context,
+            context.backtrace()
+        );
     }
 
     static bool is_defined(evaluation::context& context, values::type const& argument, ast::context const& argument_context)
@@ -115,7 +117,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
              types::type::name() %
              values::value(argument).get_type()
             ).str(),
-            argument_context);
+            argument_context,
+            context.backtrace()
+        );
     }
 
     static bool is_defined(evaluation::context& context, values::value const& argument, ast::context const& argument_context)
@@ -133,7 +137,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
              types::type::name() %
              argument.get_type()
             ).str(),
-            argument_context);
+            argument_context,
+            context.backtrace()
+        );
     }
 
     descriptor defined::create_descriptor()

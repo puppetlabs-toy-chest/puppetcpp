@@ -205,7 +205,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Find the requested function
         auto descriptor = find(context.name().value);
         if (!descriptor) {
-            throw evaluation_exception((boost::format("unknown function '%1%'.") % context.name()).str(), context.name());
+            throw evaluation_exception(
+                (boost::format("function '%1%' was not found.") %
+                 context.name()
+                ).str(),
+                context.name(),
+                context.context().backtrace()
+            );
         }
         return descriptor->dispatch(context);
     }
@@ -215,7 +221,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Find the requested function
         auto descriptor = find(context.oper());
         if (!descriptor) {
-            throw evaluation_exception((boost::format("unknown binary operator '%1%'.") % context.oper()).str(), context.operator_context());
+            throw evaluation_exception(
+                (boost::format("unknown binary operator '%1%'.") %
+                 context.oper()
+                ).str(),
+                context.operator_context(),
+                context.context().backtrace()
+            );
         }
         return descriptor->dispatch(context);
     }
@@ -225,7 +237,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Find the requested function
         auto descriptor = find(context.oper());
         if (!descriptor) {
-            throw evaluation_exception((boost::format("unknown unary operator '%1%'.") % context.oper()).str(), context.operator_context());
+            throw evaluation_exception(
+                (boost::format("unknown unary operator '%1%'.") %
+                 context.oper()
+                ).str(),
+                context.operator_context(),
+                context.context().backtrace()
+            );
         }
         return descriptor->dispatch(context);
     }

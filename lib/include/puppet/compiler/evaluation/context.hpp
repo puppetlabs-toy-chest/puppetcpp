@@ -143,7 +143,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
      private:
         friend struct context;
-        void evaluate(compiler::catalog& catalog) const;
+        void evaluate(evaluation::context& context, compiler::catalog& catalog) const;
 
         std::shared_ptr<ast::syntax_tree> _tree;
         compiler::relationship _relationship;
@@ -198,7 +198,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
      private:
         friend struct context;
-        void evaluate(compiler::catalog& catalog) const;
+        void evaluate(evaluation::context& context, compiler::catalog& catalog) const;
 
         std::shared_ptr<ast::syntax_tree> _tree;
         runtime::types::resource _type;

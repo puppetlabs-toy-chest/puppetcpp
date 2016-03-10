@@ -88,7 +88,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         try {
             return yield_without_catch(arguments);
         } catch (argument_exception const& ex) {
-            throw evaluation_exception(ex.what(), _block->parameters[ex.index()].context());
+            throw evaluation_exception(ex.what(), _block->parameters[ex.index()].context(), _context.backtrace());
         }
     }
 

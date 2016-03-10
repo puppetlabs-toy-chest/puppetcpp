@@ -7,7 +7,7 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace collectors {
 
-    void collector::detect_uncollected() const
+    void collector::detect_uncollected(evaluation::context& context) const
     {
     }
 
