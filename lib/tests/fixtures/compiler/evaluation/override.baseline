@@ -1,0 +1,125 @@
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Foo",
+      "title": "foo",
+      "tags": [
+        "class",
+        "foo",
+        "main",
+        "stage"
+      ],
+      "file": "override.pp",
+      "line": 9,
+      "exported": false,
+      "parameters": {
+        "bar": "foo",
+        "foo": "bar"
+      }
+    },
+    {
+      "type": "Class",
+      "title": "baz",
+      "tags": [
+        "baz",
+        "class"
+      ],
+      "file": "override.pp",
+      "line": 25,
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "bar",
+      "tags": [
+        "bar",
+        "class"
+      ],
+      "file": "override.pp",
+      "line": 18,
+      "exported": false
+    },
+    {
+      "type": "Foo",
+      "title": "bar",
+      "tags": [
+        "bar",
+        "class",
+        "foo"
+      ],
+      "file": "override.pp",
+      "line": 13,
+      "exported": false,
+      "parameters": {
+        "foo": "bar",
+        "bar": [
+          "foo"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[baz]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[bar]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Foo[foo]"
+    },
+    {
+      "source": "Class[bar]",
+      "target": "Foo[bar]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main",
+    "baz",
+    "bar"
+  ]
+}
+

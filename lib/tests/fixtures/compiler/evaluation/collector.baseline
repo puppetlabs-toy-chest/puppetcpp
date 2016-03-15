@@ -1,0 +1,151 @@
+Notice: Scope(Foo[foo]): foo
+Notice: Scope(Foo[bar]): bar
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "File",
+      "title": "/tmp/bar",
+      "tags": [
+        "class",
+        "file",
+        "main",
+        "stage"
+      ],
+      "file": "collector.pp",
+      "line": 7,
+      "exported": false,
+      "parameters": {
+        "content": "hello\nworld"
+      }
+    },
+    {
+      "type": "Foo",
+      "title": "foo",
+      "tags": [
+        "class",
+        "foo",
+        "main",
+        "stage"
+      ],
+      "file": "collector.pp",
+      "line": 17,
+      "exported": false,
+      "parameters": {
+        "param": "foo"
+      }
+    },
+    {
+      "type": "Foo",
+      "title": "bar",
+      "tags": [
+        "class",
+        "foo",
+        "main",
+        "stage"
+      ],
+      "file": "collector.pp",
+      "line": 21,
+      "exported": true,
+      "parameters": {
+        "param": "bar"
+      }
+    },
+    {
+      "type": "File",
+      "title": "before",
+      "tags": [
+        "class",
+        "file",
+        "main",
+        "stage"
+      ],
+      "file": "collector.pp",
+      "line": 31,
+      "exported": false
+    },
+    {
+      "type": "File",
+      "title": "after",
+      "tags": [
+        "class",
+        "file",
+        "main",
+        "stage"
+      ],
+      "file": "collector.pp",
+      "line": 32,
+      "exported": false,
+      "parameters": {
+        "require": [
+          "File[before]"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "File[before]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "File[after]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "File[/tmp/bar]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Foo[foo]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Foo[bar]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

@@ -1,0 +1,164 @@
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "File",
+      "title": "/tmp/default",
+      "tags": [
+        "class",
+        "file",
+        "main",
+        "stage"
+      ],
+      "file": "defaults.pp",
+      "line": 8,
+      "exported": false,
+      "parameters": {
+        "content": "hello\nworld"
+      }
+    },
+    {
+      "type": "File",
+      "title": "/tmp/different",
+      "tags": [
+        "class",
+        "file",
+        "main",
+        "stage"
+      ],
+      "file": "defaults.pp",
+      "line": 11,
+      "exported": false,
+      "parameters": {
+        "content": "different"
+      }
+    },
+    {
+      "type": "Class",
+      "title": "bar",
+      "tags": [
+        "bar",
+        "class"
+      ],
+      "file": "defaults.pp",
+      "line": 34,
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "foo",
+      "tags": [
+        "class",
+        "foo"
+      ],
+      "file": "defaults.pp",
+      "line": 25,
+      "exported": false
+    },
+    {
+      "type": "File",
+      "title": "/tmp/foo",
+      "tags": [
+        "class",
+        "file",
+        "foo"
+      ],
+      "file": "defaults.pp",
+      "line": 21,
+      "exported": false,
+      "parameters": {
+        "ensure": "file",
+        "owner": "peter",
+        "content": "hello\nworld"
+      }
+    },
+    {
+      "type": "File",
+      "title": "/tmp/bar",
+      "tags": [
+        "bar",
+        "class",
+        "file"
+      ],
+      "file": "defaults.pp",
+      "line": 30,
+      "exported": false,
+      "parameters": {
+        "ensure": "directory",
+        "owner": "peter",
+        "content": "hello\nworld"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[bar]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[foo]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "File[/tmp/default]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "File[/tmp/different]"
+    },
+    {
+      "source": "Class[bar]",
+      "target": "File[/tmp/bar]"
+    },
+    {
+      "source": "Class[foo]",
+      "target": "File[/tmp/foo]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main",
+    "bar",
+    "foo"
+  ]
+}
+

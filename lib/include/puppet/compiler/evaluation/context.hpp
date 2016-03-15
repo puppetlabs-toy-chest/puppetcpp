@@ -162,7 +162,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Constructs a resource override.
          * @param type The resource type being overridden.
-         * @param context The AST context of the override expression.
+         * @param context The AST context of the resource type.
          * @param attributes The attributes to apply to the resource.
          * @param scope The scope where the override is taking place.
          */
@@ -179,8 +179,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::types::resource const& type() const;
 
         /**
-         * Gets the AST context for the resource override.
-         * @return Returns the AST context for the resource override.
+         * Gets the AST context for the resource type.
+         * @return Returns the AST context for the resource type.
          */
         ast::context const& context() const;
 

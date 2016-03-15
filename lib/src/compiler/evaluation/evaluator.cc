@@ -484,6 +484,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     } else {
                         _context.add(resource_override{ *resource, expression.reference.context(), attributes, scope });
                     }
+                    _context.add(resource_override(*resource, expression.reference.context(), attributes, _context.current_scope()));
                 } else {
                     throw evaluation_exception(
                         (boost::format("expected qualified %1% for array element but found %2%.") %
@@ -513,6 +514,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             } else {
                 _context.add(resource_override{ *resource, expression.reference.context(), rvalue_cast(attributes), scope });
             }
+            _context.add(resource_override(*resource, expression.reference.context(), rvalue_cast(attributes), _context.current_scope()));
         } else {
             throw evaluation_exception(
                 (boost::format("expected qualified %1% for resource reference but found %2%.") %
@@ -894,7 +896,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
 
         // If a class, don't set a container; one will be associated when the class is declared
-        resource const* container = is_class ? nullptr : scope->resource();
+        // Stages never have a container
+        resource const* container = is_class || type_name == "stage" ? nullptr : scope->resource();
 
         bool is_exported = expression.status == ast::resource_status::exported;
         bool is_virtual = is_exported || expression.status == ast::resource_status::virtualized;

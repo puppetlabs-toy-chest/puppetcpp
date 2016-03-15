@@ -71,11 +71,6 @@ namespace puppet { namespace compiler {
             throw runtime_error("resource name is not fully qualified.");
         }
 
-        // Check for stages with a container
-        if (container && type.is_stage()) {
-            throw runtime_error("stages cannot have a container.");
-        }
-
         // Attempt to find an existing resource
         if (find(type)) {
             return nullptr;
