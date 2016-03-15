@@ -7,6 +7,7 @@ include_directories(
 
 add_executable(puppet_test
     compiler/ast/ast.cc
+    compiler/evaluation/evaluation.cc
     compiler/lexer/lexer.cc
     compiler/parser/parser.cc
     compiler/environment.cc

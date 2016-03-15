@@ -1,0 +1,30 @@
+Error: func_stack_too_deep.pp:5:5: node 'test': cannot call 'foo': maximum stack depth reached.
+  foo($counter - 1)
+  ^~~
+  backtrace:
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    in 'foo' at func_stack_too_deep.pp:5
+    and 976 more frames

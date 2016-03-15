@@ -257,7 +257,6 @@ namespace puppet { namespace logging {
      */
     struct console_logger : stream_logger
     {
-     public:
         /**
          * Constructs a console logger.
          */

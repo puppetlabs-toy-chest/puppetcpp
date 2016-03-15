@@ -1,0 +1,30 @@
+Error: func_deep_stack.pp:3:9: node 'test': evaluation failed: done
+  fail done
+  ^~~~
+  backtrace:
+    in 'fail' (no source)
+    in 'foo' at func_deep_stack.pp:3
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    in 'foo' at func_deep_stack.pp:5
+    and 2 more frames

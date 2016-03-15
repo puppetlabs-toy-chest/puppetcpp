@@ -1,0 +1,6 @@
+Error: func_bad_optional.pp:1:25: node 'test': parameter $y is required but appears after optional parameters.
+  function test($x = foo, $y)
+                          ^~
+  backtrace:
+    in 'test' at func_bad_optional.pp:1
+    in '<class main>' at func_bad_optional.pp:6
