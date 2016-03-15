@@ -52,6 +52,21 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         // Handle functions written in Puppet
         if (_expression) {
+            // Ensure the caller is allowed to call this function if it is private
+            if (_expression->is_private && _expression->tree && context.name().tree &&
+                _expression->tree->module() != context.name().tree->module()) {
+                throw evaluation_exception(
+                    (boost::format("function '%1%' (declared at %2%:%3%) is private to module '%4%'.") %
+                     context.name() %
+                     _expression->tree->path() %
+                     _expression->begin.line() %
+                     _expression->tree->module()->name()
+                    ).str(),
+                    context.name(),
+                    evaluation_context.backtrace()
+                );
+            }
+
             try {
                 function_evaluator evaluator{ evaluation_context, *_expression };
                 return evaluator.evaluate(context.arguments(), nullptr, context.name(), false);

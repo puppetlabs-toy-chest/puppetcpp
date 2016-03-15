@@ -439,6 +439,17 @@ namespace puppet { namespace compiler {
             );
         }
 
+        // Ensure private functions have an associated module
+        if (expression.is_private && expression.tree && !expression.tree->module()) {
+            throw parse_exception(
+                (boost::format("function '%1%' cannot be declared private because it is not contained in a module.") %
+                 expression.name
+                ).str(),
+                expression.name.begin,
+                expression.name.end
+            );
+        }
+
         scope_helper scope{ _scopes };
 
         // Scan the parameters

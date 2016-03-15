@@ -442,10 +442,11 @@ namespace puppet { namespace compiler { namespace parser {
     // Functions
     DEFINE_RULE(
         function_expression,
-        begin(lexer::token_id::keyword_function) >
+        boost::spirit::x3::matches[raw(lexer::token_id::keyword_private, false)] >>
+        (((begin(lexer::token_id::keyword_private) >> raw(lexer::token_id::keyword_function)) | begin(lexer::token_id::keyword_function)) >
         name >
         -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
-        raw('{') > (raw('}', false) | statements) > end('}') > tree
+        raw('{') > (raw('}', false) | statements) > end('}') > tree)
     )
 
     // Unary expressions

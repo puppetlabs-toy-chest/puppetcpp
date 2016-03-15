@@ -2098,6 +2098,11 @@ namespace puppet { namespace compiler { namespace ast {
     struct function_expression : context
     {
         /**
+         * Stores whether or not the function is private to a module.
+         */
+        bool is_private = false;
+
+        /**
          * Stores the function's name.
          */
         ast::name name;
