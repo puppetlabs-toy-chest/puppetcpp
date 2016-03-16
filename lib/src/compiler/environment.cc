@@ -211,6 +211,7 @@ namespace puppet { namespace compiler {
             auto resource = catalog.add(
                 types::resource("node", result.second),
                 catalog.find(types::resource("class", "main")),
+                context.top_scope(),
                 result.first->expression());
             if (!resource) {
                 throw evaluation_exception("failed to add node resource.");
@@ -383,7 +384,7 @@ namespace puppet { namespace compiler {
         try {
             shared_ptr<ast::syntax_tree> tree;
 
-            // Check for a already parsed AST
+            // Check for an already parsed AST
             auto it = _parsed.find(path);
             if (it != _parsed.end()) {
                 LOG(debug, "using cached AST for '%1%' in environment '%2%'.", path, name());

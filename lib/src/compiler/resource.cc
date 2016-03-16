@@ -1,6 +1,7 @@
 #include <puppet/compiler/resource.hpp>
 #include <puppet/compiler/catalog.hpp>
 #include <puppet/compiler/exceptions.hpp>
+#include <puppet/compiler/evaluation/scope.hpp>
 #include <puppet/cast.hpp>
 #include <rapidjson/document.h>
 
@@ -10,7 +11,7 @@ using namespace puppet::runtime::values;
 
 namespace puppet { namespace compiler {
 
-    bool indirect_less::operator()(string const* left, string const* right) const
+    bool tag_set_less::operator()(string const* left, string const* right) const
     {
         return *left < *right;
     }
@@ -23,6 +24,11 @@ namespace puppet { namespace compiler {
     resource const* resource::container() const
     {
         return _container;
+    }
+
+    shared_ptr<evaluation::scope> const& resource::scope() const
+    {
+        return _scope;
     }
 
     ast::context const& resource::context() const
@@ -62,7 +68,7 @@ namespace puppet { namespace compiler {
     {
         auto it = _attributes.find(name);
         if (it == _attributes.end()) {
-            return nullptr;
+            return _scope ? _scope->find_default(_type, name) : nullptr;
         }
         return it->second;
     }
@@ -82,32 +88,32 @@ namespace puppet { namespace compiler {
             return true;
         }
 
-        auto it = _attributes.find(attribute->name());
-        if (it == _attributes.end()) {
+        auto existing = get(attribute->name());
+        if (!existing) {
             // Not present, just set
             set(rvalue_cast(attribute));
             return true;
         }
 
         // Ensure the existing value is an array
-        if (!it->second->value().as<values::array>()) {
+        if (!existing->value().as<values::array>()) {
             return false;
         }
 
         // If the attribute owns the value (is unique), modify it; otherwise copy it as it is shared
-        values::array existing;
-        if (it->second->unique()) {
-            existing = it->second->value().move_as<values::array>();
+        values::array existing_value;
+        if (existing->unique()) {
+            existing_value = existing->value().move_as<values::array>();
         } else {
-            existing = *it->second->value().as<values::array>();
+            existing_value = *existing->value().as<values::array>();
         }
 
         // Append the value to the array
         auto value = attribute->value().to_array();
-        existing.insert(existing.end(), std::make_move_iterator(value.begin()), std::make_move_iterator(value.end()));
+        existing_value.insert(existing_value.end(), std::make_move_iterator(value.begin()), std::make_move_iterator(value.end()));
 
         // Update the attribute's value and set it
-        attribute->value() = rvalue_cast(existing);
+        attribute->value() = rvalue_cast(existing_value);
         set(rvalue_cast(attribute));
         return true;
     }
@@ -172,10 +178,18 @@ namespace puppet { namespace compiler {
             return;
         }
 
+        attribute_set set;
         for (auto const& kvp : _attributes) {
+            if (!set.insert(kvp.second.get()).second) {
+                continue;
+            }
             if (!callback(*kvp.second)) {
                 break;
             }
+        }
+
+        if (_scope) {
+            _scope->each_default(_type, set, callback);
         }
     }
 
@@ -210,9 +224,10 @@ namespace puppet { namespace compiler {
         return find(metaparameters.begin(), metaparameters.end(), name) != metaparameters.end();
     }
 
-    resource::resource(types::resource type, resource const* container, boost::optional<ast::context> context, bool exported) :
+    resource::resource(types::resource type, resource const* container, shared_ptr<evaluation::scope> scope, boost::optional<ast::context> context, bool exported) :
         _type(rvalue_cast(type)),
         _container(container),
+        _scope(rvalue_cast(scope)),
         _context(rvalue_cast(context)),
         _vertex_id(numeric_limits<size_t>::max()),
         _exported(exported)
@@ -259,25 +274,27 @@ namespace puppet { namespace compiler {
         // Write out the parameters
         json_value parameters;
         parameters.SetObject();
-        for (auto& attribute : _attributes) {
-            auto const& name = attribute.first;
-            auto const& value = attribute.second->value();
+
+        each_attribute([&](auto& attribute) {
+            auto const& name = attribute.name();
+            auto const& value = attribute.value();
 
             // Do not write any values set to undef
             if (value.is_undef()) {
-                continue;
+                return true;
             }
 
             // Do not write out relationship metaparameters (sourced from dependency graph below)
             if (name == "before" || name == "notify" || name == "require"  || name == "subscribe") {
-                continue;
+                return true;
             }
 
             parameters.AddMember(
                 rapidjson::StringRef(name.c_str(), name.size()),
                 value.to_json(allocator),
                 allocator);
-        }
+            return true;
+        });
 
         // Add the relationship parameters
         add_relationship_parameters(parameters, allocator, catalog);

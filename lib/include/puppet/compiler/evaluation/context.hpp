@@ -171,7 +171,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     /**
      * Represents a resource override.
-     * Resource overrides are applied immediately, upon resource declaration, or during evaluation context finalization.
+     * Resource overrides are applied immediately (i.e. resource already exists), upon resource realization, or during context finalization.
      */
     struct resource_override
     {

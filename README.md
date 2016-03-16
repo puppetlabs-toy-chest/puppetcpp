@@ -51,7 +51,7 @@ Expression evaluator status:
 * [x] resource metaparameters
 * [x] virtual resource expressions
 * [x] exported resource expressions
-* [ ] resource defaults expressions
+* [x] resource defaults expressions (see note below)
 * [x] resource override expressions
 * [x] class definition expressions
 * [x] defined type expressions
@@ -73,6 +73,8 @@ Expression evaluator status:
 * [ ] module data functions (Ruby or Puppet)
 * [x] EPP support
 * [ ] application orchestration (NYI: evaluation)
+
+Note: resource default expressions use "static scoping" instead of "dynamic scoping"
 
 Type system implemented:
 

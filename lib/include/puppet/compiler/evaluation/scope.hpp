@@ -12,6 +12,7 @@
 #include <string>
 #include <memory>
 #include <cstdint>
+#include <functional>
 
 namespace puppet { namespace compiler { namespace evaluation {
 
@@ -108,11 +109,35 @@ namespace puppet { namespace compiler { namespace evaluation {
          */
         std::shared_ptr<runtime::values::value const> get(std::string const& name);
 
+        /**
+         * Adds resource attribute defaults to the scope.
+         * @param type The resource type for the defaults.
+         * @param attributes The attributes to use as defaults.
+         */
+        void add_defaults(runtime::types::resource const& type, compiler::attributes attributes);
+
+        /**
+         * Finds a default attribute for the given resource type and attribute name.
+         * @param type The resource type to find the default attribute for.
+         * @param name The attribute name.
+         * @return Returns the attribute or nullptr if there is no default defined.
+         */
+        std::shared_ptr<attribute> find_default(runtime::types::resource const& type, std::string const& name) const;
+
+        /**
+         * Enumerates the default attributes in this scope and the parent scopes.
+         * @param type The resource type to find the default attributes for.
+         * @param set The attribute set to use to keep track of already seen attributes.
+         * @param callback The callback to call for each attribute.
+         */
+        void each_default(runtime::types::resource const& type, attribute_set& set, std::function<bool(attribute const&)> const& callback) const;
+
      private:
         std::shared_ptr<facts::provider> _facts;
         std::shared_ptr<scope> _parent;
         compiler::resource* _resource;
         std::unordered_map<std::string, std::pair<std::shared_ptr<runtime::values::value const>, assignment_context>> _variables;
+        std::unordered_map<std::string, attributes> _defaults;
     };
 
     /**
