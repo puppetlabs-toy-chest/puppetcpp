@@ -789,6 +789,15 @@ unless "\$interpolated.split('') = ${interpolated.split('')}" == "\$interpolated
 unless foo =~ /f(o)o/ or "match group 1 = '${1}'" == "match group 1 = 'o'" {
     fail incorrect
 }
+unless "${  interpolated   }" == foo {
+    fail incorrect
+}
+unless "${interpolated   }" == foo {
+    fail incorrect
+}
+unless "${   interpolated}" == foo {
+    fail incorrect
+}
 
 # Resource defaults
 File {
