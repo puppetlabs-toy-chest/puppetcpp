@@ -1,4 +1,5 @@
 #include <puppet/compiler/evaluation/context.hpp>
+#include <puppet/compiler/evaluation/evaluator.hpp>
 #include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
@@ -8,6 +9,8 @@ using namespace std;
 using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation {
+
+    static const size_t MAX_STACK_DEPTH = 1000;
 
     match_scope::match_scope(evaluation::context& context) :
         _context(context)
@@ -20,44 +23,25 @@ namespace puppet { namespace compiler { namespace evaluation {
         _context._match_stack.pop_back();
     }
 
-    local_scope::local_scope(evaluation::context& context, shared_ptr<evaluation::scope> scope) :
-        match_scope(context),
-        _context(context)
-    {
-        if (!scope) {
-            scope = make_shared<evaluation::scope>(_context.current_scope());
-        }
-
-        // Push the named scope onto the stack
-        _context._scope_stack.emplace_back(rvalue_cast(scope));
-    }
-
-    local_scope::~local_scope()
-    {
-        _context._scope_stack.pop_back();
-    }
-
     node_scope::node_scope(evaluation::context& context, compiler::resource& resource) :
         _context(context)
     {
         // Create a node scope that inherits from the top scope
         _context._node_scope = make_shared<scope>(_context.top_scope(), &resource);
-        _context._scope_stack.push_back(_context._node_scope);
     }
 
     node_scope::~node_scope()
     {
-        _context._scope_stack.pop_back();
         _context._node_scope.reset();
     }
 
-    local_output_stream::local_output_stream(evaluation::context& context, ostream& stream) :
+    scoped_output_stream::scoped_output_stream(evaluation::context& context, ostream& stream) :
         _context(context)
     {
         _context._stream_stack.push_back(&stream);
     }
 
-    local_output_stream::~local_output_stream()
+    scoped_output_stream::~scoped_output_stream()
     {
         _context._stream_stack.pop_back();
     }
@@ -212,8 +196,57 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
         }
 
-        // Override the attributes
-        resource->apply(_attributes, override);
+        // If not allowing overrides, check for conflicts
+        if (!override) {
+            for (auto& pair : _attributes) {
+                auto oper = pair.first;
+                auto& attribute = pair.second;
+
+                auto previous = resource->get(attribute->name());
+                if (!previous) {
+                    continue;
+                }
+
+                char const* action = "set";
+                if (oper == ast::attribute_operator::assignment) {
+                    if (attribute->value().is_undef()) {
+                        action = "remove";
+                    }
+                } else if (oper == ast::attribute_operator::append) {
+                    action = "append";
+                } else {
+                    throw runtime_error("unexpected attribute operator");
+                }
+
+                auto const& name_context = previous->name_context();
+                throw evaluation_exception(
+                    (boost::format("cannot %1% attribute '%2%' from resource %3% that was previously set at %4%:%5%.") %
+                     action %
+                     attribute->name() %
+                     resource->type() %
+                     name_context.tree->path() %
+                     name_context.begin.line()
+                    ).str(),
+                    attribute->name_context()
+                );
+            }
+        }
+
+        // Set the attributes
+        for (auto& pair : _attributes) {
+            switch (pair.first) {
+                case ast::attribute_operator::assignment:
+                    resource->set(pair.second);
+                    break;
+
+                case ast::attribute_operator::append:
+                    resource->append(pair.second);
+                    break;
+
+                default:
+                    throw runtime_error("unexpected attribute operator");
+            }
+        }
     }
 
     declared_defined_type::declared_defined_type(compiler::resource& resource, defined_type const& definition) :
@@ -222,7 +255,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
     }
 
-    compiler::resource const& declared_defined_type::resource() const
+    compiler::resource& declared_defined_type::resource() const
     {
         return _resource;
     }
@@ -232,29 +265,39 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _definition;
     }
 
-    void declared_defined_type::evaluate(evaluation::context& context) const
+    scoped_stack_frame::scoped_stack_frame(evaluation::context& context, stack_frame frame) :
+        match_scope(context)
     {
-        _definition.evaluate(context, _resource);
+        if (_context._call_stack.size() > MAX_STACK_DEPTH) {
+            auto context = _context._call_stack.empty() ? ast::context{} : _context._call_stack.back().current();
+            throw evaluation_exception(
+                (boost::format("cannot call '%1%': maximum stack depth reached.") % frame.name()).str(),
+                rvalue_cast(context)
+            );
+        }
+        _context._call_stack.emplace_back(rvalue_cast(frame));
     }
 
-    context::context(bool create_scope) :
+    scoped_stack_frame::~scoped_stack_frame()
+    {
+        _context._call_stack.pop_back();
+    }
+
+    context::context() :
         _node(nullptr),
         _catalog(nullptr),
         _registry(nullptr),
         _dispatcher(nullptr)
     {
-        if (create_scope) {
-            create_top_scope();
-        }
     }
 
     context::context(compiler::node& node, compiler::catalog& catalog) :
         _node(&node),
         _catalog(&catalog),
         _registry(&node.environment().registry()),
-        _dispatcher(&node.environment().dispatcher())
+        _dispatcher(&node.environment().dispatcher()),
+        _top_scope(make_shared<scope>(node.facts()))
     {
-        create_top_scope(node.facts());
     }
 
     compiler::node& context::node() const
@@ -289,33 +332,38 @@ namespace puppet { namespace compiler { namespace evaluation {
         return *_dispatcher;
     }
 
-    shared_ptr<scope> const& context::current_scope()
+    shared_ptr<scope> const& context::current_scope() const
     {
-        if (_scope_stack.empty()) {
+        if (_call_stack.empty()) {
             throw evaluation_exception("operation not permitted: the current scope is not available.");
         }
-        return _scope_stack.back();
+        return _call_stack.back().scope();
     }
 
-    shared_ptr<scope> const& context::top_scope()
+    shared_ptr<scope> const& context::top_scope() const
     {
-        if (_scope_stack.empty()) {
+        if (!_top_scope) {
             throw evaluation_exception("operation not permitted: the top scope is not available.");
         }
-        return _scope_stack.front();
+        return _top_scope;
     }
 
-    shared_ptr<scope> const& context::node_scope()
+    shared_ptr<scope> const& context::node_scope() const
     {
         return _node_scope;
     }
 
-    shared_ptr<scope> const& context::node_or_top()
+    shared_ptr<scope> const& context::node_or_top() const
     {
-        if (_node_scope) {
-            return _node_scope;
+        return _node_scope ? _node_scope : _top_scope;
+    }
+
+    shared_ptr<scope> const& context::calling_scope() const
+    {
+        if (_call_stack.size() < 2) {
+            throw evaluation_exception("operation not permitted: there is no calling scope.");
         }
-        return top_scope();
+        return _call_stack[_call_stack.size() - 2].scope();
     }
 
     bool context::add_scope(std::shared_ptr<evaluation::scope> scope)
@@ -327,13 +375,17 @@ namespace puppet { namespace compiler { namespace evaluation {
             throw runtime_error("expected a scope with an associated resource.");
         }
         string name = scope->resource()->type().title();
-        return _scopes.emplace(rvalue_cast(name), rvalue_cast(scope)).second;
+        return _named_scopes.emplace(rvalue_cast(name), rvalue_cast(scope)).second;
     }
 
     std::shared_ptr<scope> context::find_scope(string const& name) const
     {
-        auto it = _scopes.find(name);
-        if (it == _scopes.end()) {
+        if (name.empty()) {
+            return top_scope();
+        }
+
+        auto it = _named_scopes.find(name);
+        if (it == _named_scopes.end()) {
             return nullptr;
         }
         return it->second;
@@ -374,11 +426,6 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto ns = expression.name.substr(global ? 2 : 0, global ? (pos > 2 ? pos - 2 : 0) : pos);
         auto var = expression.name.substr(pos + 2);
 
-        // An empty namespace is the top scope
-        if (ns.empty()) {
-            return top_scope()->get(var);
-        }
-
         // Lookup the namespace
         auto scope = find_scope(ns);
         if (scope) {
@@ -415,14 +462,16 @@ namespace puppet { namespace compiler { namespace evaluation {
         return nullptr;
     }
 
-    match_scope context::create_match_scope()
+    vector<stack_frame> context::backtrace() const
     {
-        return match_scope { *this };
+        return vector<stack_frame>{ _call_stack.rbegin(), _call_stack.rend() };
     }
 
-    local_scope context::create_local_scope(shared_ptr<evaluation::scope> scope)
+    void context::current_context(ast::context context)
     {
-        return local_scope { *this, rvalue_cast(scope) };
+        if (!_call_stack.empty()) {
+            _call_stack.back().current(rvalue_cast(context));
+        }
     }
 
     bool context::write(values::value const& value)
@@ -541,19 +590,10 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Contain the class in the stage
         catalog.relate(relationship::contains, *stage, *resource);
 
-        try {
-            // Evaluate all definitions of the class
-            for (auto& definition : *definitions) {
-                definition.evaluate(*this, *resource);
-            }
-        } catch (evaluation_exception const& ex) {
-            // Log the original exception and throw that evaluation failed
-            log(logging::level::error, ex.what(), &ex.context());
-            throw evaluation_exception(
-                (boost::format("failed to evaluate class '%1%'.") %
-                 resource->type().title()
-                ).str(),
-                context);
+        // Evaluate all definitions of the class
+        for (auto& definition : *definitions) {
+            evaluation::class_evaluator evaluator{ *this, definition.expression() };
+            evaluator.evaluate(*resource);
         }
         return resource;
     }
@@ -576,6 +616,25 @@ namespace puppet { namespace compiler { namespace evaluation {
             definitions = registry.find_class(name);
         }
         return definitions;
+    }
+
+    functions::descriptor* context::find_function(string name, bool import)
+    {
+        return const_cast<functions::descriptor*>(static_cast<context const*>(this)->find_function(rvalue_cast(name), import));
+    }
+
+    functions::descriptor const* context::find_function(string name, bool import) const
+    {
+        auto& dispatcher = this->dispatcher();
+        auto descriptor = dispatcher.find(name);
+        if (!descriptor && import) {
+            auto& node = this->node();
+
+            // Attempt to import the function and find it again
+            node.environment().import(node.logger(), find_type::function, name);
+            descriptor = dispatcher.find(name);
+        }
+        return descriptor;
     }
 
     compiler::defined_type const* context::find_defined_type(string name, bool import)
@@ -737,61 +796,38 @@ namespace puppet { namespace compiler { namespace evaluation {
         _overrides.clear();
     }
 
-    void context::create_top_scope(std::shared_ptr<facts::provider> facts)
-    {
-        if (!_scopes.empty()) {
-            return;
-        }
-
-        // Add the top scope
-        auto top = make_shared<scope>(rvalue_cast(facts));
-        _scopes.emplace("", top);
-        _scope_stack.emplace_back(rvalue_cast(top));
-
-        // Add an empty top match scope
-        _match_stack.emplace_back();
-    }
-
     void context::evaluate_defined_types(size_t& index, vector<declared_defined_type*>& virtualized)
     {
         resource const* current = nullptr;
 
-        try {
-            // Evaluate any previously virtual defined type
-            virtualized.erase(remove_if(virtualized.begin(), virtualized.end(), [&](auto const& declared) {
-                // Check to see if the resource is still virtual
-                if (declared->resource().virtualized()) {
-                    return false;
-                }
-                // Evaluate the defined type
-                current = &declared->resource();
-                declared->evaluate(*this);
-                return true;
-            }), virtualized.end());
-
-            // Evaluate all non-virtual define types from the current start to the current end *only*
-            // Any defined types that are added to the list as a result of the evaluation will be themselves
-            // evaluated on the next pass.
-            auto size = _defined_types.size();
-            for (; index < size; ++index) {
-                auto& declared = _defined_types[index];
-
-                if (declared.resource().virtualized()) {
-                    // Defined type is virtual, enqueue it for later evaluation
-                    virtualized.emplace_back(&declared);
-                    continue;
-                }
-                current = &declared.resource();
-                declared.evaluate(*this);
+        // Evaluate any previously virtual defined type
+        virtualized.erase(remove_if(virtualized.begin(), virtualized.end(), [&](auto const& declared) {
+            // Check to see if the resource is still virtual
+            if (declared->resource().virtualized()) {
+                return false;
             }
-        } catch (evaluation_exception const& ex) {
-            // Log the original exception and throw that evaluation failed
-            log(logging::level::error, ex.what(), &ex.context());
-            throw evaluation_exception(
-                (boost::format("failed to evaluate defined type '%1%'.") %
-                 current->type()
-                ).str(),
-                current->context());
+            // Evaluate the defined type
+            current = &declared->resource();
+            defined_type_evaluator evaluator{ *this, declared->definition().expression() };
+            evaluator.evaluate(declared->resource());
+            return true;
+        }), virtualized.end());
+
+        // Evaluate all non-virtual define types from the current start to the current end *only*
+        // Any defined types that are added to the list as a result of the evaluation will be themselves
+        // evaluated on the next pass.
+        auto size = _defined_types.size();
+        for (; index < size; ++index) {
+            auto& declared = _defined_types[index];
+
+            if (declared.resource().virtualized()) {
+                // Defined type is virtual, enqueue it for later evaluation
+                virtualized.emplace_back(&declared);
+                continue;
+            }
+            current = &declared.resource();
+            defined_type_evaluator evaluator{ *this, declared.definition().expression() };
+            evaluator.evaluate(declared.resource());
         }
     }
 

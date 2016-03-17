@@ -28,7 +28,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         descriptor.add("Callable", [](call_context& context) {
             auto& evaluation_context = context.context();
-            return log(evaluation_context.node().logger(), *evaluation_context.current_scope(), logging::level::alert, context.arguments());
+            return log(evaluation_context.node().logger(), *evaluation_context.calling_scope(), logging::level::alert, context.arguments());
         });
         return descriptor;
     }

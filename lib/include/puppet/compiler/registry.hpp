@@ -8,11 +8,10 @@
 #include "ast/ast.hpp"
 #include "evaluation/scope.hpp"
 #include "../runtime/values/value.hpp"
+#include <boost/optional.hpp>
 #include <memory>
 #include <vector>
-#include <unordered_set>
 #include <unordered_map>
-#include <boost/optional.hpp>
 
 namespace puppet { namespace compiler {
 
@@ -50,16 +49,7 @@ namespace puppet { namespace compiler {
          */
         ast::class_expression const& expression() const;
 
-        /**
-         * Evaluates the class into the given evaluation context.
-         * @param context The current evaluation context.
-         * @param resource The resource representing the class.
-         */
-        void evaluate(evaluation::context& context, compiler::resource& resource) const;
-
      private:
-        std::shared_ptr<evaluation::scope> evaluate_parent(evaluation::context& context) const;
-
         std::string _name;
         std::shared_ptr<ast::syntax_tree> _tree;
         ast::class_expression const& _expression;
@@ -89,13 +79,6 @@ namespace puppet { namespace compiler {
          */
         ast::defined_type_expression const& expression() const;
 
-        /**
-         * Evaluates the defined type into the given evaluation context.
-         * @param context The current evaluation context.
-         * @param resource The resource representing the defined type.
-         */
-        void evaluate(evaluation::context& context, compiler::resource& resource) const;
-
      private:
         std::string _name;
         std::shared_ptr<ast::syntax_tree> _tree;
@@ -118,13 +101,6 @@ namespace puppet { namespace compiler {
          * @return Returns the expression that defines the node.
          */
         ast::node_expression const& expression() const;
-
-        /**
-         * Evaluates the node definition into the given evaluation context.
-         * @param context The current evaluation context.
-         * @param resource The resource representing the defined type.
-         */
-        void evaluate(evaluation::context& context, compiler::resource& resource) const;
 
      private:
         std::shared_ptr<ast::syntax_tree> _tree;
@@ -153,13 +129,6 @@ namespace puppet { namespace compiler {
          * @return Returns this registry.
          */
         registry& operator=(registry&&) = default;
-
-        /**
-         * Imports a syntax tree into the registry.
-         * Throws parse_exception if the tree cannot be successfully imported.
-         * @param tree The syntax tree to import into the registry.
-         */
-        void import(ast::syntax_tree const& tree);
 
         /**
          * Finds a class given the qualified name.
@@ -219,7 +188,6 @@ namespace puppet { namespace compiler {
         registry(registry&) = delete;
         registry& operator=(registry&) = delete;
 
-        std::unordered_set<ast::syntax_tree const*> _imported;
         std::unordered_map<std::string, std::vector<klass>> _classes;
         std::unordered_map<std::string, defined_type> _defined_types;
         std::vector<node_definition> _nodes;

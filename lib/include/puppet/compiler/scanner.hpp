@@ -6,6 +6,7 @@
 
 #include "ast/ast.hpp"
 #include "registry.hpp"
+#include "evaluation/dispatcher.hpp"
 #include <boost/variant.hpp>
 #include <vector>
 #include <string>
@@ -19,10 +20,11 @@ namespace puppet { namespace compiler {
     struct scanner : boost::static_visitor<>
     {
         /**
-         * Constructs a definition scanner with the registry to populate.
+         * Constructs a definition scanner.
          * @param registry The registry to populate with definitions.
+         * @param dispatcher The dispatcher to populate with definitions.
          */
-        explicit scanner(compiler::registry& registry);
+        scanner(compiler::registry& registry, evaluation::dispatcher& dispatcher);
 
         /**
          * Scans the given syntax tree for definitions.
@@ -87,10 +89,8 @@ namespace puppet { namespace compiler {
         void validate_parameters(char const* type, std::vector<ast::parameter> const& parameters) const;
 
         registry& _registry;
-        std::vector<std::string> _scopes;
-        std::vector<klass> _classes;
-        std::vector<defined_type> _defined_types;
-        std::vector<node_definition> _nodes;
+        evaluation::dispatcher& _dispatcher;
+        std::vector<ast::class_expression const*> _scopes;
     };
 
 }}  // puppet::compiler

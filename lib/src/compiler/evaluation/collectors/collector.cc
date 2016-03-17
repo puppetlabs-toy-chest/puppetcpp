@@ -28,8 +28,21 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
         // Realize the resource
         catalog.realize(resource);
 
-        // Apply the attributes
-        resource.apply(_attributes, true /* override */);
+        // Set the attributes
+        for (auto& pair : _attributes) {
+            switch (pair.first) {
+                case ast::attribute_operator::assignment:
+                    resource.set(pair.second);
+                    break;
+
+                case ast::attribute_operator::append:
+                    resource.append(pair.second);
+                    break;
+
+                default:
+                    throw runtime_error("unexpected attribute operator");
+            }
+        }
 
         // Check if the resource is already in the list
         if (check && find(_resources.begin(), _resources.end(), &resource) != _resources.end()) {

@@ -1,6 +1,5 @@
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/evaluation/evaluator.hpp>
-#include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 
 using namespace std;
@@ -13,9 +12,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         _name(expression.function),
         _block(expression.lambda)
     {
+        // Capture the closure scope if there is a block
+        if (_block) {
+            _closure_scope = context.current_scope();
+        }
+
         _arguments.reserve(expression.arguments.size());
 
-        // Evaluate the arguments
         evaluate_arguments(expression.arguments);
     }
 
@@ -37,7 +40,6 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             _arguments.emplace_back(rvalue_cast(instance));
         }
 
-        // Evaluate the arguments
         evaluate_arguments(expression.arguments);
     }
 
@@ -83,7 +85,6 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
     values::value call_context::yield(values::array& arguments) const
     {
-        // Execute the block
         try {
             return yield_without_catch(arguments);
         } catch (argument_exception const& ex) {
@@ -96,13 +97,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         if (!_block) {
             return values::undef();
         }
-        call_evaluator evaluator{ _context, _block->parameters, _block->body };
-        return evaluator.evaluate(arguments);
+        function_evaluator evaluator{ _context, "<block>", _block->parameters, _block->body };
+        return evaluator.evaluate(arguments, _closure_scope);
     }
 
     void call_context::evaluate_arguments(vector<ast::expression> const& arguments)
     {
-        // Evaluate the arguments
         evaluation::evaluator evaluator{ _context };
         for (auto& argument : arguments) {
             auto value = evaluator.evaluate(argument);
@@ -119,6 +119,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             _argument_contexts.push_back(argument.context());
             _arguments.emplace_back(rvalue_cast(value));
         }
+
+        // Arguments have evaluated, set the current context to the function's name
+        _context.current_context(_name);
     }
 
 }}}}  // namespace puppet::compiler::evaluation::functions

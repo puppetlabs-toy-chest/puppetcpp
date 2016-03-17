@@ -1,5 +1,6 @@
 #include <puppet/compiler/evaluation/functions/descriptor.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
+#include <puppet/compiler/evaluation/evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
 
@@ -8,9 +9,13 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    descriptor::descriptor(string name) :
-        _name(rvalue_cast(name))
+    descriptor::descriptor(string name, ast::function_expression const* expression) :
+        _name(rvalue_cast(name)),
+        _expression(expression)
     {
+        if (_expression && _expression->tree) {
+            _tree = _expression->tree->shared_from_this();
+        }
     }
 
     string const& descriptor::name() const
@@ -18,9 +23,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         return _name;
     }
 
+    ast::function_expression const* descriptor::expression() const
+    {
+        return _expression;
+    }
+
     bool descriptor::dispatchable() const
     {
-        return !_dispatch_descriptors.empty();
+        return _expression || !_dispatch_descriptors.empty();
     }
 
     void descriptor::add(string const& signature, callback_type callback)
@@ -38,10 +48,29 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
     values::value descriptor::dispatch(call_context& context) const
     {
+        auto& evaluation_context = context.context();
+
+        // Handle functions written in Puppet
+        if (_expression) {
+            try {
+                function_evaluator evaluator{ evaluation_context, *_expression };
+                return evaluator.evaluate(context.arguments(), nullptr, context.name(), false);
+            } catch (argument_exception const& ex) {
+                throw evaluation_exception(ex.what(), context.argument_context(ex.index()));
+            }
+        }
+
         // Search for a dispatch descriptor with a matching signature
         // TODO: in the future, this should dispatch to the most specific overload rather than the first dispatchable overload
         for (auto& descriptor : _dispatch_descriptors) {
             if (descriptor.signature.can_dispatch(context)) {
+                scoped_stack_frame frame{
+                    evaluation_context,
+                    stack_frame{
+                        _name.c_str(),
+                        make_shared<evaluation::scope>(evaluation_context.top_scope())
+                    }
+                };
                 return descriptor.callback(context);
             }
         }
@@ -52,7 +81,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         check_parameter_types(context, invocable);
 
         // Generic error in case the above fails
-        throw evaluation_exception((boost::format("function '%1%' cannot be dispatched.") % _name).str(), context.name());
+        throw evaluation_exception(
+            (boost::format("function '%1%' cannot be dispatched.") %
+             _name
+            ).str(),
+            context.name()
+        );
     }
 
     vector<descriptor::dispatch_descriptor const*> descriptor::check_argument_count(call_context const& context) const
@@ -132,9 +166,19 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         // If the invocable set is empty, then there was a block mismatch
         if (invocable.empty()) {
             if (block) {
-                throw evaluation_exception((boost::format("function '%1%' does not accept a block.") % _name).str(), *block);
+                throw evaluation_exception(
+                    (boost::format("function '%1%' does not accept a block.") %
+                     _name
+                    ).str(),
+                    *block
+                );
             }
-            throw evaluation_exception((boost::format("function '%1%' requires a block to be passed.") % _name).str(), context.name());
+            throw evaluation_exception(
+                (boost::format("function '%1%' requires a block to be passed.") %
+                 _name
+                ).str(),
+                context.name()
+            );
         }
 
         // If there's no block, nothing to validate
@@ -232,7 +276,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
              set %
              context.argument(min_argument_mismatch).get_type()
             ).str(),
-            context.argument_context(min_argument_mismatch));
+            context.argument_context(min_argument_mismatch)
+        );
     }
 
 }}}}  // namespace puppet::compiler::evaluation::functions

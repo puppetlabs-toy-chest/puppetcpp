@@ -75,12 +75,12 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/unary/negate.cc
     src/compiler/evaluation/operators/unary/splat.cc
     src/compiler/evaluation/access_evaluator.cc
-    src/compiler/evaluation/call_evaluator.cc
     src/compiler/evaluation/context.cc
     src/compiler/evaluation/dispatcher.cc
     src/compiler/evaluation/evaluator.cc
     src/compiler/evaluation/postfix_evaluator.cc
     src/compiler/evaluation/scope.cc
+    src/compiler/evaluation/stack_frame.cc
     src/compiler/lexer/lexer.cc
     src/compiler/lexer/position.cc
     src/compiler/lexer/tokens.cc

@@ -16,8 +16,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         functions::descriptor descriptor{ "tagged" };
 
         descriptor.add("Callable[Variant[String, Array[Any]], 1]", [](call_context& context) {
-            // Get the current scope's resource
-            auto resource = context.context().current_scope()->resource();
+            auto& evaluation_context = context.context();
+
+            // Get the calling scope's resource
+            auto resource = evaluation_context.calling_scope()->resource();
             if (!resource) {
                 return false;
             }
@@ -36,7 +38,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                     }
                     return true;
                 })) {
-                    throw evaluation_exception((boost::format("expected %1% or array of %1% but found %2%.") % types::string::name() % argument.get_type()).str(), context.argument_context(i));
+                    throw evaluation_exception(
+                        (boost::format("expected %1% or array of %1% but found %2%.") %
+                         types::string::name() %
+                         argument.get_type()
+                        ).str(),
+                        context.argument_context(i)
+                    );
                 }
                 if (!matches) {
                     return false;

@@ -135,4 +135,162 @@ namespace puppet { namespace compiler { namespace evaluation {
         evaluation::context& _context;
     };
 
+    /**
+     * Represents a Puppet function evaluator.
+     */
+    struct function_evaluator
+    {
+        /**
+         * Constructs a function evaluator for a Puppet function.
+         * @param context The current evaluation context.
+         * @param expression The Puppet function expression.
+         */
+        function_evaluator(evaluation::context& context, ast::function_expression const& expression);
+
+        /**
+         * Constructs a function evaluator for a named function without a definition.
+         * @param context The current evaluation context.
+         * @param name The function's name.
+         * @param parameters The function's parameters.
+         * @param body The function's body.
+         */
+        function_evaluator(evaluation::context& context, char const* name, std::vector<ast::parameter> const& parameters, std::vector<ast::expression> const& body);
+
+        /**
+         * Evaluates the function.
+         * @param arguments The arguments passed to the function.
+         * @param parent The parent scope to use or nullptr for top scope.
+         * @param call_context The context of the call expression.
+         * @param allow_excessive If true, excessive arguments are not an error.  If false, an error is raised when there are excessive arguments.
+         * @return Returns the function's return value.
+         */
+        runtime::values::value evaluate(
+            runtime::values::array& arguments,
+            std::shared_ptr<scope> parent = nullptr,
+            ast::context const& call_context = {},
+            bool allow_excessive = true) const;
+
+        /**
+         * Evaluates the function.
+         * @param arguments The arguments passed to the function.
+         * @param parent The parent scope to use or nullptr for top scope.
+         * @return Returns the function's return value.
+         */
+        runtime::values::value evaluate(runtime::values::hash& arguments, std::shared_ptr<scope> parent = nullptr) const;
+
+     private:
+        evaluation::context& _context;
+        char const* _name;
+        ast::function_expression const* _expression;
+        std::vector<ast::parameter> const& _parameters;
+        std::vector<ast::expression> const& _body;
+    };
+
+    /**
+     * Represents a Puppet resource evaluator.
+     * Base type for class, defined type, and node evaluators.
+     */
+    struct resource_evaluator
+    {
+        /**
+         * Constructs a resource evaluator.
+         * @param context The current evaluation context.
+         * @param parameters The resource definition's parameters.
+         * @param body The resource definition's body.
+         */
+        resource_evaluator(evaluation::context& context, std::vector<ast::parameter> const& parameters, std::vector<ast::expression> const& body);
+
+     protected:
+        /**
+         * Prepares the scope.
+         * @param scope The scope to prepare for evaluation.
+         * @param resource The resource whose attributes will be set in the scope.
+         */
+        void prepare_scope(evaluation::scope& scope, compiler::resource& resource) const;
+
+        /**
+         * Stores the evaluation context.
+         */
+        evaluation::context& _context;
+
+        /**
+         * Stores the parameters.
+         */
+        std::vector<ast::parameter> const& _parameters;
+
+        /**
+         * Stores the body.
+         */
+        std::vector<ast::expression> const& _body;
+    };
+
+    /**
+     * Represents a Puppet class evaluator.
+     */
+    struct class_evaluator : resource_evaluator
+    {
+        /**
+         * Constructs a class evaluator.
+         * @param context The current evaluation context.
+         * @param expression The class expression to evaluate.
+         */
+        class_evaluator(evaluation::context& context, ast::class_expression const& expression);
+
+        /**
+         * Evaluates for the given resource.
+         * @param resource The class resource to evaluate.
+         */
+        void evaluate(compiler::resource& resource) const;
+
+     private:
+        std::shared_ptr<scope> evaluate_parent() const;
+        ast::class_expression const& _expression;
+    };
+
+    /**
+     * Represents a Puppet defined type evaluator.
+     */
+    struct defined_type_evaluator : resource_evaluator
+    {
+        /**
+         * Constructs a defined type evaluator.
+         * @param context The current evaluation context.
+         * @param expression The defined type expression to evaluate.
+         */
+        defined_type_evaluator(evaluation::context& context, ast::defined_type_expression const& expression);
+
+        /**
+         * Evaluates for the given resource.
+         * @param resource The defined type resource to evaluate.
+         */
+        void evaluate(compiler::resource& resource) const;
+
+     private:
+        ast::defined_type_expression const& _expression;
+    };
+
+    /**
+     * Represents a Puppet node evaluator.
+     */
+    struct node_evaluator : resource_evaluator
+    {
+        /**
+         * Constructs a node evaluator.
+         * @param context The current evaluation context.
+         * @param expression The defined type expression to evaluate.
+         */
+        node_evaluator(evaluation::context& context, ast::node_expression const& expression);
+
+        /**
+         * Evaluates for the given resource.
+         * @param resource The node resource to evaluate.
+         */
+        void evaluate(compiler::resource& resource) const;
+
+     private:
+        static std::vector<ast::parameter> _none;
+
+        ast::node_expression const& _expression;
+    };
+
 }}}  // namespace puppet::compiler::evaluation

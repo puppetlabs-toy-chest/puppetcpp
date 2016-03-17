@@ -820,3 +820,29 @@ File['/default/check'] {
 unless File['/default/check'][baz] == cake {
     fail incorrect
 }
+
+# Function tests
+
+function test::noparams {
+    true
+}
+
+unless test::noparams() {
+    fail incorrect
+}
+
+function test::typedparams(Integer $a, String $b) {
+    $a == 1 and $b == foo
+}
+
+unless test::typedparams(1, foo) {
+    fail incorrect
+}
+
+function test::function($a, $b, *$c) {
+    $a == 1 and $b == foo and $c == [bar, baz]
+}
+
+unless test::function(1, foo, bar, baz) {
+    fail incorrect
+}

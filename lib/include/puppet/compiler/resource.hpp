@@ -118,13 +118,6 @@ namespace puppet { namespace compiler {
         bool append(std::shared_ptr<compiler::attribute> attribute);
 
         /**
-         * Applies the given attributes to the resource.
-         * @param attributes The attributes to apply.
-         * @param override True if existing attributes can be overriden or false if not.
-         */
-        void apply(compiler::attributes const& attributes, bool override = false);
-
-        /**
          * Enumerates each attribute in the resource.
          * @param callback The callback to call for each attribute.
          */

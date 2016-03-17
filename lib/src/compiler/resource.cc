@@ -118,60 +118,6 @@ namespace puppet { namespace compiler {
         return true;
     }
 
-    void resource::apply(compiler::attributes const& attributes, bool override)
-    {
-        // Go through each given attribute
-        for (auto& pair : attributes) {
-            auto oper = pair.first;
-            auto& attribute = pair.second;
-            // Check for assignment or append
-            if (oper == ast::attribute_operator::assignment) {
-                if (!override) {
-                    if (auto previous = get(attribute->name())) {
-                        auto const& context = previous->name_context();
-                        if (attribute->value().is_undef()) {
-                            throw evaluation_exception(
-                                (boost::format("cannot remove attribute '%1%' from resource %2% that was previously set at %3%:%4%.") %
-                                 attribute->name() %
-                                 _type %
-                                 context.tree->path() %
-                                 context.begin.line()
-                                ).str(),
-                                attribute->name_context());
-                        }
-                        throw evaluation_exception(
-                            (boost::format("cannot override attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
-                             attribute->name() %
-                             _type %
-                             context.tree->path() %
-                             context.begin.line()
-                            ).str(),
-                            attribute->name_context());
-                    }
-                }
-                // Set the attribute on the resource
-                set(attribute);
-            } else if (oper == ast::attribute_operator::append) {
-                if (!override) {
-                    if (auto previous = get(attribute->name())) {
-                        auto const& context = previous->name_context();
-                        throw evaluation_exception(
-                            (boost::format("cannot append to attribute '%1%' because it has already been set for resource %2% at %3%:%4%.") %
-                             attribute->name() %
-                             this->type() %
-                             context.tree->path() %
-                             context.begin.line()
-                            ).str(),
-                            attribute->name_context());
-                    }
-                }
-                append(attribute);
-            } else {
-                throw runtime_error("unexpected attribute operator");
-            }
-        }
-    }
-
     void resource::each_attribute(function<bool(attribute const&)> const& callback) const
     {
         if (!callback) {

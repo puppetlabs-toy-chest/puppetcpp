@@ -22,6 +22,28 @@ namespace puppet { namespace compiler {
     }
 
     /**
+     * Exception for arguments passed by index.
+     */
+    struct argument_exception : std::runtime_error
+    {
+        /**
+         * Constructs a new argument exception.
+         * @param message The exception message.
+         * @param index The index of the argument.
+         */
+        argument_exception(std::string const& message, size_t index);
+
+        /**
+         * Gets the index of the argument that caused the exception.
+         * @return Returns the index of the argument that caused the exception.
+         */
+        size_t index() const;
+
+     private:
+        size_t _index;
+    };
+
+    /**
      * Exception for lexer errors.
      * @tparam Iterator The iterator type.
      */

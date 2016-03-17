@@ -15,6 +15,7 @@ namespace puppet { namespace compiler {
     {
         switch (type) {
             case find_type::manifest:
+            case find_type::function:
                 return ".pp";
 
             default:
@@ -67,6 +68,8 @@ namespace puppet { namespace compiler {
         if (_manifests_path.empty()) {
             _manifests_path = make_absolute("manifests", _directory);
         }
+
+        _functions_path = make_absolute("functions", _directory);
     }
 
     string const& finder::directory() const
@@ -122,6 +125,9 @@ namespace puppet { namespace compiler {
         switch (type) {
             case find_type::manifest:
                 return _manifests_path;
+
+            case find_type::function:
+                return _functions_path;
 
             default:
                 throw runtime_error("unexpected file type.");

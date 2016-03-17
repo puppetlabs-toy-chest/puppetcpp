@@ -7,6 +7,17 @@ using namespace std;
 
 namespace puppet { namespace compiler {
 
+    argument_exception::argument_exception(std::string const& message, size_t index) :
+        runtime_error(message),
+        _index(index)
+    {
+    }
+
+    size_t argument_exception::index() const
+    {
+        return _index;
+    }
+
     parse_exception::parse_exception(string const& message, lexer::position begin, lexer::position end) :
         runtime_error(message),
         _begin(rvalue_cast(begin)),

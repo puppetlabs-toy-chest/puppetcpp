@@ -1,6 +1,5 @@
 #include <puppet/compiler/evaluation/functions/each.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
-#include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>

@@ -72,10 +72,10 @@ namespace puppet { namespace runtime { namespace values {
         }
 
         try {
-            // Use an empty evaluation context that has no top scope
+            // Use an empty evaluation context
             // This will prevent evaluation of expressions that require access to the node, catalog, or scope
-            evaluation::context context{ false };
-            evaluation::evaluator evaluator { context };
+            evaluation::context context;
+            evaluation::evaluator evaluator{ context };
             auto result = evaluator.evaluate(*postfix);
             if (result.as<type>()) {
                 return result.move_as<type>();
