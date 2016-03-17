@@ -233,8 +233,11 @@ namespace puppet { namespace compiler { namespace lexer {
                 lex::token_def<>(R"(\")",                             static_cast<id_type>(token_id::string_end))          [ action(&lexer::string_end) ]          |
                 lex::token_def<>(R"(.)",                              static_cast<id_type>(token_id::string_text))         [ action(&lexer::string_text) ];
             this->self(VARIABLE_CHECK_STATE) =
-                lex::token_def<>(VALID_VARIABLE_WITHOUT_SIGN_PATTERN, static_cast<id_type>(token_id::variable))            [ variable_check ] |
+                lex::token_def<>(VALID_VARIABLE_WITHOUT_SIGN_PATTERN, static_cast<id_type>(token_id::variable))            [ variable_check ]                            |
+                lex::token_def<>(R"(\s+)",                            static_cast<id_type>(token_id::whitespace))          [ lex::_pass = lex::pass_flags::pass_ignore ] |
                 lex::token_def<>(R"(.)",                              static_cast<id_type>(token_id::string_end))          [ end_variable_check ];
+            this->self(VARIABLE_LOOKAHEAD_STATE) =
+                lex::token_def<>(R"(\s*(\}|\.|\[))",                  1);
             this->self(HEREDOC_STATE) =
                 lex::token_def<>(R"(\$\{)",                           static_cast<id_type>(token_id::interpolation_start)) [ action(&lexer::interpolation_start) ] |
                 lex::token_def<>(VALID_VARIABLE_PATTERN,              static_cast<id_type>(token_id::variable))                                                    |
@@ -835,12 +838,14 @@ namespace puppet { namespace compiler { namespace lexer {
 
         static void variable_check(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            // If the next token is not }, '.', or '[', then this token cannot be a variable
-            auto state = context.get_state_id("INITIAL");
-            if (!context.lookahead('}', state) && !context.lookahead('.', state) && !context.lookahead('[', state)) {
+            // Check for the variable lookahead token
+            if (!context.lookahead(1, context.get_state_id(VARIABLE_LOOKAHEAD_STATE))) {
                 end_variable_check(begin, end, matched, id, context);
                 return;
             }
+
+            // Transition to the initial state to lex the interpolation expression
+            context.set_state(context.get_state_id("INITIAL"));
         }
 
         static void end_variable_check(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type const& id, context_type& context)
@@ -1320,6 +1325,7 @@ namespace puppet { namespace compiler { namespace lexer {
         static char const* const HEREDOC_STATE;
         static char const* const HEREDOC_END_STATE;
         static char const* const VARIABLE_CHECK_STATE;
+        static char const* const VARIABLE_LOOKAHEAD_STATE;
     };
 
     template<typename Base>
@@ -1349,6 +1355,8 @@ namespace puppet { namespace compiler { namespace lexer {
     char const* const lexer<Base>::HEREDOC_END_STATE = "HDE";
     template<typename Base>
     char const* const lexer<Base>::VARIABLE_CHECK_STATE = "VC";
+    template<typename Base>
+    char const* const lexer<Base>::VARIABLE_LOOKAHEAD_STATE = "VLH";
 
     /**
      * The input iterator for files.

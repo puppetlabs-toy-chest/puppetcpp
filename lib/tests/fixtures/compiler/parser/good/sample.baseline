@@ -18050,79 +18050,259 @@ statements:
               offset: 11911
               line: 790
             value: incorrect
+  - kind: unless
+    begin:
+      offset: 11914
+      line: 792
+    end:
+      offset: 11973
+      line: 794
+    conditional:
+      kind: binary
+      first:
+        kind: interpolated string
+        begin:
+          offset: 11921
+          line: 792
+        end:
+          offset: 11943
+          line: 792
+        parts:
+          - kind: variable
+            begin:
+              offset: 11926
+              line: 792
+            end:
+              offset: 11938
+              line: 792
+            name: interpolated
+      operations:
+        - operator_position:
+            offset: 11944
+            line: 792
+          operator: ==
+          operand:
+            kind: name
+            begin:
+              offset: 11947
+              line: 792
+            end:
+              offset: 11950
+              line: 792
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 11957
+            line: 793
+          end:
+            offset: 11961
+            line: 793
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 11962
+              line: 793
+            end:
+              offset: 11971
+              line: 793
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 11974
+      line: 795
+    end:
+      offset: 12031
+      line: 797
+    conditional:
+      kind: binary
+      first:
+        kind: interpolated string
+        begin:
+          offset: 11981
+          line: 795
+        end:
+          offset: 12001
+          line: 795
+        parts:
+          - kind: variable
+            begin:
+              offset: 11984
+              line: 795
+            end:
+              offset: 11996
+              line: 795
+            name: interpolated
+      operations:
+        - operator_position:
+            offset: 12002
+            line: 795
+          operator: ==
+          operand:
+            kind: name
+            begin:
+              offset: 12005
+              line: 795
+            end:
+              offset: 12008
+              line: 795
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 12015
+            line: 796
+          end:
+            offset: 12019
+            line: 796
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 12020
+              line: 796
+            end:
+              offset: 12029
+              line: 796
+            value: incorrect
+  - kind: unless
+    begin:
+      offset: 12032
+      line: 798
+    end:
+      offset: 12089
+      line: 800
+    conditional:
+      kind: binary
+      first:
+        kind: interpolated string
+        begin:
+          offset: 12039
+          line: 798
+        end:
+          offset: 12059
+          line: 798
+        parts:
+          - kind: variable
+            begin:
+              offset: 12045
+              line: 798
+            end:
+              offset: 12057
+              line: 798
+            name: interpolated
+      operations:
+        - operator_position:
+            offset: 12060
+            line: 798
+          operator: ==
+          operand:
+            kind: name
+            begin:
+              offset: 12063
+              line: 798
+            end:
+              offset: 12066
+              line: 798
+            value: foo
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 12073
+            line: 799
+          end:
+            offset: 12077
+            line: 799
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 12078
+              line: 799
+            end:
+              offset: 12087
+              line: 799
+            value: incorrect
   - kind: resource defaults
     begin:
-      offset: 11935
-      line: 794
+      offset: 12111
+      line: 803
     end:
-      offset: 11958
-      line: 796
+      offset: 12134
+      line: 805
     type:
       kind: type
       begin:
-        offset: 11935
-        line: 794
+        offset: 12111
+        line: 803
       end:
-        offset: 11939
-        line: 794
+        offset: 12115
+        line: 803
       name: File
     operations:
       - name:
           kind: name
           begin:
-            offset: 11946
-            line: 795
+            offset: 12122
+            line: 804
           end:
-            offset: 11949
-            line: 795
+            offset: 12125
+            line: 804
           value: foo
         operator_position:
-          offset: 11950
-          line: 795
+          offset: 12126
+          line: 804
         operator: =>
         value:
           kind: name
           begin:
-            offset: 11953
-            line: 795
+            offset: 12129
+            line: 804
           end:
-            offset: 11956
-            line: 795
+            offset: 12132
+            line: 804
           value: bar
   - kind: resource
     begin:
-      offset: 11960
-      line: 798
+      offset: 12136
+      line: 807
     end:
-      offset: 11986
-      line: 799
+      offset: 12162
+      line: 808
     status: realized
     type:
       kind: name
       begin:
-        offset: 11960
-        line: 798
+        offset: 12136
+        line: 807
       end:
-        offset: 11964
-        line: 798
+        offset: 12140
+        line: 807
       value: file
     bodies:
       - title:
           kind: string
           begin:
-            offset: 11967
-            line: 798
+            offset: 12143
+            line: 807
           end:
-            offset: 11983
-            line: 798
+            offset: 12159
+            line: 807
           value: /default/check
   - kind: unless
     begin:
-      offset: 11988
-      line: 801
+      offset: 12164
+      line: 810
     end:
-      offset: 12052
-      line: 803
+      offset: 12228
+      line: 812
     conditional:
       kind: binary
       first:
@@ -18130,144 +18310,144 @@ statements:
         primary:
           kind: type
           begin:
-            offset: 11995
-            line: 801
+            offset: 12171
+            line: 810
           end:
-            offset: 11999
-            line: 801
+            offset: 12175
+            line: 810
           name: File
         subexpressions:
           - kind: access
             begin:
-              offset: 11999
-              line: 801
+              offset: 12175
+              line: 810
             end:
-              offset: 12017
-              line: 801
+              offset: 12193
+              line: 810
             arguments:
               - kind: string
                 begin:
-                  offset: 12000
-                  line: 801
+                  offset: 12176
+                  line: 810
                 end:
-                  offset: 12016
-                  line: 801
+                  offset: 12192
+                  line: 810
                 value: /default/check
           - kind: access
             begin:
-              offset: 12017
-              line: 801
+              offset: 12193
+              line: 810
             end:
-              offset: 12022
-              line: 801
+              offset: 12198
+              line: 810
             arguments:
               - kind: name
                 begin:
-                  offset: 12018
-                  line: 801
+                  offset: 12194
+                  line: 810
                 end:
-                  offset: 12021
-                  line: 801
+                  offset: 12197
+                  line: 810
                 value: foo
       operations:
         - operator_position:
-            offset: 12023
-            line: 801
+            offset: 12199
+            line: 810
           operator: ==
           operand:
             kind: name
             begin:
-              offset: 12026
-              line: 801
+              offset: 12202
+              line: 810
             end:
-              offset: 12029
-              line: 801
+              offset: 12205
+              line: 810
             value: bar
     body:
       - kind: function call
         function:
           kind: name
           begin:
-            offset: 12036
-            line: 802
+            offset: 12212
+            line: 811
           end:
-            offset: 12040
-            line: 802
+            offset: 12216
+            line: 811
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12041
-              line: 802
+              offset: 12217
+              line: 811
             end:
-              offset: 12050
-              line: 802
+              offset: 12226
+              line: 811
             value: incorrect
   - kind: resource override
     begin:
-      offset: 12076
-      line: 807
+      offset: 12252
+      line: 816
     end:
-      offset: 12118
-      line: 809
+      offset: 12294
+      line: 818
     reference:
       kind: postfix
       primary:
         kind: type
         begin:
-          offset: 12076
-          line: 807
+          offset: 12252
+          line: 816
         end:
-          offset: 12080
-          line: 807
+          offset: 12256
+          line: 816
         name: File
       subexpressions:
         - kind: access
           begin:
-            offset: 12080
-            line: 807
+            offset: 12256
+            line: 816
           end:
-            offset: 12098
-            line: 807
+            offset: 12274
+            line: 816
           arguments:
             - kind: string
               begin:
-                offset: 12081
-                line: 807
+                offset: 12257
+                line: 816
               end:
-                offset: 12097
-                line: 807
+                offset: 12273
+                line: 816
               value: /default/check
     operations:
       - name:
           kind: name
           begin:
-            offset: 12105
-            line: 808
+            offset: 12281
+            line: 817
           end:
-            offset: 12108
-            line: 808
+            offset: 12284
+            line: 817
           value: baz
         operator_position:
-          offset: 12109
-          line: 808
+          offset: 12285
+          line: 817
         operator: =>
         value:
           kind: name
           begin:
-            offset: 12112
-            line: 808
+            offset: 12288
+            line: 817
           end:
-            offset: 12116
-            line: 808
+            offset: 12292
+            line: 817
           value: cake
   - kind: unless
     begin:
-      offset: 12120
-      line: 811
+      offset: 12296
+      line: 820
     end:
-      offset: 12185
-      line: 813
+      offset: 12361
+      line: 822
     conditional:
       kind: binary
       first:
@@ -18275,76 +18455,76 @@ statements:
         primary:
           kind: type
           begin:
-            offset: 12127
-            line: 811
+            offset: 12303
+            line: 820
           end:
-            offset: 12131
-            line: 811
+            offset: 12307
+            line: 820
           name: File
         subexpressions:
           - kind: access
             begin:
-              offset: 12131
-              line: 811
+              offset: 12307
+              line: 820
             end:
-              offset: 12149
-              line: 811
+              offset: 12325
+              line: 820
             arguments:
               - kind: string
                 begin:
-                  offset: 12132
-                  line: 811
+                  offset: 12308
+                  line: 820
                 end:
-                  offset: 12148
-                  line: 811
+                  offset: 12324
+                  line: 820
                 value: /default/check
           - kind: access
             begin:
-              offset: 12149
-              line: 811
+              offset: 12325
+              line: 820
             end:
-              offset: 12154
-              line: 811
+              offset: 12330
+              line: 820
             arguments:
               - kind: name
                 begin:
-                  offset: 12150
-                  line: 811
+                  offset: 12326
+                  line: 820
                 end:
-                  offset: 12153
-                  line: 811
+                  offset: 12329
+                  line: 820
                 value: baz
       operations:
         - operator_position:
-            offset: 12155
-            line: 811
+            offset: 12331
+            line: 820
           operator: ==
           operand:
             kind: name
             begin:
-              offset: 12158
-              line: 811
+              offset: 12334
+              line: 820
             end:
-              offset: 12162
-              line: 811
+              offset: 12338
+              line: 820
             value: cake
     body:
       - kind: function call
         function:
           kind: name
           begin:
-            offset: 12169
-            line: 812
+            offset: 12345
+            line: 821
           end:
-            offset: 12173
-            line: 812
+            offset: 12349
+            line: 821
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12174
-              line: 812
+              offset: 12350
+              line: 821
             end:
-              offset: 12183
-              line: 812
+              offset: 12359
+              line: 821
             value: incorrect
