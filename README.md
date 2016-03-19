@@ -160,25 +160,17 @@ Catalog compiling status:
 * [x] Facts from files and Facter
 * [x] JSON catalog generation
 
-Building with Docker
---------------------
+Running With Docker
+-------------------
 
-The `peterhuene/puppetcpp` image on Docker Hub contains an Arch Linux image with all build dependencies already installed.
+The `peterhuene/puppetcpp` image on Docker Hub contains a pre-built version of the prototype compiler.
 
-Run bash from within the container:
+Use the following docker command to run the compiler:
 
-    $ docker run -t -i -v `pwd`:/puppetcpp peterhuene/puppetcpp /bin/bash
+    $ docker run -it peterhuene/puppetcpp
 
-Build the compiler (note: replace the `-j 2` below with the appropriate job count for faster parallel builds):
+This image is not yet automatically updated when commits are merged into master; it will be periodically updated when new features are merged.
 
-    $ mkdir -p /puppetcpp/release
-    $ cd /puppetcpp/release
-    $ cmake ..
-    $ make -j 2
-
-Run the compiler:
-
-    $ bin/puppetcpp
 
 Build Requirements
 ------------------
