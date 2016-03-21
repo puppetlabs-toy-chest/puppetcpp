@@ -11,7 +11,8 @@ include(cotire)
 
 enable_testing()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -ftemplate-depth=512 -Wall -Wextra -Werror -Wno-unused-parameter")
+# Disable PCH date-time check because Boost Spirit Lex uses __DATE__ and __TIME__ for static lexer generation
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -ftemplate-depth=512 -Wall -Wextra -Werror -Wno-unused-parameter -Wno-pch-date-time")
 
 if (${TEST_COVERAGE})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -coverage")
