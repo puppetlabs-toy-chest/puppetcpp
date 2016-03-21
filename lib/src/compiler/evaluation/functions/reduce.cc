@@ -35,9 +35,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
     static values::value reduce_values(call_context& context, boost::optional<values::value> memo, types::integer const& range)
     {
-        if (!range.enumerable()) {
+        if (!range.iterable()) {
             throw evaluation_exception(
-                (boost::format("%1% is not enumerable.") %
+                (boost::format("%1% is not an iterable range.") %
                  range
                 ).str(),
                 context.argument_context(0),

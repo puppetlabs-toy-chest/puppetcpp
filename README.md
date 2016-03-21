@@ -65,6 +65,7 @@ Expression evaluator status:
 * [x] local scope
 * [x] node scope
 * [x] string interpolation
+* [ ] Puppet type aliases
 * [x] custom functions written in Puppet
 * [ ] custom functions written in Ruby
 * [ ] custom types written in Puppet
@@ -91,6 +92,8 @@ Type system implemented:
 * [x] Float
 * [x] Hash
 * [x] Integer
+* [x] Iterable
+* [ ] Iterator
 * [x] Class
 * [x] NotUndef
 * [x] Numeric
@@ -143,15 +146,18 @@ Puppet functions implemented:
 * [x] reduce
 * [ ] regsubst
 * [x] require
+* [ ] reverse_each
 * [ ] scanf
 * [ ] sha1
 * [ ] shellquote
 * [ ] slice
 * [x] split
 * [ ] sprintf
+* [ ] step
 * [x] tag
 * [x] tagged
 * [ ] template
+* [ ] type
 * [x] versioncmp
 * [x] warning
 * [x] with

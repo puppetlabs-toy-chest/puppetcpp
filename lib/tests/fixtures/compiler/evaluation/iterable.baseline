@@ -1,0 +1,52 @@
+Notice: Scope(Class[main]): Iterable
+Notice: Scope(Class[main]): Iterable[String]
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+
