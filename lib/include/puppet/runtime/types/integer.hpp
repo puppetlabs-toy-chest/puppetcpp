@@ -49,13 +49,6 @@ namespace puppet { namespace runtime { namespace types {
         bool iterable() const;
 
         /**
-         * Gets the size of the range.
-         * If the range is not iterable, the size will be zero.
-         * @return Returns the size of the range.
-         */
-        size_t size() const;
-
-        /**
          * Calls the given callback for each integer in the range.
          * @param callback The callback to call.
          */

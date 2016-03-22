@@ -11,7 +11,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     static values::value split_characters(string const& str)
     {
         values::array result;
-        values::enumerate_string(str, [&](string codepoint) {
+        values::each_code_point(str, [&](string codepoint) {
             result.emplace_back(rvalue_cast(codepoint));
             return true;
         });

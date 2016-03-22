@@ -120,6 +120,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/types/hash.cc
     src/runtime/types/integer.cc
     src/runtime/types/iterable.cc
+    src/runtime/types/iterator.cc
     src/runtime/types/not_undef.cc
     src/runtime/types/numeric.cc
     src/runtime/types/optional.cc
@@ -137,6 +138,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/values/array.cc
     src/runtime/values/defaulted.cc
     src/runtime/values/hash.cc
+    src/runtime/values/iterator.cc
     src/runtime/values/regex.cc
     src/runtime/values/type.cc
     src/runtime/values/undef.cc

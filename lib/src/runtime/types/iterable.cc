@@ -101,7 +101,31 @@ namespace puppet { namespace runtime { namespace types {
             return false;
         }
 
-        // TODO: add support for Iterator
+        // Check for iterator
+        if (auto iterator = value.as<values::iterator>()) {
+            bool match = true;
+            if (_type) {
+                auto tuple = boost::get<types::tuple>(_type.get());
+                iterator->each([&](auto const* key, auto const& value) {
+                    if (key) {
+                        if (!tuple) {
+                            match = false;
+                            return false;
+                        }
+                        auto& types = tuple->types();
+                        if (types.size() != 2) {
+                            match = false;
+                            return false;
+                        }
+                        match = types[0]->is_instance(*key) && types[1]->is_instance(value);
+                    } else {
+                        match = _type->is_instance(value);
+                    }
+                    return match;
+                });
+            }
+            return match;
+        }
         return false;
     }
 

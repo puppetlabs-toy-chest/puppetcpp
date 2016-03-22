@@ -267,6 +267,34 @@ namespace puppet { namespace compiler { namespace evaluation {
             return types::iterable(make_unique<values::type>(_arguments[0]->move_as<values::type>()));
         }
 
+        value operator()(types::iterator const& target)
+        {
+            // Only 1 argument to Iterator
+            if (_arguments.size() > 1) {
+                throw evaluation_exception(
+                    (boost::format("expected 1 argument for %1% but %2% were given.") %
+                     types::iterator::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
+            }
+
+            // First argument should be a type
+            if (!_arguments[0]->as<values::type>()) {
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::type::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
+            }
+            return types::iterator(make_unique<values::type>(_arguments[0]->move_as<values::type>()));
+        }
+
         value operator()(floating const& target)
         {
             // At most 2 arguments to Float

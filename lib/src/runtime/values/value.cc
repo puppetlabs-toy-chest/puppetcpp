@@ -118,12 +118,20 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(array const&) const
         {
+            // TODO: infer the type argument
             return types::array(make_unique<type>(types::any()));
         }
 
         result_type operator()(hash const&) const
         {
+            // TODO: infer the type arguments
             return types::hash(make_unique<type>(types::any()), make_unique<type>(types::any()));
+        }
+
+        result_type operator()(iterator const&) const
+        {
+            // TODO: infer the type argument
+            return types::iterator();
         }
     };
 
@@ -151,7 +159,21 @@ namespace puppet { namespace runtime { namespace values {
                 element.emplace_back(kvp.value());
                 result.emplace_back(rvalue_cast(element));
             }
-        } else if (!is_undef()) {
+        } else if (auto iterator = as<values::iterator>()) {
+            // Copy the iteration into the result
+            iterator->each([&](auto const* key, auto const& value) {
+                if (key) {
+                    array kvp;
+                    kvp[0] = *key;
+                    kvp[1] = value;
+                    result.emplace_back(rvalue_cast(kvp));
+                } else {
+                    result.emplace_back(value);
+                }
+                return true;
+            });
+        }
+        else if (!is_undef()) {
             // Otherwise, add the value as the only element
             result.emplace_back(rvalue_cast(*this));
         }
@@ -353,9 +375,38 @@ namespace puppet { namespace runtime { namespace values {
                 value.AddMember(
                     json_value(boost::lexical_cast<string>(kvp.key()).c_str(), _allocator),
                     boost::apply_visitor(*this, kvp.value()),
-                    _allocator);
+                    _allocator
+                );
             }
             return value;
+        }
+
+        result_type operator()(values::iterator const& iterator) const
+        {
+            json_value result;
+
+            bool is_hash = iterator.value().as<values::hash>();
+
+            if (is_hash) {
+                result.SetObject();
+            } else {
+                result.SetArray();
+            }
+
+            // Copy the iteration into the result
+            iterator.each([&](auto const* key, auto const& value) {
+                if (key) {
+                    result.AddMember(
+                        json_value(boost::lexical_cast<string>(*key).c_str(), _allocator),
+                        boost::apply_visitor(*this, value),
+                        _allocator
+                    );
+                } else {
+                    result.PushBack(boost::apply_visitor(*this, value), _allocator);
+                }
+                return true;
+            });
+            return result;
         }
 
      private:
@@ -367,14 +418,31 @@ namespace puppet { namespace runtime { namespace values {
         return boost::apply_visitor(json_visitor(allocator), *this);
     }
 
-    void enumerate_string(string const& str, function<bool(string)> const& callback)
+    void each_code_point(string const& str, function<bool(string)> const& callback, bool reverse)
     {
         // Go through each Unicode code point in the string
+
+        if (reverse) {
+            if (str.empty()) {
+                return;
+            }
+            // Because utf8::prior walks backward, we can't use rbegin/rend.
+            auto current = &str.back() + 1;
+            while (current >= &str.front()) {
+                auto end = current;
+                utf8::prior(current, &str.front());
+                if (!callback(string{ current, end })) {
+                    break;
+                }
+            }
+            return;
+        }
+
         auto current = str.begin();
         while (current != str.end()) {
             auto begin = current;
             utf8::next(current, str.end());
-            if (!callback(string(begin, current))) {
+            if (!callback(string{ begin, current })) {
                 break;
             }
         }

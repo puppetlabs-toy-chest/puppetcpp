@@ -8,6 +8,7 @@
 #include "array.hpp"
 #include "defaulted.hpp"
 #include "hash.hpp"
+#include "iterator.hpp"
 #include "regex.hpp"
 #include "type.hpp"
 #include "undef.hpp"
@@ -58,7 +59,8 @@ namespace puppet { namespace runtime { namespace values {
         type,
         variable,
         array,
-        hash
+        hash,
+        iterator
     >;
 
     /**
@@ -122,9 +124,9 @@ namespace puppet { namespace runtime { namespace values {
         value(char const* string);
 
         /**
-         * Intentionally undefined constructor to prevent implicit conversion to a boolean value.
+         * Intentionally deleted constructor to prevent implicit conversion to a boolean value.
          */
-        value(void const*);
+        value(void const*) = delete;
 
         /**
          * Move assigns the value given a wrapper containing the value to move.
@@ -340,20 +342,20 @@ namespace puppet { namespace runtime { namespace values {
     std::ostream& operator<<(std::ostream& os, value const& val);
 
     /**
-     * Declaration of operator== for values.
-     * This exists to intentionally cause an ambiguity if operator== is used on a value.
-     * Always use equals() on values and not operator==.
-     * @return No return defined.
+     * Equality operator for value.
+     * @param left The left value to compare.
+     * @param right The right value to compare.
+     * @return Returns true if the two values are equal or false if not.
      */
-    bool operator==(value const&, value const&);
+    bool operator==(value const& left, value const& right);
 
     /**
-     * Declaration of operator!= for values.
-     * This exists to intentionally cause an ambiguity if operator!= is used on a value.
-     * Always use !equals() on values and not operator!=.
-     * @return No return defined.
+     * Inequality operator for value.
+     * @param left The left value to compare.
+     * @param right The right value to compare.
+     * @return Returns true if the two values are not equal or false if they are equal.
      */
-    bool operator!=(value const&, value const&);
+    bool operator!=(value const& left, value const& right);
 
     /**
      * Equality visitor for values that handles variable comparison.
@@ -432,10 +434,11 @@ namespace puppet { namespace runtime { namespace values {
     }
 
     /**
-     * Enumerates each Unicode code point in the given string.
-     * @param str The string to enumerate.
+     * Iterates each Unicode code point in a string.
+     * @param str The string to iterate.
      * @param callback The callback to call for each Unicode code point, passed as a UTF-8 string.
+     * @param reverse True to reverse the iteration or false if not.
      */
-    void enumerate_string(std::string const& str, std::function<bool(std::string)> const& callback);
+    void each_code_point(std::string const& str, std::function<bool(std::string)> const& callback, bool reverse = false);
 
 }}}  // namespace puppet::runtime::values

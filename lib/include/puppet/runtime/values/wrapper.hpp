@@ -20,7 +20,7 @@ namespace puppet { namespace runtime { namespace values {
     struct wrapper
     {
         /**
-         * The t
+         * The underlying value type.
          */
         using value_type = T;
 

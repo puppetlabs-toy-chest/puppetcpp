@@ -19,6 +19,7 @@
 #include "../types/hash.hpp"
 #include "../types/integer.hpp"
 #include "../types/iterable.hpp"
+#include "../types/iterator.hpp"
 #include "../types/not_undef.hpp"
 #include "../types/numeric.hpp"
 #include "../types/optional.hpp"
@@ -69,6 +70,7 @@ namespace puppet { namespace runtime { namespace values {
         types::hash,
         types::integer,
         types::iterable,
+        types::iterator,
         types::not_undef,
         types::numeric,
         types::optional,

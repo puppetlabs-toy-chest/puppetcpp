@@ -9,6 +9,9 @@ namespace puppet { namespace runtime { namespace types {
         _from(from),
         _to(to)
     {
+        if (from > to) {
+            throw runtime_error("from cannot be greater than to.");
+        }
     }
 
     int64_t integer::from() const
@@ -28,17 +31,7 @@ namespace puppet { namespace runtime { namespace types {
 
     bool integer::iterable() const
     {
-        return std::min(_from, _to) != numeric_limits<int64_t>::min() &&
-               std::max(_from, _to) != numeric_limits<int64_t>::max();
-    }
-
-    size_t integer::size() const
-    {
-        if (!iterable()) {
-            return 0;
-        }
-        // Ranges are inclusive, so size is always > 0
-        return std::max(_from, _to) - std::min(_from, _to) + 1;
+        return _from != numeric_limits<int64_t>::min() && _to != numeric_limits<int64_t>::max();
     }
 
     void integer::each(function<bool(int64_t, int64_t)> const& callback) const
