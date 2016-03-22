@@ -22,7 +22,11 @@ namespace puppet { namespace runtime { namespace values {
 
     size_t hash_value(defaulted const&)
     {
-        return 0;
+        static const size_t name_hash = boost::hash_value("default");
+
+        std::size_t seed = 0;
+        boost::hash_combine(seed, name_hash);
+        return seed;
     }
 
 }}}  // namespace puppet::runtime::values

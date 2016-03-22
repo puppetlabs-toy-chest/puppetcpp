@@ -343,6 +343,7 @@ namespace puppet { namespace runtime { namespace values {
     template <typename T>
     size_t hash_value(values::wrapper<T> const& wrapper)
     {
+        // Hash the underlying value
         return hash_value(*wrapper);
     }
 
