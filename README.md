@@ -146,7 +146,7 @@ Puppet functions implemented:
 * [x] reduce
 * [ ] regsubst
 * [x] require
-* [ ] reverse_each
+* [x] reverse_each
 * [ ] scanf
 * [ ] sha1
 * [ ] shellquote

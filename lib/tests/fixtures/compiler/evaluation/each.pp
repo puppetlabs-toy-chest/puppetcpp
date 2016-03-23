@@ -50,4 +50,18 @@ notice Enum[foo, bar, baz].each |$index, $value| {
     notice "index = $index, value = $value"
 }
 
-# TODO: add tests for iterators when they can be instantiated
+notice [1, 2, 3].reverse_each.each |$value| {
+    notice "value = $value"
+}
+
+notice [1, 2, 3].reverse_each.each |$index, $value| {
+    notice "index = $index, value = $value"
+}
+
+notice { foo => bar, bar => baz, baz => cake }.reverse_each.each |$value| {
+    notice "value = $value"
+}
+
+notice { foo => bar, bar => baz, baz => cake }.reverse_each.each |$key, $value| {
+    notice "key = $key, value = $value"
+}

@@ -19,6 +19,7 @@
 #include <puppet/compiler/evaluation/functions/realize.hpp>
 #include <puppet/compiler/evaluation/functions/reduce.hpp>
 #include <puppet/compiler/evaluation/functions/require.hpp>
+#include <puppet/compiler/evaluation/functions/reverse_each.hpp>
 #include <puppet/compiler/evaluation/functions/split.hpp>
 #include <puppet/compiler/evaluation/functions/tag.hpp>
 #include <puppet/compiler/evaluation/functions/tagged.hpp>
@@ -84,6 +85,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::realize::create_descriptor());
         add(functions::reduce::create_descriptor());
         add(functions::require::create_descriptor());
+        add(functions::reverse_each::create_descriptor());
         add(functions::split::create_descriptor());
         add(functions::tag::create_descriptor());
         add(functions::tagged::create_descriptor());

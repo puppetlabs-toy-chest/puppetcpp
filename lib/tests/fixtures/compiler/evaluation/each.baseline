@@ -50,6 +50,22 @@ Notice: Scope(Class[main]): index = 0, value = foo
 Notice: Scope(Class[main]): index = 1, value = bar
 Notice: Scope(Class[main]): index = 2, value = baz
 Notice: Scope(Class[main]): Enum[foo, bar, baz]
+Notice: Scope(Class[main]): value = 3
+Notice: Scope(Class[main]): value = 2
+Notice: Scope(Class[main]): value = 1
+Notice: Scope(Class[main]): [3, 2, 1]
+Notice: Scope(Class[main]): index = 0, value = 3
+Notice: Scope(Class[main]): index = 1, value = 2
+Notice: Scope(Class[main]): index = 2, value = 1
+Notice: Scope(Class[main]): [3, 2, 1]
+Notice: Scope(Class[main]): value = [baz, cake]
+Notice: Scope(Class[main]): value = [bar, baz]
+Notice: Scope(Class[main]): value = [foo, bar]
+Notice: Scope(Class[main]): {baz => cake, bar => baz, foo => bar}
+Notice: Scope(Class[main]): key = baz, value = cake
+Notice: Scope(Class[main]): key = bar, value = baz
+Notice: Scope(Class[main]): key = foo, value = bar
+Notice: Scope(Class[main]): {baz => cake, bar => baz, foo => bar}
 {
   "name": "test",
   "version": 123456789

@@ -36,6 +36,18 @@ Notice: Scope(Class[main]): foobarbaz
 Notice: Scope(Class[main]): memo = foo, value = bar
 Notice: Scope(Class[main]): memo = foobar, value = baz
 Notice: Scope(Class[main]): foobarbaz
+Notice: Scope(Class[main]): memo = 3, value = 2
+Notice: Scope(Class[main]): memo = 5, value = 1
+Notice: Scope(Class[main]): 6
+Notice: Scope(Class[main]): memo = 3, value = 2
+Notice: Scope(Class[main]): memo = 5, value = 1
+Notice: Scope(Class[main]): 6
+Notice: Scope(Class[main]): value = [bar, baz]
+Notice: Scope(Class[main]): value = [foo, bar]
+Notice: Scope(Class[main]): [baz, cake, bar, baz, foo, bar]
+Notice: Scope(Class[main]): key = , value = [bar, baz]
+Notice: Scope(Class[main]): key = , value = [foo, bar]
+Notice: Scope(Class[main]): [baz, cake, bar, baz, foo, bar]
 {
   "name": "test",
   "version": 123456789

@@ -1,5 +1,7 @@
 Notice: Scope(Class[main]): Iterator
 Notice: Scope(Class[main]): Iterator[String]
+Notice: Scope(Class[main]): [3, 2, 1]
+Notice: Scope(Class[main]): {baz => cake, bar => baz, foo => bar}
 {
   "name": "test",
   "version": 123456789
