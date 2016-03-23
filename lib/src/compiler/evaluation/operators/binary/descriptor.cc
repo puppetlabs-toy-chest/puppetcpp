@@ -94,9 +94,16 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             }
         }
 
+        auto& evaluation_context = context.context();
         if (set.empty()) {
             // Generic error for no matched types
-            throw evaluation_exception((boost::format("binary operator '%1%' cannot be dispatched.") % _operator).str(), context.operator_context());
+            throw evaluation_exception(
+                (boost::format("binary operator '%1%' cannot be dispatched.") %
+                 _operator
+                ).str(),
+                context.operator_context(),
+                evaluation_context.backtrace()
+            );
         }
 
         throw evaluation_exception(
@@ -105,7 +112,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
              set %
              (!rhs_match ? context.right() : context.left()).get_type()
             ).str(),
-            !rhs_match ? context.right_context() : context.left_context());
+            !rhs_match ? context.right_context() : context.left_context(),
+            evaluation_context.backtrace()
+        );
     }
 
 }}}}}  // namespace puppet::compiler::evaluation::operators::binary

@@ -18,7 +18,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 ss << ": ";
                 context.arguments().join(ss, " ");
             }
-            throw evaluation_exception(ss.str(), context.name());
+            throw evaluation_exception(ss.str(), context.name(), context.context().backtrace());
         });
         return descriptor;
     }

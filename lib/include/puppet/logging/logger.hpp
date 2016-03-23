@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include "../compiler/evaluation/stack_frame.hpp"
 #include <boost/format.hpp>
 #include <string>
 #include <iostream>
@@ -141,6 +142,12 @@ namespace puppet { namespace logging {
         }
 
         /**
+         * Logs a backtrace at error level.
+         * @param backtrace The backtrace to log.
+         */
+        void log(std::vector<compiler::evaluation::stack_frame> const& backtrace);
+
+        /**
          * Gets the number of warnings logged.
          * @return Returns the number of warnings logged.
          */
@@ -189,6 +196,12 @@ namespace puppet { namespace logging {
          */
         virtual void log_message(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message) = 0;
 
+        /**
+         * Logs a backtrace.
+         * @param backtrace The backtrace to log.
+         */
+        virtual void log_backtrace(std::vector<compiler::evaluation::stack_frame> const& backtrace) = 0;
+
      private:
         size_t _warnings;
         size_t _errors;
@@ -211,7 +224,13 @@ namespace puppet { namespace logging {
          * @param path The path of the source file.
          * @param message The message to log.
          */
-        virtual void log_message(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message) override;
+        void log_message(logging::level level, size_t line, size_t column, size_t length, std::string const& text, std::string const& path, std::string const& message) override;
+
+        /**
+         * Logs a backtrace.
+         * @param backtrace The backtrace to log.
+         */
+        void log_backtrace(std::vector<compiler::evaluation::stack_frame> const& backtrace) override;
 
         /**
          * Gets the stream to log to based on the message's log level.
@@ -238,7 +257,6 @@ namespace puppet { namespace logging {
      */
     struct console_logger : stream_logger
     {
-     public:
         /**
          * Constructs a console logger.
          */

@@ -1,0 +1,56 @@
+Notice: Scope(Class[main]): a-b
+Notice: Scope(Class[main]): _foo-bar_-baz
+Notice: Scope(Class[main]): _
+Notice: Scope(Class[main]): a-b
+Notice: Scope(Class[main]): _foo-bar_-baz
+Notice: Scope(Class[main]): foo
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

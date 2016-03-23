@@ -1,0 +1,6 @@
+Notice: Scope(Class[main]): foo
+Error: func_too_may_args.pp:6:1: node 'test': function 'test' has 1 parameter but 2 arguments were given.
+  test(foo, bar)
+  ^~~~
+  backtrace:
+    in '<class main>' at func_too_may_args.pp:6

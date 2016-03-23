@@ -1,0 +1,3 @@
+Error: missing_override.pp:1:1: node 'test': resource File[nope] does not exist in the catalog.
+  File[nope] {
+  ^~~~~~~~~~

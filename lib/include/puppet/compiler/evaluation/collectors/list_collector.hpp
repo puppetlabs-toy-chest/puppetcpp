@@ -35,9 +35,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
 
         /**
          * Detects uncollected resources.
+         * @param context The current evaluation context.
          * Throws an evaluation exception if there are any uncollected resources.
          */
-        void detect_uncollected() const override;
+        void detect_uncollected(evaluation::context& context) const override;
 
      private:
         std::shared_ptr<ast::syntax_tree> _tree;

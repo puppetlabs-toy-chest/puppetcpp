@@ -12,13 +12,29 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     static values::value add(call_context& context, int64_t left, int64_t right)
     {
+        auto& evaluation_context = context.context();
+
         if (right > 0) {
             if (left > numeric_limits<int64_t>::max() - right) {
-                throw evaluation_exception((boost::format("addition of %1% and %2% results in an arithmetic overflow.") % left % right).str(), context.right_context());
+                throw evaluation_exception(
+                    (boost::format("addition of %1% and %2% results in an arithmetic overflow.") %
+                     left %
+                     right
+                    ).str(),
+                    context.right_context(),
+                    evaluation_context.backtrace()
+                );
             }
         } else {
             if (left < numeric_limits<int64_t>::min() - right) {
-                throw evaluation_exception((boost::format("addition of %1% and %2% results in an arithmetic underflow.") % left % right).str(), context.right_context());
+                throw evaluation_exception(
+                    (boost::format("addition of %1% and %2% results in an arithmetic underflow.") %
+                     left %
+                     right
+                    ).str(),
+                    context.right_context(),
+                    evaluation_context.backtrace()
+                );
             }
         }
         return left + right;
@@ -26,12 +42,28 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     static values::value add(call_context& context, double left, double right)
     {
+        auto& evaluation_context = context.context();
+
         feclearexcept(FE_OVERFLOW | FE_UNDERFLOW);
         double result = left + right;
         if (fetestexcept(FE_OVERFLOW)) {
-            throw evaluation_exception((boost::format("addition of %1% and %2% results in an arithmetic overflow.") % left % right).str(), context.right_context());
+            throw evaluation_exception(
+                (boost::format("addition of %1% and %2% results in an arithmetic overflow.") %
+                 left %
+                 right
+                ).str(),
+                context.right_context(),
+                evaluation_context.backtrace()
+            );
         } else if (fetestexcept(FE_UNDERFLOW)) {
-            throw evaluation_exception((boost::format("addition of %1% and %2% results in an arithmetic underflow.") % left % right).str(), context.right_context());
+            throw evaluation_exception(
+                (boost::format("addition of %1% and %2% results in an arithmetic underflow.") %
+                 left %
+                 right
+                ).str(),
+                context.right_context(),
+                evaluation_context.backtrace()
+            );
         }
         return result;
     }
@@ -124,7 +156,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             } else {
                 // Otherwise, there should be an even number of elements
                 if (right.size() & 1) {
-                    throw evaluation_exception((boost::format("expected an even number of elements in %1% for concatenation but found %2%.") % types::array::name() % right.size()).str(), context.right_context());
+                    throw evaluation_exception(
+                        (boost::format("expected an even number of elements in %1% for concatenation but found %2%.") %
+                         types::array::name() %
+                         right.size()
+                        ).str(),
+                        context.right_context(),
+                        context.context().backtrace()
+                    );
                 }
 
                 for (size_t i = 0; i < right.size(); i += 2) {

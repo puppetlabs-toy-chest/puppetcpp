@@ -1,6 +1,5 @@
 #include <puppet/compiler/evaluation/functions/reduce.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
-#include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
@@ -37,7 +36,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     static values::value reduce_values(call_context& context, boost::optional<values::value> memo, types::integer const& range)
     {
         if (!range.enumerable()) {
-            throw evaluation_exception((boost::format("%1% is not enumerable.") % range).str(), context.argument_context(0));
+            throw evaluation_exception(
+                (boost::format("%1% is not enumerable.") %
+                 range
+                ).str(),
+                context.argument_context(0),
+                context.context().backtrace()
+            );
         }
 
         values::array block_arguments(2);

@@ -18,14 +18,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
         }
     }
 
-    void list_collector::detect_uncollected() const
+    void list_collector::detect_uncollected(evaluation::context& context) const
     {
         if (_list.empty()) {
             return;
         }
         // Throw an exception for the first uncollected resource
         auto& front = _list.front();
-        throw evaluation_exception((boost::format("resource %1% does not exist in the catalog.") % front.first).str(), front.second);
+        throw evaluation_exception((boost::format("resource %1% does not exist in the catalog.") % front.first).str(), front.second, context.backtrace());
     }
 
     void list_collector::collect(evaluation::context& context)

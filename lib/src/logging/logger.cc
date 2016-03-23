@@ -10,6 +10,8 @@ using boost::format;
 
 namespace puppet { namespace logging {
 
+    static const size_t MAX_BACKTRACE_COUNT = 25;
+
     ostream& operator<<(ostream& out, logging::level level)
     {
         // Keep this in sync with the definition of logging::level
@@ -59,6 +61,15 @@ namespace puppet { namespace logging {
         log_message(level, line, column, length, text, path, message);
     }
 
+    void logger::log(vector<compiler::evaluation::stack_frame> const& backtrace)
+    {
+        if (!would_log(logging::level::error) || backtrace.empty()) {
+            return;
+        }
+
+        log_backtrace(backtrace);
+    }
+
     size_t logger::warnings() const
     {
         return _warnings;
@@ -93,10 +104,7 @@ namespace puppet { namespace logging {
     {
         ostream& stream = get_stream(level);
 
-        // Colorize the output
         colorize(level);
-
-        // Output the level
         stream << level << ": ";
 
         // If a location was given, write it out
@@ -111,53 +119,62 @@ namespace puppet { namespace logging {
             stream << ": ";
         }
 
-        // Output the message
-        if (!message.empty()) {
-            stream << message;
-        }
+        stream << message << "\n";
 
-        stream << "\n";
-
-        // Output the offending line's text
         if (!text.empty() && column > 0) {
             reset(level);
 
             // Ignore leading whitespace in the line
             size_t offset = 0;
-            size_t column_offset = 0;
-            for (; offset < text.size(); ++offset, ++column_offset) {
+            size_t leading_spaces = 0;
+            for (; offset < text.size(); ++offset, ++leading_spaces) {
                 // If the current offset into the string is not a space, break out
                 if (!isspace(text[offset])) {
                     break;
                 }
                 // If a tab, offset the column by a tab width (3 + 1)
                 if (text[offset] == '\t') {
-                    column_offset += 3;
+                    leading_spaces += 3;
                     continue;
                 }
             }
 
-            // Write the line
-            stream << "    ";
+            // Write the line starting at the whitespace offset
+            stream << "  ";
             stream.write(text.c_str() + offset, text.size() - offset);
             stream << '\n';
 
             // Write the "pointer" pointing at the column
-            fill_n(ostream_iterator<char>(stream), column - column_offset + 3, ' ');
+            fill_n(ostream_iterator<char>(stream), (leading_spaces > column ? 1 : (column - leading_spaces)) + 1, ' ');
             colorize(logging::level::info);
             stream << "^";
-            if (length > 0) {
-                length -= 1; // need to offset as the caret indicator counts as a length of 1
-                if (length > (text.size() - column)) {
-                    length = text.size() - column;
-                }
+            if (length > 1) {
+                // If the length exceeds the current line, truncate to only what's visible on this line
+                length = ((column - 1) + length > text.size()) ? (column > text.size() ? 0 : text.size() - column) : length - 1 /* caret counts as one */;
                 fill_n(ostream_iterator<char>(stream), length, '~');
             }
             stream << "\n";
         }
 
-        // Reset the colorization
         reset(level);
+    }
+
+    void stream_logger::log_backtrace(vector<compiler::evaluation::stack_frame> const& backtrace)
+    {
+        colorize(logging::level::error);
+
+        ostream& stream = get_stream(logging::level::error);
+
+        stream << "  backtrace:\n";
+        for (size_t i = 0; i < backtrace.size() && i < MAX_BACKTRACE_COUNT; ++i) {
+            stream << "    " << backtrace[i] << '\n';
+        }
+        if (backtrace.size() > MAX_BACKTRACE_COUNT) {
+            size_t remaining = backtrace.size() - MAX_BACKTRACE_COUNT;
+            stream << "    and " << remaining << " more frame" << ((remaining != 1) ? "s\n" : "\n");
+        }
+
+        reset(logging::level::error);
     }
 
     void stream_logger::colorize(logging::level) const

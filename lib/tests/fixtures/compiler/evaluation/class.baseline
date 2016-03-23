@@ -1,0 +1,148 @@
+Warning: class.pp:11:8: could not look up variable $foo::x because class 'foo' has not been declared.
+  notice $foo::x, $foo::y
+         ^~~~~~~
+Warning: class.pp:11:17: could not look up variable $foo::y because class 'foo' has not been declared.
+  notice $foo::x, $foo::y
+                  ^~~~~~~
+Notice: Scope(Class[main]):  
+Notice: Scope(Class[foo]): foo
+Notice: Scope(Class[bar]): bar
+Notice: Scope(Class[baz]): bar baz
+Notice: Scope(Class[main]): foo foo
+Notice: Scope(Class[main]): bar foo
+Notice: Scope(Class[main]): bar baz baz
+Notice: Scope(Class[in::stage::foo]): foo
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "bar",
+      "tags": [
+        "bar",
+        "class"
+      ],
+      "file": "class.pp",
+      "line": 13,
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "foo",
+      "tags": [
+        "class",
+        "foo"
+      ],
+      "file": "class.pp",
+      "line": 6,
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "baz",
+      "tags": [
+        "baz",
+        "class"
+      ],
+      "file": "class.pp",
+      "line": 25,
+      "exported": false,
+      "parameters": {
+        "bar": "baz",
+        "foo": "bar"
+      }
+    },
+    {
+      "type": "Stage",
+      "title": "foo",
+      "tags": [
+        "stage"
+      ],
+      "file": "class.pp",
+      "line": 33,
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "in::stage::foo",
+      "tags": [
+        "class",
+        "foo",
+        "in",
+        "in::stage::foo",
+        "stage"
+      ],
+      "file": "class.pp",
+      "line": 40,
+      "exported": false,
+      "parameters": {
+        "stage": "foo"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[bar]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[foo]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[baz]"
+    },
+    {
+      "source": "Stage[foo]",
+      "target": "Class[in::stage::foo]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main",
+    "bar",
+    "foo",
+    "baz",
+    "in::stage::foo"
+  ]
+}
+

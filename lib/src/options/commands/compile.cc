@@ -63,6 +63,7 @@ namespace puppet { namespace options { namespace commands {
             (NODE_OPTION_FULL, po::value<string>(), NODE_DESCRIPTION)
             (NO_COLOR_OPTION, NO_COLOR_DESCRIPTION)
             (OUTPUT_OPTION_FULL, po::value<string>()->default_value("catalog.json"), OUTPUT_DESCRIPTION)
+            (TRACE_OPTION, TRACE_DESCRIPTION)
             (VERBOSE_OPTION, VERBOSE_DESCRIPTION)
             ;
         return options;
@@ -83,6 +84,7 @@ namespace puppet { namespace options { namespace commands {
         auto settings = create_settings(options);
         auto node_name = get_node(options, *facts);
         auto manifests = get_manifests(options);
+        bool trace = options.count(TRACE_OPTION) > 0;
 
         // Move the options into the lambda capture
         return {
@@ -95,6 +97,7 @@ namespace puppet { namespace options { namespace commands {
                 facts = rvalue_cast(facts),
                 output_file = rvalue_cast(output_file),
                 graph_file = rvalue_cast(graph_file),
+                trace = trace,
                 this
             ] () {
                 bool failed = true;
@@ -149,11 +152,17 @@ namespace puppet { namespace options { namespace commands {
 
                     } catch (compilation_exception const& ex) {
                         LOG(error, ex.line(), ex.column(), ex.length(), ex.text(), ex.path(), "node '%1%': %2%", node.name(), ex.what());
+                        if (trace) {
+                            logger.log(ex.backtrace());
+                        }
                     } catch (resource_cycle_exception const& ex) {
                         LOG(error, ex.what());
                     }
                 } catch (compilation_exception const& ex) {
                     LOG(error, ex.line(), ex.column(), ex.length(), ex.text(), ex.path(), ex.what());
+                    if (trace) {
+                        logger.log(ex.backtrace());
+                    }
                 } catch (yaml_parse_exception const& ex) {
                     LOG(error, ex.line(), 1, ex.column(), ex.text(), ex.path(), ex.what());
                 } catch (exception const& ex) {
@@ -282,5 +291,7 @@ namespace puppet { namespace options { namespace commands {
     char const* const compile::NODE_OPTION_FULL       = "node,n";
     char const* const compile::NODE_DESCRIPTION       = "The node name to use. Defaults to the 'fqdn' fact.";
     char const* const compile::OUTPUT_DESCRIPTION     = "The output path for the compiled catalog.";
+    char const* const compile::TRACE_OPTION           = "trace";
+    char const* const compile::TRACE_DESCRIPTION      = "Display Puppet backtraces for evaluation errors.";
 
 }}}  // namespace puppet::options::commands

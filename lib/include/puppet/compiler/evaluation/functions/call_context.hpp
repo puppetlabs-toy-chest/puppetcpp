@@ -106,6 +106,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         runtime::values::array _arguments;
         std::vector<ast::context> _argument_contexts;
         boost::optional<ast::lambda_expression> const& _block;
+        std::shared_ptr<scope> _closure_scope;
     };
 
 }}}}  // namespace puppet::compiler::evaluation::functions

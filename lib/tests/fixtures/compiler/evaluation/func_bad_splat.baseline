@@ -1,0 +1,6 @@
+Error: func_bad_splat.pp:1:15: node 'test': parameter $x "captures rest" but is not the last parameter.
+  function test(*$x, $y)
+                ^~~
+  backtrace:
+    in 'test' at func_bad_splat.pp:1
+    in '<class main>' at func_bad_splat.pp:6

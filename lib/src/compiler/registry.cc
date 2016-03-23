@@ -1,8 +1,5 @@
 #include <puppet/compiler/registry.hpp>
-#include <puppet/compiler/scanner.hpp>
 #include <puppet/compiler/exceptions.hpp>
-#include <puppet/compiler/evaluation/context.hpp>
-#include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/node.hpp>
 #include <puppet/cast.hpp>
 
@@ -29,37 +26,6 @@ namespace puppet { namespace compiler {
         return _expression;
     }
 
-    void klass::evaluate(evaluation::context& context, compiler::resource& resource) const
-    {
-        // Create a scope for the class
-        auto scope = make_shared<evaluation::scope>(evaluate_parent(context), &resource);
-
-        // Add the class' scope
-        context.add_scope(scope);
-
-        // Use a call evaluator to "call" the class
-        call_evaluator evaluator{ context, _expression.parameters, _expression.body };
-
-        // Evaluate in the class' scope
-        evaluator.evaluate(resource, scope);
-    }
-
-    shared_ptr<scope> klass::evaluate_parent(evaluation::context& context) const
-    {
-        // If no parent, return the node or top scope
-        auto const& parent = _expression.parent;
-        if (!parent) {
-            return context.node_or_top();
-        }
-
-        auto scope = context.find_scope(context.declare_class(parent->value, *parent)->type().title());
-        if (!scope) {
-            // Because classes are added to the catalog before the scope is added to the context, a failure to find the scope means there is a circular inheritence
-            throw evaluation_exception((boost::format("cannot evaluate parent class '%1%' because it causes a circular inheritence.") % *parent).str(), *parent);
-        }
-        return scope;
-    }
-
     defined_type::defined_type(string name, ast::defined_type_expression const& expression) :
         _name(rvalue_cast(name)),
         _tree(expression.tree->shared_from_this()),
@@ -77,18 +43,6 @@ namespace puppet { namespace compiler {
         return _expression;
     }
 
-    void defined_type::evaluate(evaluation::context& context, compiler::resource& resource) const
-    {
-        // Create a temporary scope for evaluating the defined type
-        auto scope = make_shared<evaluation::scope>(context.node_or_top(), &resource);
-
-        // Use a call evaluator to "call" the defined type
-        call_evaluator evaluator{ context, _expression.parameters, _expression.body };
-
-        // Evaluate in the temporary scope
-        evaluator.evaluate(resource, scope);
-    }
-
     node_definition::node_definition(ast::node_expression const& expression) :
         _tree(expression.tree->shared_from_this()),
         _expression(expression)
@@ -98,33 +52,6 @@ namespace puppet { namespace compiler {
     ast::node_expression const& node_definition::expression() const
     {
         return _expression;
-    }
-
-    void node_definition::evaluate(evaluation::context& context, compiler::resource& resource) const
-    {
-        // Set the node scope for the remainder of the evaluation
-        node_scope scope{ context, resource };
-
-        // Use a call evaluator to "call" the node expressions's body
-        vector<ast::parameter> parameters;
-        call_evaluator evaluator{ context, parameters, _expression.body };
-
-        // Evaluate in node scope
-        evaluator.evaluate(context.node_scope());
-    }
-
-    void registry::import(ast::syntax_tree const& tree)
-    {
-        // Ensure trees are only scanned once
-        if (_imported.count(&tree)) {
-            return;
-        }
-
-        compiler::scanner scanner{ *this };
-        scanner.scan(tree);
-
-        // Mark the tree as imported
-        _imported.emplace(&tree);
     }
 
     vector<klass> const* registry::find_class(string const& name) const
@@ -250,7 +177,13 @@ namespace puppet { namespace compiler {
             try {
                 regexes.emplace_back(hostname.to_string());
             } catch (regex_error const& ex) {
-                throw evaluation_exception((boost::format("invalid regular expression: %1%") % ex.what()).str(), hostname.context());
+                throw parse_exception(
+                    (boost::format("invalid regular expression: %1%") %
+                     ex.what()
+                    ).str(),
+                    hostname.context().begin,
+                    hostname.context().end
+                );
             }
         }
 

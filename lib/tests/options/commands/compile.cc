@@ -43,6 +43,8 @@ extern char const* const COMPILE_COMMAND_HELP =
     "  --no-color                            Disable color output.\n"
     "  -o [ --output ] arg (=catalog.json)   The output path for the compiled \n"
     "                                        catalog.\n"
+    "  --trace                               Display Puppet backtraces for \n"
+    "                                        evaluation errors.\n"
     "  --verbose                             Enable verbose output (info level).\n"
     "\n"
     "Compiles one or more Puppet manifests, or directories containing manifests, into\n"

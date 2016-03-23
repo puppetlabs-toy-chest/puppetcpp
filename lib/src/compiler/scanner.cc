@@ -10,26 +10,33 @@ using namespace puppet::runtime;
 namespace puppet { namespace compiler {
 
     // Utility class that keeps track of class scopes
-    // Empty scopes on the stack represent scopes where definitions may not occur
-    struct class_scope
+    // null scopes on the stack represent scopes where definitions may not occur
+    struct scope_helper
     {
-        explicit class_scope(vector<string>& scopes, string name = {}) :
+        explicit scope_helper(vector<ast::class_expression const*>& scopes) :
             _scopes(scopes)
         {
-            scopes.push_back(rvalue_cast(name));
+            scopes.emplace_back(nullptr);
         }
 
-        ~class_scope()
+        scope_helper(vector<ast::class_expression const*>& scopes, ast::class_expression const& expression) :
+            _scopes(scopes)
+        {
+            scopes.emplace_back(&expression);
+        }
+
+        ~scope_helper()
         {
             _scopes.pop_back();
         }
 
      private:
-        vector<string>& _scopes;
+        vector<ast::class_expression const*>& _scopes;
     };
 
-    scanner::scanner(compiler::registry& registry) :
-        _registry(registry)
+    scanner::scanner(compiler::registry& registry, evaluation::dispatcher& dispatcher) :
+        _registry(registry),
+        _dispatcher(dispatcher)
     {
     }
 
@@ -37,36 +44,15 @@ namespace puppet { namespace compiler {
     {
         // Reset for the scan
         _scopes.clear();
-        _classes.clear();
-        _defined_types.clear();
-        _nodes.clear();
 
-        // Check all parameters
         if (tree.parameters) {
             for (auto const& parameter : *tree.parameters) {
                 operator()(parameter);
             }
         }
 
-        // Scan first before registering anything
-        // This attempts to make the scan transaction; if the scan throws an exception, nothing will be registered
         for (auto const& statement : tree.statements) {
             operator()(statement);
-        }
-
-        // Register the classes
-        for (auto& klass : _classes) {
-            _registry.register_class(rvalue_cast(klass));
-        }
-
-        // Register the defined types
-        for (auto& type : _defined_types) {
-            _registry.register_defined_type(rvalue_cast(type));
-        }
-
-        // Register the ndoes
-        for (auto& node : _nodes) {
-            _registry.register_node(rvalue_cast(node));
         }
     }
 
@@ -96,20 +82,6 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::variable const& expression)
     {
-        static const char* valid_variable_pattern = R"(0|[1-9]\d*|((::)?[a-z]\w*)*(::)?[a-z_]\w*)";
-        static const regex valid_variable_regex(valid_variable_pattern);
-
-        // Ensure the parameter name is valid
-        if (!regex_match(expression.name, valid_variable_regex)) {
-            throw parse_exception(
-                (boost::format("variable name '%1%' is not a valid variable name: the name must conform to /%2%/.") %
-                 expression.name %
-                 valid_variable_pattern
-                ).str(),
-                expression.begin,
-                expression.end
-            );
-        }
     }
 
     void scanner::operator()(ast::name const& expression)
@@ -137,8 +109,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::array const& expression)
     {
-        // Array expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         for (auto const& element : expression.elements) {
             operator()(element);
@@ -147,8 +118,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::hash const& expression)
     {
-        // Hash expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         for (auto const& pair : expression.elements) {
             operator()(pair.first);
@@ -172,8 +142,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::case_expression const& expression)
     {
-        // Control flow expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         operator()(expression.conditional);
 
@@ -189,8 +158,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::if_expression const& expression)
     {
-        // Control flow expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         operator()(expression.conditional);
         for (auto const& statement : expression.body) {
@@ -213,8 +181,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::unless_expression const& expression)
     {
-        // Control flow expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         operator()(expression.conditional);
         for (auto const& statement : expression.body) {
@@ -230,8 +197,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::function_call_expression const& expression)
     {
-        // Control flow expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         for (auto const& argument : expression.arguments) {
             operator()(argument);
@@ -243,8 +209,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::resource_expression const& expression)
     {
-        // Resource expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         for (auto const& body : expression.bodies) {
             operator()(body.title);
@@ -256,8 +221,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::resource_override_expression const& expression)
     {
-        // Resource expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         operator()(expression.reference);
 
@@ -268,8 +232,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::resource_defaults_expression const& expression)
     {
-        // Resource expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         for (auto const& operation : expression.operations) {
             operator()(operation.value);
@@ -310,13 +273,9 @@ namespace puppet { namespace compiler {
             }
         }
 
-        // Add to list to register later
-        _classes.emplace_back(name, expression);
-
         // Scan the parameters
         if (!expression.parameters.empty()) {
-            // Parameters have no class scope
-            class_scope scope(_scopes, {});
+            scope_helper scope{ _scopes };
 
             for (auto const& parameter : expression.parameters) {
                 operator()(parameter);
@@ -326,13 +285,15 @@ namespace puppet { namespace compiler {
         // Scan the body
         if (!expression.body.empty()) {
             // Set the class scope
-            class_scope scope(_scopes, name);
+            scope_helper scope(_scopes, expression);
 
             for (auto const& statement : expression.body) {
                 operator()(statement);
             }
         }
 
+        // Register the class
+        _registry.register_class(klass{ rvalue_cast(name), expression });
     }
 
     void scanner::operator()(ast::defined_type_expression const& expression)
@@ -355,11 +316,7 @@ namespace puppet { namespace compiler {
             );
         }
 
-        // Add the defined type for later registration
-        _defined_types.emplace_back(rvalue_cast(name), expression);
-
-        // Defined types have no class scope
-        class_scope scope(_scopes, {});
+        scope_helper scope{ _scopes };
 
         // Scan the parameters
         for (auto const& parameter : expression.parameters) {
@@ -370,6 +327,9 @@ namespace puppet { namespace compiler {
         for (auto const& statement : expression.body) {
             operator()(statement);
         }
+
+        // Register the defined type
+        _registry.register_defined_type(defined_type{ rvalue_cast(name), expression });
     }
 
     void scanner::operator()(ast::node_expression const& expression)
@@ -404,22 +364,20 @@ namespace puppet { namespace compiler {
             );
         }
 
-        // Add it for later registration
-        _nodes.emplace_back(expression);
-
-        // Node definitions have no class scope
-        class_scope scope(_scopes, {});
+        scope_helper scope{ _scopes };
 
         // Scan the body
         for (auto const& statement : expression.body) {
             operator()(statement);
         }
+
+        // Register the node
+        _registry.register_node(node_definition{ expression });
     }
 
     void scanner::operator()(ast::collector_expression const& expression)
     {
-        // Collector expressions have no class scope
-        class_scope scope(_scopes, {});
+        scope_helper scope{ _scopes };
 
         // Scan the query
         if (expression.query) {
@@ -429,8 +387,7 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::query_expression const& expression)
     {
-        // Queries have no class scope
-        class_scope scope(_scopes, {});
+        scope_helper scope{ _scopes };
 
         operator()(expression.primary);
 
@@ -456,14 +413,44 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::function_expression const& expression)
     {
-        if (!can_define()) {
-            throw parse_exception("function definitions can only be defined at top-level or inside a class.", expression.begin, expression.end);
+        if (!_scopes.empty()) {
+            throw parse_exception("function definitions can only be defined at top-level.", expression.begin, expression.end);
         }
 
-        // TODO: register the function
+        // First check for existing functions in the dispatcher
+        if (auto descriptor = _dispatcher.find(expression.name.value)) {
+            if (auto existing = descriptor->expression()) {
+                throw parse_exception(
+                    (boost::format("cannot define function '%1%' because it conflicts with a previous definition at %2%:%3%.") %
+                     expression.name %
+                     existing->tree->path() %
+                     existing->begin.line()
+                    ).str(),
+                    expression.name.begin,
+                    expression.name.end
+                );
+            }
+            throw parse_exception(
+                (boost::format("cannot define function '%1%' because it conflicts with a built-in function of the same name.") %
+                 expression.name
+                ).str(),
+                expression.name.begin,
+                expression.name.end
+            );
+        }
 
-        // Functions have no class scope
-        class_scope scope(_scopes, {});
+        // Ensure private functions have an associated module
+        if (expression.is_private && expression.tree && !expression.tree->module()) {
+            throw parse_exception(
+                (boost::format("function '%1%' cannot be declared private because it is not contained in a module.") %
+                 expression.name
+                ).str(),
+                expression.name.begin,
+                expression.name.end
+            );
+        }
+
+        scope_helper scope{ _scopes };
 
         // Scan the parameters
         for (auto const& parameter : expression.parameters) {
@@ -474,6 +461,9 @@ namespace puppet { namespace compiler {
         for (auto const& statement : expression.body) {
             operator()(statement);
         }
+
+        // Add the function
+        _dispatcher.add(evaluation::functions::descriptor{ expression.name.value, &expression });
     }
 
     void scanner::operator()(ast::unary_expression const& expression)
@@ -565,8 +555,7 @@ namespace puppet { namespace compiler {
     {
         // TODO: register the mapping
 
-        // Produces expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         for (auto const& operation : expression.operations) {
             operator()(operation.value);
@@ -577,8 +566,7 @@ namespace puppet { namespace compiler {
     {
         // TODO: register the mapping
 
-        // Consumes expressions have no class scope
-        class_scope scope(_scopes);
+        scope_helper scope{ _scopes };
 
         for (auto const& operation : expression.operations) {
             operator()(operation.value);
@@ -608,23 +596,27 @@ namespace puppet { namespace compiler {
 
     bool scanner::can_define() const
     {
-        return _scopes.empty() || !_scopes.back().empty();
+        return _scopes.empty() || _scopes.back();
     }
 
     string scanner::qualify(string const& name) const
     {
-        // Treat both class and defined types as normalized class names
-        string normalized = name;
-        types::klass::normalize(normalized);
-
         // Walk backwards looking for the last non-empty scope
+        string qualified;
         for (auto it = _scopes.rbegin(); it != _scopes.rend(); ++it) {
-            if (it->empty()) {
+            if (!*it) {
                 continue;
             }
-            return *it + "::" + normalized;
+            qualified = (*it)->name.value + "::" + name;
+            break;
         }
-        return normalized;
+
+        if (qualified.empty()) {
+            qualified = name;
+        }
+
+        types::klass::normalize(qualified);
+        return qualified;
     }
 
     string scanner::validate_name(bool is_class, ast::name const& name) const

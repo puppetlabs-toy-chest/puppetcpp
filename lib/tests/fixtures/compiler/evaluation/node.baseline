@@ -1,0 +1,68 @@
+Notice: Scope(Node[default]): hello from default node
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Node",
+      "title": "default",
+      "tags": [
+        "class",
+        "main",
+        "node",
+        "stage"
+      ],
+      "file": "node.pp",
+      "line": 2,
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Node[default]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

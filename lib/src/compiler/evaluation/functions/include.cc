@@ -9,24 +9,24 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    static void declare_class(evaluation::context& evaluation_context, types::klass const& klass, ast::context const& declaration_context, boost::optional<compiler::relationship> const& relationship)
+    static void declare_class(evaluation::context& context, types::klass const& klass, ast::context const& declaration_context, boost::optional<compiler::relationship> const& relationship)
     {
         types::resource type("class", klass.title());
 
         if (!type.fully_qualified()) {
-            throw evaluation_exception("cannot declare a class with an unspecified title.", declaration_context);
+            throw evaluation_exception("cannot declare a class with an unspecified title.", declaration_context, context.backtrace());
         }
 
         // Declare the class
-        auto resource = evaluation_context.declare_class(klass.title(), declaration_context);
+        auto resource = context.declare_class(klass.title(), declaration_context);
 
         // Add a relationship to the current resource
         if (relationship) {
-            auto* current = evaluation_context.current_scope()->resource();
+            auto* current = context.current_scope()->resource();
             if (!current) {
-                throw evaluation_exception("the current scope has no associated resource to form a relationship with.", declaration_context);
+                throw evaluation_exception("the current scope has no associated resource to form a relationship with.", declaration_context, context.backtrace());
             }
-            evaluation_context.catalog().relate(*relationship, *current, *resource);
+            context.catalog().relate(*relationship, *current, *resource);
         }
     }
 
@@ -52,13 +52,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             }
             if (auto resource = boost::get<types::resource>(&type)) {
                 if (!resource->is_class()) {
-                    throw evaluation_exception("resource type must be class.", declaration_context);
+                    throw evaluation_exception("resource type must be class.", declaration_context, context.backtrace());
                 }
                 declare_class(context, types::klass{ resource->title() }, declaration_context, relationship);
                 return;
             }
         }
-        throw evaluation_exception((boost::format("cannot declare class with argument type %1%.") % name.get_type()).str(), declaration_context);
+        throw evaluation_exception((boost::format("cannot declare class with argument type %1%.") % name.get_type()).str(), declaration_context, context.backtrace());
     }
 
     void declare_class(call_context& context, boost::optional<compiler::relationship> relationship = boost::none)

@@ -65,12 +65,13 @@ Expression evaluator status:
 * [x] local scope
 * [x] node scope
 * [x] string interpolation
-* [ ] custom functions written in Puppet (NYI: evaluation)
+* [x] custom functions written in Puppet
 * [ ] custom functions written in Ruby
 * [ ] custom types written in Puppet
 * [ ] custom types written in Ruby
 * [ ] external data binding (i.e. hiera)
-* [ ] module data functions (Ruby or Puppet)
+* [ ] module data functions in Ruby
+* [ ] module data functions in Puppet
 * [x] EPP support
 * [ ] application orchestration (NYI: evaluation)
 

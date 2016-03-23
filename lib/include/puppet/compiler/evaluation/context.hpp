@@ -7,7 +7,9 @@
 #include "../node.hpp"
 #include "../catalog.hpp"
 #include "scope.hpp"
+#include "stack_frame.hpp"
 #include "collectors/collector.hpp"
+#include "../exceptions.hpp"
 #include "../../runtime/values/value.hpp"
 #include <boost/optional.hpp>
 #include <string>
@@ -39,28 +41,10 @@ namespace puppet { namespace compiler { namespace evaluation {
          */
         ~match_scope();
 
-     private:
-        evaluation::context& _context;
-    };
-
-    /**
-     * Helper for setting a local scope.
-     */
-    struct local_scope : match_scope
-    {
+     protected:
         /**
-         * Constructs a local scope.
-         * @param context The current evaluation context.
-         * @param scope The scope to set in the evaluation context.  If nullptr, an ephemeral scope is created.
+         * Stores the evaluation context.
          */
-        explicit local_scope(evaluation::context& context, std::shared_ptr<evaluation::scope> scope = nullptr);
-
-        /**
-         * Destructs the local scope.
-         */
-        ~local_scope();
-
-     private:
         evaluation::context& _context;
     };
 
@@ -86,21 +70,21 @@ namespace puppet { namespace compiler { namespace evaluation {
     };
 
     /**
-     * Helper for setting a local output stream.
+     * Helper for scoping evaluation output streams.
      */
-    struct local_output_stream
+    struct scoped_output_stream
     {
         /**
-         * Constructs a local output stream.
+         * Constructs a scoped output stream.
          * @param context The current evaluation context.
          * @param stream The stream to set in the evaluation context.
          */
-        local_output_stream(evaluation::context& context, std::ostream& stream);
+        scoped_output_stream(evaluation::context& context, std::ostream& stream);
 
         /**
-         * Destructs the local output stream.
+         * Destructs the scoped output stream.
          */
-        ~local_output_stream();
+        ~scoped_output_stream();
 
      private:
         evaluation::context& _context;
@@ -159,7 +143,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
      private:
         friend struct context;
-        void evaluate(compiler::catalog& catalog) const;
+        void evaluate(evaluation::context& context, compiler::catalog& catalog) const;
 
         std::shared_ptr<ast::syntax_tree> _tree;
         compiler::relationship _relationship;
@@ -178,7 +162,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Constructs a resource override.
          * @param type The resource type being overridden.
-         * @param context The AST context of the override expression.
+         * @param context The AST context of the resource type.
          * @param attributes The attributes to apply to the resource.
          * @param scope The scope where the override is taking place.
          */
@@ -195,8 +179,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::types::resource const& type() const;
 
         /**
-         * Gets the AST context for the resource override.
-         * @return Returns the AST context for the resource override.
+         * Gets the AST context for the resource type.
+         * @return Returns the AST context for the resource type.
          */
         ast::context const& context() const;
 
@@ -214,7 +198,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
      private:
         friend struct context;
-        void evaluate(compiler::catalog& catalog) const;
+        void evaluate(evaluation::context& context, compiler::catalog& catalog) const;
 
         std::shared_ptr<ast::syntax_tree> _tree;
         runtime::types::resource _type;
@@ -239,7 +223,7 @@ namespace puppet { namespace compiler { namespace evaluation {
          * Gets the resource of the declared defined type.
          * @return Returns the resource of the declared defined type.
          */
-        compiler::resource const& resource() const;
+        compiler::resource& resource() const;
 
         /**
          * Gets the definition of the defined type.
@@ -248,11 +232,26 @@ namespace puppet { namespace compiler { namespace evaluation {
         defined_type const& definition() const;
 
      private:
-        friend struct context;
-        void evaluate(evaluation::context& context) const;
-
         compiler::resource& _resource;
         defined_type const& _definition;
+    };
+
+    /**
+     * Helper for managing stack frame scope.
+     */
+    struct scoped_stack_frame : match_scope
+    {
+        /**
+         * Constructs a scoped stack frame.
+         * @param context The current evaluation context.
+         * @param frame The new stack frame.
+         */
+        scoped_stack_frame(evaluation::context& context, stack_frame frame);
+
+        /**
+         * Destructs the scoped stack frame.
+         */
+        ~scoped_stack_frame();
     };
 
     /**
@@ -261,11 +260,10 @@ namespace puppet { namespace compiler { namespace evaluation {
     struct context
     {
         /**
-         * Constructs a default evaluation context.
-         * Operations requiring node or catalog context will not be allowed.
-         * @param create_scope True to create a top scope or false to create no top scope; if there is no top scope, operations requiring scope access will not be permitted.
+         * Constructs an empty evaluation context.
+         * Operations requiring scope, node or catalog context will not be allowed.
          */
-        explicit context(bool create_scope = true);
+        context();
 
         /**
          * Constructs an evaluation context.
@@ -313,25 +311,31 @@ namespace puppet { namespace compiler { namespace evaluation {
          * Gets the current scope.
          * @return Returns the current scope and will never return nullptr.
          */
-        std::shared_ptr<scope> const& current_scope();
+        std::shared_ptr<scope> const& current_scope() const;
 
         /**
          * Gets the top scope.
          * @return Returns the top scope and will never return nullptr.
          */
-        std::shared_ptr<scope> const& top_scope();
+        std::shared_ptr<scope> const& top_scope() const;
 
         /**
          * Gets the node scope.
          * @return Returns the node scope or nullptr if there currently is no node scope.
          */
-        std::shared_ptr<scope> const& node_scope();
+        std::shared_ptr<scope> const& node_scope() const;
 
         /**
          * Gets the node or top scope.
          * @return Returns the node scope if there is one, otherwise returns the top scope.
          */
-        std::shared_ptr<scope> const& node_or_top();
+        std::shared_ptr<scope> const& node_or_top() const;
+
+        /**
+         * Gets the scope of the caller.
+         * @return Returns the scope of the caller.
+         */
+        std::shared_ptr<scope> const& calling_scope() const;
 
         /**
          * Adds a named scope to the evaluation context.
@@ -370,17 +374,16 @@ namespace puppet { namespace compiler { namespace evaluation {
         std::shared_ptr<runtime::values::value const> lookup(size_t index) const;
 
         /**
-         * Creates a match scope.
-         * @return Returns the match scope.
+         * Gets the current Puppet backtrace from the context.
+         * @return Returns the current Puppet backtrace from the context.
          */
-        match_scope create_match_scope();
+        std::vector<stack_frame> backtrace() const;
 
         /**
-         * Creates a local scope.
-         * @param scope The scope to change to.  If nullptr, the scope will be ephemeral.
-         * @return Returns the local scope.
+         * Sets the current stack frame's AST context.
+         * @param context The current AST context.
          */
-        local_scope create_local_scope(std::shared_ptr<evaluation::scope> scope = nullptr);
+        void current_context(ast::context context);
 
         /**
          * Writes the given value to the output stream.
@@ -428,6 +431,22 @@ namespace puppet { namespace compiler { namespace evaluation {
          * @return Returns the defined type or nullptr if the defined type is not defined.
          */
         compiler::defined_type const* find_defined_type(std::string name, bool import = true);
+
+        /**
+         * Finds a function by name.
+         * @param name The name of the function to find.
+         * @param import Specifies whether or not an attempt to import the function should be made.
+         * @return Returns the function descriptor or nullptr if not found.
+         */
+        functions::descriptor* find_function(std::string name, bool import = true);
+
+        /**
+         * Finds a function by name.
+         * @param name The name of the function to find.
+         * @param import Specifies whether or not an attempt to import the function should be made.
+         * @return Returns the function descriptor or nullptr if not found.
+         */
+        functions::descriptor const* find_function(std::string name, bool import = true) const;
 
         /**
          * Determines if the given name is defined.
@@ -480,21 +499,22 @@ namespace puppet { namespace compiler { namespace evaluation {
 
      private:
         friend struct match_scope;
-        friend struct local_scope;
         friend struct node_scope;
-        friend struct local_output_stream;
+        friend struct scoped_output_stream;
+        friend struct scoped_stack_frame;
 
         context(context&) = delete;
         context& operator=(context&) = delete;
-        void create_top_scope(std::shared_ptr<facts::provider> facts = nullptr);
         void evaluate_defined_types(size_t& index, std::vector<declared_defined_type*>& virtualized);
 
         compiler::node* _node;
         compiler::catalog* _catalog;
         compiler::registry const* _registry;
         evaluation::dispatcher const* _dispatcher;
-        std::unordered_map<std::string, std::shared_ptr<evaluation::scope>> _scopes;
-        std::vector<std::shared_ptr<scope>> _scope_stack;
+
+        std::vector<stack_frame> _call_stack;
+        std::shared_ptr<scope> _top_scope;
+        std::unordered_map<std::string, std::shared_ptr<evaluation::scope>> _named_scopes;
         std::shared_ptr<scope> _node_scope;
         std::vector<std::shared_ptr<std::vector<std::shared_ptr<runtime::values::value const>>>> _match_stack;
         std::unordered_set<std::string> _classes;

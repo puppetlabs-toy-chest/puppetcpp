@@ -1,0 +1,138 @@
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "File",
+      "title": "foo",
+      "tags": [
+        "class",
+        "file",
+        "main",
+        "stage"
+      ],
+      "file": "resources.pp",
+      "line": 1,
+      "exported": false,
+      "parameters": {
+        "baz": [
+          1,
+          2,
+          3
+        ],
+        "bar": 1
+      }
+    },
+    {
+      "type": "User",
+      "title": "foo",
+      "tags": [
+        "class",
+        "main",
+        "stage",
+        "user"
+      ],
+      "file": "resources.pp",
+      "line": 7,
+      "exported": false,
+      "parameters": {
+        "foo": 0,
+        "bar": 2
+      }
+    },
+    {
+      "type": "User",
+      "title": "bar",
+      "tags": [
+        "class",
+        "main",
+        "stage",
+        "user"
+      ],
+      "file": "resources.pp",
+      "line": 10,
+      "exported": false,
+      "parameters": {
+        "bar": 1
+      }
+    },
+    {
+      "type": "File",
+      "title": "bar",
+      "tags": [
+        "class",
+        "file",
+        "main",
+        "stage"
+      ],
+      "file": "resources.pp",
+      "line": 24,
+      "exported": false,
+      "parameters": {
+        "notice": "lol",
+        "if": true,
+        "foo": "bar"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "File[foo]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "User[foo]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "User[bar]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "File[bar]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

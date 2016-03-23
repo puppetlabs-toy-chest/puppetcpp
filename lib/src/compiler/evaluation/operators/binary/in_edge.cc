@@ -14,7 +14,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         context.right().each_resource([&](types::resource const& target) {
             result.push_back(target);
         }, [&](string const& message) {
-            throw evaluation_exception(message, context.right_context());
+            throw evaluation_exception(message, context.right_context(), context.context().backtrace());
         });
 
         // Add the relationship; it will be evaluated upon context finalization

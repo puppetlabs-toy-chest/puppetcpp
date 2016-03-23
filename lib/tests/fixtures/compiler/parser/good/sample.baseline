@@ -18528,3 +18528,449 @@ statements:
               offset: 12359
               line: 821
             value: incorrect
+  - kind: function
+    begin:
+      offset: 12381
+      line: 826
+    end:
+      offset: 12417
+      line: 828
+    name:
+      kind: name
+      begin:
+        offset: 12390
+        line: 826
+      end:
+        offset: 12404
+        line: 826
+      value: test::noparams
+    body:
+      - kind: boolean
+        begin:
+          offset: 12411
+          line: 827
+        end:
+          offset: 12415
+          line: 827
+        value: true
+  - kind: unless
+    begin:
+      offset: 12419
+      line: 830
+    end:
+      offset: 12465
+      line: 832
+    conditional:
+      kind: function call
+      function:
+        kind: name
+        begin:
+          offset: 12426
+          line: 830
+        end:
+          offset: 12440
+          line: 830
+        value: test::noparams
+      end:
+        offset: 12442
+        line: 830
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 12449
+            line: 831
+          end:
+            offset: 12453
+            line: 831
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 12454
+              line: 831
+            end:
+              offset: 12463
+              line: 831
+            value: incorrect
+  - kind: function
+    begin:
+      offset: 12467
+      line: 834
+    end:
+      offset: 12546
+      line: 836
+    name:
+      kind: name
+      begin:
+        offset: 12476
+        line: 834
+      end:
+        offset: 12493
+        line: 834
+      value: test::typedparams
+    parameters:
+      - type:
+          kind: type
+          begin:
+            offset: 12494
+            line: 834
+          end:
+            offset: 12501
+            line: 834
+          name: Integer
+        variable:
+          kind: variable
+          begin:
+            offset: 12502
+            line: 834
+          end:
+            offset: 12504
+            line: 834
+          name: a
+      - type:
+          kind: type
+          begin:
+            offset: 12506
+            line: 834
+          end:
+            offset: 12512
+            line: 834
+          name: String
+        variable:
+          kind: variable
+          begin:
+            offset: 12513
+            line: 834
+          end:
+            offset: 12515
+            line: 834
+          name: b
+    body:
+      - kind: binary
+        first:
+          kind: variable
+          begin:
+            offset: 12523
+            line: 835
+          end:
+            offset: 12525
+            line: 835
+          name: a
+        operations:
+          - operator_position:
+              offset: 12526
+              line: 835
+            operator: ==
+            operand:
+              kind: number
+              begin:
+                offset: 12529
+                line: 835
+              end:
+                offset: 12530
+                line: 835
+              base: decimal
+              value: 1
+          - operator_position:
+              offset: 12531
+              line: 835
+            operator: and
+            operand:
+              kind: variable
+              begin:
+                offset: 12535
+                line: 835
+              end:
+                offset: 12537
+                line: 835
+              name: b
+          - operator_position:
+              offset: 12538
+              line: 835
+            operator: ==
+            operand:
+              kind: name
+              begin:
+                offset: 12541
+                line: 835
+              end:
+                offset: 12544
+                line: 835
+              value: foo
+  - kind: unless
+    begin:
+      offset: 12548
+      line: 838
+    end:
+      offset: 12603
+      line: 840
+    conditional:
+      kind: function call
+      function:
+        kind: name
+        begin:
+          offset: 12555
+          line: 838
+        end:
+          offset: 12572
+          line: 838
+        value: test::typedparams
+      arguments:
+        - kind: number
+          begin:
+            offset: 12573
+            line: 838
+          end:
+            offset: 12574
+            line: 838
+          base: decimal
+          value: 1
+        - kind: name
+          begin:
+            offset: 12576
+            line: 838
+          end:
+            offset: 12579
+            line: 838
+          value: foo
+      end:
+        offset: 12580
+        line: 838
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 12587
+            line: 839
+          end:
+            offset: 12591
+            line: 839
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 12592
+              line: 839
+            end:
+              offset: 12601
+              line: 839
+            value: incorrect
+  - kind: function
+    begin:
+      offset: 12605
+      line: 842
+    end:
+      offset: 12692
+      line: 844
+    name:
+      kind: name
+      begin:
+        offset: 12614
+        line: 842
+      end:
+        offset: 12628
+        line: 842
+      value: test::function
+    parameters:
+      - variable:
+          kind: variable
+          begin:
+            offset: 12629
+            line: 842
+          end:
+            offset: 12631
+            line: 842
+          name: a
+      - variable:
+          kind: variable
+          begin:
+            offset: 12633
+            line: 842
+          end:
+            offset: 12635
+            line: 842
+          name: b
+      - captures:
+          offset: 12637
+          line: 842
+        variable:
+          kind: variable
+          begin:
+            offset: 12638
+            line: 842
+          end:
+            offset: 12640
+            line: 842
+          name: c
+    body:
+      - kind: binary
+        first:
+          kind: variable
+          begin:
+            offset: 12648
+            line: 843
+          end:
+            offset: 12650
+            line: 843
+          name: a
+        operations:
+          - operator_position:
+              offset: 12651
+              line: 843
+            operator: ==
+            operand:
+              kind: number
+              begin:
+                offset: 12654
+                line: 843
+              end:
+                offset: 12655
+                line: 843
+              base: decimal
+              value: 1
+          - operator_position:
+              offset: 12656
+              line: 843
+            operator: and
+            operand:
+              kind: variable
+              begin:
+                offset: 12660
+                line: 843
+              end:
+                offset: 12662
+                line: 843
+              name: b
+          - operator_position:
+              offset: 12663
+              line: 843
+            operator: ==
+            operand:
+              kind: name
+              begin:
+                offset: 12666
+                line: 843
+              end:
+                offset: 12669
+                line: 843
+              value: foo
+          - operator_position:
+              offset: 12670
+              line: 843
+            operator: and
+            operand:
+              kind: variable
+              begin:
+                offset: 12674
+                line: 843
+              end:
+                offset: 12676
+                line: 843
+              name: c
+          - operator_position:
+              offset: 12677
+              line: 843
+            operator: ==
+            operand:
+              kind: array
+              begin:
+                offset: 12680
+                line: 843
+              end:
+                offset: 12690
+                line: 843
+              elements:
+                - kind: name
+                  begin:
+                    offset: 12681
+                    line: 843
+                  end:
+                    offset: 12684
+                    line: 843
+                  value: bar
+                - kind: name
+                  begin:
+                    offset: 12686
+                    line: 843
+                  end:
+                    offset: 12689
+                    line: 843
+                  value: baz
+  - kind: unless
+    begin:
+      offset: 12694
+      line: 846
+    end:
+      offset: 12756
+      line: 848
+    conditional:
+      kind: function call
+      function:
+        kind: name
+        begin:
+          offset: 12701
+          line: 846
+        end:
+          offset: 12715
+          line: 846
+        value: test::function
+      arguments:
+        - kind: number
+          begin:
+            offset: 12716
+            line: 846
+          end:
+            offset: 12717
+            line: 846
+          base: decimal
+          value: 1
+        - kind: name
+          begin:
+            offset: 12719
+            line: 846
+          end:
+            offset: 12722
+            line: 846
+          value: foo
+        - kind: name
+          begin:
+            offset: 12724
+            line: 846
+          end:
+            offset: 12727
+            line: 846
+          value: bar
+        - kind: name
+          begin:
+            offset: 12729
+            line: 846
+          end:
+            offset: 12732
+            line: 846
+          value: baz
+      end:
+        offset: 12733
+        line: 846
+    body:
+      - kind: function call
+        function:
+          kind: name
+          begin:
+            offset: 12740
+            line: 847
+          end:
+            offset: 12744
+            line: 847
+          value: fail
+        arguments:
+          - kind: name
+            begin:
+              offset: 12745
+              line: 847
+            end:
+              offset: 12754
+              line: 847
+            value: incorrect

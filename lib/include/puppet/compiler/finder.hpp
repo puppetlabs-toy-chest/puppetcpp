@@ -19,7 +19,11 @@ namespace puppet { namespace compiler {
         /**
          * Finds a manifest.
          */
-        manifest
+        manifest,
+        /**
+         * Finds a function
+         */
+        function
     };
 
     /**
@@ -61,6 +65,7 @@ namespace puppet { namespace compiler {
 
         std::string _directory;
         std::string _manifests_path;
+        std::string _functions_path;
     };
 
 }}  // puppet::compiler

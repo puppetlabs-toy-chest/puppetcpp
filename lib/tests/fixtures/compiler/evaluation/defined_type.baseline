@@ -1,0 +1,160 @@
+Notice: Scope(Foo[bar]): declaring file resource with param: bar
+Notice: Scope(Nested[baz]): title is baz and name is baz
+Notice: Scope(Foo[baz]): declaring file resource with param: nested
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Foo",
+      "title": "bar",
+      "tags": [
+        "class",
+        "foo",
+        "main",
+        "stage"
+      ],
+      "file": "defined_type.pp",
+      "line": 14,
+      "exported": false,
+      "parameters": {
+        "param": "bar"
+      }
+    },
+    {
+      "type": "Nested",
+      "title": "baz",
+      "tags": [
+        "class",
+        "main",
+        "nested",
+        "stage"
+      ],
+      "file": "defined_type.pp",
+      "line": 18,
+      "exported": false,
+      "parameters": {
+        "param": "baz"
+      }
+    },
+    {
+      "type": "File",
+      "title": "/tmp/foo/bar",
+      "tags": [
+        "class",
+        "file",
+        "foo",
+        "main",
+        "stage"
+      ],
+      "file": "defined_type.pp",
+      "line": 4,
+      "exported": false,
+      "parameters": {
+        "ensure": "file"
+      }
+    },
+    {
+      "type": "Foo",
+      "title": "baz",
+      "tags": [
+        "class",
+        "foo",
+        "main",
+        "nested",
+        "stage"
+      ],
+      "file": "defined_type.pp",
+      "line": 11,
+      "exported": false,
+      "parameters": {
+        "param": "nested",
+        "require": [
+          "Foo[bar]"
+        ]
+      }
+    },
+    {
+      "type": "File",
+      "title": "/tmp/foo/nested",
+      "tags": [
+        "class",
+        "file",
+        "foo",
+        "main",
+        "nested",
+        "stage"
+      ],
+      "file": "defined_type.pp",
+      "line": 4,
+      "exported": false,
+      "parameters": {
+        "ensure": "file"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Foo[bar]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Nested[baz]"
+    },
+    {
+      "source": "Foo[bar]",
+      "target": "File[/tmp/foo/bar]"
+    },
+    {
+      "source": "Nested[baz]",
+      "target": "Foo[baz]"
+    },
+    {
+      "source": "Foo[baz]",
+      "target": "File[/tmp/foo/nested]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

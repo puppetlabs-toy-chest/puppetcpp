@@ -23,9 +23,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
 
         // TODO: support exported resources
 
-        // Change to the stored scope
-        local_scope scope{ context, _scope };
-
+        scoped_stack_frame frame{ context, stack_frame{ &_expression, _scope } };
         query_evaluator evaluator{ context, _expression.query };
 
         // Realize each resource that matches the query
@@ -40,7 +38,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
                 return true;
             },
             _expression.type.name,
-            _index);
+            _index
+        );
     }
 
 }}}}  // namespace puppet::compiler::evaluation::collectors

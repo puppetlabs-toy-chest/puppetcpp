@@ -1,5 +1,6 @@
 #include <puppet/compiler/environment.hpp>
 #include <puppet/compiler/parser/parser.hpp>
+#include <puppet/compiler/scanner.hpp>
 #include <puppet/compiler/evaluation/evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/logging/logger.hpp>
@@ -179,12 +180,16 @@ namespace puppet { namespace compiler {
             }
         }
 
-        evaluation::evaluator evaluator{ context };
+        {
+            // Create the 'main' stack frame
+            evaluation::scoped_stack_frame frame{ context, evaluation::stack_frame{ "<class main>", context.top_scope(), false }};
+            evaluation::evaluator evaluator{ context };
 
-        // Now evaluate the parsed syntax trees
-        for (auto const& tree : trees) {
-            LOG(debug, "evaluating the syntax tree for '%1%'.", tree->path());
-            evaluator.evaluate(*tree);
+            // Now evaluate the parsed syntax trees
+            for (auto const& tree : trees) {
+                LOG(debug, "evaluating the syntax tree for '%1%'.", tree->path());
+                evaluator.evaluate(*tree);
+            }
         }
 
         // Find and evaluate a node definition
@@ -217,8 +222,9 @@ namespace puppet { namespace compiler {
                 throw evaluation_exception("failed to add node resource.");
             }
 
-            LOG(debug, "evaluating node definition for node '%1%'.", name());
-            result.first->evaluate(context, *resource);
+            LOG(debug, "evaluating node definition for node '%1%'.", context.node().name());
+            evaluation::node_evaluator evaluator{ context, result.first->expression() };
+            evaluator.evaluate(*resource);
         }
     }
 
@@ -301,11 +307,7 @@ namespace puppet { namespace compiler {
     {
         auto module_path = _settings.get(settings::module_path);
         if (!module_path.as<string>()) {
-            throw compilation_exception(
-                (boost::format("expected a string for $%1% setting.") %
-                 settings::module_path
-                ).str()
-            );
+            throw compilation_exception((boost::format("expected a string for $%1% setting.") % settings::module_path).str());
         }
 
         LOG(debug, "searching for modules using module path '%1%'.", module_path);
@@ -380,23 +382,25 @@ namespace puppet { namespace compiler {
     shared_ptr<ast::syntax_tree> environment::import(logging::logger& logger, string const& path, compiler::module const* module)
     {
         // TODO: this needs to be made thread safe
+        // TODO: this needs to be made transactional
 
         try {
-            shared_ptr<ast::syntax_tree> tree;
-
             // Check for an already parsed AST
             auto it = _parsed.find(path);
             if (it != _parsed.end()) {
                 LOG(debug, "using cached AST for '%1%' in environment '%2%'.", path, name());
-                tree = it->second;
-            } else {
-                // Parse the file
-                LOG(debug, "loading '%1%' into environment '%2%'.", path, name());
-                tree = parser::parse_file(logger, path, module);
-                LOG(debug, "parsed AST for '%1%':\n-----\n%2%\n-----", path, *tree);
-                _parsed.emplace(path, tree);
+                return it->second;
             }
-            _registry.import(*tree);
+
+            // Parse the file
+            LOG(debug, "loading '%1%' into environment '%2%'.", path, name());
+            auto tree = parser::parse_file(logger, path, module);
+            LOG(debug, "parsed AST for '%1%':\n-----\n%2%\n-----", path, *tree);
+            _parsed.emplace(path, tree);
+
+            // Scan the tree for definitions
+            compiler::scanner scanner{ _registry, _dispatcher };
+            scanner.scan(*tree);
             return tree;
         } catch (parse_exception const& ex) {
             throw compilation_exception(ex, path);

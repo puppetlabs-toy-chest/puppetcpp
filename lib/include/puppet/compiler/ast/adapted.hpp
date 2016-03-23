@@ -315,6 +315,7 @@ BOOST_FUSION_ADAPT_STRUCT(
 
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::function_expression,
+    is_private,
     begin,
     name,
     parameters,

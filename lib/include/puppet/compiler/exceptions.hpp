@@ -5,7 +5,7 @@
 #pragma once
 
 #include "lexer/position.hpp"
-#include "ast/ast.hpp"
+#include "evaluation/stack_frame.hpp"
 #include "../cast.hpp"
 #include <string>
 #include <exception>
@@ -20,6 +20,28 @@ namespace puppet { namespace compiler {
         // Forward declaration of syntax tree
         struct syntax_tree;
     }
+
+    /**
+     * Exception for arguments passed by index.
+     */
+    struct argument_exception : std::runtime_error
+    {
+        /**
+         * Constructs a new argument exception.
+         * @param message The exception message.
+         * @param index The index of the argument.
+         */
+        argument_exception(std::string const& message, size_t index);
+
+        /**
+         * Gets the index of the argument that caused the exception.
+         * @return Returns the index of the argument that caused the exception.
+         */
+        size_t index() const;
+
+     private:
+        size_t _index;
+    };
 
     /**
      * Exception for lexer errors.
@@ -109,8 +131,9 @@ namespace puppet { namespace compiler {
          * Constructs an evaluation exception.
          * @param message The exception message.
          * @param context The AST context where evaluation failed.
+         * @param backtrace The evaluation backtrace.
          */
-        evaluation_exception(std::string const& message, ast::context context);
+        evaluation_exception(std::string const& message, ast::context context, std::vector<evaluation::stack_frame> backtrace);
 
         /**
          * Gets the AST context where evaluation failed.
@@ -118,9 +141,16 @@ namespace puppet { namespace compiler {
          */
         ast::context const& context() const;
 
+        /**
+         * Gets the backtrace where evaluation failed.
+         * @return Returns the backtrace where evaluation failed.
+         */
+        std::vector<evaluation::stack_frame> const& backtrace() const;
+
      private:
         std::shared_ptr<ast::syntax_tree> _tree;
         ast::context _context;
+        std::vector<evaluation::stack_frame> _backtrace;
     };
 
     /**
@@ -182,12 +212,19 @@ namespace puppet { namespace compiler {
          */
         std::string const& text() const;
 
+        /**
+         * Gets the backtrace where evaluation failed.
+         * @return Returns the backtrace where evaluation failed.
+         */
+        std::vector<evaluation::stack_frame> const& backtrace() const;
+
     private:
         std::string _path;
         size_t _line;
         size_t _column;
         size_t _length;
         std::string _text;
+        std::vector<evaluation::stack_frame> _backtrace;
     };
 
 }}  // puppet::compiler

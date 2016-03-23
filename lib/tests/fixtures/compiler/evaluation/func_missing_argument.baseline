@@ -1,0 +1,6 @@
+Error: func_missing_argument.pp:1:15: node 'test': parameter $x is required but no value was given.
+  function test($x, $y = foo)
+                ^~
+  backtrace:
+    in 'test' at func_missing_argument.pp:1
+    in '<class main>' at func_missing_argument.pp:5

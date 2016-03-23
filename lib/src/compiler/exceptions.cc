@@ -7,6 +7,17 @@ using namespace std;
 
 namespace puppet { namespace compiler {
 
+    argument_exception::argument_exception(std::string const& message, size_t index) :
+        runtime_error(message),
+        _index(index)
+    {
+    }
+
+    size_t argument_exception::index() const
+    {
+        return _index;
+    }
+
     parse_exception::parse_exception(string const& message, lexer::position begin, lexer::position end) :
         runtime_error(message),
         _begin(rvalue_cast(begin)),
@@ -29,9 +40,10 @@ namespace puppet { namespace compiler {
     {
     }
 
-    evaluation_exception::evaluation_exception(string const& message, ast::context context) :
+    evaluation_exception::evaluation_exception(string const& message, ast::context context, vector<evaluation::stack_frame> backtrace) :
         runtime_error(message),
-        _context(rvalue_cast(context))
+        _context(rvalue_cast(context)),
+        _backtrace(rvalue_cast(backtrace))
     {
         if (_context.tree) {
             // Take a shared pointer on the tree
@@ -43,6 +55,11 @@ namespace puppet { namespace compiler {
     ast::context const& evaluation_exception::context() const
     {
         return _context;
+    }
+
+    vector<evaluation::stack_frame> const& evaluation_exception::backtrace() const
+    {
+        return _backtrace;
     }
 
     compilation_exception::compilation_exception(string const& message, string path, size_t line, size_t column, size_t length, string text) :
@@ -68,16 +85,21 @@ namespace puppet { namespace compiler {
     }
 
     compilation_exception::compilation_exception(evaluation_exception const& ex) :
-        runtime_error(ex.what())
+        runtime_error(ex.what()),
+        _backtrace(ex.backtrace())
     {
         auto& context = ex.context();
         if (context.tree) {
             _path = context.tree->path();
             _line = context.begin.line();
             _length = context.end.offset() - context.begin.offset();
-            ifstream input{_path};
-            if (input) {
-                tie(_text, _column) = lexer::get_text_and_column(input, context.begin.offset());
+            if (context.tree->source().empty()) {
+                ifstream input{ _path };
+                if (input) {
+                    tie(_text, _column) = lexer::get_text_and_column(input, context.begin.offset());
+                }
+            } else {
+                tie(_text, _column) = lexer::get_text_and_column(context.tree->source(), context.begin.offset());
             }
         }
     }
@@ -105,6 +127,11 @@ namespace puppet { namespace compiler {
     string const& compilation_exception::text() const
     {
         return _text;
+    }
+
+    vector<evaluation::stack_frame> const& compilation_exception::backtrace() const
+    {
+        return _backtrace;
     }
 
 }}  // namespace puppet::compiler

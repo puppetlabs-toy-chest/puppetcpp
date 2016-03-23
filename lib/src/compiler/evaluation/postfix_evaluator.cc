@@ -30,7 +30,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         void operator()(selector_expression const& expression)
         {
             // Selector expressions create a new match scope
-            auto match_scope = _evaluator.context().create_match_scope();
+            match_scope scope{ _evaluator.context() };
 
             auto& cases = expression.cases;
             boost::optional<size_t> default_index;
@@ -65,7 +65,13 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Handle no matching case
             if (!default_index) {
-                throw evaluation_exception((boost::format("no matching selector case for value '%1%'.") % _value).str(), expression);
+                throw evaluation_exception(
+                    (boost::format("no matching selector case for value '%1%'.") %
+                     _value
+                    ).str(),
+                    expression,
+                    _evaluator.context().backtrace()
+                );
             }
 
             // Evaluate the default case
@@ -83,6 +89,9 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         void operator()(method_call_expression const& expression)
         {
+            // Find the function before executing the call to ensure it is imported
+            _evaluator.context().find_function(expression.method.value);
+
             functions::call_context context{ _evaluator.context(), expression, _value, _value_context, _splat };
             _value = _evaluator.context().dispatcher().dispatch(context);
             _value_context = expression.context();

@@ -4,10 +4,12 @@
  */
 #pragma once
 
+#include "../../ast/ast.hpp"
 #include "../../../runtime/values/value.hpp"
 #include <string>
 #include <vector>
 #include <functional>
+#include <memory>
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
@@ -27,14 +29,21 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         /**
          * Constructs a function descriptor.
          * @param name The name of the function.
+         * @param expression The function expression if the function was defined in Puppet source code.
          */
-        explicit descriptor(std::string name);
+        explicit descriptor(std::string name, ast::function_expression const* expression = nullptr);
 
         /**
          * Gets the function's name.
          * @return Returns the function's name.
          */
         std::string const& name() const;
+
+        /**
+         * Gets the associated function expression if the function was defined in Puppet source code.
+         * @return Returns the function expression or nullptr if the function is a built-in function.
+         */
+        ast::function_expression const* expression() const;
 
         /**
          * Determines if the function has dispatch descriptors.
@@ -69,6 +78,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         std::string _name;
         std::vector<dispatch_descriptor> _dispatch_descriptors;
+        std::shared_ptr<ast::syntax_tree> _tree;
+        ast::function_expression const* _expression;
     };
 
 }}}}  // puppet::compiler::evaluation::functions

@@ -71,11 +71,6 @@ namespace puppet { namespace compiler {
             throw runtime_error("resource name is not fully qualified.");
         }
 
-        // Check for stages with a container
-        if (container && type.is_stage()) {
-            throw runtime_error("stages cannot have a container.");
-        }
-
         // Attempt to find an existing resource
         if (find(type)) {
             return nullptr;
@@ -433,7 +428,9 @@ namespace puppet { namespace compiler {
                      name %
                      target_resource
                     ).str(),
-                    attribute->value_context());
+                    attribute->value_context(),
+                    {}
+                );
             }
 
             if (&source == target) {
@@ -441,7 +438,9 @@ namespace puppet { namespace compiler {
                     (boost::format("resource %1% cannot form a relationship with itself.") %
                      source.type()
                     ).str(),
-                    attribute->value_context());
+                    attribute->value_context(),
+                    {}
+                );
             }
 
             // Add the relationship
@@ -455,7 +454,9 @@ namespace puppet { namespace compiler {
                  name %
                  message
                 ).str(),
-                attribute->value_context());
+                attribute->value_context(),
+                {}
+            );
         });
     }
 

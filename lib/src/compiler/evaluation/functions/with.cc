@@ -1,6 +1,5 @@
 #include <puppet/compiler/evaluation/functions/with.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
-#include <puppet/compiler/evaluation/call_evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
 
@@ -17,7 +16,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             try {
                 return context.yield_without_catch(context.arguments());
             } catch (argument_exception const& ex) {
-                throw evaluation_exception(ex.what(), context.argument_context(ex.index()));
+                throw evaluation_exception(ex.what(), context.argument_context(ex.index()), context.context().backtrace());
             }
         });
         return descriptor;

@@ -18,7 +18,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         // Otherwise, a block is required
         if (!context.block()) {
-            throw evaluation_exception((boost::format("type assertion failure: expected %1% but found %2%.") % type % instance.get_type()).str(), context.argument_context(1));
+            throw evaluation_exception(
+                (boost::format("type assertion failure: expected %1% but found %2%.") %
+                 type %
+                 instance.get_type()
+                ).str(),
+                context.argument_context(1),
+                context.context().backtrace()
+            );
         }
 
         // Call the block and give it the type of the argument as the second argument
@@ -37,7 +44,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             auto& type_string = context.argument(0).require<string>();
             auto type = values::type::parse(type_string);
             if (!type) {
-                throw evaluation_exception((boost::format("the expression '%1%' is not a valid type specification.") % type_string).str(), context.argument_context(0));
+                throw evaluation_exception(
+                    (boost::format("the expression '%1%' is not a valid type specification.") %
+                     type_string
+                    ).str(),
+                    context.argument_context(0),
+                    context.context().backtrace()
+                );
             }
             return assert_type_is(context, *type);
         });
