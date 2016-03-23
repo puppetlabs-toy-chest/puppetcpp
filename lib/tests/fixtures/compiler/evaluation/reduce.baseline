@@ -1,0 +1,88 @@
+Notice: Scope(Class[main]): memo = 1, value = 2
+Notice: Scope(Class[main]): memo = 3, value = 3
+Notice: Scope(Class[main]): 6
+Notice: Scope(Class[main]): memo = 1, value = 2
+Notice: Scope(Class[main]): memo = 3, value = 3
+Notice: Scope(Class[main]): 6
+Notice: Scope(Class[main]): memo = [foo, bar], value = [bar, baz]
+Notice: Scope(Class[main]): memo = [foo, bar, bar, baz], value = [baz, cake]
+Notice: Scope(Class[main]): [foo, bar, bar, baz, baz, cake]
+Notice: Scope(Class[main]): memo = [foo, bar], value = [bar, baz]
+Notice: Scope(Class[main]): memo = [foo, bar, bar, baz], value = [baz, cake]
+Notice: Scope(Class[main]): [foo, bar, bar, baz, baz, cake]
+Notice: Scope(Class[main]): memo = 0, value = 1
+Notice: Scope(Class[main]): memo = 1, value = 2
+Notice: Scope(Class[main]): memo = 3, value = 3
+Notice: Scope(Class[main]): memo = 6, value = 4
+Notice: Scope(Class[main]): 10
+Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): memo = 1, value = 5
+Notice: Scope(Class[main]): 6
+Notice: Scope(Class[main]): memo = 5, value = 6
+Notice: Scope(Class[main]): memo = 11, value = 7
+Notice: Scope(Class[main]): memo = 18, value = 8
+Notice: Scope(Class[main]): memo = 26, value = 9
+Notice: Scope(Class[main]): memo = 35, value = 10
+Notice: Scope(Class[main]): 45
+Notice: Scope(Class[main]): memo = 5, value = 6
+Notice: Scope(Class[main]): memo = 11, value = 7
+Notice: Scope(Class[main]): memo = 18, value = 8
+Notice: Scope(Class[main]): memo = 26, value = 9
+Notice: Scope(Class[main]): memo = 35, value = 10
+Notice: Scope(Class[main]): 45
+Notice: Scope(Class[main]): memo = foo, value = bar
+Notice: Scope(Class[main]): memo = foobar, value = baz
+Notice: Scope(Class[main]): foobarbaz
+Notice: Scope(Class[main]): memo = foo, value = bar
+Notice: Scope(Class[main]): memo = foobar, value = baz
+Notice: Scope(Class[main]): foobarbaz
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

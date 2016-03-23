@@ -1,0 +1,102 @@
+Notice: Scope(Class[main]): value = 1
+Notice: Scope(Class[main]): value = 2
+Notice: Scope(Class[main]): value = 3
+Notice: Scope(Class[main]): [1, 2]
+Notice: Scope(Class[main]): index = 0, value = 1
+Notice: Scope(Class[main]): index = 1, value = 2
+Notice: Scope(Class[main]): index = 2, value = 3
+Notice: Scope(Class[main]): [1, 2]
+Notice: Scope(Class[main]): value = [foo, bar]
+Notice: Scope(Class[main]): value = [bar, baz]
+Notice: Scope(Class[main]): value = [baz, cake]
+Notice: Scope(Class[main]): {bar => baz}
+Notice: Scope(Class[main]): key = foo, value = bar
+Notice: Scope(Class[main]): key = bar, value = baz
+Notice: Scope(Class[main]): key = baz, value = cake
+Notice: Scope(Class[main]): {bar => baz}
+Notice: Scope(Class[main]): value = 0
+Notice: Scope(Class[main]): value = 1
+Notice: Scope(Class[main]): value = 2
+Notice: Scope(Class[main]): value = 3
+Notice: Scope(Class[main]): value = 4
+Notice: Scope(Class[main]): [0, 1]
+Notice: Scope(Class[main]): index = 0, value = 0
+Notice: Scope(Class[main]): index = 1, value = 1
+Notice: Scope(Class[main]): index = 2, value = 2
+Notice: Scope(Class[main]): index = 3, value = 3
+Notice: Scope(Class[main]): index = 4, value = 4
+Notice: Scope(Class[main]): [0, 1]
+Notice: Scope(Class[main]): value = 5
+Notice: Scope(Class[main]): []
+Notice: Scope(Class[main]): value = 5
+Notice: Scope(Class[main]): value = 6
+Notice: Scope(Class[main]): value = 7
+Notice: Scope(Class[main]): value = 8
+Notice: Scope(Class[main]): value = 9
+Notice: Scope(Class[main]): value = 10
+Notice: Scope(Class[main]): [5, 6]
+Notice: Scope(Class[main]): index = 0, value = 5
+Notice: Scope(Class[main]): index = 1, value = 6
+Notice: Scope(Class[main]): index = 2, value = 7
+Notice: Scope(Class[main]): index = 3, value = 8
+Notice: Scope(Class[main]): index = 4, value = 9
+Notice: Scope(Class[main]): index = 5, value = 10
+Notice: Scope(Class[main]): [5, 6]
+Notice: Scope(Class[main]): value = foo
+Notice: Scope(Class[main]): value = bar
+Notice: Scope(Class[main]): value = baz
+Notice: Scope(Class[main]): [bar, baz]
+Notice: Scope(Class[main]): index = 0, value = foo
+Notice: Scope(Class[main]): index = 1, value = bar
+Notice: Scope(Class[main]): index = 2, value = baz
+Notice: Scope(Class[main]): [bar, baz]
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+
