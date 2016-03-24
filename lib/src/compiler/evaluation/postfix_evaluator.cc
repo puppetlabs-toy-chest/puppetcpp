@@ -45,21 +45,22 @@ namespace puppet { namespace compiler { namespace evaluation {
                     continue;
                 }
 
+                if (_evaluator.is_match(_value, _value_context, selector, selector_case.second.context())) {
+                    _value = _evaluator.evaluate(selector_case.second);
+                    _value_context.end = selector_case.second.context().end;
+                    return;
+                }
+
                 // If splat, treat each element as an option
-                if (selector_case.first.is_splat() && selector.as<values::array>()) {
-                    auto unfolded = selector.move_as<values::array>();
+                if (selector_case.first.is_splat()) {
+                    auto unfolded = selector.to_array();
                     for (auto& element : unfolded) {
-                        if (_evaluator.is_match(_value, selector_case.first.context(), element, selector_case.second.context())) {
+                        if (_evaluator.is_match(_value, _value_context, element, selector_case.second.context())) {
                             _value = _evaluator.evaluate(selector_case.second);
-                            _value_context = selector_case.second.context();
+                            _value_context.end = selector_case.second.context().end;
                             return;
                         }
                     }
-                }
-                if (_evaluator.is_match(_value, selector_case.first.context(), selector, selector_case.second.context())) {
-                    _value = _evaluator.evaluate(selector_case.second);
-                    _value_context = selector_case.second.context();
-                    return;
                 }
             }
 
@@ -69,7 +70,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     (boost::format("no matching selector case for value '%1%'.") %
                      _value
                     ).str(),
-                    expression,
+                    _value_context,
                     _evaluator.context().backtrace()
                 );
             }
@@ -77,14 +78,14 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Evaluate the default case
             auto const& default_case = cases[*default_index];
             _value = _evaluator.evaluate(default_case.second);
-            _value_context = default_case.second.context();
+            _value_context.end = default_case.second.context().end;
         }
 
         void operator()(access_expression const& expression)
         {
             access_evaluator evaluator(_evaluator.context());
             _value = evaluator.evaluate(_value, expression);
-            _value_context = expression;
+            _value_context.end = expression.end;
         }
 
         void operator()(method_call_expression const& expression)
@@ -94,7 +95,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             functions::call_context context{ _evaluator.context(), expression, _value, _value_context, _splat };
             _value = _evaluator.context().dispatcher().dispatch(context);
-            _value_context = expression.context();
+            _value_context.end = expression.context().end;
         }
 
         value& result()

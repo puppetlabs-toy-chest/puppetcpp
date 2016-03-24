@@ -56,8 +56,8 @@ namespace puppet { namespace runtime { namespace values {
 
         /**
          * The underlying sequence type.
-         * This is a list because the index keeps list references and they cannot be invalidated unless erased.
-         * This also provides for a faster erase implementation.
+         * This is a list because the hash index keeps list references and they cannot be invalidated unless erased.
+         * This also provides for a faster erase implementation than a deque could provide.
          */
         using sequence_type = std::list<pair>;
 

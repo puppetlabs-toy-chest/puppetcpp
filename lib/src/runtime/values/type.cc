@@ -97,6 +97,7 @@ namespace puppet { namespace runtime { namespace values {
 
     size_t hash_value(values::type const& type)
     {
+        // Hash the underlying type
         return hash_value(type.get());
     }
 

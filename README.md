@@ -93,7 +93,7 @@ Type system implemented:
 * [x] Hash
 * [x] Integer
 * [x] Iterable
-* [ ] Iterator
+* [x] Iterator
 * [x] Class
 * [x] NotUndef
 * [x] Numeric

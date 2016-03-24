@@ -108,8 +108,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             auto value = evaluator.evaluate(argument);
 
             // If the argument is being splatted, move its elements
-            if (argument.is_splat() && value.as<values::array>()) {
-                auto unfolded = value.move_as<values::array>();
+            if (argument.is_splat()) {
+                auto unfolded = value.to_array();
                 _argument_contexts.insert(_argument_contexts.end(), unfolded.size(), argument.context());
                 _arguments.reserve(_arguments.size() + unfolded.size());
                 _arguments.insert(_arguments.end(), std::make_move_iterator(unfolded.begin()), std::make_move_iterator(unfolded.end()));

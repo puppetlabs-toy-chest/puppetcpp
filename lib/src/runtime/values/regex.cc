@@ -43,7 +43,12 @@ namespace puppet { namespace runtime { namespace values {
 
     size_t hash_value(values::regex const& regex)
     {
-        return boost::hash_value(regex.pattern());
+        static const size_t name_hash = boost::hash_value("regex");
+
+        std::size_t seed = 0;
+        boost::hash_combine(seed, name_hash);
+        boost::hash_combine(seed, regex.pattern());
+        return seed;
     }
 
 }}}  // namespace puppet::runtime::values

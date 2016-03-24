@@ -55,6 +55,7 @@ namespace puppet { namespace runtime { namespace values {
 
     size_t hash_value(values::variable const& variable)
     {
+        // Hash the underlying value
        return boost::hash_value(variable.value());
     }
 

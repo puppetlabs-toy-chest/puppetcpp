@@ -199,6 +199,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             { types::hash::name(),          types::hash() },
             { types::integer::name(),       types::integer() },
             { types::iterable::name(),      types::iterable() },
+            { types::iterator::name(),      types::iterator() },
             { types::klass::name(),         types::klass() },
             { types::not_undef::name(),     types::not_undef() },
             { types::numeric::name(),       types::numeric() },
@@ -307,19 +308,19 @@ namespace puppet { namespace compiler { namespace evaluation {
                     continue;
                 }
 
-                // If splatted, unfold the array and match against each element
-                if (option_value.as<values::array>() && option.is_splat()) {
+                // Match against the value
+                if (is_match(result, expression, option_value, option.context())) {
+                    return evaluate_body(proposition.body);
+                }
+
+                // If splatted, match against each element in the array
+                if (option.is_splat() && option_value.as<values::array>()) {
                     auto array = option_value.move_as<values::array>();
                     for (auto& element : array) {
                         if (is_match(result, expression, element, option.context())) {
                             return evaluate_body(proposition.body);
                         }
                     }
-                }
-
-                // Otherwise, match against the value
-                if (is_match(result, expression, option_value, option.context())) {
-                    return evaluate_body(proposition.body);
                 }
             }
         }

@@ -54,8 +54,10 @@ namespace puppet { namespace runtime { namespace values {
 
     size_t hash_value(values::array const& array)
     {
-        std::size_t seed = 0;
+        static const size_t name_hash = boost::hash_value("array");
 
+        std::size_t seed = 0;
+        boost::hash_combine(seed, name_hash);
         for (auto const& element : array) {
             boost::hash_combine(seed, element);
         }
