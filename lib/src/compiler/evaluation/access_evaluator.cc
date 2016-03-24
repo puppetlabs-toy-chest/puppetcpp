@@ -239,6 +239,34 @@ namespace puppet { namespace compiler { namespace evaluation {
             return integer(from, to);
         }
 
+        value operator()(types::iterable const& target)
+        {
+            // Only 1 argument to Iterable
+            if (_arguments.size() > 1) {
+                throw evaluation_exception(
+                    (boost::format("expected 1 argument for %1% but %2% were given.") %
+                     types::iterable::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
+            }
+
+            // First argument should be a type
+            if (!_arguments[0]->as<values::type>()) {
+                throw evaluation_exception(
+                    (boost::format("expected parameter to be %1% but found %2%.") %
+                     types::type::name() %
+                     _arguments[0]->get_type()
+                    ).str(),
+                    _contexts[0],
+                    _context.backtrace()
+                );
+            }
+            return types::iterable(make_unique<values::type>(_arguments[0]->move_as<values::type>()));
+        }
+
         value operator()(floating const& target)
         {
             // At most 2 arguments to Float
@@ -979,6 +1007,16 @@ namespace puppet { namespace compiler { namespace evaluation {
                         );
                     }
                 }
+            }
+            if (from > to) {
+                throw evaluation_exception(
+                    (boost::format("a 'from' value of %1% cannot be greater than a 'to' value of %2%.") %
+                     from %
+                     to
+                    ).str(),
+                    _contexts[start_index],
+                    _context.backtrace()
+                );
             }
             return make_tuple(from, to);
         }

@@ -43,14 +43,14 @@ namespace puppet { namespace runtime { namespace types {
         static char const* name();
 
         /**
-         * Determines if the range is enumerable.
-         * @return Returns whether or not the range is enumerable.
+         * Determines if the range is iterable.
+         * @return Returns whether or not the range is iterable.
          */
-        bool enumerable() const;
+        bool iterable() const;
 
         /**
          * Gets the size of the range.
-         * If the range is not enumerable, the size will be zero.
+         * If the range is not iterable, the size will be zero.
          * @return Returns the size of the range.
          */
         size_t size() const;
