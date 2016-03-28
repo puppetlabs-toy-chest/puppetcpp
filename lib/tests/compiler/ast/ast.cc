@@ -443,6 +443,15 @@ static site_expression create_site(vector<expression> body = {})
     return node;
 }
 
+static type_alias_expression create_alias(ast::type alias, postfix_expression type)
+{
+    type_alias_expression node;
+    node.begin = create_position();
+    node.alias = rvalue_cast(alias);
+    node.type = rvalue_cast(type);
+    return node;
+}
+
 static unary_expression create_unary(unary_operator operator_, postfix_expression operand)
 {
     unary_expression node;
@@ -908,7 +917,7 @@ SCENARIO("primary expression", "[ast]")
 {
     primary_expression node;
     THEN("it should have the expected number of types") {
-        REQUIRE(boost::mpl::size<primary_expression::types>::value == 34);
+        REQUIRE(boost::mpl::size<primary_expression::types>::value == 35);
     }
     WHEN("using a primary expression") {
         GIVEN("an undef") {
@@ -1740,6 +1749,37 @@ SCENARIO("primary expression", "[ast]")
             }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "site { foo { something: bar => 8080 } }");
+            }
+        }
+        GIVEN("a type alias expression") {
+            auto subnode = create_alias(
+                create_type("Foo"),
+                create_postfix(primary(create_type("String")),
+                    {
+                        subexpression(create_access(
+                            {
+                                create_expression(primary(create_number(10))),
+                                create_expression(primary(create_number(20)))
+                            }
+                        ))
+                    }
+                )
+            );
+            node = subnode;
+            THEN("the same context should be returned") {
+                REQUIRE(node.context() == subnode.context());
+            }
+            THEN("it should not be default") {
+                REQUIRE_FALSE(node.is_default());
+            }
+            THEN("it should be productive") {
+                REQUIRE(node.is_productive());
+            }
+            THEN("it should not be a splat expression") {
+                REQUIRE_FALSE(node.is_splat());
+            }
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "type Foo = String[10, 20]");
             }
         }
     }
@@ -4289,7 +4329,7 @@ SCENARIO("site expression", "[ast]")
         }
     );
 
-    WHEN("using node expression") {
+    WHEN("using site expression") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2 == node);
@@ -4318,6 +4358,44 @@ SCENARIO("site expression", "[ast]")
             decltype(node) other;
             THEN("the objects should not be equal") {
                 REQUIRE(node != other);
+            }
+        }
+    }
+}
+
+SCENARIO("type alias expression", "[ast]")
+{
+    auto node = create_alias(
+        create_type("Foo"),
+        create_postfix(primary(create_type("String")),
+            {
+                subexpression(create_access(
+                    {
+                        create_expression(primary(create_number(10))),
+                        create_expression(primary(create_number(20)))
+                    }
+                ))
+            }
+        )
+    );
+
+    WHEN("using type alias expression") {
+        THEN("it should be copy constructible") {
+            auto node2 = node;
+            REQUIRE(node2.context() == node.context());
+        }
+        THEN("it should be movable") {
+            auto node2 = node;
+            auto node3 = rvalue_cast(node2);
+            REQUIRE(node3.context() == node.context());
+        }
+        THEN("it should output the expected format") {
+            REQUIRE(lexical_cast<std::string>(node) == "type Foo = String[10, 20]");
+        }
+        GIVEN("another non-equal object") {
+            decltype(node) other;
+            THEN("the objects should not be equal") {
+                REQUIRE(node.context() != other.context());
             }
         }
     }

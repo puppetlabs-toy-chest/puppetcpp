@@ -53,6 +53,7 @@ namespace puppet { namespace compiler { namespace ast {
     struct consumes_expression;
     struct application_expression;
     struct site_expression;
+    struct type_alias_expression;
     struct syntax_tree;
 
     /**
@@ -475,7 +476,8 @@ namespace puppet { namespace compiler { namespace ast {
         boost::spirit::x3::forward_ast<produces_expression>,
         boost::spirit::x3::forward_ast<consumes_expression>,
         boost::spirit::x3::forward_ast<application_expression>,
-        boost::spirit::x3::forward_ast<site_expression>
+        boost::spirit::x3::forward_ast<site_expression>,
+        boost::spirit::x3::forward_ast<type_alias_expression>
         >
     {
         // Use the base's construction and assignment semantics
@@ -2385,6 +2387,41 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, site_expression const& node);
+
+    /**
+     * Represents a type alias expression.
+     */
+    struct type_alias_expression
+    {
+        /**
+         * Stores the beginning position of the expression.
+         */
+        lexer::position begin;
+
+        /**
+         * Stores the alias type.
+         */
+        ast::type alias;
+
+        /**
+         * Stores the postfix expression for the type being aliased.
+         */
+        postfix_expression type;
+
+        /**
+         * Get the context of the consumes expression.
+         * @return Returns the context of the consumes expression.
+         */
+        ast::context context() const;
+    };
+
+    /**
+     * Stream insertion operator for type alias expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, type_alias_expression const& node);
 
     /**
      * Represents a supported serialization format for the syntax tree.

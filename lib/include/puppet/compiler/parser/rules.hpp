@@ -117,6 +117,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(consumes_expression,           "consumes expression",           ast::consumes_expression)
     DECLARE_RULE(application_expression,        "application expression",        ast::application_expression)
     DECLARE_RULE(site_expression,               "site expression",               ast::site_expression)
+    DECLARE_RULE(type_alias_expression,         "type alias expression",         ast::type_alias_expression)
 
     // Literal rules
     DEFINE_RULE(
@@ -498,6 +499,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         primary_statement,
+        type_alias_expression        |
         resource_expression          |
         resource_override_expression |
         resource_defaults_expression |
@@ -633,6 +635,12 @@ namespace puppet { namespace compiler { namespace parser {
         begin(lexer::token_id::keyword_site) > raw('{') > (raw('}', false) | statements) > end('}') > tree
     )
 
+    // Type alias
+    DEFINE_RULE(
+        type_alias_expression,
+        begin(lexer::token_id::keyword_type) > type > raw('=') > type_expression
+    )
+
     // These macros associate the above rules with their definitions
     // Too many rules to associate in a single macro
     BOOST_SPIRIT_DEFINE(
@@ -727,6 +735,7 @@ namespace puppet { namespace compiler { namespace parser {
         binary_expression,
         primary_expression,
         nested_expression,
+        type_alias_expression,
         syntax_tree
     );
 

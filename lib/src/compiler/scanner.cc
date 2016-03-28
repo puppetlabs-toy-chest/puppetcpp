@@ -606,6 +606,14 @@ namespace puppet { namespace compiler {
         }
     }
 
+    void scanner::operator()(ast::type_alias_expression const& expression)
+    {
+        scope_helper scope{ _scopes };
+
+        operator()(expression.alias);
+        operator()(expression.type);
+    }
+
     bool scanner::can_define() const
     {
         return _scopes.empty() || _scopes.back();

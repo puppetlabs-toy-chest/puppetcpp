@@ -680,6 +680,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         throw evaluation_exception("site expressions are not yet implemented.", expression, _context.backtrace());
     }
 
+    value evaluator::operator()(type_alias_expression const& expression)
+    {
+        // TODO: implement
+        throw evaluation_exception("type alias expressions are not yet implemented.", expression.context(), _context.backtrace());
+    }
+
     value evaluator::evaluate_body(vector<ast::expression> const& body)
     {
         value result;
