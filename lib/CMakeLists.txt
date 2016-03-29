@@ -109,6 +109,7 @@ set(PUPPET_COMMON_SOURCES
     src/options/command.cc
     src/options/executor.cc
     src/options/parser.cc
+    src/runtime/types/alias.cc
     src/runtime/types/any.cc
     src/runtime/types/array.cc
     src/runtime/types/boolean.cc

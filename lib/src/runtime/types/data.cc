@@ -27,14 +27,25 @@ namespace puppet { namespace runtime { namespace types {
                hash().is_specialization(other);
     }
 
+    bool data::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Data is a real type
+        return true;
+    }
+
+    void data::write(ostream& stream, bool expand) const
+    {
+        stream << data::name();
+    }
+
     char const* data::name()
     {
         return "Data";
     }
 
-    ostream& operator<<(ostream& os, data const&)
+    ostream& operator<<(ostream& os, data const& type)
     {
-        os << data::name();
+        type.write(os);
         return os;
     }
 

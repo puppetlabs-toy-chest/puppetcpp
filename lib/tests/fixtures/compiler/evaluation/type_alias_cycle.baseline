@@ -1,0 +1,6 @@
+Error: type_alias_cycle.pp:1:10: node 'test': B (alias for A) does not resolve to a real type.
+  type A = B
+           ^
+  backtrace:
+    in '<type alias A>' at type_alias_cycle.pp:1
+    in '<class main>' at type_alias_cycle.pp:3

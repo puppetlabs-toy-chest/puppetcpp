@@ -296,14 +296,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         compiler::catalog& catalog() const;
 
         /**
-         * Gets the currentregistry.
-         * @return Returns the current registry.
+         * Gets the type registry.
+         * @return Returns the type registry.
          */
         compiler::registry const& registry() const;
 
         /**
-         * Gets the current function dispatcher.
-         * @return Returns the current function dispatcher.
+         * Gets the function dispatcher.
+         * @return Returns the function dispatcher.
          */
         evaluation::dispatcher const& dispatcher() const;
 
@@ -418,7 +418,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         /**
          * Finds a class definition by name.
-         * @param name The name of the class to find.
+         * @param name The name of the class to find (e.g. foo::bar).
          * @param import Specifies whether or not an attempt to import the class should be made.
          * @return Returns the class definition or nullptr if the class is not defined.
          */
@@ -426,7 +426,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         /**
          * Finds a defined type definition by name.
-         * @param name The name of the defined type to find.
+         * @param name The name of the defined type to find (e.g. foo::bar).
          * @param import Specifies whether or not an attempt to import the defined type should be made.
          * @return Returns the defined type or nullptr if the defined type is not defined.
          */
@@ -434,19 +434,42 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         /**
          * Finds a function by name.
-         * @param name The name of the function to find.
+         * @param name The name of the function to find (e.g. foo::bar).
          * @param import Specifies whether or not an attempt to import the function should be made.
          * @return Returns the function descriptor or nullptr if not found.
          */
-        functions::descriptor* find_function(std::string name, bool import = true);
+        functions::descriptor* find_function(std::string const& name, bool import = true);
 
         /**
          * Finds a function by name.
-         * @param name The name of the function to find.
+         * @param name The name of the function to find (e.g. foo::bar).
          * @param import Specifies whether or not an attempt to import the function should be made.
          * @return Returns the function descriptor or nullptr if not found.
          */
-        functions::descriptor const* find_function(std::string name, bool import = true) const;
+        functions::descriptor const* find_function(std::string const& name, bool import = true) const;
+
+        /**
+         * Finds a type alias by name.
+         * @param name The name of the type alias to find (e.g. 'Foo::Bar').
+         * @param import Specifies whether or not an attempt to import the type alias should be made.
+         * @return Returns the type alias or nullptr if not found.
+         */
+        compiler::type_alias* find_type_alias(std::string const& name, bool import = true);
+
+        /**
+         * Finds a type alias by name.
+         * @param name The name of the type alias to find (e.g. 'Foo::Bar').
+         * @param import Specifies whether or not an attempt to import the type alias should be made.
+         * @return Returns the type alias or nullptr if not found.
+         */
+        compiler::type_alias const* find_type_alias(std::string const& name, bool import = true) const;
+
+        /**
+         * Resolves a type alias by name.
+         * @param name The name of the type alias to resolve.
+         * @return Returns a shared pointer to the resolved type or nullptr if the alias does not exist.
+         */
+        std::shared_ptr<runtime::values::type> resolve_type_alias(std::string const& name);
 
         /**
          * Determines if the given name is defined.
@@ -523,6 +546,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         std::vector<resource_relationship> _relationships;
         std::vector<std::shared_ptr<collectors::collector>> _collectors;
         std::vector<std::ostream*> _stream_stack;
+        std::unordered_map<std::string, std::shared_ptr<runtime::values::type>> _resolved_type_aliases;
     };
 
 }}}  // namespace puppet::compiler::evaluation

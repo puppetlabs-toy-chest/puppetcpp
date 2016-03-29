@@ -26,7 +26,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             ast::class_expression const*,
             ast::defined_type_expression const*,
             ast::node_expression const*,
-            ast::collector_expression const*
+            ast::collector_expression const*,
+            ast::type_alias_expression const*
         >;
 
         /**

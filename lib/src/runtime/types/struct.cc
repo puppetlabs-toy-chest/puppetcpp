@@ -127,6 +127,33 @@ namespace puppet { namespace runtime { namespace types {
         return false;
     }
 
+    bool structure::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Struct is a real type
+        return true;
+    }
+
+    void structure::write(ostream& stream, bool expand) const
+    {
+        stream << structure::name();
+        if (_schema.empty()) {
+            return;
+        }
+        stream << "[";
+        bool first = true;
+        for (auto const& kvp : _schema) {
+            if (first) {
+                first = false;
+            } else {
+                stream << ", ";
+            }
+            kvp.first->write(stream, false);
+            stream << " => ";
+            kvp.second->write(stream, false);
+        }
+        stream << "]";
+    }
+
     std::string structure::to_key(values::type const& type)
     {
         // Check for Enum[string]
@@ -153,23 +180,9 @@ namespace puppet { namespace runtime { namespace types {
         return enumeration && !enumeration->strings().empty() ? enumeration->strings().front() : std::string();
     }
 
-    ostream& operator<<(std::ostream& os, structure const& type)
+    ostream& operator<<(ostream& os, structure const& type)
     {
-        os << structure::name();
-        if (type.schema().empty()) {
-            return os;
-        }
-        os << "[";
-        bool first = true;
-        for (auto const& kvp : type.schema()) {
-            if (first) {
-                first = false;
-            } else {
-                os << ", ";
-            }
-            os << *kvp.first << " => " << *kvp.second;
-        }
-        os << "]";
+        type.write(os);
         return os;
     }
 

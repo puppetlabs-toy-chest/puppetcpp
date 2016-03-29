@@ -73,13 +73,26 @@ namespace puppet { namespace runtime { namespace types {
         return iterator && iterator->type();
     }
 
+    bool iterator::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Iterator is a real type
+        return true;
+    }
+
+    void iterator::write(ostream& stream, bool expand) const
+    {
+        stream << types::iterator::name();
+        if (!_type) {
+            return;
+        }
+        stream << '[';
+        _type->write(stream, false);
+        stream << ']';
+    }
+
     ostream& operator<<(ostream& os, types::iterator const& type)
     {
-        os << types::iterator::name();
-        if (!type.type()) {
-            return os;
-        }
-        os << '[' << *type.type() << ']';
+        type.write(os);
         return os;
     }
 

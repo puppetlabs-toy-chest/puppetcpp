@@ -1,0 +1,6 @@
+Error: invalid_variant_recursive_alias.pp:2:16: node 'test': Variant[Foo] does not resolve to a real type.
+  type Invalid = Variant[Foo]
+                 ^~~~~~~~~~~~
+  backtrace:
+    in '<type alias Invalid>' at invalid_variant_recursive_alias.pp:2
+    in '<class main>' at invalid_variant_recursive_alias.pp:3

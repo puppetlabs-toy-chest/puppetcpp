@@ -73,28 +73,39 @@ namespace puppet { namespace runtime { namespace types {
                std::max(ptr->from(), ptr->to()) <= std::max(_from, _to);
     }
 
-    ostream& operator<<(ostream& os, integer const& type)
+    bool integer::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << integer::name();
-        bool from_default = type.from() == numeric_limits<int64_t>::min();
-        bool to_default = type.to() == numeric_limits<int64_t>::max();
+        // Integer is a real type
+        return true;
+    }
+
+    void integer::write(ostream& stream, bool expand) const
+    {
+        stream << integer::name();
+        bool from_default = _from == numeric_limits<int64_t>::min();
+        bool to_default = _to == numeric_limits<int64_t>::max();
         if (from_default && to_default) {
             // Only output the type name
-            return os;
+            return;
         }
-        os << '[';
+        stream << '[';
         if (from_default) {
-            os << "default";
+            stream << "default";
         } else {
-            os << type.from();
+            stream << _from;
         }
-        os << ", ";
+        stream << ", ";
         if (to_default) {
-            os << "default";
+            stream << "default";
         } else {
-            os << type.to();
+            stream << _to;
         }
-        os << ']';
+        stream << ']';
+    }
+
+    ostream& operator<<(ostream& os, integer const& type)
+    {
+        type.write(os);
         return os;
     }
 

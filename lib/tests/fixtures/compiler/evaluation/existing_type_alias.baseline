@@ -1,0 +1,3 @@
+Error: existing_type_alias.pp:2:6: node 'test': type alias 'Foo' was previously defined at existing_type_alias.pp:1.
+  type Foo = String
+       ^~~

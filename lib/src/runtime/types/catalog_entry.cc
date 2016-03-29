@@ -23,9 +23,20 @@ namespace puppet { namespace runtime { namespace types {
                boost::get<klass>(&other);
     }
 
+    bool catalog_entry::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // CatalogEntry is a real type
+        return true;
+    }
+
+    void catalog_entry::write(ostream& stream, bool expand) const
+    {
+        stream << catalog_entry::name();
+    }
+
     ostream& operator<<(ostream& os, catalog_entry const& type)
     {
-        os << catalog_entry::name();
+        type.write(os);
         return os;
     }
 

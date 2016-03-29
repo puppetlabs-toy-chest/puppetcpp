@@ -128,6 +128,57 @@ namespace puppet { namespace runtime { namespace types {
                std::max(ptr->min(), ptr->max()) <= std::max(_min, _max);
     }
 
+    bool callable::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Callable is a real type
+        return true;
+    }
+
+    void callable::write(ostream& stream, bool expand) const
+    {
+        // If no types, and the remaining parameters are all their default values, only output the type name
+        stream << callable::name();
+        if (_types.empty() && _min == 0 && _max == numeric_limits<int64_t>::max() && !_block_type) {
+            return;
+        }
+
+        stream << "[";
+        bool first = true;
+        for (auto const& element : _types) {
+            if (first) {
+                first = false;
+            } else {
+                stream << ", ";
+            }
+            element->write(stream, false);
+        }
+        // If the min and max are equal to the number of types and there is no block, don't output the remaining parameters
+        int64_t size = static_cast<int64_t>(_types.size());
+        if (_min == size && _max == size && !_block_type) {
+            stream << ']';
+            return;
+        }
+        if (size > 0) {
+            stream << ", ";
+        }
+        if (_min == 0) {
+            stream << "default";
+        } else {
+            stream << _min;
+        }
+        stream << ", ";
+        if (_max == numeric_limits<int64_t>::max()) {
+            stream << "default";
+        } else {
+            stream << _max;
+        }
+        if (_block_type) {
+            stream << ", ";
+            _block_type->write(stream, false);
+        }
+        stream << ']';
+    }
+
     bool callable::can_dispatch(call_context const& context) const
     {
         auto& arguments = context.arguments();
@@ -193,47 +244,7 @@ namespace puppet { namespace runtime { namespace types {
 
     ostream& operator<<(ostream& os, callable const& type)
     {
-        // If no types, and the remaining parameters are all their default values, only output the type name
-        os << callable::name();
-        if (type.types().empty() && type.min() == 0 && type.max() == numeric_limits<int64_t>::max() && !type.block_type()) {
-            return os ;
-        }
-
-        os << "[";
-        bool first = true;
-        for (auto const& element : type.types()) {
-            if (first) {
-                first = false;
-            } else {
-                os << ", ";
-            }
-            os << *element;
-        }
-        // If the min and max are equal to the number of types and there is no block, don't output the remaining parameters
-        int64_t size = static_cast<int64_t>(type.types().size());
-        if (type.min() == size && type.max() == size && !type.block_type()) {
-            os << ']';
-            return os;
-        }
-        if (size > 0) {
-            os << ", ";
-        }
-        if (type.min() == 0) {
-            os << "default";
-        } else {
-            os << type.min();
-        }
-        os << ", ";
-        if (type.max() == numeric_limits<int64_t>::max()) {
-            os << "default";
-        } else {
-            os << type.max();
-        }
-        if (type.block_type()) {
-            os << ", ";
-            os << *type.block_type();
-        }
-        os << ']';
+        type.write(os);
         return os;
     }
 

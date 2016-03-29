@@ -248,9 +248,4 @@ namespace puppet { namespace compiler { namespace evaluation {
         return descriptor->dispatch(context);
     }
 
-    void dispatcher::fallback(fallback_type fallback)
-    {
-        _fallback = rvalue_cast(fallback);
-    }
-
 }}}  // namespace puppet::compiler::evaluation

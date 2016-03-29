@@ -36,6 +36,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             buffer << "<node>";
         } else if (as<ast::collector_expression>()) {
             buffer << "<collector>";
+        } else if (auto expression = as<ast::type_alias_expression>()) {
+            buffer << "<type alias " << expression->alias << ">";
         } else if (_name) {
             buffer << _name;
         }
@@ -90,6 +92,11 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
 
             ast::context operator()(ast::collector_expression const* expression) const
+            {
+                return expression->context();
+            }
+
+            ast::context operator()(ast::type_alias_expression const* expression) const
             {
                 return expression->context();
             }

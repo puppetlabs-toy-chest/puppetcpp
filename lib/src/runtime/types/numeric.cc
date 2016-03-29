@@ -21,9 +21,20 @@ namespace puppet { namespace runtime { namespace types {
         return boost::get<integer>(&other) || boost::get<floating>(&other);
     }
 
-    ostream& operator<<(ostream& os, numeric const&)
+    bool numeric::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << numeric::name();
+        // Numeric is a real type
+        return true;
+    }
+
+    void numeric::write(ostream& stream, bool expand) const
+    {
+        stream << numeric::name();
+    }
+
+    ostream& operator<<(ostream& os, numeric const& type)
+    {
+        type.write(os);
         return os;
     }
 

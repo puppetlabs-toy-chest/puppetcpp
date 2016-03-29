@@ -93,17 +93,28 @@ namespace puppet { namespace runtime { namespace types {
         return _type_name.empty() && !type->type_name().empty();
     }
 
+    bool runtime::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Runtime is a real type
+        return true;
+    }
+
+    void runtime::write(ostream& stream, bool expand) const
+    {
+        stream << runtime::name();
+        if (_runtime_name.empty()) {
+            return;
+        }
+        stream << "['" << _runtime_name;
+        if (!_type_name.empty()) {
+            stream << "', '" << _type_name;
+        }
+        stream << "']";
+    }
+
     ostream& operator<<(ostream& os, runtime const& type)
     {
-        os << runtime::name();
-        if (type.runtime_name().empty()) {
-            return os;
-        }
-        os << "['" << type.runtime_name();
-        if (!type.type_name().empty()) {
-            os << "', '" << type.type_name();
-        }
-        os << "']";
+        type.write(os);
         return os;
     }
 

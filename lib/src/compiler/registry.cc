@@ -55,6 +55,17 @@ namespace puppet { namespace compiler {
         return _expression;
     }
 
+    type_alias::type_alias(ast::type_alias_expression const& expression) :
+        _tree(expression.alias.tree->shared_from_this()),
+        _expression(expression)
+    {
+    }
+
+    ast::type_alias_expression const& type_alias::expression() const
+    {
+        return _expression;
+    }
+
     klass const* registry::find_class(string const& name) const
     {
         auto it = _classes.find(name);
@@ -212,6 +223,25 @@ namespace puppet { namespace compiler {
     bool registry::has_nodes() const
     {
         return !_nodes.empty();
+    }
+
+    void registry::register_type_alias(type_alias alias)
+    {
+        _aliases.emplace(alias.expression().alias.name, rvalue_cast(alias));
+    }
+
+    type_alias* registry::find_type_alias(string const& name)
+    {
+        return const_cast<type_alias*>(static_cast<registry const*>(this)->find_type_alias(name));
+    }
+
+    type_alias const* registry::find_type_alias(string const& name) const
+    {
+        auto it = _aliases.find(name);
+        if (it == _aliases.end()) {
+            return nullptr;
+        }
+        return &it->second;
     }
 
 }}  // namespace puppet::compiler

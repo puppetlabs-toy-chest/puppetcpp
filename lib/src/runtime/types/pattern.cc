@@ -53,23 +53,34 @@ namespace puppet { namespace runtime { namespace types {
         return ptr->patterns().size() < _patterns.size();
     }
 
-    ostream& operator<<(ostream& os, pattern const& type)
+    bool pattern::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << pattern::name();
-        if (type.patterns().empty()) {
-            return os;
+        // Pattern is a real type
+        return true;
+    }
+
+    void pattern::write(ostream& stream, bool expand) const
+    {
+        stream << pattern::name();
+        if (_patterns.empty()) {
+            return;
         }
-        os << '[';
+        stream << '[';
         bool first = true;
-        for (auto const& pattern : type.patterns()) {
+        for (auto const& pattern : _patterns) {
             if (first) {
                 first = false;
             } else {
-                os << ", ";
+                stream << ", ";
             }
-            os << pattern;
+            stream << pattern;
         }
-        os << ']';
+        stream << ']';
+    }
+
+    ostream& operator<<(ostream& os, pattern const& type)
+    {
+        type.write(os);
         return os;
     }
 

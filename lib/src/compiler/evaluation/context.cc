@@ -623,27 +623,10 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto klass = registry.find_class(name);
         if (!klass && import && _node) {
             // Attempt to import the class
-            _node->environment().import(_node->logger(), find_type::manifest, name);
+            _node->environment().import(_node->logger(), find_type::manifest, boost::to_lower_copy(name));
             klass = registry.find_class(name);
         }
         return klass;
-    }
-
-    functions::descriptor* context::find_function(string name, bool import)
-    {
-        return const_cast<functions::descriptor*>(static_cast<context const*>(this)->find_function(rvalue_cast(name), import));
-    }
-
-    functions::descriptor const* context::find_function(string name, bool import) const
-    {
-        auto& dispatcher = this->dispatcher();
-        auto descriptor = dispatcher.find(name);
-        if (!descriptor && import && _node) {
-            // Attempt to import the function and find it again
-            _node->environment().import(_node->logger(), find_type::function, name);
-            descriptor = dispatcher.find(name);
-        }
-        return descriptor;
     }
 
     compiler::defined_type const* context::find_defined_type(string name, bool import)
@@ -656,12 +639,93 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto definition = registry.find_defined_type(name);
         if (!definition && import && _node) {
             // Attempt to import the defined type
-            _node->environment().import(_node->logger(), find_type::manifest, name);
+            _node->environment().import(_node->logger(), find_type::manifest, boost::to_lower_copy(name));
 
             // Find it again
             definition = registry.find_defined_type(name);
         }
         return definition;
+    }
+
+    functions::descriptor* context::find_function(string const& name, bool import)
+    {
+        return const_cast<functions::descriptor*>(static_cast<context const*>(this)->find_function(name, import));
+    }
+
+    functions::descriptor const* context::find_function(string const& name, bool import) const
+    {
+        auto& dispatcher = this->dispatcher();
+        auto descriptor = dispatcher.find(name);
+        if (!descriptor && import && _node) {
+            // Attempt to import the function and find it again
+            _node->environment().import(_node->logger(), find_type::function, boost::to_lower_copy(name));
+            descriptor = dispatcher.find(name);
+        }
+        return descriptor;
+    }
+
+    compiler::type_alias* context::find_type_alias(string const& name, bool import)
+    {
+        return const_cast<compiler::type_alias*>(static_cast<context const*>(this)->find_type_alias(name, import));
+    }
+
+    compiler::type_alias const* context::find_type_alias(string const& name, bool import) const
+    {
+        auto& registry = this->registry();
+
+        auto alias = registry.find_type_alias(name);
+        if (!alias && import && _node) {
+            // Attempt to import the alias using a lowercase name and find it again
+            _node->environment().import(_node->logger(), find_type::type, boost::to_lower_copy(name));
+            alias = registry.find_type_alias(name);
+        }
+        return alias;
+    }
+
+    shared_ptr<values::type> context::resolve_type_alias(string const& name)
+    {
+        auto it = _resolved_type_aliases.find(name);
+        if (it != _resolved_type_aliases.end()) {
+            return it->second;
+        }
+
+        auto alias = find_type_alias(name);
+        if (!alias) {
+            return nullptr;
+        }
+
+        // Push a frame indicating an alias resolution
+        scoped_stack_frame frame{ *this, stack_frame{ &alias->expression(), current_scope() }};
+
+        // Initially map to an Any type
+        auto resolved = make_shared<values::type>();
+        _resolved_type_aliases[name] = resolved;
+
+        auto type = values::type::create(alias->expression().type, this);
+        if (!type) {
+            throw evaluation_exception(
+                (boost::format("expected type alias '%1%' to evaluate to a type.") %
+                 name
+                ).str(),
+                alias->expression().alias,
+                backtrace()
+            );
+        }
+
+        *resolved = rvalue_cast(*type);
+
+        // Ensure the alias resolves to a "real" type
+        unordered_map<values::type const*, bool> map;
+        if (!resolved->is_real(map)) {
+            throw evaluation_exception(
+                (boost::format("%1% does not resolve to a real type.") %
+                 *resolved
+                ).str(),
+                alias->expression().type.context(),
+                backtrace()
+            );
+        }
+        return resolved;
     }
 
     bool context::is_defined(string name, bool check_classes, bool checked_defined_types)

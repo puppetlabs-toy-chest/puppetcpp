@@ -50,29 +50,40 @@ namespace puppet { namespace runtime { namespace types {
                std::max(ptr->from(), ptr->to()) <= std::max(_from, _to);
     }
 
-    ostream& operator<<(ostream& os, floating const& type)
+    bool floating::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << floating::name();
+        // Float is a real type
+        return true;
+    }
+
+    void floating::write(ostream& stream, bool expand) const
+    {
+        stream << floating::name();
         // BUG: fix direct floating point comparison
-        bool from_default = type.from() == numeric_limits<double>::lowest();
-        bool to_default = type.to() == numeric_limits<double>::max();
+        bool from_default = _from == numeric_limits<double>::lowest();
+        bool to_default = _to == numeric_limits<double>::max();
         if (from_default && to_default) {
             // Only output the type name
-            return os;
+            return;
         }
-        os << '[';
+        stream << '[';
         if (from_default) {
-            os << "default";
+            stream << "default";
         } else {
-            os << type.from();
+            stream << _from;
         }
-        os << ", ";
+        stream << ", ";
         if (to_default) {
-            os << "default";
+            stream << "default";
         } else {
-            os << type.to();
+            stream << _to;
         }
-        os << ']';
+        stream << ']';
+    }
+
+    ostream& operator<<(ostream& os, floating const& type)
+    {
+        type.write(os);
         return os;
     }
 

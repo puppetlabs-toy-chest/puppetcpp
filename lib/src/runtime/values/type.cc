@@ -19,6 +19,11 @@ namespace puppet { namespace runtime { namespace values {
         return _value;
     }
 
+    bool type::is_alias() const
+    {
+        return boost::get<types::alias>(&_value);
+    }
+
     struct is_instance_visitor : boost::static_visitor<bool>
     {
         explicit is_instance_visitor(values::value const& value) :
@@ -38,7 +43,7 @@ namespace puppet { namespace runtime { namespace values {
 
     bool type::is_instance(values::value const& value) const
     {
-        return boost::apply_visitor(is_instance_visitor(value), _value);
+        return boost::apply_visitor(is_instance_visitor{ value }, _value);
     }
 
     struct is_specialization_visitor : boost::static_visitor<bool>
@@ -60,33 +65,135 @@ namespace puppet { namespace runtime { namespace values {
 
     bool type::is_specialization(values::type const& type) const
     {
-        return boost::apply_visitor(is_specialization_visitor(type), _value);
+        return boost::apply_visitor(is_specialization_visitor{ type }, _value);
     }
 
-    boost::optional<type> type::parse(string const& expression)
+    struct is_real_visitor : boost::static_visitor<bool>
+    {
+        explicit is_real_visitor(unordered_map<values::type const*, bool>& map) :
+            _map(map)
+        {
+        }
+
+        template <typename T>
+        bool operator()(T const& type) const
+        {
+            return type.is_real(_map);
+        }
+
+     private:
+        unordered_map<values::type const*, bool>& _map;
+    };
+
+    bool type::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        return boost::apply_visitor(is_real_visitor{ map }, _value);
+    }
+
+    struct write_visitor : boost::static_visitor<void>
+    {
+        write_visitor(ostream& os, bool expand) :
+            _os(os),
+            _expand(expand)
+        {
+        }
+
+        template <typename T>
+        void operator()(T const& type) const
+        {
+            type.write(_os, _expand);
+        }
+
+     private:
+        ostream& _os;
+        bool _expand;
+    };
+
+    void type::write(ostream& stream, bool expand) const
+    {
+        boost::apply_visitor(write_visitor{ stream, expand }, _value);
+    }
+
+    type const* type::find(string const& name)
+    {
+        static const unordered_map<string, type> puppet_types = {
+            { types::any::name(),           types::any() },
+            { types::array::name(),         types::array() },
+            { types::boolean::name(),       types::boolean() },
+            { types::callable::name(),      types::callable() },
+            { types::catalog_entry::name(), types::catalog_entry() },
+            { types::collection::name(),    types::collection() },
+            { types::data::name(),          types::data() },
+            { types::defaulted::name(),     types::defaulted() },
+            { types::enumeration::name(),   types::enumeration() },
+            { types::floating::name(),      types::floating() },
+            { types::hash::name(),          types::hash() },
+            { types::integer::name(),       types::integer() },
+            { types::iterable::name(),      types::iterable() },
+            { types::iterator::name(),      types::iterator() },
+            { types::klass::name(),         types::klass() },
+            { types::not_undef::name(),     types::not_undef() },
+            { types::numeric::name(),       types::numeric() },
+            { types::optional::name(),      types::optional() },
+            { types::pattern::name(),       types::pattern() },
+            { types::regexp::name(),        types::regexp() },
+            { types::resource::name(),      types::resource() },
+            { types::runtime::name(),       types::runtime() },
+            { types::scalar::name(),        types::scalar() },
+            { types::string::name(),        types::string() },
+            { types::structure::name(),     types::structure() },
+            { types::tuple::name(),         types::tuple() },
+            { types::type::name(),          types::type() },
+            { types::undef::name(),         types::undef() },
+            { types::variant::name(),       types::variant() },
+        };
+
+        auto it = puppet_types.find(name);
+        return it == puppet_types.end() ? nullptr : &it->second;
+    }
+
+    boost::optional<type> type::create(ast::postfix_expression const& expression, compiler::evaluation::context* context)
+    {
+        // TODO: validate that the expression is valid for a type specification (no variables, no function calls, no catalog expressions
+
+        // Use an empty evaluation context if not given one (no node, catalog, registry, or dispatcher access)
+        evaluation::context empty{};
+        if (!context) {
+            context = &empty;
+        }
+
+        evaluation::evaluator evaluator{ *context };
+        auto result = evaluator.evaluate(expression);
+        if (result.as<type>()) {
+            return result.move_as<type>();
+        }
+        return boost::none;
+    }
+
+    boost::optional<type> type::parse(string const& expression, compiler::evaluation::context* context)
     {
         // Type specifications are postfix access expressions
         auto postfix = parser::parse_postfix(expression);
         if (!postfix) {
             return boost::none;
         }
+        return create(*postfix, context);
+    }
 
-        try {
-            // Use an empty evaluation context
-            // This will prevent evaluation of expressions that require access to the node, catalog, or scope
-            evaluation::context context;
-            evaluation::evaluator evaluator{ context };
-            auto result = evaluator.evaluate(*postfix);
-            if (result.as<type>()) {
-                return result.move_as<type>();
-            }
-        } catch (evaluation_exception const&) {
-        }
-        return boost::none;
+    ostream& operator<<(ostream& os, values::type const& type)
+    {
+        type.write(os);
+        return os;
     }
 
     bool operator==(type const& left, type const& right)
     {
+        if (auto alias = boost::get<types::alias>(&left.get())) {
+            return alias->resolved_type() == right;
+        }
+        if (auto alias = boost::get<types::alias>(&right.get())) {
+            return left == alias->resolved_type();
+        }
         return left.get() == right.get();
     }
 

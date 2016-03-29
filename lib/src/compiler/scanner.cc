@@ -608,10 +608,41 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::type_alias_expression const& expression)
     {
+        if (!_scopes.empty()) {
+            auto context = expression.context();
+            throw parse_exception("type aliases can only be defined at top-level.", context.begin, context.end);
+        }
+
+        if (values::type::find(expression.alias.name)) {
+            throw parse_exception(
+                (boost::format("type alias '%1%' conflicts with a built-in type of the same name.") %
+                 expression.alias
+                ).str(),
+                expression.alias.begin,
+                expression.alias.end
+            );
+        }
+
+        auto alias = _registry.find_type_alias(expression.alias.name);
+        if (alias) {
+            auto context = alias->expression().context();
+            throw parse_exception(
+                (boost::format("type alias '%1%' was previously defined at %2%:%3%.") %
+                 expression.alias %
+                 context.tree->path() %
+                 context.begin.line()
+                ).str(),
+                expression.alias.begin,
+                expression.alias.end
+            );
+        }
+
         scope_helper scope{ _scopes };
 
         operator()(expression.alias);
         operator()(expression.type);
+
+        _registry.register_type_alias(type_alias{ expression });
     }
 
     bool scanner::can_define() const

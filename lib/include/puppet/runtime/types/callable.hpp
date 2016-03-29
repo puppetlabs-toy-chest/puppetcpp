@@ -9,8 +9,8 @@
 #include <boost/optional.hpp>
 #include <ostream>
 #include <vector>
-#include <memory>
 #include <limits>
+#include <unordered_map>
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
@@ -20,6 +20,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 }}}}  // namespace puppet::compiler::evaluation::functions
 
 namespace puppet { namespace runtime { namespace types {
+
+    // Forward declaration of alias
+    struct alias;
 
     /**
      * Represents the Puppet Callable type.
@@ -121,6 +124,20 @@ namespace puppet { namespace runtime { namespace types {
          * @return Returns true if the other type is a specialization or false if not.
          */
         bool is_specialization(values::type const& other) const;
+
+        /**
+         * Determines if the type is real (i.e. actual type vs. an alias/variant that never resolves to an actual type).
+         * @param map The map to keep track of encountered type aliases.
+         * @return Returns true if the type is real or false if it never resolves to an actual type.
+         */
+        bool is_real(std::unordered_map<values::type const*, bool>& map) const;
+
+        /**
+         * Writes a representation of the type to the given stream.
+         * @param stream The stream to write to.
+         * @param expand True to specify that type aliases should be expanded or false if not.
+         */
+        void write(std::ostream& stream, bool expand = true) const;
 
         /**
          * Determines if a function call can be dispatched to a function matching this Callable's signature.

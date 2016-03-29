@@ -47,6 +47,10 @@ namespace puppet { namespace runtime { namespace types {
     {
         // Go through each type and ensure one matches
         for (auto const& type : _types) {
+            // Skip any self referencing aliases
+            if (is_self_referencing(*type)) {
+                continue;
+            }
             if (type->is_instance(value)) {
                 return true;
             }
@@ -77,23 +81,50 @@ namespace puppet { namespace runtime { namespace types {
         return other_types.size() > _types.size();
     }
 
-    ostream& operator<<(ostream& os, variant const& type)
+    bool variant::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << variant::name();
-        if (type.types().empty()) {
-            return os;
+        // A Variant is real provided all of its types are real
+        bool is_real = false;
+        for (auto const& element : _types) {
+            // Skip over any directly self-referential type aliases to allow an alias such as `type Foo = Variant[String, Foo]`.
+            if (is_self_referencing(*element)) {
+                continue;
+            }
+            is_real = element->is_real(map);
+            if (!is_real) {
+                return false;
+            }
         }
-        os << '[';
+        return is_real;
+    }
+
+    void variant::write(ostream& stream, bool expand) const
+    {
+        stream << variant::name();
+        if (_types.empty()) {
+            return;
+        }
+        stream << '[';
         bool first = true;
-        for (auto const& element : type.types()) {
+        for (auto const& element : _types) {
             if (first) {
                 first = false;
             } else {
-                os << ", ";
+                stream << ", ";
             }
-            os << *element;
+            element->write(stream, false);
         }
-        os << ']';
+        stream << ']';
+    }
+
+    bool variant::is_self_referencing(values::type const& type) const
+    {
+        return boost::get<variant>(&type) == this;
+    }
+
+    ostream& operator<<(ostream& os, variant const& type)
+    {
+        type.write(os);
         return os;
     }
 

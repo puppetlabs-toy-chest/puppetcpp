@@ -44,13 +44,24 @@ namespace puppet { namespace runtime { namespace types {
         return rgx && !rgx->pattern().empty();
     }
 
+    bool regexp::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Regexp is a real type
+        return true;
+    }
+
+    void regexp::write(ostream& stream, bool expand) const
+    {
+        stream << regexp::name();
+        if (_pattern.empty()) {
+            return;
+        }
+        stream << "[/" << _pattern << "/]";
+    }
+
     ostream& operator<<(ostream& os, regexp const& type)
     {
-        os << regexp::name();
-        if (type.pattern().empty()) {
-            return os;
-        }
-        os << "[/" << type.pattern() << "/]";
+        type.write(os);
         return os;
     }
 

@@ -128,29 +128,43 @@ namespace puppet { namespace runtime { namespace types {
                std::max(from, to) <= std::max(_from, _to);
     }
 
-    ostream& operator<<(ostream& os, hash const& type)
+    bool hash::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << hash::name() << '[' << type.key_type() << ", " << type.element_type();
-        bool from_default = type.from() == numeric_limits<int64_t>::min();
-        bool to_default = type.to() == numeric_limits<int64_t>::max();
+        // Hash is a real type
+        return true;
+    }
+
+    void hash::write(ostream& stream, bool expand) const
+    {
+        stream << hash::name() << '[';
+        _key_type->write(stream, false);
+        stream << ", ";
+        _element_type->write(stream, false);
+        bool from_default = _from == numeric_limits<int64_t>::min();
+        bool to_default = _to == numeric_limits<int64_t>::max();
         if (from_default && to_default) {
             // Only output the types
-            os << ']';
-            return os;
+            stream << ']';
+            return;
         }
-        os << ", ";
+        stream << ", ";
         if (from_default) {
-            os << "default";
+            stream << "default";
         } else {
-            os << type.from();
+            stream << _from;
         }
-        os << ", ";
+        stream << ", ";
         if (to_default) {
-            os << "default";
+            stream << "default";
         } else {
-            os << type.to();
+            stream << _to;
         }
-        os << ']';
+        stream << ']';
+    }
+
+    ostream& operator<<(ostream& os, hash const& type)
+    {
+        type.write(os);
         return os;
     }
 

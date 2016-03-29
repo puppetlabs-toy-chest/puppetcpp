@@ -6,8 +6,12 @@
 
 #include "../values/forward.hpp"
 #include <ostream>
+#include <unordered_map>
 
 namespace puppet { namespace runtime { namespace types {
+
+    // Forward declaration of alias
+    struct alias;
 
     /**
      * Represents the Puppet Iterable type.
@@ -72,6 +76,20 @@ namespace puppet { namespace runtime { namespace types {
          */
         bool is_specialization(values::type const& other) const;
 
+        /**
+         * Determines if the type is real (i.e. actual type vs. an alias/variant that never resolves to an actual type).
+         * @param map The map to keep track of encountered type aliases.
+         * @return Returns true if the type is real or false if it never resolves to an actual type.
+         */
+        bool is_real(std::unordered_map<values::type const*, bool>& map) const;
+
+        /**
+         * Writes a representation of the type to the given stream.
+         * @param stream The stream to write to.
+         * @param expand True to specify that type aliases should be expanded or false if not.
+         */
+        void write(std::ostream& stream, bool expand = true) const;
+
      private:
         std::unique_ptr<values::type> _type;
     };
@@ -79,9 +97,10 @@ namespace puppet { namespace runtime { namespace types {
     /**
      * Stream insertion operator for iterable type.
      * @param os The output stream to write the type to.
+     * @param type The type to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, iterable const&);
+    std::ostream& operator<<(std::ostream& os, iterable const& type);
 
     /**
      * Equality operator for iterable.
