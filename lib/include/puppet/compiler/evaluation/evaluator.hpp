@@ -116,8 +116,6 @@ namespace puppet { namespace compiler { namespace evaluation {
         void splat_attribute(compiler::attributes& attributes, std::unordered_set<std::string>& names, ast::attribute_operation const& operations);
         void validate_attribute(std::string const& name, runtime::values::value& value, ast::context const& context);
         std::vector<resource*> create_resources(bool is_class, std::string const& type_name, ast::resource_expression const& expression, attributes const& defaults);
-        static runtime::values::type create_relationship_type();
-        static runtime::values::type create_audit_type();
 
         runtime::values::value climb_expression(
             ast::postfix_expression const& expression,

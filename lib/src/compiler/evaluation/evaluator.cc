@@ -819,12 +819,12 @@ namespace puppet { namespace compiler { namespace evaluation {
     void evaluator::validate_attribute(std::string const& name, values::value& value, ast::context const& context)
     {
         // Type information for metaparameters
-        static const values::type string_array_type = types::array(make_unique<values::type>(types::string()));
-        static const values::type relationship_type = create_relationship_type();
-        static const values::type string_type = types::string();
-        static const values::type boolean_type = types::boolean();
-        static const values::type loglevel_type = types::enumeration({ "debug", "info", "notice", "warning", "err", "alert", "emerg", "crit", "verbose" });
-        static const values::type audit_type = create_audit_type();
+        static const auto string_array_type = *values::type::parse("Array[String]");
+        static const auto relationship_type = *values::type::parse("Array[Variant[String, CatalogEntry]]");
+        static const auto string_type       = *values::type::parse("String");
+        static const auto boolean_type      = *values::type::parse("Boolean");
+        static const auto loglevel_type     = *values::type::parse("Enum[debug, info, notice, warning, err, alert, emerg, crit, verbose]");
+        static const auto audit_type        = *values::type::parse("Variant[String, Array[String]]");
 
         // Ignore undef attributes
         if (value.is_undef()) {
@@ -989,22 +989,6 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
         }
         return resources;
-    }
-
-    values::type evaluator::create_relationship_type()
-    {
-        vector<unique_ptr<values::type>> types;
-        types.emplace_back(make_unique<values::type>(types::string()));
-        types.emplace_back(make_unique<values::type>(types::catalog_entry()));
-        return types::array(make_unique<values::type>(types::variant(rvalue_cast(types))));
-    }
-
-    values::type evaluator::create_audit_type()
-    {
-        vector<unique_ptr<values::type>> types;
-        types.emplace_back(make_unique<values::type>(types::string()));
-        types.emplace_back(make_unique<values::type>(types::array(make_unique<values::type>(types::string()))));
-        return types::variant(rvalue_cast(types));
     }
 
     values::value evaluator::climb_expression(
