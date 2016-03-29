@@ -265,34 +265,21 @@ namespace puppet { namespace compiler {
         // Validate the class name
         string name = validate_name(true, expression.name);
 
+        // Check if the class already exists
+        if (auto existing = _registry.find_class(name)) {
+            throw parse_exception(
+                (boost::format("class '%1%' was previously defined at %2%:%3%.") %
+                 existing->name() %
+                 existing->expression().tree->path() %
+                 existing->expression().begin.line()
+                ).str(),
+                expression.name.begin,
+                expression.name.end
+            );
+        }
+
         // Validate the class parameters
         validate_parameters("class", expression.parameters);
-
-        // Validate the class' parent
-        if (expression.parent) {
-            auto definitions = _registry.find_class(name);
-            if (definitions) {
-                for (auto const& definition : *definitions) {
-                    auto& existing = definition.expression();
-                    auto& parent = existing.parent;
-                    if (!parent || parent->value == expression.parent->value) {
-                        // No parent or parents match
-                        continue;
-                    }
-                    throw parse_exception(
-                        (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%.") %
-                         name %
-                         expression.parent->value %
-                         parent->value %
-                         existing.tree->path() %
-                         existing.begin.line()
-                        ).str(),
-                        expression.parent->begin,
-                        expression.parent->end
-                    );
-                }
-            }
-        }
 
         // Scan the parameters
         if (!expression.parameters.empty()) {
@@ -333,8 +320,8 @@ namespace puppet { namespace compiler {
                  existing->expression().tree->path() %
                  existing->expression().begin.line()
                 ).str(),
-                expression.begin,
-                expression.end
+                expression.name.begin,
+                expression.name.end
             );
         }
 
@@ -680,14 +667,13 @@ namespace puppet { namespace compiler {
                 );
             }
         } else {
-            auto definitions = _registry.find_class(qualified_name);
-            if (definitions) {
-                auto& first = definitions->front();
+            auto klass = _registry.find_class(qualified_name);
+            if (klass) {
                 throw parse_exception(
                     (boost::format("'%1%' was previously defined as a class at %2%:%3%.") %
                      qualified_name %
-                     first.expression().tree->path() %
-                     first.expression().begin.line()
+                     klass->expression().tree->path() %
+                     klass->expression().begin.line()
                     ).str(),
                     name.begin,
                     name.end

@@ -55,10 +55,10 @@ namespace puppet { namespace compiler {
         return _expression;
     }
 
-    vector<klass> const* registry::find_class(string const& name) const
+    klass const* registry::find_class(string const& name) const
     {
         auto it = _classes.find(name);
-        if (it == _classes.end() || it->second.empty()) {
+        if (it == _classes.end()) {
             return nullptr;
         }
         return &it->second;
@@ -66,8 +66,8 @@ namespace puppet { namespace compiler {
 
     void registry::register_class(compiler::klass klass)
     {
-        auto& definitions = _classes[klass.name()];
-        definitions.emplace_back(rvalue_cast(klass));
+        auto name = klass.name();
+        _classes.emplace(rvalue_cast(name), rvalue_cast(klass));
     }
 
     defined_type const* registry::find_defined_type(string const& name) const
@@ -79,16 +79,10 @@ namespace puppet { namespace compiler {
         return &it->second;
     }
 
-    defined_type const* registry::register_defined_type(defined_type type)
+    void registry::register_defined_type(defined_type type)
     {
-        // Add the defined type
         auto name = type.name();
-
-        auto result = _defined_types.emplace(rvalue_cast(name), rvalue_cast(type));
-        if (result.second) {
-            return nullptr;
-        }
-        return &result.first->second;
+        _defined_types.emplace(rvalue_cast(name), rvalue_cast(type));
     }
 
     std::pair<node_definition const*, std::string> registry::find_node(compiler::node const& node) const

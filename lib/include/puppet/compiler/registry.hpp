@@ -133,9 +133,9 @@ namespace puppet { namespace compiler {
         /**
          * Finds a class given the qualified name.
          * @param name The fully-qualified name of the class (e.g. foo::bar).
-         * @return Returns a pointer to the class definitions if found or nullptr if the class does not exist.
+         * @return Returns a pointer to the class definition if found or nullptr if the class does not exist.
          */
-        std::vector<klass> const* find_class(std::string const& name) const;
+        klass const* find_class(std::string const& name) const;
 
         /**
          * Registers a class.
@@ -153,9 +153,8 @@ namespace puppet { namespace compiler {
         /**
          * Registers a defined type.
          * @param type The defined type to register.
-         * @return Returns nullptr if the defined type was successfully registered or the pointer to the previous definition.
          */
-        defined_type const* register_defined_type(defined_type type);
+        void register_defined_type(defined_type type);
 
         /**
          * Finds a matching node definition and scope name for the given node.
@@ -188,7 +187,7 @@ namespace puppet { namespace compiler {
         registry(registry&) = delete;
         registry& operator=(registry&) = delete;
 
-        std::unordered_map<std::string, std::vector<klass>> _classes;
+        std::unordered_map<std::string, klass> _classes;
         std::unordered_map<std::string, defined_type> _defined_types;
         std::vector<node_definition> _nodes;
         std::unordered_map<std::string, size_t> _named_nodes;

@@ -420,9 +420,9 @@ namespace puppet { namespace compiler { namespace evaluation {
          * Finds a class definition by name.
          * @param name The name of the class to find.
          * @param import Specifies whether or not an attempt to import the class should be made.
-         * @return Returns the class definitions or nullptr if the class is not defined.
+         * @return Returns the class definition or nullptr if the class is not defined.
          */
-        std::vector<klass> const* find_class(std::string name, bool import = true);
+        klass const* find_class(std::string name, bool import = true);
 
         /**
          * Finds a defined type definition by name.
@@ -451,11 +451,11 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Determines if the given name is defined.
          * @param name The name to check.
-         * @param klass True if classes should be checked or false if not.
-         * @param defined_type True if defined types should be checked or false if not.
+         * @param check_classes True if classes should be checked or false if not.
+         * @param checked_defined_types True if defined types should be checked or false if not.
          * @return Returns true if the name is defined or false i fnot.
          */
-        bool is_defined(std::string name, bool klass = true, bool defined_type = true);
+        bool is_defined(std::string name, bool check_classes = true, bool checked_defined_types = true);
 
         /**
          * Adds a resource relationship to the evaluation context.

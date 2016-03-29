@@ -64,8 +64,9 @@ namespace puppet { namespace compiler {
         return (boost::format("expected %1% but found %2%.") % expected % found).str();
     }
 
-    evaluation_exception::evaluation_exception(string const& message) :
-        runtime_error(message)
+    evaluation_exception::evaluation_exception(string const& message, vector<evaluation::stack_frame> backtrace) :
+        runtime_error(message),
+        _backtrace(rvalue_cast(backtrace))
     {
     }
 

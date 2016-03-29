@@ -1,0 +1,3 @@
+Error: duplicate_defined_type.pp:5:8: node 'test': defined type 'foo' was previously defined at duplicate_defined_type.pp:1.
+  define foo {
+         ^~~

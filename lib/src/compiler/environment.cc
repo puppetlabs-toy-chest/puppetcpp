@@ -224,7 +224,7 @@ namespace puppet { namespace compiler {
                 context.top_scope(),
                 result.first->expression());
             if (!resource) {
-                throw evaluation_exception("failed to add node resource.");
+                throw evaluation_exception("failed to add node resource.", context.backtrace());
             }
 
             LOG(debug, "evaluating node definition for node '%1%'.", context.node().name());
