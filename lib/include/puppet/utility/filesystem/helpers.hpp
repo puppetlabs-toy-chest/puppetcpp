@@ -17,6 +17,12 @@ namespace puppet { namespace utility { namespace filesystem {
     char const* path_separator();
 
     /**
+     * Gets the home directory of the current user.
+     * @return Returns the home directory of the current user or an empty string if the home directory can't be determined.
+     */
+    std::string home_directory();
+
+    /**
      * Makes a path absolute.
      * This will also make the path lexically normal.
      * @param path The path to make absolute.

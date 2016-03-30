@@ -1,4 +1,5 @@
 #include <puppet/compiler/lexer/tokens.hpp>
+#include <boost/spirit/include/lex_lexertl.hpp>
 #include <iomanip>
 #include <map>
 

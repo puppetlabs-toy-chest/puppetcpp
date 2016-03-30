@@ -76,9 +76,14 @@ namespace puppet { namespace compiler {
          */
         void each_name(std::function<bool(std::string const&)> const& callback) const;
 
-     private:
-        void create_initial_resources(evaluation::context& context) const;
+        /**
+         * Creates an evaluation context for this node.
+         * @param catalog The catalog to populate during evaluation.
+         * @return Returns the evaluation context.
+         */
+        evaluation::context create_context(compiler::catalog& catalog);
 
+     private:
         logging::logger& _logger;
         std::set<std::string> _names;
         std::shared_ptr<compiler::environment> _environment;

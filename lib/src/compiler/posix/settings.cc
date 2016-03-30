@@ -1,8 +1,10 @@
 #include <puppet/compiler/settings.hpp>
+#include <puppet/utility/filesystem/helpers.hpp>
 #include <boost/filesystem.hpp>
 #include <unistd.h>
 
 using namespace std;
+using namespace puppet::utility::filesystem;
 namespace fs = boost::filesystem;
 namespace sys = boost::system;
 
@@ -10,10 +12,9 @@ namespace puppet { namespace compiler {
 
     static string default_code_directory()
     {
-        auto home = getenv("HOME");
-
         // For root or users without a HOME directory, use the global location
-        if (!home || geteuid() == 0) {
+        auto home = home_directory();
+        if (home.empty() || geteuid() == 0) {
             return "/etc/puppetlabs/code";
         }
 

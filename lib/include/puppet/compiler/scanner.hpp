@@ -33,6 +33,14 @@ namespace puppet { namespace compiler {
          */
         void scan(ast::syntax_tree const& tree);
 
+        /**
+         * Scans the given expression for definitions.
+         * Throws parse_exception if definition validation fails.
+         * @param expression The expression to scan.
+         * @return Returns true if the expression contained a definition or false if it did not.
+         */
+        bool scan(ast::expression const& expression);
+
      private:
         template<class> friend class ::boost::detail::variant::invoke_visitor;
         void operator()(ast::undef const&);
@@ -85,12 +93,13 @@ namespace puppet { namespace compiler {
         bool can_define() const;
         std::string qualify(std::string const& name) const;
         std::string validate_name(bool is_class, ast::name const& name) const;
-        void validate_parameter_name(ast::parameter const& parameter) const;
         void validate_parameters(char const* type, std::vector<ast::parameter> const& parameters) const;
+        void validate_parameter_name(ast::parameter const& parameter) const;
 
         registry& _registry;
         evaluation::dispatcher& _dispatcher;
         std::vector<ast::class_expression const*> _scopes;
+        bool _found_definition;
     };
 
 }}  // puppet::compiler

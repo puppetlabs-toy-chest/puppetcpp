@@ -2,6 +2,8 @@
 #include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/compiler/ast/ast.hpp>
 #include <puppet/cast.hpp>
+#include <sstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -33,6 +35,33 @@ namespace puppet { namespace compiler {
     lexer::position const& parse_exception::end() const
     {
         return _end;
+    }
+
+    string parse_exception::format_message(lexer::token_id id)
+    {
+        return (boost::format("syntax error: unexpected %1%.") % id).str();
+    }
+
+    string parse_exception::format_message(boost::optional<char> character)
+    {
+        ostringstream message;
+        if (character) {
+            message << "unexpected character ";
+            if (isprint(*character)) {
+                message << '\'' << *character << '\'';
+            } else {
+                message << "0x" << setw(2) << setfill('0') << static_cast<int>(*character);
+            }
+            message << ".";
+        } else {
+            message << "unexpected end of input.";
+        }
+        return message.str();
+    }
+
+    string parse_exception::format_message(string const& expected, lexer::token_id found)
+    {
+        return (boost::format("expected %1% but found %2%.") % expected % found).str();
     }
 
     evaluation_exception::evaluation_exception(string const& message) :
@@ -72,20 +101,28 @@ namespace puppet { namespace compiler {
     {
     }
 
-    compilation_exception::compilation_exception(parse_exception const& ex, string const& path) :
+    compilation_exception::compilation_exception(parse_exception const& ex, string const& path, string const& source) :
         runtime_error(ex.what()),
         _path(path),
         _line(ex.begin().line()),
+        _column(0),
         _length(ex.end().offset() - ex.begin().offset())
     {
-        ifstream input{path};
-        if (input) {
-            tie(_text, _column) = lexer::get_text_and_column(input, ex.begin().offset());
+        if (source.empty()) {
+            ifstream input{path};
+            if (input) {
+                tie(_text, _column) = lexer::get_text_and_column(input, ex.begin().offset());
+            }
+        } else {
+            tie(_text, _column) = lexer::get_text_and_column(source, ex.begin().offset());
         }
     }
 
     compilation_exception::compilation_exception(evaluation_exception const& ex) :
         runtime_error(ex.what()),
+        _line(0),
+        _column(0),
+        _length(0),
         _backtrace(ex.backtrace())
     {
         auto& context = ex.context();

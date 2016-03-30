@@ -56,6 +56,12 @@ namespace puppet { namespace compiler {
          * Gets the environment's registry.
          * @return Returns the environment's registry.
          */
+        compiler::registry& registry();
+
+        /**
+         * Gets the environment's registry.
+         * @return Returns the environment's registry.
+         */
         compiler::registry const& registry() const;
 
         /**

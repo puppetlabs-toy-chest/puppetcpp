@@ -73,7 +73,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             return name.substr(2);
         }
 
-        if (!_resource) {
+        if (!_resource || !_parent) {
             return name;
         }
 

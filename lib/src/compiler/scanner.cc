@@ -36,7 +36,8 @@ namespace puppet { namespace compiler {
 
     scanner::scanner(compiler::registry& registry, evaluation::dispatcher& dispatcher) :
         _registry(registry),
-        _dispatcher(dispatcher)
+        _dispatcher(dispatcher),
+        _found_definition(false)
     {
     }
 
@@ -44,6 +45,7 @@ namespace puppet { namespace compiler {
     {
         // Reset for the scan
         _scopes.clear();
+        _found_definition = false;
 
         if (tree.parameters) {
             for (auto const& parameter : *tree.parameters) {
@@ -54,6 +56,16 @@ namespace puppet { namespace compiler {
         for (auto const& statement : tree.statements) {
             operator()(statement);
         }
+    }
+
+    bool scanner::scan(ast::expression const& expression)
+    {
+        // Reset for the scan
+        _scopes.clear();
+        _found_definition = false;
+
+        operator()(expression);
+        return _found_definition;
     }
 
     void scanner::operator()(ast::undef const&)
@@ -128,8 +140,15 @@ namespace puppet { namespace compiler {
 
     void scanner::operator()(ast::expression const& expression)
     {
-        operator()(expression.first);
+        if (expression.operations.empty()) {
+            operator()(expression.first);
+            return;
+        }
 
+        // Binary expressions cannot contain definitions
+        scope_helper scope{ _scopes };
+
+        operator()(expression.first);
         for (auto const& operation : expression.operations) {
             operator()(operation.operand);
         }
@@ -294,6 +313,7 @@ namespace puppet { namespace compiler {
 
         // Register the class
         _registry.register_class(klass{ rvalue_cast(name), expression });
+        _found_definition = true;
     }
 
     void scanner::operator()(ast::defined_type_expression const& expression)
@@ -330,6 +350,7 @@ namespace puppet { namespace compiler {
 
         // Register the defined type
         _registry.register_defined_type(defined_type{ rvalue_cast(name), expression });
+        _found_definition = true;
     }
 
     void scanner::operator()(ast::node_expression const& expression)
@@ -373,6 +394,7 @@ namespace puppet { namespace compiler {
 
         // Register the node
         _registry.register_node(node_definition{ expression });
+        _found_definition = true;
     }
 
     void scanner::operator()(ast::collector_expression const& expression)
@@ -464,6 +486,7 @@ namespace puppet { namespace compiler {
 
         // Add the function
         _dispatcher.add(evaluation::functions::descriptor{ expression.name.value, &expression });
+        _found_definition = true;
     }
 
     void scanner::operator()(ast::unary_expression const& expression)
