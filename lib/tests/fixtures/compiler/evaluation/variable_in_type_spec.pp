@@ -1,0 +1,1 @@
+type MyInteger = Integer[$x]

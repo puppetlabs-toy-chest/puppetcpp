@@ -1,0 +1,3 @@
+Error: method_call_in_type_spec.pp:1:27: node 'test': method call expressions cannot be used in type specifications.
+  type Invalid = Integer[foo.each |$x| {}]
+                            ^~~~~~~~~~~~~

@@ -1,6 +1,7 @@
 #include <puppet/runtime/values/value.hpp>
 #include <puppet/compiler/parser/parser.hpp>
 #include <puppet/compiler/evaluation/evaluator.hpp>
+#include <puppet/compiler/validation/type_validator.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <boost/format.hpp>
 
@@ -154,7 +155,7 @@ namespace puppet { namespace runtime { namespace values {
 
     boost::optional<type> type::create(ast::postfix_expression const& expression, compiler::evaluation::context* context)
     {
-        // TODO: validate that the expression is valid for a type specification (no variables, no function calls, no catalog expressions
+        validation::type_validator::validate(expression);
 
         // Use an empty evaluation context if not given one (no node, catalog, registry, or dispatcher access)
         evaluation::context empty{};

@@ -1,0 +1,6 @@
+type ZeroOrOne = Integer[0, 1]
+type NegativeInteger = Integer[default, -1]
+type PositiveInteger = Integer[(1 + 0), default]
+type Things = Enum[foo, 'bar', "baz${{}[undef]}", "${ true or false }", "${[1, 2, 3]}", "${{foo => bar }}"]
+type MyPattern = Pattern[/foo/]
+type MyType = Type[MyPattern]

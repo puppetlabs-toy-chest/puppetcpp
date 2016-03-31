@@ -1,12 +1,14 @@
 #include <puppet/compiler/scanner.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/compiler/resource.hpp>
+#include <puppet/compiler/validation/type_validator.hpp>
 #include <puppet/runtime/types/class.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
+using namespace puppet::compiler::validation;
 using namespace puppet::runtime;
 
 namespace puppet { namespace compiler {
@@ -637,6 +639,9 @@ namespace puppet { namespace compiler {
             );
         }
 
+        // Validate the RHS expression
+        type_validator::validate(expression.type);
+
         scope_helper scope{ _scopes };
 
         operator()(expression.alias);
@@ -727,8 +732,11 @@ namespace puppet { namespace compiler {
         for (auto const& parameter : parameters) {
             auto const& name = parameter.variable.name;
 
-            // Validate the name
             validate_parameter_name(parameter);
+
+            if (parameter.type) {
+                type_validator::validate(*parameter.type);
+            }
 
             // Check for reserved names
             if (name == "title" || name == "name") {

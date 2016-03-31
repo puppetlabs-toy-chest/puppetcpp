@@ -1,0 +1,3 @@
+Error: selector_in_type_spec.pp:1:29: node 'test': selector expressions cannot be used in type specifications.
+  type Invalid = Integer[true ? { default => false}]
+                              ^~~~~~~~~~~~~~~~~~~~~
