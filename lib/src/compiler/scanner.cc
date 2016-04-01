@@ -3,6 +3,8 @@
 #include <puppet/compiler/resource.hpp>
 #include <puppet/runtime/types/class.hpp>
 #include <puppet/cast.hpp>
+#include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;

@@ -4,6 +4,8 @@
 #include <puppet/compiler/evaluation/scope.hpp>
 #include <puppet/cast.hpp>
 #include <rapidjson/document.h>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;

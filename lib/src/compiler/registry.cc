@@ -2,6 +2,7 @@
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/compiler/node.hpp>
 #include <puppet/cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
