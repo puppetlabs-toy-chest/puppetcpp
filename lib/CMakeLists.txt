@@ -190,7 +190,4 @@ target_link_libraries(puppet
 
 install(TARGETS puppet DESTINATION lib)
 
-cotire(generate_static_lexer)
-cotire(puppet)
-
 add_subdirectory(tests)
