@@ -32,7 +32,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Optional";
     }
 
-    bool optional::is_instance(values::value const& value) const
+    bool optional::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Undef always matches
         if (value.is_undef()) {
@@ -45,29 +45,34 @@ namespace puppet { namespace runtime { namespace types {
         }
 
         // Check that the instance is of the given type
-        return _type->is_instance(value);
+        return _type->is_instance(value, guard);
     }
 
-    bool optional::is_specialization(values::type const& other) const
+    bool optional::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // If this type has a specialization, the other type cannot be a specialization
-        if (_type) {
+        if (boost::get<types::undef>(&other)) {
+            return true;
+        }
+        if (auto optional = boost::get<types::optional>(&other)) {
+            if (!_type) {
+                return !optional->type();
+            }
+            if (!optional->type()) {
+                return boost::get<types::undef>(_type.get());
+            }
+            return _type->is_assignable(*optional->type(), guard);
+        }
+        // Unparameterized Optional is only assignable from Undef, which was checked above
+        if (!_type) {
             return false;
         }
-        // Check that the other type is specialized
-        auto optional = boost::get<types::optional>(&other);
-        return optional && optional->type();
-    }
-
-    bool optional::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Optional is a real type
-        return true;
+        return _type->is_assignable(other, guard);
     }
 
     void optional::write(ostream& stream, bool expand) const
     {
-        stream << optional::name();
+        // If a type is not specified on an Optional, treat it like an Undef
+        stream << (_type ? optional::name() : undef::name());
         if (!_type) {
             return;
         }
@@ -84,12 +89,11 @@ namespace puppet { namespace runtime { namespace types {
 
     bool operator==(optional const& left, optional const& right)
     {
-        if (!left.type() && !right.type()) {
-            return true;
-        } else if (!left.type()) {
-            return false;
-        } else if (!right.type()) {
-            return false;
+        if (!left.type()) {
+            return !right.type() || boost::get<undef>(right.type().get());
+        }
+        if (!right.type()) {
+            return !left.type() || boost::get<undef>(left.type().get());
         }
         return *left.type() == *right.type();
     }

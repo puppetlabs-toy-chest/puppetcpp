@@ -32,7 +32,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         descriptor.add("Type", "Type", [](call_context& context) {
             auto& left = context.left().require<values::type>();
             auto& right = context.right().require<values::type>();
-            return left == right || right.is_specialization(left);
+            types::recursion_guard guard;
+            return left.is_assignable(right, guard);
         });
         return descriptor;
     }

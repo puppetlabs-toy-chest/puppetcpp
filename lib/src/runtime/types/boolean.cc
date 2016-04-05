@@ -5,26 +5,21 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    boolean const boolean::instance{};
+
     char const* boolean::name()
     {
         return "Boolean";
     }
 
-    bool boolean::is_instance(values::value const& value) const
+    bool boolean::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return value.as<bool>();
     }
 
-    bool boolean::is_specialization(values::type const& other) const
+    bool boolean::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // No specializations for Boolean
-        return false;
-    }
-
-    bool boolean::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Boolean is a real type
-        return true;
+        return boost::get<boolean>(&other);
     }
 
     void boolean::write(ostream& stream, bool expand) const

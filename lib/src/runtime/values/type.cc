@@ -25,70 +25,132 @@ namespace puppet { namespace runtime { namespace values {
         return boost::get<types::alias>(&_value);
     }
 
+    type const& type::dereference() const
+    {
+        if (auto alias = boost::get<types::alias>(&_value)) {
+            return alias->resolved_type().dereference();
+        }
+        return *this;
+    }
+
     struct is_instance_visitor : boost::static_visitor<bool>
     {
-        explicit is_instance_visitor(values::value const& value) :
-            _value(value)
+        is_instance_visitor(values::value const& value, types::recursion_guard& guard) :
+            _value(value),
+            _guard(guard)
         {
         }
 
         template <typename T>
         bool operator()(T const& type) const
         {
-            return type.is_instance(_value);
+            return type.is_instance(_value, _guard);
         }
 
      private:
         values::value const& _value;
+        types::recursion_guard& _guard;
     };
 
-    bool type::is_instance(values::value const& value) const
+    bool type::is_instance(values::value const& value, types::recursion_guard& guard) const
     {
-        return boost::apply_visitor(is_instance_visitor{ value }, _value);
+        return boost::apply_visitor(is_instance_visitor{ value, guard }, _value);
     }
 
-    struct is_specialization_visitor : boost::static_visitor<bool>
+    struct is_assignable_visitor : boost::static_visitor<bool>
     {
-        explicit is_specialization_visitor(values::type const& type) :
-            _type(type)
+        is_assignable_visitor(values::type const& type, types::recursion_guard& guard) :
+            _type(type),
+            _guard(guard)
         {
         }
 
         template <typename T>
         bool operator()(T const& type) const
         {
-            return type.is_specialization(_type);
+            return type.is_assignable(_type, _guard);
         }
 
      private:
         values::type const& _type;
+        types::recursion_guard& _guard;
     };
 
-    bool type::is_specialization(values::type const& type) const
+    bool type::is_assignable(values::type const& type, types::recursion_guard& guard) const
     {
-        return boost::apply_visitor(is_specialization_visitor{ type }, _value);
+        // Check for Variant[T1, T2...]; all types must be assignable to this type
+        if (auto variant = boost::get<types::variant>(&type._value)) {
+            for (auto& t : variant->types()) {
+                if (!is_assignable(*t, guard)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Check for NotUndef[T] and check T for assignability to this type
+        if (auto not_undef = boost::get<types::not_undef>(&type._value)) {
+            if (not_undef->type()) {
+                return is_assignable(*not_undef->type(), guard);
+            }
+        }
+        return boost::apply_visitor(is_assignable_visitor{ type, guard }, _value);
     }
 
-    struct is_real_visitor : boost::static_visitor<bool>
+    bool type::is_real(types::recursion_guard& guard) const
     {
-        explicit is_real_visitor(unordered_map<values::type const*, bool>& map) :
-            _map(map)
-        {
+        if (auto alias = boost::get<types::alias>(&_value)) {
+            auto result = guard.add(*alias);
+            if (result.recursed()) {
+                return result.value();
+            }
+            result.value(alias->resolved_type().is_real(guard));
+            return result.value();
         }
-
-        template <typename T>
-        bool operator()(T const& type) const
-        {
-            return type.is_real(_map);
+        if (auto variant = boost::get<types::variant>(&_value)) {
+            // For variants, consider it real if all the types are real
+            // Skip over any unreal member that is referencing this variant
+            bool has_real_type = false;
+            for (auto& type : variant->types()) {
+                if (!type->is_real(guard)) {
+                    if (type->references(*this, guard)) {
+                        continue;
+                    }
+                    return false;
+                } else {
+                    has_real_type = true;
+                }
+            }
+            return variant->types().empty() || has_real_type;
         }
+        // All other types are real
+        return true;
+    }
 
-     private:
-        unordered_map<values::type const*, bool>& _map;
-    };
-
-    bool type::is_real(unordered_map<values::type const*, bool>& map) const
+    bool type::references(values::type const& other, types::recursion_guard& guard) const
     {
-        return boost::apply_visitor(is_real_visitor{ map }, _value);
+        // Check if the given type is this type
+        if (this == &other) {
+            return true;
+        }
+        if (auto alias = boost::get<types::alias>(&_value)) {
+            auto result = guard.add(*alias, &other);
+            if (result.recursed()) {
+                return result.value();
+            }
+            result.value(alias->resolved_type().references(other, guard));
+            return result.value();
+        }
+        if (auto variant = boost::get<types::variant>(&_value)) {
+            // For variants, check the types
+            for (auto& type : variant->types()) {
+                if (type->references(other, guard)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return false;
     }
 
     struct write_visitor : boost::static_visitor<void>
@@ -189,12 +251,6 @@ namespace puppet { namespace runtime { namespace values {
 
     bool operator==(type const& left, type const& right)
     {
-        if (auto alias = boost::get<types::alias>(&left.get())) {
-            return alias->resolved_type() == right;
-        }
-        if (auto alias = boost::get<types::alias>(&right.get())) {
-            return left == alias->resolved_type();
-        }
         return left.get() == right.get();
     }
 

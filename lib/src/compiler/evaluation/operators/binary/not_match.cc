@@ -21,7 +21,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return !is_match(context, context.left().require<string>(), context.right().require<values::regex>());
         });
         descriptor.add("Any", "Type", [](call_context& context) {
-            return !context.right().require<values::type>().is_instance(context.left());
+            types::recursion_guard guard;
+            return !context.right().require<values::type>().is_instance(context.left(), guard);
         });
         return descriptor;
     }

@@ -12,7 +12,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     static values::value assert_type_is(call_context& context, values::type const& type)
     {
         auto& instance = context.argument(1);
-        if (type.is_instance(instance)) {
+        types::recursion_guard guard;
+        if (type.is_instance(instance, guard)) {
             return rvalue_cast(instance);
         }
 

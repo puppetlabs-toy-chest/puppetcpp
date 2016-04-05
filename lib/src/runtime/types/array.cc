@@ -6,6 +6,8 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    array const array::instance;
+
     array::array(unique_ptr<values::type> type, int64_t from, int64_t to) :
         _element_type(rvalue_cast(type)),
         _from(from),
@@ -51,7 +53,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Array";
     }
 
-    bool array::is_instance(values::value const& value) const
+    bool array::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for array
         auto ptr = value.as<values::array>();
@@ -67,61 +69,49 @@ namespace puppet { namespace runtime { namespace types {
 
         // Check that each element is of the type
         for (auto const& element : *ptr) {
-            if (!_element_type->is_instance(*element)) {
+            if (!_element_type->is_instance(*element, guard)) {
                 return false;
             }
         }
         return true;
     }
 
-    bool array::is_specialization(values::type const& other) const
+    bool array::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // For the other type to be a specialization, it must be an Array or Tuple
-        // For Tuple, the number of types must be 1
-        // The element types must match
-        // And the range of other needs to be inside of this type's range
         int64_t from, to;
-        auto array = boost::get<types::array>(&other);
-        if (!array) {
-            // Check for Array[ElementType]
-            if (array->element_type() != *_element_type) {
+        if (auto array = boost::get<types::array>(&other)) {
+            // Ensure element type is assignable
+            if (!_element_type->is_assignable(*array->_element_type, guard)) {
                 return false;
             }
-            from = array->from();
-            to = array->to();
-        } else {
-            // Check for a Tuple with a single type
-            auto tuple = boost::get<types::tuple>(&other);
-            if (!tuple || tuple->types().size() != 1) {
+            from = array->_from;
+            to = array->_to;
+        } else if (auto tuple = boost::get<types::tuple>(&other)) {
+            if (tuple->types().empty()) {
+                // Not assignable from an empty tuple
                 return false;
             }
-            // Check that the Tuple's type matches the element type
-            auto& type = tuple->types().front();
-            if (*type != *_element_type) {
-                return false;
+            // Ensure the element type is assignable from all of the tuple's types
+            for (auto& type : tuple->types()) {
+                if (!_element_type->is_assignable(*type, guard)) {
+                    return false;
+                }
             }
             from = tuple->from();
             to = tuple->to();
-        }
-        // Check for equality
-        if (from == _from && to == _to) {
+        } else {
+            // Not a Tuple or Array
             return false;
         }
         return std::min(from, to) >= std::min(_from, _to) &&
                std::max(from, to) <= std::max(_from, _to);
     }
 
-    bool array::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Array is a real type
-        return true;
-    }
-
     void array::write(ostream& stream, bool expand) const
     {
         stream << array::name() << '[';
         _element_type->write(stream, false);
-        bool from_default = _from == numeric_limits<int64_t>::min();
+        bool from_default = _from == 0;
         bool to_default = _to == numeric_limits<int64_t>::max();
         if (from_default && to_default) {
             // Only output the type

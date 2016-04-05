@@ -11,22 +11,17 @@ namespace puppet { namespace runtime { namespace types {
         return "CatalogEntry";
     }
 
-    bool catalog_entry::is_instance(values::value const& value) const
+    bool catalog_entry::is_instance(values::value const& value, recursion_guard& guard) const
     {
-        return resource().is_instance(value) || klass().is_instance(value);
+        return resource::instance.is_instance(value, guard) || klass::instance.is_instance(value, guard);
     }
 
-    bool catalog_entry::is_specialization(values::type const& other) const
+    bool catalog_entry::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Resource and Class types are specializations
-        return boost::get<resource>(&other) ||
-               boost::get<klass>(&other);
-    }
-
-    bool catalog_entry::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // CatalogEntry is a real type
-        return true;
+        if (boost::get<catalog_entry>(&other)) {
+            return true;
+        }
+        return resource::instance.is_assignable(other, guard) || klass::instance.is_assignable(other, guard);
     }
 
     void catalog_entry::write(ostream& stream, bool expand) const

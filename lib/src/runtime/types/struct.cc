@@ -51,7 +51,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Struct";
     }
 
-    bool structure::is_instance(values::value const& value) const
+    bool structure::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for hash
         auto ptr = value.as<values::hash>();
@@ -78,14 +78,14 @@ namespace puppet { namespace runtime { namespace types {
                     return false;
                 }
                 // Key not found, treat as undef
-                if (!kvp.second->is_instance(values::undef())) {
+                if (!kvp.second->is_instance(values::undef(), guard)) {
                     return false;
                 }
                 continue;
             }
 
             // Check that the value is of the expected type
-            if (!kvp.second->is_instance(*value)) {
+            if (!kvp.second->is_instance(*value, guard)) {
                 return false;
             }
 
@@ -96,41 +96,47 @@ namespace puppet { namespace runtime { namespace types {
         return count == ptr->size();
     }
 
-    bool structure::is_specialization(values::type const& other) const
+    bool structure::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Check for another Struct
-        auto ptr = boost::get<structure>(&other);
-        if (!ptr) {
-            return false;
-        }
-
-        // Check for less types (i.e. this type is more specialized)
-        auto& other_schema = ptr->schema();
-        if (other_schema.size() < _schema.size()) {
-            return false;
-        }
-
-        // All values present in this schema must match the other
-        for (auto const& kvp : _schema) {
-            auto other_it = find_if(other_schema.begin(), other_schema.end(), [&](auto& other_kvp) { return *kvp.first == *other_kvp.first; });
-            if (other_it == other_schema.end()) {
-                return false;
+        if (auto structure = boost::get<types::structure>(&other)) {
+            auto& other_schema = structure->schema();
+            size_t matched = 0;
+            for (auto& kvp : _schema) {
+                // Find the key in the other structure
+                auto it = find_if(other_schema.begin(), other_schema.end(), [&](auto const& okvp) {
+                    return to_key(*kvp.first) == to_key(*okvp.first);
+                });
+                if (it == other_schema.end()) {
+                    // Ensure the key is optional
+                    if (!kvp.first->is_assignable(undef::instance, guard)) {
+                        return false;
+                    }
+                } else {
+                    ++matched;
+                    if (!kvp.first->is_assignable(*it->first, guard) || !kvp.second->is_assignable(*it->second, guard)) {
+                        return false;
+                    }
+                }
             }
-            if (*kvp.second != *other_it->second) {
-                return false;
+            return matched == other_schema.size();
+        } else if (auto hash = boost::get<types::hash>(&other)) {
+            int64_t required = 0;
+            for (auto& kvp : _schema) {
+                if (kvp.first->is_assignable(undef::instance, guard)) {
+                    continue;
+                }
+                if (!hash->key_type().is_instance(to_key(*kvp.first), guard)) {
+                    return false;
+                }
+                ++required;
+                if (!kvp.second->is_assignable(hash->value_type(), guard)) {
+                    return false;
+                }
             }
-        }
-        // If the other type has more types, it is more specialized
-        if (other_schema.size() > _schema.size()) {
-            return true;
+            // Ensure the number of required elements is in range of the hash
+            return integer{required, static_cast<int64_t>(_schema.size())}.is_assignable(integer{ hash->from(), hash->to() }, guard);
         }
         return false;
-    }
-
-    bool structure::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Struct is a real type
-        return true;
     }
 
     void structure::write(ostream& stream, bool expand) const
@@ -154,8 +160,10 @@ namespace puppet { namespace runtime { namespace types {
         stream << "]";
     }
 
-    std::string structure::to_key(values::type const& type)
+    std::string const& structure::to_key(values::type const& type)
     {
+        static std::string empty;
+
         // Check for Enum[string]
         types::enumeration const* enumeration = boost::get<types::enumeration>(&type);
 
@@ -177,7 +185,7 @@ namespace puppet { namespace runtime { namespace types {
             }
         }
 
-        return enumeration && !enumeration->strings().empty() ? enumeration->strings().front() : std::string();
+        return enumeration && !enumeration->strings().empty() ? enumeration->strings().front() : empty;
     }
 
     ostream& operator<<(ostream& os, structure const& type)

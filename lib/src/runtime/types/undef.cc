@@ -5,26 +5,21 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    undef const undef::instance{};
+
     char const* undef::name()
     {
         return "Undef";
     }
 
-    bool undef::is_instance(values::value const& value) const
+    bool undef::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return value.is_undef();
     }
 
-    bool undef::is_specialization(values::type const& other) const
+    bool undef::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // No specializations of Undef
-        return false;
-    }
-
-    bool undef::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Undef is a real type
-        return true;
+        return boost::get<undef>(&other);
     }
 
     void undef::write(ostream& stream, bool expand) const

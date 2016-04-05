@@ -341,10 +341,10 @@ unless foo > bar {
 if foo > foo {
     fail incorrect
 }
-if String > String[0, 0] {
+unless String > String[0, 0] {
     fail incorrect
 }
-unless String[0, 0] > String {
+if String[0, 0] > String {
     fail incorrect
 }
 if String[0, 0] > String[0, 0] {
@@ -387,10 +387,10 @@ unless foo >= bar {
 unless foo >= foo {
     fail incorrect
 }
-if String >= String[0, 0] {
+unless String >= String[0, 0] {
     fail incorrect
 }
-unless String[0, 0] >= String {
+if String[0, 0] >= String {
     fail incorrect
 }
 unless String[0, 0] >= String[0, 0] {
@@ -489,10 +489,10 @@ if foo < bar {
 if foo < foo {
     fail incorrect
 }
-unless String < String[0, 0] {
+if String < String[0, 0] {
     fail incorrect
 }
-if String[0, 0] < String {
+unless String[0, 0] < String {
     fail incorrect
 }
 if String[0, 0] < String[0, 0] {
@@ -535,10 +535,10 @@ if foo <= bar {
 unless foo <= foo {
     fail incorrect
 }
-unless String <= String[0, 0] {
+if String <= String[0, 0] {
     fail incorrect
 }
-if String[0, 0] <= String {
+unless String[0, 0] <= String {
     fail incorrect
 }
 unless String[0, 0] <= String[0, 0] {
@@ -786,7 +786,7 @@ unless "\$interpolated[0] = ${interpolated[0]}" == "\$interpolated[0] = f" {
 unless "\$interpolated.split('') = ${interpolated.split('')}" == "\$interpolated.split('') = [f, o, o]" {
     fail incorrect
 }
-unless foo =~ /f(o)o/ or "match group 1 = '${1}'" == "match group 1 = 'o'" {
+unless foo =~ /f(o)o/ and "match group 1 = '${1}'" == "match group 1 = 'o'" {
     fail incorrect
 }
 unless "${  interpolated   }" == foo {

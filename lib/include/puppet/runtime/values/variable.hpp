@@ -73,7 +73,7 @@ namespace puppet { namespace runtime { namespace values {
      * @param right The right variable to compare.
      * @return Returns true if variables are not equal or false if they are equal.
      */
-    bool operator==(type const& left, type const& right);
+    bool operator!=(variable const& left, variable const& right);
 
     /**
      * Hashes the variable value.

@@ -21,7 +21,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Enum";
     }
 
-    bool enumeration::is_instance(values::value const& value) const
+    bool enumeration::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<std::string>();
         if (!ptr) {
@@ -30,29 +30,28 @@ namespace puppet { namespace runtime { namespace types {
         if (_strings.empty()) {
             return true;
         }
-        for (auto const& string : _strings) {
-            // Enumerations are case sensative, so just use operator==
-            if (string == *ptr) {
-                return true;
+        return std::find(_strings.begin(), _strings.end(), *ptr) != _strings.end();
+    }
+
+    bool enumeration::is_assignable(values::type const& other, recursion_guard& guard) const
+    {
+        if (_strings.empty()) {
+            return boost::get<string>(&other) || boost::get<enumeration>(&other) || boost::get<pattern>(&other);
+        }
+
+        if (auto enumeration = boost::get<types::enumeration>(&other)) {
+            if (enumeration->_strings.empty()) {
+                return false;
             }
+            // All of the other's strings must be in this enumeration
+            for (auto& string : enumeration->_strings) {
+                if (std::find(_strings.begin(), _strings.end(), string) == _strings.end()) {
+                    return false;
+                }
+            }
+            return true;
         }
         return false;
-    }
-
-    bool enumeration::is_specialization(values::type const& other) const
-    {
-        // Specializations of Enum have *fewer* strings (i.e. are more restrictive)
-        auto ptr = boost::get<enumeration>(&other);
-        if (!ptr) {
-            return false;
-        }
-        return ptr->strings().size() < _strings.size();
-    }
-
-    bool enumeration::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Enum is a real type
-        return true;
     }
 
     void enumeration::write(ostream& stream, bool expand) const

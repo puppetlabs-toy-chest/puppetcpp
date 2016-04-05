@@ -248,7 +248,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                      types::iterable::name() %
                      _arguments.size()
                     ).str(),
-                    _contexts[2],
+                    _contexts[1],
                     _context.backtrace()
                 );
             }
@@ -276,7 +276,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                      types::iterator::name() %
                      _arguments.size()
                     ).str(),
-                    _contexts[2],
+                    _contexts[1],
                     _context.backtrace()
                 );
             }
@@ -329,7 +329,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
 
             int64_t from, to;
-            tie(from, to) = get_range<int64_t, integer>(true);
+            tie(from, to) = get_range<int64_t, integer>(true, 0, 0);
             return types::string(from, to);
         }
 
@@ -466,7 +466,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Get the optional range
             size_t from, to;
-            tie(from, to) = get_range<int64_t, integer>(true, 1);
+            tie(from, to) = get_range<int64_t, integer>(true, 1, 0);
             return types::array(make_unique<values::type>(_arguments[0]->move_as<values::type>()), from, to);
         }
 
@@ -520,7 +520,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Get the optional range
             size_t from, to;
-            tie(from, to) = get_range<int64_t, integer>(true, 2);
+            tie(from, to) = get_range<int64_t, integer>(true, 2, 0);
             return types::hash(
                 make_unique<values::type>(_arguments[0]->move_as<values::type>()),
                 make_unique<values::type>(_arguments[1]->move_as<values::type>()),
@@ -551,7 +551,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                         );
                     }
                     // Get the optional range
-                    tie(from, to) = get_range<int64_t, integer>(false, i, 0, numeric_limits<int64_t>::max());
+                    tie(from, to) = get_range<int64_t, integer>(false, i, 0);
                     break;
                 }
                 types.emplace_back(new values::type(_arguments[i]->move_as<values::type>()));
@@ -584,7 +584,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
 
             int64_t from, to;
-            tie(from, to) = get_range<int64_t, integer>(true);
+            tie(from, to) = get_range<int64_t, integer>(true, 0, 0);
             return collection(from, to);
         }
 
@@ -597,7 +597,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                      optional::name() %
                      _arguments.size()
                     ).str(),
-                    _contexts[2],
+                    _contexts[1],
                     _context.backtrace()
                 );
             }
@@ -632,7 +632,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                      optional::name() %
                      _arguments.size()
                     ).str(),
-                    _contexts[2],
+                    _contexts[1],
                     _context.backtrace()
                 );
             }
@@ -667,7 +667,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                      types::type::name() %
                      _arguments.size()
                     ).str(),
-                    _contexts[2],
+                    _contexts[1],
                     _context.backtrace()
                 );
             }
@@ -696,7 +696,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                      structure::name() %
                      _arguments.size()
                     ).str(),
-                    _contexts[2],
+                    _contexts[1],
                     _context.backtrace()
                 );
             }
@@ -733,6 +733,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                         if (not_undef->type()) {
                             enumeration = boost::get<types::enumeration>(not_undef->type().get());
                         }
+                    } else {
+                        enumeration = boost::get<types::enumeration>(type);
                     }
                     if (enumeration && enumeration->strings().size() == 1) {
                         key = make_unique<values::type>(*type);
@@ -882,7 +884,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                         );
                     }
                     // Get the optional min/max range
-                    tie(min, max) = get_range<int64_t, integer>(false, i, 0, numeric_limits<int64_t>::max());
+                    tie(min, max) = get_range<int64_t, integer>(false, i, 0);
 
                     // Get the optional block type
                     if (i + 2 < _arguments.size()) {

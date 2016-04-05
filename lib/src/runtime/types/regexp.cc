@@ -6,6 +6,8 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    regexp const regexp::instance;
+
     regexp::regexp(std::string pattern) :
         _pattern(rvalue_cast(pattern))
     {
@@ -21,7 +23,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Regexp";
     }
 
-    bool regexp::is_instance(values::value const& value) const
+    bool regexp::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<values::regex>();
         if (!ptr) {
@@ -33,21 +35,14 @@ namespace puppet { namespace runtime { namespace types {
         return ptr->pattern() == _pattern;
     }
 
-    bool regexp::is_specialization(values::type const& other) const
+    bool regexp::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // If this Regexp has a pattern, the other type cannot be a specialization
-        if (!_pattern.empty()) {
+        auto regexp = boost::get<types::regexp>(&other);
+        if (!regexp) {
             return false;
         }
-        // Check that the other type has a pattern
-        auto rgx = boost::get<regexp>(&other);
-        return rgx && !rgx->pattern().empty();
-    }
 
-    bool regexp::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Regexp is a real type
-        return true;
+        return _pattern.empty() || _pattern == regexp->_pattern;
     }
 
     void regexp::write(ostream& stream, bool expand) const

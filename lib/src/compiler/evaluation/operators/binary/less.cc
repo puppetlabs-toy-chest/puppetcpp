@@ -27,7 +27,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return boost::ilexicographical_compare(context.left().require<string>(), context.right().require<string>());
         });
         descriptor.add("Type", "Type", [](call_context& context) {
-            return context.left().require<values::type>().is_specialization(context.right().require<values::type>());
+            auto& left = context.left().require<values::type>();
+            auto& right = context.right().require<values::type>();
+            types::recursion_guard guard;
+            return right.is_assignable(left, guard) && left != right && !left.is_assignable(right, guard);
         });
         return descriptor;
     }

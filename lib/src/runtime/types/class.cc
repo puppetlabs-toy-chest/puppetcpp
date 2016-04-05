@@ -7,6 +7,8 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    klass const klass::instance;
+
     klass::klass(std::string title) :
         _title(rvalue_cast(title))
     {
@@ -28,14 +30,12 @@ namespace puppet { namespace runtime { namespace types {
         return "Class";
     }
 
-    bool klass::is_instance(values::value const& value) const
+    bool klass::is_instance(values::value const& value, recursion_guard& guard) const
     {
-        // Check for type
         auto ptr = value.as<values::type>();
         if (!ptr) {
             return false;
         }
-        // Check for class type
         auto class_ptr = boost::get<klass>(ptr);
         if (!class_ptr) {
             return false;
@@ -43,26 +43,13 @@ namespace puppet { namespace runtime { namespace types {
         return _title.empty() || _title == class_ptr->title();
     }
 
-    bool klass::is_specialization(values::type const& other) const
+    bool klass::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // If the class has a specialization, the other type cannot be one
-        if (!_title.empty()) {
+        auto ptr = boost::get<klass>(&other);
+        if (!ptr) {
             return false;
         }
-        // Check that the other Class is specialized
-        auto class_ptr = boost::get<klass>(&other);
-        if (!class_ptr) {
-            // Not the same type
-            return false;
-        }
-        // Otherwise, the other one is a specialization if it has a title
-        return !class_ptr->title().empty();
-    }
-
-    bool klass::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Class is a real type
-        return true;
+        return _title.empty() || _title == ptr->title();
     }
 
     void klass::write(ostream& stream, bool expand) const

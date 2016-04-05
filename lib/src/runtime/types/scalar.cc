@@ -5,37 +5,26 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    scalar const scalar::instance{};
+
     char const* scalar::name()
     {
         return "Scalar";
     }
 
-    bool scalar::is_instance(values::value const& value) const
+    bool scalar::is_instance(values::value const& value, recursion_guard& guard) const
     {
-        // A Scalar is a Numeric, String, Boolean, and Regexp
-        return
-            numeric().is_instance(value) ||
-            string().is_instance(value) ||
-            boolean().is_instance(value) ||
-            regexp().is_instance(value);
+        return numeric::instance.is_instance(value, guard) || string::instance.is_instance(value, guard) ||
+               boolean::instance.is_instance(value, guard) || regexp::instance.is_instance(value, guard);
     }
 
-    bool scalar::is_specialization(values::type const& other) const
+    bool scalar::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Numeric, String, Boolean and Regexp are specializations
-        // Also specializations of Numeric and String
-        return boost::get<numeric>(&other) ||
-               boost::get<string>(&other) ||
-               boost::get<boolean>(&other) ||
-               boost::get<regexp>(&other) ||
-               numeric().is_specialization(other) ||
-               string().is_specialization(other);
-    }
-
-    bool scalar::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Scalar is a real type
-        return true;
+        if (boost::get<scalar>(&other)) {
+            return true;
+        }
+        return numeric::instance.is_assignable(other, guard) || string::instance.is_assignable(other, guard) ||
+               boolean::instance.is_assignable(other, guard) || regexp::instance.is_assignable(other, guard);
     }
 
     void scalar::write(ostream& stream, bool expand) const

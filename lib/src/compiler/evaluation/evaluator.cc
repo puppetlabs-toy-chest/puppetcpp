@@ -852,7 +852,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
 
         // Validate the type of the parameter
-        if (type && !type->is_instance(value)) {
+        types::recursion_guard guard;
+        if (type && !type->is_instance(value, guard)) {
             throw evaluation_exception(
                 (boost::format("expected %1% for attribute '%2%' but found %3%.") %
                  *type %
@@ -1084,7 +1085,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 context.backtrace()
             );
         }
-        if (!type->is_instance(value)) {
+        types::recursion_guard guard;
+        if (!type->is_instance(value, guard)) {
             error((boost::format("parameter $%1% has expected type %2% but was given %3%.") % parameter.variable.name % *type % value.get_type()).str());
         }
     }

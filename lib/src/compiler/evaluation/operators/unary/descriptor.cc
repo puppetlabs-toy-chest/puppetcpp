@@ -40,8 +40,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
     {
         // Search for a dispatch descriptor with a matching operand type
         // TODO: in the future, this should dispatch to the most specific overload rather than the first dispatchable overload
+        types::recursion_guard guard;
         for (auto& descriptor : _dispatch_descriptors) {
-            if (descriptor.type.is_instance(context.operand())) {
+            if (descriptor.type.is_instance(context.operand(), guard)) {
                 return descriptor.callback(context);
             }
         }

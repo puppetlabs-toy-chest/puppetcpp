@@ -202,25 +202,44 @@ namespace puppet { namespace runtime { namespace values {
         bool is_alias() const;
 
         /**
-         * Determines if the value is an instance of this type.
-         * @param value The value to check if being an instance of this type.
-         * @return Returns true if the value is an instance of this type or false if not.
+         * Deferences the type if an alias or returns this type if not.
+         * @return Returns the dereferenced alias or this type if not an alias.
          */
-        bool is_instance(values::value const& value) const;
+        type const& dereference() const;
 
         /**
-         * Determines if the given type is a specialization of this type.
-         * @param type The type to check for specialization.
-         * @return Returns true if the given type is a specialization of this type or false if not.
+         * Determines if the value is an instance of this type.
+         * @param value The value to check if being an instance of this type.
+         * @param guard The recursion guard to use for aliases.
+         * @return Returns true if the value is an instance of this type or false if not.
          */
-        bool is_specialization(values::type const& type) const;
+        bool is_instance(values::value const& value, types::recursion_guard& guard) const;
+
+        /**
+         * Determines if the given type is assignable to this type.
+         * @param other The other type to check for assignability.
+         * @param guard The recursion guard to use for aliases.
+         * @return Returns true if the given type is assignable to this type or false if the given type is not assignable to this type.
+         */
+        bool is_assignable(values::type const& other, types::recursion_guard& guard) const;
 
         /**
          * Determines if the type is real (i.e. actual type vs. an alias/variant that never resolves to an actual type).
-         * @param map The map to keep track of encountered type aliases.
+         * @param guard The recursion guard to use for aliases.
          * @return Returns true if the type is real or false if it never resolves to an actual type.
          */
-        bool is_real(std::unordered_map<values::type const*, bool>& map) const;
+        bool is_real(types::recursion_guard& guard) const;
+
+        /**
+         * Checks to see if this type refers to the given type.
+         * For aliases, this checks to see if the resolved type refers to the given type.
+         * For variants, this checks to see if any member types refer to the given type.
+         * For all other types, checks to see if this type is the same instance as the other type.
+         * @param other The other type to check.
+         * @param guard The recursion guard to use for aliases.
+         * @return Returns true if the type refers to the other type or false if it does not.
+         */
+        bool references(values::type const& other, types::recursion_guard& guard) const;
 
         /**
          * Writes a representation of the type to the given stream.
@@ -384,10 +403,7 @@ namespace boost {
     template <typename T>
     inline T const& get(puppet::runtime::values::type const& type)
     {
-        if (auto alias = boost::get<puppet::runtime::types::alias>(&type.get())) {
-            return get<T>(alias->resolved_type());
-        }
-        return boost::get<T>(type.get());
+        return boost::get<T>(type.dereference().get());
     }
 
     /**
@@ -399,10 +415,7 @@ namespace boost {
     template <typename T>
     inline T const* get(puppet::runtime::values::type const* type)
     {
-        if (auto alias = boost::get<puppet::runtime::types::alias>(&type->get())) {
-            return get<T>(&alias->resolved_type());
-        }
-        return boost::get<T>(&type->get());
+        return boost::get<T>(&type->dereference().get());
     }
 
 }  // namespace boost

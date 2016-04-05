@@ -21,7 +21,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Pattern";
     }
 
-    bool pattern::is_instance(values::value const& value) const
+    bool pattern::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for string
         auto ptr = value.as<std::string>();
@@ -43,20 +43,33 @@ namespace puppet { namespace runtime { namespace types {
         return false;
     }
 
-    bool pattern::is_specialization(values::type const& other) const
+    bool pattern::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Specializations of Pattern have *fewer* patterns (i.e. are more restrictive)
-        auto ptr = boost::get<pattern>(&other);
-        if (!ptr) {
-            return false;
+        if (boost::get<types::string>(&other)) {
+            // Matches string only if no pattern was specified
+            return _patterns.empty();
         }
-        return ptr->patterns().size() < _patterns.size();
-    }
+        if (auto enumeration = boost::get<types::enumeration>(&other)) {
+            if (_patterns.empty()) {
+                return true;
+            }
+            if (enumeration->strings().empty()) {
+                return false;
+            }
 
-    bool pattern::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Pattern is a real type
-        return true;
+            // All strings in the enum must match a pattern
+            for (auto& string : enumeration->strings()) {
+                auto match = find_if(_patterns.begin(), _patterns.end(), [&](auto const& regex) {
+                    return regex_search(string, regex.value());
+                });
+                if (match == _patterns.end()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        // Otherwise, only accept a Pattern type if this Pattern has not specified patterns
+        return _patterns.empty() && boost::get<types::pattern>(&other);
     }
 
     void pattern::write(ostream& stream, bool expand) const
