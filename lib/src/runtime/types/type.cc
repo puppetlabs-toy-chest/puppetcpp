@@ -58,13 +58,26 @@ namespace puppet { namespace runtime { namespace types {
         return type && type->parameter();
     }
 
+    bool type::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Type is a real type
+        return true;
+    }
+
+    void type::write(ostream& stream, bool expand) const
+    {
+        stream << types::type::name();
+        if (!_parameter) {
+            return;
+        }
+        stream << '[';
+        _parameter->write(stream, false);
+        stream << ']';
+    }
+
     ostream& operator<<(ostream& os, types::type const& type)
     {
-        os << types::type::name();
-        if (!type.parameter()) {
-            return os;
-        }
-        os << '[' << *type.parameter() << ']';
+        type.write(os);
         return os;
     }
 

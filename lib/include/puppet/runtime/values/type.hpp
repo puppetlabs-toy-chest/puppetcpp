@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../values/forward.hpp"
+#include "../types/alias.hpp"
 #include "../types/any.hpp"
 #include "../types/array.hpp"
 #include "../types/boolean.hpp"
@@ -56,7 +57,8 @@ namespace puppet { namespace runtime { namespace values {
      * types derived from boost::variant (ambiguous construction between the type variant and a variant<U...>).
      */
     using type_variant = boost::variant<
-        types::any,
+        types::any,  // Must be first (default type)
+        types::alias,
         types::array,
         types::boolean,
         types::callable,
@@ -194,6 +196,12 @@ namespace puppet { namespace runtime { namespace values {
         type_variant const& get() const;
 
         /**
+         * Determines if this type is an alias.
+         * @return Returns true if the type is an alias or false if not.
+         */
+        bool is_alias() const;
+
+        /**
          * Determines if the value is an instance of this type.
          * @param value The value to check if being an instance of this type.
          * @return Returns true if the value is an instance of this type or false if not.
@@ -208,11 +216,41 @@ namespace puppet { namespace runtime { namespace values {
         bool is_specialization(values::type const& type) const;
 
         /**
-         * Creates a type from a Puppet type expression.
+         * Determines if the type is real (i.e. actual type vs. an alias/variant that never resolves to an actual type).
+         * @param map The map to keep track of encountered type aliases.
+         * @return Returns true if the type is real or false if it never resolves to an actual type.
+         */
+        bool is_real(std::unordered_map<values::type const*, bool>& map) const;
+
+        /**
+         * Writes a representation of the type to the given stream.
+         * @param stream The stream to write to.
+         * @param expand True to specify that type aliases should be expanded or false if not.
+         */
+        void write(std::ostream& stream, bool expand = true) const;
+
+        /**
+         * Finds a type in the Puppet type system.
+         * @name The name of the Puppet type (e.g. 'String').
+         * @return Returns the Puppet type or nullptr if the given name is not a type from the Puppet type system.
+         */
+        static values::type const* find(std::string const& name);
+
+        /**
+         * Creates a type from a postfix expression.
+         * @param expression The expression to create the type from.
+         * @param context The evaluation context to use to evaluate the expression; if nullptr, an empty evaluation context will be used.
+         * @return Returns the type or boost::none if the expression is not a valid type expression.
+         */
+        static boost::optional<type> create(compiler::ast::postfix_expression const& expression, compiler::evaluation::context* context = nullptr);
+
+        /**
+         * Parses a type from a Puppet type expression.
          * @param expression The expression to parse for the type.
+         * @param context The evaluation context to use to evaluate the expression; if nullptr, an empty evaluation context will be used.
          * @return Returns the type if the parse was successful or boost::none if the string is not a valid type expression.
          */
-        static boost::optional<type> parse(std::string const& expression);
+        static boost::optional<type> parse(std::string const& expression, compiler::evaluation::context* context = nullptr);
 
         /**
          * Creates a type from a Puppet type expression.
@@ -240,6 +278,14 @@ namespace puppet { namespace runtime { namespace values {
      private:
         type_variant _value;
     };
+
+    /**
+     * Stream insertion operator for runtime type.
+     * @param os The output stream to write the runtime type to.
+     * @param type The runtime type to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, values::type const& type);
 
     /**
      * Equality operator for type.
@@ -336,33 +382,12 @@ namespace boost {
      * @return Returns the type or throws boost::bad_get if the type is not of the requested value.
      */
     template <typename T>
-    inline T& get(puppet::runtime::values::type& type)
-    {
-        return boost::get<T>(type.get());
-    }
-
-    /**
-     * Gets a value from a type.
-     * @tparam T The type to get.
-     * @param type The type to get a value from.
-     * @return Returns the type or throws boost::bad_get if the type is not of the requested value.
-     */
-    template <typename T>
     inline T const& get(puppet::runtime::values::type const& type)
     {
+        if (auto alias = boost::get<puppet::runtime::types::alias>(&type.get())) {
+            return get<T>(alias->resolved_type());
+        }
         return boost::get<T>(type.get());
-    }
-
-    /**
-     * Gets a value from a type.
-     * @tparam T The type to get.
-     * @param type The type to get a value from.
-     * @return Returns the type or nullptr if the type is not of the requested value.
-     */
-    template <typename T>
-    inline T* get(puppet::runtime::values::type* type)
-    {
-        return boost::get<T>(&type->get());
     }
 
     /**
@@ -374,6 +399,9 @@ namespace boost {
     template <typename T>
     inline T const* get(puppet::runtime::values::type const* type)
     {
+        if (auto alias = boost::get<puppet::runtime::types::alias>(&type->get())) {
+            return get<T>(&alias->resolved_type());
+        }
         return boost::get<T>(&type->get());
     }
 

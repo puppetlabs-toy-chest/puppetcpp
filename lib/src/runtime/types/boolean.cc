@@ -10,9 +10,31 @@ namespace puppet { namespace runtime { namespace types {
         return "Boolean";
     }
 
-    ostream& operator<<(ostream& os, boolean const&)
+    bool boolean::is_instance(values::value const& value) const
     {
-        os << boolean::name();
+        return value.as<bool>();
+    }
+
+    bool boolean::is_specialization(values::type const& other) const
+    {
+        // No specializations for Boolean
+        return false;
+    }
+
+    bool boolean::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Boolean is a real type
+        return true;
+    }
+
+    void boolean::write(ostream& stream, bool expand) const
+    {
+        stream << boolean::name();
+    }
+
+    ostream& operator<<(ostream& os, boolean const& type)
+    {
+        type.write(os);
         return os;
     }
 
@@ -24,17 +46,6 @@ namespace puppet { namespace runtime { namespace types {
     bool operator!=(boolean const& left, boolean const& right)
     {
         return !(left == right);
-    }
-
-    bool boolean::is_instance(values::value const& value) const
-    {
-        return value.as<bool>();
-    }
-
-    bool boolean::is_specialization(values::type const& other) const
-    {
-        // No specializations for Boolean
-        return false;
     }
 
     size_t hash_value(boolean const&)

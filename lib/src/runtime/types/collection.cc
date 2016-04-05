@@ -57,28 +57,39 @@ namespace puppet { namespace runtime { namespace types {
                hash().is_specialization(other);
     }
 
-    ostream& operator<<(ostream& os, collection const& type)
+    bool collection::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << collection::name();
-        bool from_default = type.from() == numeric_limits<int64_t>::min();
-        bool to_default = type.to() == numeric_limits<int64_t>::max();
+        // Collection is a real type
+        return true;
+    }
+
+    void collection::write(ostream& stream, bool expand) const
+    {
+        stream << collection::name();
+        bool from_default = _from == numeric_limits<int64_t>::min();
+        bool to_default = _to == numeric_limits<int64_t>::max();
         if (from_default && to_default) {
             // Only output the type name
-            return os;
+            return;
         }
-        os << '[';
+        stream << '[';
         if (from_default) {
-            os << "default";
+            stream << "default";
         } else {
-            os << type.from();
+            stream << _from;
         }
-        os << ", ";
+        stream << ", ";
         if (to_default) {
-            os << "default";
+            stream << "default";
         } else {
-            os << type.to();
+            stream << _to;
         }
-        os << ']';
+        stream << ']';
+    }
+
+    ostream& operator<<(ostream& os, collection const& type)
+    {
+        type.write(os);
         return os;
     }
 

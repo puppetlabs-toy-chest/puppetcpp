@@ -42,7 +42,21 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         });
         descriptor.add("Callable[String, Any, 2, 2, Optional[Callable[2, 2]]]", [](call_context& context) {
             auto& type_string = context.argument(0).require<string>();
-            auto type = values::type::parse(type_string);
+
+            boost::optional<values::type> type;
+            try {
+                type = values::type::parse(type_string, &context.context());
+            } catch (evaluation_exception const& ex) {
+                throw evaluation_exception(
+                    (boost::format("the expression '%1%' is not a valid type specification: %2%") %
+                     type_string %
+                     ex.what()
+                    ).str(),
+                    context.argument_context(0),
+                    ex.backtrace()
+                );
+            }
+
             if (!type) {
                 throw evaluation_exception(
                     (boost::format("the expression '%1%' is not a valid type specification.") %

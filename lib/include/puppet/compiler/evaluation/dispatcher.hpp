@@ -17,11 +17,6 @@ namespace puppet { namespace compiler { namespace evaluation {
     struct dispatcher
     {
         /**
-         * The function type for dispatch fallback.
-         */
-        using fallback_type = std::function<boost::optional<runtime::values::value>(functions::call_context& context)>;
-
-        /**
          * Default constructor for dispatcher.
          */
         dispatcher() = default;
@@ -123,17 +118,10 @@ namespace puppet { namespace compiler { namespace evaluation {
          */
         runtime::values::value dispatch(operators::unary::call_context& context) const;
 
-        /**
-         * Set the fallback callback to use.
-         * @param fallback The fallback callback to use.
-         */
-        void fallback(fallback_type fallback);
-
      private:
         dispatcher(dispatcher&) = delete;
         dispatcher& operator=(dispatcher&) = delete;
 
-        fallback_type _fallback;
         std::unordered_map<std::string, functions::descriptor> _functions;
         std::vector<operators::binary::descriptor> _binary_operators;
         std::vector<operators::unary::descriptor> _unary_operators;

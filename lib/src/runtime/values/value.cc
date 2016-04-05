@@ -195,7 +195,8 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(values::type const& type) const
         {
-            boost::apply_visitor(*this, type);
+            // Don't expand when printing out a value that is a type (display aliases as just the name)
+            type.write(_os, false);
             return _os;
         }
 

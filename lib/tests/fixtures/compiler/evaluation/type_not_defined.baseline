@@ -1,0 +1,9 @@
+Error: type_not_defined.pp:5:10: node 'test': resource type 'NotDefined' was not found.
+  type E = NotDefined
+           ^~~~~~~~~~
+  backtrace:
+    in '<type alias E>' at type_not_defined.pp:5
+    in '<type alias C>' at type_not_defined.pp:3
+    in '<type alias B>' at type_not_defined.pp:2
+    in '<type alias A>' at type_not_defined.pp:1
+    in '<class main>' at type_not_defined.pp:7

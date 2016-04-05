@@ -87,6 +87,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/lexer/position.cc
     src/compiler/lexer/tokens.cc
     src/compiler/parser/parser.cc
+    src/compiler/validation/type_validator.cc
     src/compiler/attribute.cc
     src/compiler/catalog.cc
     src/compiler/environment.cc
@@ -109,6 +110,7 @@ set(PUPPET_COMMON_SOURCES
     src/options/command.cc
     src/options/executor.cc
     src/options/parser.cc
+    src/runtime/types/alias.cc
     src/runtime/types/any.cc
     src/runtime/types/array.cc
     src/runtime/types/boolean.cc

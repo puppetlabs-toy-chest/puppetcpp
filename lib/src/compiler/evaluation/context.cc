@@ -320,7 +320,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     compiler::node& context::node() const
     {
         if (!_node) {
-            throw evaluation_exception("operation not permitted: node is not available.");
+            throw evaluation_exception("operation not permitted: node is not available.", backtrace());
         }
         return *_node;
     }
@@ -328,7 +328,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     compiler::catalog& context::catalog() const
     {
         if (!_catalog) {
-            throw evaluation_exception("operation not permitted: catalog is not available.");
+            throw evaluation_exception("operation not permitted: catalog is not available.", backtrace());
         }
         return *_catalog;
     }
@@ -336,7 +336,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     compiler::registry const& context::registry() const
     {
         if (!_registry) {
-            throw evaluation_exception("operation not permitted: registry is not available.");
+            throw evaluation_exception("operation not permitted: registry is not available.", backtrace());
         }
         return *_registry;
     }
@@ -344,7 +344,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     evaluation::dispatcher const& context::dispatcher() const
     {
         if (!_dispatcher) {
-            throw evaluation_exception("operation not permitted: function dispatcher is not available.");
+            throw evaluation_exception("operation not permitted: function dispatcher is not available.", backtrace());
         }
         return *_dispatcher;
     }
@@ -352,7 +352,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     shared_ptr<scope> const& context::current_scope() const
     {
         if (_call_stack.empty()) {
-            throw evaluation_exception("operation not permitted: the current scope is not available.");
+            throw evaluation_exception("operation not permitted: the current scope is not available.", backtrace());
         }
         return _call_stack.back().scope();
     }
@@ -360,7 +360,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     shared_ptr<scope> const& context::top_scope() const
     {
         if (!_top_scope) {
-            throw evaluation_exception("operation not permitted: the top scope is not available.");
+            throw evaluation_exception("operation not permitted: the top scope is not available.", backtrace());
         }
         return _top_scope;
     }
@@ -378,7 +378,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     shared_ptr<scope> const& context::calling_scope() const
     {
         if (_call_stack.size() < 2) {
-            throw evaluation_exception("operation not permitted: there is no calling scope.");
+            throw evaluation_exception("operation not permitted: there is no calling scope.", backtrace());
         }
         return _call_stack[_call_stack.size() - 2].scope();
     }
@@ -549,25 +549,16 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Ensure the name is in the expected format
         types::klass::normalize(name);
 
-        // Find the class definitions
-        auto definitions = registry().find_class(name);
-        if (!definitions) {
-            auto& node = this->node();
-
-            // Attempt to import the class
-            node.environment().import(node.logger(), find_type::manifest, name);
-
-            // Search again
-            definitions = registry().find_class(name);
-            if (!definitions) {
-                throw evaluation_exception(
-                    (boost::format("cannot evaluate class '%1%' because it has not been defined.") %
-                     name
-                    ).str(),
-                    context,
-                    backtrace()
-                );
-            }
+        // Find the class definition
+        auto klass = find_class(name);
+        if (!klass) {
+            throw evaluation_exception(
+                (boost::format("cannot evaluate class '%1%' because it has not been defined.") %
+                 name
+                ).str(),
+                context,
+                backtrace()
+            );
         }
 
         // Find the resource
@@ -610,58 +601,32 @@ namespace puppet { namespace compiler { namespace evaluation {
         } else {
             stage = catalog.find(types::resource("stage", "main"));
             if (!stage) {
-                throw evaluation_exception("stage 'main' does not exist in the catalog.");
+                throw evaluation_exception("stage 'main' does not exist in the catalog.", backtrace());
             }
         }
 
         // Contain the class in the stage
         catalog.relate(relationship::contains, *stage, *resource);
 
-        // Evaluate all definitions of the class
-        for (auto& definition : *definitions) {
-            evaluation::class_evaluator evaluator{ *this, definition.expression() };
-            evaluator.evaluate(*resource);
-        }
+        // Evaluate the class
+        evaluation::class_evaluator evaluator{ *this, klass->expression() };
+        evaluator.evaluate(*resource);
         return resource;
     }
 
-    vector<klass> const* context::find_class(string name, bool import)
+    klass const* context::find_class(string name, bool import)
     {
         auto& registry = this->registry();
 
-        // Ensure the name is in the expected format
         types::klass::normalize(name);
 
-        auto definitions = registry.find_class(name);
-        if (!definitions && import) {
-            auto& node = this->node();
-
+        auto klass = registry.find_class(name);
+        if (!klass && import && _node) {
             // Attempt to import the class
-            node.environment().import(node.logger(), find_type::manifest, name);
-
-            // Find it again
-            definitions = registry.find_class(name);
+            _node->environment().import(_node->logger(), find_type::manifest, boost::to_lower_copy(name));
+            klass = registry.find_class(name);
         }
-        return definitions;
-    }
-
-    functions::descriptor* context::find_function(string name, bool import)
-    {
-        return const_cast<functions::descriptor*>(static_cast<context const*>(this)->find_function(rvalue_cast(name), import));
-    }
-
-    functions::descriptor const* context::find_function(string name, bool import) const
-    {
-        auto& dispatcher = this->dispatcher();
-        auto descriptor = dispatcher.find(name);
-        if (!descriptor && import) {
-            auto& node = this->node();
-
-            // Attempt to import the function and find it again
-            node.environment().import(node.logger(), find_type::function, name);
-            descriptor = dispatcher.find(name);
-        }
-        return descriptor;
+        return klass;
     }
 
     compiler::defined_type const* context::find_defined_type(string name, bool import)
@@ -672,11 +637,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         types::klass::normalize(name);
 
         auto definition = registry.find_defined_type(name);
-        if (!definition && import) {
-            auto& node = this->node();
-
+        if (!definition && import && _node) {
             // Attempt to import the defined type
-            node.environment().import(node.logger(), find_type::manifest, name);
+            _node->environment().import(_node->logger(), find_type::manifest, boost::to_lower_copy(name));
 
             // Find it again
             definition = registry.find_defined_type(name);
@@ -684,29 +647,109 @@ namespace puppet { namespace compiler { namespace evaluation {
         return definition;
     }
 
-    bool context::is_defined(string name, bool klass, bool defined_type)
+    functions::descriptor* context::find_function(string const& name, bool import)
+    {
+        return const_cast<functions::descriptor*>(static_cast<context const*>(this)->find_function(name, import));
+    }
+
+    functions::descriptor const* context::find_function(string const& name, bool import) const
+    {
+        auto& dispatcher = this->dispatcher();
+        auto descriptor = dispatcher.find(name);
+        if (!descriptor && import && _node) {
+            // Attempt to import the function and find it again
+            _node->environment().import(_node->logger(), find_type::function, boost::to_lower_copy(name));
+            descriptor = dispatcher.find(name);
+        }
+        return descriptor;
+    }
+
+    compiler::type_alias* context::find_type_alias(string const& name, bool import)
+    {
+        return const_cast<compiler::type_alias*>(static_cast<context const*>(this)->find_type_alias(name, import));
+    }
+
+    compiler::type_alias const* context::find_type_alias(string const& name, bool import) const
     {
         auto& registry = this->registry();
 
-        if (!klass && !defined_type) {
+        auto alias = registry.find_type_alias(name);
+        if (!alias && import && _node) {
+            // Attempt to import the alias using a lowercase name and find it again
+            _node->environment().import(_node->logger(), find_type::type, boost::to_lower_copy(name));
+            alias = registry.find_type_alias(name);
+        }
+        return alias;
+    }
+
+    shared_ptr<values::type> context::resolve_type_alias(string const& name)
+    {
+        auto it = _resolved_type_aliases.find(name);
+        if (it != _resolved_type_aliases.end()) {
+            return it->second;
+        }
+
+        auto alias = find_type_alias(name);
+        if (!alias) {
+            return nullptr;
+        }
+
+        // Push a frame indicating an alias resolution
+        scoped_stack_frame frame{ *this, stack_frame{ &alias->expression(), current_scope() }};
+
+        // Initially map to an Any type
+        auto resolved = make_shared<values::type>();
+        _resolved_type_aliases[name] = resolved;
+
+        auto type = values::type::create(alias->expression().type, this);
+        if (!type) {
+            throw evaluation_exception(
+                (boost::format("expected type alias '%1%' to evaluate to a type.") %
+                 name
+                ).str(),
+                alias->expression().alias,
+                backtrace()
+            );
+        }
+
+        *resolved = rvalue_cast(*type);
+
+        // Ensure the alias resolves to a "real" type
+        unordered_map<values::type const*, bool> map;
+        if (!resolved->is_real(map)) {
+            throw evaluation_exception(
+                (boost::format("%1% does not resolve to a real type.") %
+                 *resolved
+                ).str(),
+                alias->expression().type.context(),
+                backtrace()
+            );
+        }
+        return resolved;
+    }
+
+    bool context::is_defined(string name, bool check_classes, bool checked_defined_types)
+    {
+        auto& registry = this->registry();
+
+        if (!check_classes && !checked_defined_types) {
             return false;
         }
 
-        // Ensure the name is in the expected format
         types::klass::normalize(name);
 
         // Check for class or defined type
-        if ((klass && registry.find_class(name)) || (defined_type && registry.find_defined_type(name))) {
+        if ((check_classes && registry.find_class(name)) || (checked_defined_types && registry.find_defined_type(name))) {
             return true;
         }
 
-        auto& node = this->node();
+        if (!_node) {
+            return false;
+        }
 
-        // Try to import a manifest with the name
-        node.environment().import(node.logger(), find_type::manifest, name);
-
-        // Check again for class or defined type
-        return (klass && registry.find_class(name)) || (defined_type && registry.find_defined_type(name));
+        // Try to import a manifest with the name and check again
+        _node->environment().import(_node->logger(), find_type::manifest, name);
+        return (check_classes && registry.find_class(name)) || (checked_defined_types && registry.find_defined_type(name));
     }
 
     void context::add(resource_relationship relationship)
@@ -794,7 +837,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Guard against infinite recursion by limiting the number of loop iterations
             if (iteration++ >= max_iterations) {
-                throw evaluation_exception("maximum defined type evaluations exceeded: a defined type may be infinitely recursive.");
+                throw evaluation_exception("maximum defined type evaluations exceeded: a defined type may be infinitely recursive.", backtrace());
             }
 
             // Loop one more time so that collectors are run again

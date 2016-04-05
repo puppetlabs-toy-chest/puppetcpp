@@ -90,6 +90,7 @@ namespace puppet { namespace compiler {
         void operator()(ast::consumes_expression const& expression);
         void operator()(ast::application_expression const& expression);
         void operator()(ast::site_expression const& expression);
+        void operator()(ast::type_alias_expression const& expression);
         bool can_define() const;
         std::string qualify(std::string const& name) const;
         std::string validate_name(bool is_class, ast::name const& name) const;

@@ -108,9 +108,29 @@ namespace puppet { namespace compiler {
     };
 
     /**
-     * Represents the type registry.
-     * Note: the registry assumes that any syntax tree imported into it will outlive the registry; it does not
-     * take a shared pointer on any tree.
+     * Represents a type alias.
+     */
+    struct type_alias
+    {
+        /**
+         * Constructs a type alias.
+         * @param expression The type alias expression.
+         */
+        explicit type_alias(ast::type_alias_expression const& expression);
+
+        /**
+         * Gets the expression for the type alias.
+         * @return Returns the expression for the type alias.
+         */
+        ast::type_alias_expression const& expression() const;
+
+     private:
+        std::shared_ptr<ast::syntax_tree> _tree;
+        ast::type_alias_expression const& _expression;
+    };
+
+    /**
+     * Represents the compiler registry.
      */
     struct registry
     {
@@ -133,9 +153,9 @@ namespace puppet { namespace compiler {
         /**
          * Finds a class given the qualified name.
          * @param name The fully-qualified name of the class (e.g. foo::bar).
-         * @return Returns a pointer to the class definitions if found or nullptr if the class does not exist.
+         * @return Returns a pointer to the class definition if found or nullptr if the class does not exist.
          */
-        std::vector<klass> const* find_class(std::string const& name) const;
+        klass const* find_class(std::string const& name) const;
 
         /**
          * Registers a class.
@@ -153,9 +173,8 @@ namespace puppet { namespace compiler {
         /**
          * Registers a defined type.
          * @param type The defined type to register.
-         * @return Returns nullptr if the defined type was successfully registered or the pointer to the previous definition.
          */
-        defined_type const* register_defined_type(defined_type type);
+        void register_defined_type(defined_type type);
 
         /**
          * Finds a matching node definition and scope name for the given node.
@@ -184,16 +203,37 @@ namespace puppet { namespace compiler {
          */
         bool has_nodes() const;
 
+        /**
+         * Registers a type alias.
+         * @param alias The type alias to register.
+         */
+        void register_type_alias(type_alias alias);
+
+        /**
+         * Finds a type alias by name.
+         * @param name The name of the type alias (e.g. Foo::Bar).
+         * @return Returns the type alias or nullptr if the type alias does not exist.
+         */
+        type_alias* find_type_alias(std::string const& name);
+
+        /**
+         * Finds a type alias by name.
+         * @param name The name of the type alias (e.g. Foo::Bar).
+         * @return Returns the type alias or nullptr if hte type alias does not exist.
+         */
+        type_alias const* find_type_alias(std::string const& name) const;
+
      private:
         registry(registry&) = delete;
         registry& operator=(registry&) = delete;
 
-        std::unordered_map<std::string, std::vector<klass>> _classes;
+        std::unordered_map<std::string, klass> _classes;
         std::unordered_map<std::string, defined_type> _defined_types;
         std::vector<node_definition> _nodes;
         std::unordered_map<std::string, size_t> _named_nodes;
         std::vector<std::pair<runtime::values::regex, size_t>> _regex_nodes;
         boost::optional<size_t> _default_node_index;
+        std::unordered_map<std::string, type_alias> _aliases;
     };
 
 }}  // puppet::compiler

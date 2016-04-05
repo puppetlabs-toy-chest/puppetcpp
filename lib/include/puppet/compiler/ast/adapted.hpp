@@ -403,9 +403,16 @@ BOOST_FUSION_ADAPT_STRUCT(
 BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::site_expression,
     begin,
-    body ,
+    body,
     end,
     tree
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::type_alias_expression,
+    begin,
+    alias,
+    type
 )
 
 BOOST_FUSION_ADAPT_STRUCT(

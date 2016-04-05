@@ -16,7 +16,30 @@ namespace puppet { namespace compiler {
         switch (type) {
             case find_type::manifest:
             case find_type::function:
+            case find_type::type:
                 return ".pp";
+
+            default:
+                throw runtime_error("unexpected file type.");
+        }
+    }
+
+    fs::path base_path(compiler::finder const& finder, find_type type)
+    {
+        switch (type) {
+            case find_type::manifest: {
+                auto& setting = finder.manifest_setting();
+                if (setting.empty()) {
+                    return fs::path{ finder.directory() } / "manifests";
+                }
+                return setting;
+            }
+
+            case find_type::function:
+                return fs::path{ finder.directory() } / "functions";
+
+            case find_type::type:
+                return fs::path{ finder.directory() } / "types";
 
             default:
                 throw runtime_error("unexpected file type.");
@@ -61,20 +84,19 @@ namespace puppet { namespace compiler {
         if (settings) {
             auto manifest = settings->get(settings::manifest);
             if (manifest.as<string>()) {
-                _manifests_path = make_absolute(*manifest.as<string>(), _directory);
+                _manifest_setting = make_absolute(*manifest.as<string>(), _directory);
             }
         }
-        // Fall back to default search locations if not specified
-        if (_manifests_path.empty()) {
-            _manifests_path = make_absolute("manifests", _directory);
-        }
-
-        _functions_path = make_absolute("functions", _directory);
     }
 
     string const& finder::directory() const
     {
         return _directory;
+    }
+
+    string const& finder::manifest_setting() const
+    {
+        return _manifest_setting;
     }
 
     string finder::find_file(find_type type, string const& name) const
@@ -84,7 +106,7 @@ namespace puppet { namespace compiler {
         }
 
         // Start with the base
-        fs::path path = base_path(type);
+        auto path = base_path(*this, type);
 
         // Split the name on '::' and treat all but the last component as a subdirectory
         boost::split_iterator<string::const_iterator> end;
@@ -103,11 +125,11 @@ namespace puppet { namespace compiler {
 
     void finder::each_file(find_type type, function<bool(string const&)> const& callback) const
     {
-        auto& base = base_path(type);
+        auto base = base_path(*this, type);
         sys::error_code ec;
         if (fs::is_regular_file(base, ec)) {
             // If the base itself is to a file, treat it like a manifest
-            callback(base);
+            callback(base.string());
             return;
         }
         if (!fs::is_directory(base, ec)) {
@@ -118,20 +140,6 @@ namespace puppet { namespace compiler {
         // This defaults to the C locale to ensure a consistent sort regardless of the current user's locale
         std::locale locale{};
         compiler::each_file(type, base, locale, callback);
-    }
-
-    string const& finder::base_path(find_type type) const
-    {
-        switch (type) {
-            case find_type::manifest:
-                return _manifests_path;
-
-            case find_type::function:
-                return _functions_path;
-
-            default:
-                throw runtime_error("unexpected file type.");
-        }
     }
 
 }}  // namespace puppet::compiler

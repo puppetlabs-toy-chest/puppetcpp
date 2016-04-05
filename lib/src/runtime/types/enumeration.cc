@@ -49,23 +49,34 @@ namespace puppet { namespace runtime { namespace types {
         return ptr->strings().size() < _strings.size();
     }
 
-    ostream& operator<<(ostream& os, enumeration const& type)
+    bool enumeration::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << enumeration::name();
-        if (type.strings().empty()) {
-            return os;
+        // Enum is a real type
+        return true;
+    }
+
+    void enumeration::write(ostream& stream, bool expand) const
+    {
+        stream << enumeration::name();
+        if (_strings.empty()) {
+            return;
         }
-        os << '[';
+        stream << '[';
         bool first = true;
-        for (auto const& string : type.strings()) {
+        for (auto const& string : _strings) {
             if (first) {
                 first = false;
             } else {
-                os << ", ";
+                stream << ", ";
             }
-            os << string;
+            stream << string;
         }
-        os << ']';
+        stream << ']';
+    }
+
+    ostream& operator<<(ostream& os, enumeration const& type)
+    {
+        type.write(os);
         return os;
     }
 

@@ -22,7 +22,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         }
 
         // Check for built-in type
-        if (types::resource(argument).is_builtin()) {
+        if (types::resource::is_builtin(types::resource{argument}.type_name())) {
             return true;
         }
 
@@ -50,7 +50,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         // If no title, check for built-in or defined type
         if (argument.title().empty()) {
-            if (argument.is_builtin()) {
+            if (types::resource::is_builtin(argument.type_name())) {
                 return true;
             }
             return context.is_defined(argument.title(), false, true);

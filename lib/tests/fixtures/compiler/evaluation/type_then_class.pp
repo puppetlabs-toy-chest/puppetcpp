@@ -1,0 +1,7 @@
+define foo {
+
+}
+
+class foo {
+
+}

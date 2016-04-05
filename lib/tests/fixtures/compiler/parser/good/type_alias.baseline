@@ -1,0 +1,106 @@
+statements:
+  - kind: type alias
+    alias:
+      kind: type
+      begin:
+        offset: 5
+        line: 1
+      end:
+        offset: 8
+        line: 1
+      name: Foo
+    type:
+      kind: type
+      begin:
+        offset: 11
+        line: 1
+      end:
+        offset: 17
+        line: 1
+      name: String
+  - kind: type alias
+    alias:
+      kind: type
+      begin:
+        offset: 23
+        line: 2
+      end:
+        offset: 26
+        line: 2
+      name: Bar
+    type:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 29
+          line: 2
+        end:
+          offset: 35
+          line: 2
+        name: String
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 35
+            line: 2
+          end:
+            offset: 43
+            line: 2
+          arguments:
+            - kind: number
+              begin:
+                offset: 36
+                line: 2
+              end:
+                offset: 37
+                line: 2
+              base: decimal
+              value: 0
+            - kind: number
+              begin:
+                offset: 39
+                line: 2
+              end:
+                offset: 42
+                line: 2
+              base: decimal
+              value: 100
+  - kind: type alias
+    alias:
+      kind: type
+      begin:
+        offset: 49
+        line: 3
+      end:
+        offset: 52
+        line: 3
+      name: Baz
+    type:
+      kind: postfix
+      primary:
+        kind: type
+        begin:
+          offset: 55
+          line: 3
+        end:
+          offset: 59
+          line: 3
+        name: Type
+      subexpressions:
+        - kind: access
+          begin:
+            offset: 59
+            line: 3
+          end:
+            offset: 64
+            line: 3
+          arguments:
+            - kind: type
+              begin:
+                offset: 60
+                line: 3
+              end:
+                offset: 63
+                line: 3
+              name: Foo

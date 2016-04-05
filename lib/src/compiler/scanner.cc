@@ -1,12 +1,14 @@
 #include <puppet/compiler/scanner.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/compiler/resource.hpp>
+#include <puppet/compiler/validation/type_validator.hpp>
 #include <puppet/runtime/types/class.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
 using namespace std;
+using namespace puppet::compiler::validation;
 using namespace puppet::runtime;
 
 namespace puppet { namespace compiler {
@@ -265,34 +267,21 @@ namespace puppet { namespace compiler {
         // Validate the class name
         string name = validate_name(true, expression.name);
 
+        // Check if the class already exists
+        if (auto existing = _registry.find_class(name)) {
+            throw parse_exception(
+                (boost::format("class '%1%' was previously defined at %2%:%3%.") %
+                 existing->name() %
+                 existing->expression().tree->path() %
+                 existing->expression().begin.line()
+                ).str(),
+                expression.name.begin,
+                expression.name.end
+            );
+        }
+
         // Validate the class parameters
         validate_parameters("class", expression.parameters);
-
-        // Validate the class' parent
-        if (expression.parent) {
-            auto definitions = _registry.find_class(name);
-            if (definitions) {
-                for (auto const& definition : *definitions) {
-                    auto& existing = definition.expression();
-                    auto& parent = existing.parent;
-                    if (!parent || parent->value == expression.parent->value) {
-                        // No parent or parents match
-                        continue;
-                    }
-                    throw parse_exception(
-                        (boost::format("class '%1%' cannot inherit from '%2%' because the class already inherits from '%3%' at %4%:%5%.") %
-                         name %
-                         expression.parent->value %
-                         parent->value %
-                         existing.tree->path() %
-                         existing.begin.line()
-                        ).str(),
-                        expression.parent->begin,
-                        expression.parent->end
-                    );
-                }
-            }
-        }
 
         // Scan the parameters
         if (!expression.parameters.empty()) {
@@ -333,8 +322,8 @@ namespace puppet { namespace compiler {
                  existing->expression().tree->path() %
                  existing->expression().begin.line()
                 ).str(),
-                expression.begin,
-                expression.end
+                expression.name.begin,
+                expression.name.end
             );
         }
 
@@ -619,6 +608,48 @@ namespace puppet { namespace compiler {
         }
     }
 
+    void scanner::operator()(ast::type_alias_expression const& expression)
+    {
+        if (!_scopes.empty()) {
+            auto context = expression.context();
+            throw parse_exception("type aliases can only be defined at top-level.", context.begin, context.end);
+        }
+
+        if (values::type::find(expression.alias.name)) {
+            throw parse_exception(
+                (boost::format("type alias '%1%' conflicts with a built-in type of the same name.") %
+                 expression.alias
+                ).str(),
+                expression.alias.begin,
+                expression.alias.end
+            );
+        }
+
+        auto alias = _registry.find_type_alias(expression.alias.name);
+        if (alias) {
+            auto context = alias->expression().context();
+            throw parse_exception(
+                (boost::format("type alias '%1%' was previously defined at %2%:%3%.") %
+                 expression.alias %
+                 context.tree->path() %
+                 context.begin.line()
+                ).str(),
+                expression.alias.begin,
+                expression.alias.end
+            );
+        }
+
+        // Validate the RHS expression
+        type_validator::validate(expression.type);
+
+        scope_helper scope{ _scopes };
+
+        operator()(expression.alias);
+        operator()(expression.type);
+
+        _registry.register_type_alias(type_alias{ expression });
+    }
+
     bool scanner::can_define() const
     {
         return _scopes.empty() || _scopes.back();
@@ -680,14 +711,13 @@ namespace puppet { namespace compiler {
                 );
             }
         } else {
-            auto definitions = _registry.find_class(qualified_name);
-            if (definitions) {
-                auto& first = definitions->front();
+            auto klass = _registry.find_class(qualified_name);
+            if (klass) {
                 throw parse_exception(
                     (boost::format("'%1%' was previously defined as a class at %2%:%3%.") %
                      qualified_name %
-                     first.expression().tree->path() %
-                     first.expression().begin.line()
+                     klass->expression().tree->path() %
+                     klass->expression().begin.line()
                     ).str(),
                     name.begin,
                     name.end
@@ -702,8 +732,11 @@ namespace puppet { namespace compiler {
         for (auto const& parameter : parameters) {
             auto const& name = parameter.variable.name;
 
-            // Validate the name
             validate_parameter_name(parameter);
+
+            if (parameter.type) {
+                type_validator::validate(*parameter.type);
+            }
 
             // Check for reserved names
             if (name == "title" || name == "name") {

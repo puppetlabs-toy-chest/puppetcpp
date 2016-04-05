@@ -185,45 +185,27 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(ast::type const& expression)
     {
-        static const unordered_map<std::string, values::type> names = {
-            { types::any::name(),           types::any() },
-            { types::array::name(),         types::array() },
-            { types::boolean::name(),       types::boolean() },
-            { types::callable::name(),      types::callable() },
-            { types::catalog_entry::name(), types::catalog_entry() },
-            { types::collection::name(),    types::collection() },
-            { types::data::name(),          types::data() },
-            { types::defaulted::name(),     types::defaulted() },
-            { types::enumeration::name(),   types::enumeration() },
-            { types::floating::name(),      types::floating() },
-            { types::hash::name(),          types::hash() },
-            { types::integer::name(),       types::integer() },
-            { types::iterable::name(),      types::iterable() },
-            { types::iterator::name(),      types::iterator() },
-            { types::klass::name(),         types::klass() },
-            { types::not_undef::name(),     types::not_undef() },
-            { types::numeric::name(),       types::numeric() },
-            { types::optional::name(),      types::optional() },
-            { types::pattern::name(),       types::pattern() },
-            { types::regexp::name(),        types::regexp() },
-            { types::resource::name(),      types::resource() },
-            { types::runtime::name(),       types::runtime() },
-            { types::scalar::name(),        types::scalar() },
-            { types::string::name(),        types::string() },
-            { types::structure::name(),     types::structure() },
-            { types::tuple::name(),         types::tuple() },
-            { types::type::name(),          types::type() },
-            { types::undef::name(),         types::undef() },
-            { types::variant::name(),       types::variant() },
-        };
+        auto type = values::type::find(expression.name);
+        if (type) {
+            return *type;
+        }
 
-        auto it = names.find(expression.name);
-        if (it == names.end()) {
-            // Assume the unknown type is a resource
-            // TODO: this needs to check registered types
+        // TODO: check with the registry for defined resource types instead of this "builtin" function
+        if (types::resource::is_builtin(expression.name) || _context.find_defined_type(expression.name)) {
             return types::resource(expression.name);
         }
-        return it->second;
+
+        if (auto resolved = _context.resolve_type_alias(expression.name)) {
+            return types::alias(expression.name, rvalue_cast(resolved));
+        }
+
+        throw evaluation_exception(
+            (boost::format("resource type '%1%' was not found.") %
+             expression.name
+            ).str(),
+            expression,
+            _context.backtrace()
+        );
     }
 
     value evaluator::operator()(interpolated_string const& expression)
@@ -680,6 +662,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         throw evaluation_exception("site expressions are not yet implemented.", expression, _context.backtrace());
     }
 
+    value evaluator::operator()(type_alias_expression const& expression)
+    {
+        // No return value
+        return values::undef();
+    }
+
     value evaluator::evaluate_body(vector<ast::expression> const& body)
     {
         value result;
@@ -813,12 +801,12 @@ namespace puppet { namespace compiler { namespace evaluation {
     void evaluator::validate_attribute(std::string const& name, values::value& value, ast::context const& context)
     {
         // Type information for metaparameters
-        static const values::type string_array_type = types::array(make_unique<values::type>(types::string()));
-        static const values::type relationship_type = create_relationship_type();
-        static const values::type string_type = types::string();
-        static const values::type boolean_type = types::boolean();
-        static const values::type loglevel_type = types::enumeration({ "debug", "info", "notice", "warning", "err", "alert", "emerg", "crit", "verbose" });
-        static const values::type audit_type = create_audit_type();
+        static const auto string_array_type = *values::type::parse("Array[String]");
+        static const auto relationship_type = *values::type::parse("Array[Variant[String, CatalogEntry]]");
+        static const auto string_type       = *values::type::parse("String");
+        static const auto boolean_type      = *values::type::parse("Boolean");
+        static const auto loglevel_type     = *values::type::parse("Enum[debug, info, notice, warning, err, alert, emerg, crit, verbose]");
+        static const auto audit_type        = *values::type::parse("Variant[String, Array[String]]");
 
         // Ignore undef attributes
         if (value.is_undef()) {
@@ -884,7 +872,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Lookup a defined type if not a built-in or class
         defined_type const* definition = nullptr;
-        if (!is_class && !types::resource(type_name).is_builtin()) {
+        if (!is_class && !types::resource::is_builtin(types::resource{type_name}.type_name())) {
             definition = _context.find_defined_type(type_name);
             if (!definition) {
                 throw evaluation_exception(
@@ -983,22 +971,6 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
         }
         return resources;
-    }
-
-    values::type evaluator::create_relationship_type()
-    {
-        vector<unique_ptr<values::type>> types;
-        types.emplace_back(make_unique<values::type>(types::string()));
-        types.emplace_back(make_unique<values::type>(types::catalog_entry()));
-        return types::array(make_unique<values::type>(types::variant(rvalue_cast(types))));
-    }
-
-    values::type evaluator::create_audit_type()
-    {
-        vector<unique_ptr<values::type>> types;
-        types.emplace_back(make_unique<values::type>(types::string()));
-        types.emplace_back(make_unique<values::type>(types::array(make_unique<values::type>(types::string()))));
-        return types::variant(rvalue_cast(types));
     }
 
     values::value evaluator::climb_expression(

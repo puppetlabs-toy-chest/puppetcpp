@@ -59,22 +59,41 @@ namespace puppet { namespace runtime { namespace types {
         return !class_ptr->title().empty();
     }
 
+    bool klass::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Class is a real type
+        return true;
+    }
+
+    void klass::write(ostream& stream, bool expand) const
+    {
+        stream << klass::name();
+        if (_title.empty()) {
+            return;
+        }
+        stream << "[" << _title << "]";
+    }
+
     void klass::normalize(std::string& name)
     {
         if (boost::starts_with(name, "::")) {
             name = name.substr(2);
         }
 
-        boost::to_lower(name);
+        // Now lowercase every start of a type name
+        boost::split_iterator<std::string::iterator> end;
+        for (auto it = boost::make_split_iterator(name, boost::first_finder("::", boost::is_equal())); it != end; ++it) {
+            if (!*it) {
+                continue;
+            }
+            auto range = boost::make_iterator_range(it->begin(), it->begin() + 1);
+            boost::to_lower(range);
+        }
     }
 
     ostream& operator<<(ostream& os, klass const& type)
     {
-        os << klass::name();
-        if (type.title().empty()) {
-            return os;
-        }
-        os << "[" << type.title() << "]";
+        type.write(os);
         return os;
     }
 

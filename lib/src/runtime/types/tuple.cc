@@ -129,44 +129,55 @@ namespace puppet { namespace runtime { namespace types {
                std::max(ptr->from(), ptr->to()) <= std::max(_from, _to);
     }
 
-    ostream& operator<<(ostream& os, tuple const& type)
+    bool tuple::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Tuple is a real type
+        return true;
+    }
+
+    void tuple::write(ostream& stream, bool expand) const
     {
         // Only output the tuple name if everything is default
-        os << tuple::name();
-        if (type.types().empty() && type.from() == 0 && type.to() == std::numeric_limits<int64_t>::max()) {
-            return os;
+        stream << tuple::name();
+        if (_types.empty() && _from == 0 && _to == std::numeric_limits<int64_t>::max()) {
+            return;
         }
-        os << '[';
+        stream << '[';
         bool first = true;
-        for (auto const& element : type.types()) {
+        for (auto const& element : _types) {
             if (first) {
                 first = false;
             } else {
-                os << ", ";
+                stream << ", ";
             }
-            os << *element;
+            element->write(stream, false);
         }
         // If the from and to are equal to the size of the types, only output the types
-        int64_t size = static_cast<int64_t>(type.types().size());
-        if (type.from() == size && type.to() == size) {
-            os << ']';
-            return os;
+        int64_t size = static_cast<int64_t>(_types.size());
+        if (_from == size && _to == size) {
+            stream << ']';
+            return;
         }
         if (size > 0) {
-            os << ", ";
+            stream << ", ";
         }
-        if (type.from() == 0) {
-            os << "default";
+        if (_from == 0) {
+            stream << "default";
         } else {
-            os << type.from();
+            stream << _from;
         }
-        os << ", ";
-        if (type.to() == std::numeric_limits<int64_t>::max()) {
-            os << "default";
+        stream << ", ";
+        if (_to == std::numeric_limits<int64_t>::max()) {
+            stream << "default";
         } else {
-            os << type.to();
+            stream << _to;
         }
-        os << ']';
+        stream << ']';
+    }
+
+    ostream& operator<<(ostream& os, tuple const& type)
+    {
+        type.write(os);
         return os;
     }
 

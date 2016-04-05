@@ -1,0 +1,3 @@
+Error: duplicate_class.pp:5:7: node 'test': class 'foo' was previously defined at duplicate_class.pp:1.
+  class foo {
+        ^~~

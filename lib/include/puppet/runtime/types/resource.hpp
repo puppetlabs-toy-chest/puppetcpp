@@ -5,11 +5,14 @@
 #pragma once
 
 #include "../values/forward.hpp"
-#include <ostream>
-#include <string>
 #include <boost/optional.hpp>
+#include <ostream>
+#include <unordered_map>
 
 namespace puppet { namespace runtime { namespace types {
+
+    // Forward declaration of alias
+    struct alias;
 
     /**
      * Represents the Puppet Resource type.
@@ -54,10 +57,11 @@ namespace puppet { namespace runtime { namespace types {
         bool is_stage() const;
 
         /**
-         * Determines if the resource is a "built-in" type.
-         * @return Returns true if the resource is a "built-in" type or false if not.
+         * Determines if the given name is a "built-in" type.
+         * @param name The type name to check.
+         * @return Returns true if the name is a "built-in" type or false if not.
          */
-        bool is_builtin() const;
+        static bool is_builtin(std::string const& name);
 
         /**
          * Gets the name of the type.
@@ -80,6 +84,20 @@ namespace puppet { namespace runtime { namespace types {
         bool is_specialization(values::type const& other) const;
 
         /**
+         * Determines if the type is real (i.e. actual type vs. an alias/variant that never resolves to an actual type).
+         * @param map The map to keep track of encountered type aliases.
+         * @return Returns true if the type is real or false if it never resolves to an actual type.
+         */
+        bool is_real(std::unordered_map<values::type const*, bool>& map) const;
+
+        /**
+         * Writes a representation of the type to the given stream.
+         * @param stream The stream to write to.
+         * @param expand True to specify that type aliases should be expanded or false if not.
+         */
+        void write(std::ostream& stream, bool expand = true) const;
+
+        /**
          * Parses a resource type specification into a resource.
          * @param specification The resource type specification to parse (e.g. File[foo]).
          * @return Returns the resource type if successful or boost::none if parsing was unsuccessful.
@@ -97,7 +115,7 @@ namespace puppet { namespace runtime { namespace types {
      * @param type The type to write.
      * @return Returns the given output stream.
      */
-    std::ostream& operator<<(std::ostream& os, resource const& type);\
+    std::ostream& operator<<(std::ostream& os, resource const& type);
 
     /**
      * Equality operator for resource type.

@@ -1,0 +1,1 @@
+type MyEnum = Enum["${x}"]

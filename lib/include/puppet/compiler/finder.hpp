@@ -21,9 +21,13 @@ namespace puppet { namespace compiler {
          */
         manifest,
         /**
-         * Finds a function
+         * Finds a function.
          */
-        function
+        function,
+        /**
+         * Finds a type.
+         */
+        type
     };
 
     /**
@@ -45,6 +49,12 @@ namespace puppet { namespace compiler {
         std::string const& directory() const;
 
         /**
+         * Gets the manifest setting when the finder was constructed.
+         * @return Returns the manifest setting when the finder was constructed.
+         */
+        std::string const& manifest_setting() const;
+
+        /**
          * Finds a file by qualified name.
          * @param type The type of file to find.
          * @param name The qualified name (e.g. foo::bar).
@@ -61,11 +71,8 @@ namespace puppet { namespace compiler {
         void each_file(find_type type, std::function<bool(std::string const&)> const& callback) const;
 
      private:
-        std::string const& base_path(find_type type) const;
-
         std::string _directory;
-        std::string _manifests_path;
-        std::string _functions_path;
+        std::string _manifest_setting;
     };
 
 }}  // puppet::compiler

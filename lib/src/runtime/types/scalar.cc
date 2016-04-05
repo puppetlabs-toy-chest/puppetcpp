@@ -32,9 +32,20 @@ namespace puppet { namespace runtime { namespace types {
                string().is_specialization(other);
     }
 
-    ostream& operator<<(ostream& os, scalar const&)
+    bool scalar::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << scalar::name();
+        // Scalar is a real type
+        return true;
+    }
+
+    void scalar::write(ostream& stream, bool expand) const
+    {
+        stream << scalar::name();
+    }
+
+    ostream& operator<<(ostream& os, scalar const& type)
+    {
+        type.write(os);
         return os;
     }
 

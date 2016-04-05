@@ -10,9 +10,32 @@ namespace puppet { namespace runtime { namespace types {
         return "Any";
     }
 
-    ostream& operator<<(ostream& os, any const&)
+    bool any::is_instance(values::value const& value) const
     {
-        os << any::name();
+        // All values are an instance of Any
+        return true;
+    }
+
+    bool any::is_specialization(values::type const& other) const
+    {
+        // All types (except for Any) are specializations of Any
+        return !boost::get<any>(&other);
+    }
+
+    bool any::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Any is a real type
+        return true;
+    }
+
+    void any::write(ostream& stream, bool expand) const
+    {
+        stream << any::name();
+    }
+
+    ostream& operator<<(ostream& os, any const& type)
+    {
+        type.write(os);
         return os;
     }
 
@@ -24,18 +47,6 @@ namespace puppet { namespace runtime { namespace types {
     bool operator!=(any const& left, any const& right)
     {
         return !(left == right);
-    }
-
-    bool any::is_instance(values::value const& value) const
-    {
-        // All values are an instance of Any
-        return true;
-    }
-
-    bool any::is_specialization(values::type const& other) const
-    {
-        // All types (except for Any) are specializations of Any
-        return !boost::get<any>(&other);
     }
 
     size_t hash_value(any const&)

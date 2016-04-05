@@ -140,13 +140,26 @@ namespace puppet { namespace runtime { namespace types {
         return iterable && iterable->type();
     }
 
+    bool iterable::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Iterable is a real type
+        return true;
+    }
+
+    void iterable::write(ostream& stream, bool expand) const
+    {
+        stream << types::iterable::name();
+        if (!_type) {
+            return;
+        }
+        stream << '[';
+        _type->write(stream, false);
+        stream << ']';
+    }
+
     ostream& operator<<(ostream& os, types::iterable const& type)
     {
-        os << types::iterable::name();
-        if (!type.type()) {
-            return os;
-        }
-        os << '[' << *type.type() << ']';
+        type.write(os);
         return os;
     }
 

@@ -316,7 +316,8 @@ namespace puppet { namespace compiler { namespace ast {
             boost::get<x3::forward_ast<produces_expression>>(this) ||
             boost::get<x3::forward_ast<consumes_expression>>(this) ||
             boost::get<x3::forward_ast<application_expression>>(this) ||
-            boost::get<x3::forward_ast<site_expression>>(this)) {
+            boost::get<x3::forward_ast<site_expression>>(this) ||
+            boost::get<x3::forward_ast<type_alias_expression>>(this)) {
             return true;
         }
         return false;
@@ -1493,6 +1494,21 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    ast::context type_alias_expression::context() const
+    {
+        ast::context context;
+        context.begin = begin;
+        context.end = type.context().end;
+        context.tree = alias.tree;
+        return context;
+    }
+
+    ostream& operator<<(ostream& os, type_alias_expression const& node)
+    {
+        os << "type " << node.alias << " = " << node.type;
+        return os;
+    }
+
     std::string const& syntax_tree::path() const
     {
         return *_path;
@@ -2103,6 +2119,15 @@ namespace puppet { namespace compiler { namespace ast {
             write("kind", "site");
             write(static_cast<context const&>(node));
             write("body", node.body);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(type_alias_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "type alias");
+            write("alias", node.alias);
+            write("type", node.type);
             _emitter << YAML::EndMap;
         }
 

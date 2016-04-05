@@ -21,9 +21,20 @@ namespace puppet { namespace runtime { namespace types {
         return false;
     }
 
-    ostream& operator<<(ostream& os, undef const&)
+    bool undef::is_real(unordered_map<values::type const*, bool>& map) const
     {
-        os << undef::name();
+        // Undef is a real type
+        return true;
+    }
+
+    void undef::write(ostream& stream, bool expand) const
+    {
+        stream << undef::name();
+    }
+
+    ostream& operator<<(ostream& os, undef const& type)
+    {
+        type.write(os);
         return os;
     }
 

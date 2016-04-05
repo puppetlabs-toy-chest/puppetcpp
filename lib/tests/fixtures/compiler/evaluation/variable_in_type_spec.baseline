@@ -1,0 +1,3 @@
+Error: variable_in_type_spec.pp:1:26: node 'test': variables cannot be used in type specifications.
+  type MyInteger = Integer[$x]
+                           ^~

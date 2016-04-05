@@ -1,0 +1,3 @@
+Error: illegal_type_alias_name.pp:1:6: node 'test': type alias 'String' conflicts with a built-in type of the same name.
+  type String = Integer
+       ^~~~~~

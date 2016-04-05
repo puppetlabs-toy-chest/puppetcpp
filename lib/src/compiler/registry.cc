@@ -55,10 +55,21 @@ namespace puppet { namespace compiler {
         return _expression;
     }
 
-    vector<klass> const* registry::find_class(string const& name) const
+    type_alias::type_alias(ast::type_alias_expression const& expression) :
+        _tree(expression.alias.tree->shared_from_this()),
+        _expression(expression)
+    {
+    }
+
+    ast::type_alias_expression const& type_alias::expression() const
+    {
+        return _expression;
+    }
+
+    klass const* registry::find_class(string const& name) const
     {
         auto it = _classes.find(name);
-        if (it == _classes.end() || it->second.empty()) {
+        if (it == _classes.end()) {
             return nullptr;
         }
         return &it->second;
@@ -66,8 +77,8 @@ namespace puppet { namespace compiler {
 
     void registry::register_class(compiler::klass klass)
     {
-        auto& definitions = _classes[klass.name()];
-        definitions.emplace_back(rvalue_cast(klass));
+        auto name = klass.name();
+        _classes.emplace(rvalue_cast(name), rvalue_cast(klass));
     }
 
     defined_type const* registry::find_defined_type(string const& name) const
@@ -79,16 +90,10 @@ namespace puppet { namespace compiler {
         return &it->second;
     }
 
-    defined_type const* registry::register_defined_type(defined_type type)
+    void registry::register_defined_type(defined_type type)
     {
-        // Add the defined type
         auto name = type.name();
-
-        auto result = _defined_types.emplace(rvalue_cast(name), rvalue_cast(type));
-        if (result.second) {
-            return nullptr;
-        }
-        return &result.first->second;
+        _defined_types.emplace(rvalue_cast(name), rvalue_cast(type));
     }
 
     std::pair<node_definition const*, std::string> registry::find_node(compiler::node const& node) const
@@ -218,6 +223,25 @@ namespace puppet { namespace compiler {
     bool registry::has_nodes() const
     {
         return !_nodes.empty();
+    }
+
+    void registry::register_type_alias(type_alias alias)
+    {
+        _aliases.emplace(alias.expression().alias.name, rvalue_cast(alias));
+    }
+
+    type_alias* registry::find_type_alias(string const& name)
+    {
+        return const_cast<type_alias*>(static_cast<registry const*>(this)->find_type_alias(name));
+    }
+
+    type_alias const* registry::find_type_alias(string const& name) const
+    {
+        auto it = _aliases.find(name);
+        if (it == _aliases.end()) {
+            return nullptr;
+        }
+        return &it->second;
     }
 
 }}  // namespace puppet::compiler

@@ -59,13 +59,26 @@ namespace puppet { namespace runtime { namespace types {
         return not_undef && not_undef->type();
     }
 
+    bool not_undef::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // NotUndef is a real type
+        return true;
+    }
+
+    void not_undef::write(ostream& stream, bool expand) const
+    {
+        stream << not_undef::name();
+        if (!_type) {
+            return;
+        }
+        stream << '[';
+        _type->write(stream, false);
+        stream << ']';
+    }
+
     ostream& operator<<(ostream& os, not_undef const& type)
     {
-        os << not_undef::name();
-        if (!type.type()) {
-            return os;
-        }
-        os << '[' << *type.type() << ']';
+        type.write(os);
         return os;
     }
 

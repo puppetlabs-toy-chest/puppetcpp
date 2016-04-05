@@ -1,0 +1,3 @@
+Error: if_in_type_spec.pp:1:24: node 'test': if expressions cannot be used in type specifications.
+  type Invalid = Integer[if foo {} elsif bar {} else {}]
+                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

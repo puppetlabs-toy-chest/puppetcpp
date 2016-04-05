@@ -1,0 +1,7 @@
+define foo {
+
+}
+
+define foo {
+
+}

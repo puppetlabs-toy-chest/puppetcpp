@@ -181,8 +181,9 @@ namespace puppet { namespace compiler {
         /**
          * Constructs an evaluation exception.
          * @param message The exception message.
+         * @param backtrace The evaluation backtrace.
          */
-        explicit evaluation_exception(std::string const& message);
+        evaluation_exception(std::string const& message, std::vector<evaluation::stack_frame> backtrace);
 
         /**
          * Constructs an evaluation exception.

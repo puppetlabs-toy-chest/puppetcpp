@@ -52,7 +52,7 @@ namespace puppet { namespace runtime { namespace types {
         return _type_name == "Stage";
     }
 
-    bool resource::is_builtin() const
+    bool resource::is_builtin(std::string const& name)
     {
         // TODO: remove this member once built-in types can be defined
         static const unordered_set<std::string> builtin_types = {
@@ -107,7 +107,7 @@ namespace puppet { namespace runtime { namespace types {
             "Zone",
             "Zpool"
         };
-        return builtin_types.count(_type_name) > 0;
+        return builtin_types.count(name) > 0;
     }
 
     char const* resource::name()
@@ -158,6 +158,25 @@ namespace puppet { namespace runtime { namespace types {
         return _title.empty() && !resource->title().empty();
     }
 
+    bool resource::is_real(unordered_map<values::type const*, bool>& map) const
+    {
+        // Resource is a real type
+        return true;
+    }
+
+    void resource::write(ostream& stream, bool expand) const
+    {
+        if (_type_name.empty()) {
+            stream << resource::name();
+            return;
+        }
+        stream << _type_name;
+        if (_title.empty()) {
+            return;
+        }
+        stream << "[" << _title << "]";
+    }
+
     boost::optional<resource> resource::parse(std::string const& specification)
     {
         static std::regex specification_regex("^((?:(?:::)?[A-Z]\\w*)+)\\[([^\\]]+)\\]$");
@@ -181,15 +200,7 @@ namespace puppet { namespace runtime { namespace types {
 
     ostream& operator<<(ostream& os, resource const& type)
     {
-        if (type.type_name().empty()) {
-            os << resource::name();
-            return os;
-        }
-        os << type.type_name();
-        if (type.title().empty()) {
-            return os;
-        }
-        os << "[" << type.title() << "]";
+        type.write(os);
         return os;
     }
 

@@ -1,0 +1,3 @@
+Error: class_then_type.pp:5:8: node 'test': 'foo' was previously defined as a class at class_then_type.pp:1.
+  define foo {
+         ^~~
