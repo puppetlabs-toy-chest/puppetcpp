@@ -201,26 +201,32 @@ Before building, use `cmake` to generate build files:
     $ cd release
     $ cmake ..
 
-To generate build files with debug information:
+To generate a fully debug build use `-DCMAKE_BUILD_TYPE=Debug` when invoking `cmake`.
 
-    $ mkdir debug
-    $ cd debug
-    $ cmake -DCMAKE_BUILD_TYPE=Debug ..
+To speed up builds, it is recommended to use [ccache](https://ccache.samba.org/) as the "compiler":
+
+    $ cd release
+    $ cmake .. -DCMAKE_C_COMPILER=$(which ccache) -DCMAKE_C_COMPILER_ARG1=cc -DCMAKE_CXX_COMPILER=$(which ccache) -DCMAKE_CXX_COMPILER_ARG1=c++
+
+Also consider using [Ninja](https://ninja-build.org/) as a replacement for GNU Make:
+
+    $ cd release
+    $ cmake .. -GNinja -DCMAKE_C_COMPILER=$(which ccache) -DCMAKE_C_COMPILER_ARG1=cc -DCMAKE_CXX_COMPILER=$(which ccache) -DCMAKE_CXX_COMPILER_ARG1=c++
+
+Then use `ninja` instead of `make` in the examples below.
 
 Build
 -----
 
-Note: replace the `-j 2` below with the appropriate job count for faster parallel builds.
-
 To build puppetcpp, use 'make':
 
     $ cd release
-    $ make -j 2
+    $ make
 
 To build puppetcpp with debug information:
 
     $ cd debug
-    $ make -j 2
+    $ make
 
 Run
 ---

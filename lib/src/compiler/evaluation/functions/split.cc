@@ -1,6 +1,7 @@
 #include <puppet/compiler/evaluation/functions/split.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
 using namespace std;

@@ -1,5 +1,6 @@
 #include <puppet/compiler/evaluation/operators/binary/less_equal.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;

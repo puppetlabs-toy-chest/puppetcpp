@@ -1,6 +1,7 @@
 #include <puppet/options/command.hpp>
 #include <puppet/options/parser.hpp>
 #include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 namespace po = boost::program_options;

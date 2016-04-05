@@ -7,7 +7,6 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-include(cotire)
 
 enable_testing()
 

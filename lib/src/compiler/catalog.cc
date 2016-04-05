@@ -3,6 +3,7 @@
 #include <puppet/cast.hpp>
 #include <boost/graph/hawick_circuits.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/format.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 

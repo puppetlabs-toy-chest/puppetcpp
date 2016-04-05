@@ -11,4 +11,3 @@ set_target_properties(puppetcpp PROPERTIES COTIRE_UNITY_LINK_LIBRARIES_INIT "COP
 
 install(TARGETS puppetcpp DESTINATION bin)
 
-cotire(puppetcpp)

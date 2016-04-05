@@ -2,6 +2,8 @@
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/cast.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 
 using namespace std;

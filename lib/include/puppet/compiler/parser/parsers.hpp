@@ -8,6 +8,7 @@
 #include "../lexer/tokens.hpp"
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/nonterminal/simple_trace.hpp>
+#include <boost/lexical_cast.hpp>
 #include <tuple>
 
 namespace puppet { namespace compiler { namespace parser {
