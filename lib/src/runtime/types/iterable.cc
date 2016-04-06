@@ -165,12 +165,13 @@ namespace puppet { namespace runtime { namespace types {
 
     bool operator==(iterable const& left, iterable const& right)
     {
-        if (!left.type() && !right.type()) {
-            return true;
-        } else if (left.type() || right.type()) {
-            return false;
+        if (left.type() || right.type()) {
+            if (!left.type() || !right.type()) {
+                return false;
+            }
+            return *left.type() == *right.type();
         }
-        return *left.type() == *right.type();
+        return true;
     }
 
     bool operator!=(iterable const& left, iterable const& right)

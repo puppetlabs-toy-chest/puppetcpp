@@ -105,7 +105,7 @@ namespace puppet { namespace runtime { namespace types {
 
     size_t hash_value(string const& type)
     {
-         static const size_t name_hash = boost::hash_value(string::name());
+        static const size_t name_hash = boost::hash_value(string::name());
 
         size_t seed = 0;
         boost::hash_combine(seed, name_hash);

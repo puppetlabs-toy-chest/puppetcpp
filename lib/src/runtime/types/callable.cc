@@ -266,10 +266,11 @@ namespace puppet { namespace runtime { namespace types {
             }
         }
         // Check the block
-        if ((left.block_type() && !right.block_type()) ||
-            (!left.block_type() && right.block_type()) ||
-            *left.block_type() != *right.block_type()) {
-            return false;
+        if (left.block_type() || right.block_type()) {
+            if (!left.block_type() || !right.block_type()) {
+                return false;
+            }
+            return *left.block_type() == *right.block_type();
         }
         return true;
     }
@@ -285,7 +286,9 @@ namespace puppet { namespace runtime { namespace types {
 
         size_t seed = 0;
         boost::hash_combine(seed, name_hash);
-        boost::hash_range(seed, type.types().begin(), type.types().end());
+        for (auto& t : type.types()) {
+            boost::hash_combine(seed, *t);
+        }
         boost::hash_combine(seed, type.min());
         boost::hash_combine(seed, type.max());
         if (type.block_type()) {

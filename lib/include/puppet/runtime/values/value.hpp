@@ -387,7 +387,7 @@ namespace puppet { namespace runtime { namespace values {
         }
 
         /**
-         * Compares two different value types.
+         * Compares two value types.
          * @tparam T The type of the values being compared.
          * @param left The left hand value.
          * @param right The right hand value.

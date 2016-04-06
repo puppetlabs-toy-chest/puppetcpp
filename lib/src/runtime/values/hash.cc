@@ -163,9 +163,9 @@ namespace puppet { namespace runtime { namespace values {
         return hash_value(*value);
     }
 
-    bool hash::indirect_comparer::operator()(values::value const* right, values::value const* left) const
+    bool hash::indirect_comparer::operator()(values::value const* left, values::value const* right) const
     {
-        return *right == *left;
+        return *left == *right;
     }
 
     ostream& operator<<(ostream& os, values::hash const& hash)
