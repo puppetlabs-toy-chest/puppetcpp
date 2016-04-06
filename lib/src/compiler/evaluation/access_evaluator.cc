@@ -569,6 +569,25 @@ namespace puppet { namespace compiler { namespace evaluation {
             return types::tuple(rvalue_cast(types), from, to);
         }
 
+        value operator()(collection const& target)
+        {
+            // At most 2 arguments to Collection
+            if (_arguments.size() > 2) {
+                throw evaluation_exception(
+                    (boost::format("expected at most 2 arguments for %1% but %2% were given.") %
+                     collection::name() %
+                     _arguments.size()
+                    ).str(),
+                    _contexts[2],
+                    _context.backtrace()
+                );
+            }
+
+            int64_t from, to;
+            tie(from, to) = get_range<int64_t, integer>(true);
+            return collection(from, to);
+        }
+
         value operator()(optional const& target)
         {
             // Only 1 argument to Optional
