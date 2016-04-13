@@ -1409,7 +1409,75 @@ if Iterable[Integer] <= Iterator[String] {
     fail incorrect
 }
 
-# TODO: add Iterator tests
+# Iterator tests
+
+unless Iterator == Iterator and Iterator[String] == Iterator[String] and Iterator[Integer] != Iterator[Numeric] {
+    fail incorrect
+}
+
+if Iterator > Iterator {
+    fail incorrect
+}
+
+if Iterator[String] > Iterator[String] {
+    fail incorrect
+}
+
+if Iterator[String] > Iterator {
+    fail incorrect
+}
+
+unless Iterator[Numeric] > Iterator[Integer] {
+    fail incorrect
+}
+
+unless Iterator >= Iterator {
+    fail incorrect
+}
+
+unless Iterator[String] >= Iterator[String] {
+    fail incorrect
+}
+
+if Iterator[String] >= Iterator {
+    fail incorrect
+}
+
+unless Iterator[Numeric] >= Iterator[Integer] {
+    fail incorrect
+}
+
+if Iterator < Iterator {
+    fail incorrect
+}
+
+if Iterator[String] < Iterator[String] {
+    fail incorrect
+}
+
+unless Iterator[String] < Iterator {
+    fail incorrect
+}
+
+if Iterator[Numeric] < Iterator[Integer] {
+    fail incorrect
+}
+
+unless Iterator <= Iterator {
+    fail incorrect
+}
+
+unless Iterator[String] <= Iterator[String] {
+    fail incorrect
+}
+
+unless Iterator[String] <= Iterator {
+    fail incorrect
+}
+
+if Iterator[Numeric] <= Iterator[Integer] {
+    fail incorrect
+}
 
 # Numeric tests
 
