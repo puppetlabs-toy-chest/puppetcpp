@@ -133,6 +133,16 @@ namespace puppet { namespace runtime { namespace types {
 
     bool iterable::is_assignable(values::type const& other, recursion_guard& guard) const
     {
+        // Check for Iterable
+        if (auto iterable = boost::get<types::iterable>(&other)) {
+            if (!_type) {
+                return true;
+            }
+            if (!iterable->type()) {
+                return false;
+            }
+            return _type->is_assignable(*iterable->type(), guard);
+        }
         // Check for string
         if (boost::get<types::string>(&other)) {
             return !_type || _type->is_assignable(other, guard);

@@ -1193,7 +1193,221 @@ if Iterable[Integer] > Enum[foo] {
     fail incorrect
 }
 
-# TODO: add tests for Iterable compared to Iterator
+unless Iterable > Iterator {
+    fail incorrect
+}
+
+unless Iterable[Numeric] > Iterator[Integer] {
+    fail incorrect
+}
+
+if Iterable[Integer] > Iterator[String] {
+    fail incorrect
+}
+
+unless Iterable >= Iterable and Iterable[String] >= Iterable[String] {
+    fail incorrect
+}
+
+if Iterable >= Float {
+    fail incorrect
+}
+
+unless Iterable >= String and Iterable[String] >= String {
+    fail incorrect
+}
+
+unless Iterable >= Array {
+    fail incorrect
+}
+
+if Iterable[Integer] >= Array or Iterable[Integer] >= Array[String] {
+    fail incorrect
+}
+
+unless Iterable[String] >= Array[String] {
+    fail incorrect
+}
+
+unless Iterable >= Hash and Iterable[Tuple[String, Integer]] >= Hash[String, Integer] {
+    fail incorrect
+}
+
+if Iterable[String] >= Hash or Iterable[Tuple[String]] >= Hash[String, String] or Iterable[Tuple[String, Integer]] >= Hash[Integer, String] {
+    fail incorrect
+}
+
+if Iterable >= Integer or Iterable >= Integer[0, default] or Iterable >= Integer[default, 10] {
+    fail incorrect
+}
+
+unless Iterable >= Integer[0, 10] and Iterable[Integer] >= Integer[0, 10] {
+    fail incorrect
+}
+
+if Iterable[String] >= Integer[0, 10] or Iterable[Integer[0, 10]] >= Integer[20, 30] {
+    fail incorrect
+}
+
+unless Iterable >= Enum {
+    fail incorrect
+}
+
+unless Iterable[String] >= Enum[foo] {
+    fail incorrect
+}
+
+if Iterable[Integer] >= Enum[foo] {
+    fail incorrect
+}
+
+unless Iterable >= Iterator {
+    fail incorrect
+}
+
+unless Iterable[Numeric] >= Iterator[Integer] {
+    fail incorrect
+}
+
+if Iterable[Integer] >= Iterator[String] {
+    fail incorrect
+}
+
+if Iterable < Iterable or Iterable[String] < Iterable[String] {
+    fail incorrect
+}
+
+if Iterable < Float {
+    fail incorrect
+}
+
+if Iterable < String or Iterable[String] < String {
+    fail incorrect
+}
+
+if Iterable < Array {
+    fail incorrect
+}
+
+if Iterable[Integer] < Array or Iterable[Integer] < Array[String] {
+    fail incorrect
+}
+
+if Iterable[String] < Array[String] {
+    fail incorrect
+}
+
+if Iterable < Hash or Iterable[Tuple[String, Integer]] < Hash[String, Integer] {
+    fail incorrect
+}
+
+if Iterable[String] < Hash or Iterable[Tuple[String]] < Hash[String, String] or Iterable[Tuple[String, Integer]] < Hash[Integer, String] {
+    fail incorrect
+}
+
+if Iterable < Integer or Iterable < Integer[0, default] or Iterable < Integer[default, 10] {
+    fail incorrect
+}
+
+if Iterable < Integer[0, 10] or Iterable[Integer] < Integer[0, 10] {
+    fail incorrect
+}
+
+if Iterable[String] < Integer[0, 10] or Iterable[Integer[0, 10]] < Integer[20, 30] {
+    fail incorrect
+}
+
+if Iterable < Enum {
+    fail incorrect
+}
+
+if Iterable[String] < Enum[foo] {
+    fail incorrect
+}
+
+if Iterable[Integer] < Enum[foo] {
+    fail incorrect
+}
+
+if Iterable < Iterator {
+    fail incorrect
+}
+
+if Iterable[Numeric] < Iterator[Integer] {
+    fail incorrect
+}
+
+if Iterable[Integer] < Iterator[String] {
+    fail incorrect
+}
+
+unless Iterable <= Iterable and Iterable[String] <= Iterable[String] {
+    fail incorrect
+}
+
+if Iterable <= Float {
+    fail incorrect
+}
+
+if Iterable <= String or Iterable[String] <= String {
+    fail incorrect
+}
+
+if Iterable <= Array {
+    fail incorrect
+}
+
+if Iterable[Integer] <= Array or Iterable[Integer] <= Array[String] {
+    fail incorrect
+}
+
+if Iterable[String] <= Array[String] {
+    fail incorrect
+}
+
+if Iterable <= Hash or Iterable[Tuple[String, Integer]] <= Hash[String, Integer] {
+    fail incorrect
+}
+
+if Iterable[String] <= Hash or Iterable[Tuple[String]] <= Hash[String, String] or Iterable[Tuple[String, Integer]] <= Hash[Integer, String] {
+    fail incorrect
+}
+
+if Iterable <= Integer or Iterable <= Integer[0, default] or Iterable <= Integer[default, 10] {
+    fail incorrect
+}
+
+if Iterable <= Integer[0, 10] or Iterable[Integer] <= Integer[0, 10] {
+    fail incorrect
+}
+
+if Iterable[String] <= Integer[0, 10] or Iterable[Integer[0, 10]] <= Integer[20, 30] {
+    fail incorrect
+}
+
+if Iterable <= Enum {
+    fail incorrect
+}
+
+if Iterable[String] <= Enum[foo] {
+    fail incorrect
+}
+
+if Iterable[Integer] <= Enum[foo] {
+    fail incorrect
+}
+
+if Iterable <= Iterator {
+    fail incorrect
+}
+
+if Iterable[Numeric] <= Iterator[Integer] {
+    fail incorrect
+}
+
+if Iterable[Integer] <= Iterator[String] {
+    fail incorrect
+}
 
 # TODO: add Iterator tests
 
