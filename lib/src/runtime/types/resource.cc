@@ -9,6 +9,8 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    resource const resource::instance;
+
     resource::resource(std::string type_name, std::string title) :
         _type_name(rvalue_cast(type_name)),
         _title(rvalue_cast(title))
@@ -115,7 +117,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Resource";
     }
 
-    bool resource::is_instance(values::value const& value) const
+    bool resource::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for type
         auto ptr = value.as<values::type>();
@@ -138,30 +140,13 @@ namespace puppet { namespace runtime { namespace types {
         return _title.empty() || _title == resource_ptr->title();
     }
 
-    bool resource::is_specialization(values::type const& other) const
+    bool resource::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Check that the other Resource is specialized
         auto resource = boost::get<types::resource>(&other);
         if (!resource) {
-            // Not the same type
             return false;
         }
-        // If this resource has no type name, the other is specialized if it does have one
-        if (_type_name.empty()) {
-            return !resource->type_name().empty();
-        }
-        // Otherwise, the types need to be the same
-        if (_type_name != resource->type_name()) {
-            return false;
-        }
-        // Otherwise, the other one is a specialization if this does not have a title but the other one does
-        return _title.empty() && !resource->title().empty();
-    }
-
-    bool resource::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Resource is a real type
-        return true;
+        return _type_name.empty() || (_type_name == resource->type_name() && (_title.empty() || _title == resource->title()));
     }
 
     void resource::write(ostream& stream, bool expand) const

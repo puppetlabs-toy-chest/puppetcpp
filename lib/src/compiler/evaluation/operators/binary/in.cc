@@ -29,8 +29,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         descriptor.add("Type", "Array[Any]", [](call_context& context) {
             auto& left = context.left().require<values::type>();
             auto& right = context.right().require<values::array>();
+            types::recursion_guard guard;
             for (auto const& element : right) {
-                if (left.is_instance(element)) {
+                if (left.is_instance(element, guard)) {
                     return true;
                 }
             }
@@ -60,8 +61,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         descriptor.add("Type", "Hash[Any, Any]", [](call_context& context) {
             auto& left = context.left().require<values::type>();
             auto& right = context.right().require<values::hash>();
+            types::recursion_guard guard;
             for (auto const& kvp : right) {
-                if (left.is_instance(kvp.key())) {
+                if (left.is_instance(kvp.key(), guard)) {
                     return true;
                 }
             }

@@ -5,26 +5,24 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    numeric const numeric::instance{};
+
     char const* numeric::name()
     {
         return "Numeric";
     }
 
-    bool numeric::is_instance(values::value const& value) const
+    bool numeric::is_instance(values::value const& value, recursion_guard& guard) const
     {
-        return value.as<int64_t>() || value.as<double>();
+        return integer::instance.is_instance(value, guard) || floating::instance.is_instance(value, guard);
     }
 
-    bool numeric::is_specialization(values::type const& other) const
+    bool numeric::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Integer or Float is a specialization
-        return boost::get<integer>(&other) || boost::get<floating>(&other);
-    }
-
-    bool numeric::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Numeric is a real type
-        return true;
+        if (boost::get<numeric>(&other)) {
+            return true;
+        }
+        return integer::instance.is_assignable(other, guard) || floating::instance.is_assignable(other, guard);
     }
 
     void numeric::write(ostream& stream, bool expand) const

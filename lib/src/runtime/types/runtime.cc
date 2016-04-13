@@ -49,7 +49,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Runtime";
     }
 
-    bool runtime::is_instance(values::value const& value) const
+    bool runtime::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for type
         auto type = value.as<values::type>();
@@ -73,30 +73,13 @@ namespace puppet { namespace runtime { namespace types {
         return _type_name.empty() || _type_name == runtime->type_name();
     }
 
-    bool runtime::is_specialization(values::type const& other) const
+    bool runtime::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Check that the other Runtime is specialized
-        auto type = boost::get<runtime>(&other);
-        if (!type) {
-            // Not the same type
+        auto runtime = boost::get<types::runtime>(&other);
+        if (!runtime) {
             return false;
         }
-        // If this Runtime object has no runtime name, the other is specialized if it does have one
-        if (_runtime_name.empty()) {
-            return !type->runtime_name().empty();
-        }
-        // Otherwise, the runtimes need to be the same
-        if (_runtime_name != type->runtime_name()) {
-            return false;
-        }
-        // Otherwise, the other one is a specialization if this does not have a type but the other one does
-        return _type_name.empty() && !type->type_name().empty();
-    }
-
-    bool runtime::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Runtime is a real type
-        return true;
+        return _runtime_name.empty() || (_runtime_name == runtime->runtime_name() && (_type_name.empty() || _type_name == runtime->type_name()));
     }
 
     void runtime::write(ostream& stream, bool expand) const

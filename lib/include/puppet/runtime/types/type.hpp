@@ -9,8 +9,8 @@
 
 namespace puppet { namespace runtime { namespace types {
 
-    // Forward declaration of alias
-    struct alias;
+    // Forward declaration of recursion_guard
+    struct recursion_guard;
 
     /**
      * Represents the Puppet Type type.
@@ -64,23 +64,18 @@ namespace puppet { namespace runtime { namespace types {
         /**
          * Determines if the given value is an instance of this type.
          * @param value The value to determine if it is an instance of this type.
+         * @param guard The recursion guard to use for aliases.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        bool is_instance(values::value const& value) const;
+        bool is_instance(values::value const& value, recursion_guard& guard) const;
 
         /**
-         * Determines if the given type is a specialization (i.e. more specific) of this type.
-         * @param other The other type to check for specialization.
-         * @return Returns true if the other type is a specialization or false if not.
+         * Determines if the given type is assignable to this type.
+         * @param other The other type to check for assignability.
+         * @param guard The recursion guard to use for aliases.
+         * @return Returns true if the given type is assignable to this type or false if the given type is not assignable to this type.
          */
-        bool is_specialization(values::type const& other) const;
-
-        /**
-         * Determines if the type is real (i.e. actual type vs. an alias/variant that never resolves to an actual type).
-         * @param map The map to keep track of encountered type aliases.
-         * @return Returns true if the type is real or false if it never resolves to an actual type.
-         */
-        bool is_real(std::unordered_map<values::type const*, bool>& map) const;
+        bool is_assignable(values::type const& other, recursion_guard& guard) const;
 
         /**
          * Writes a representation of the type to the given stream.

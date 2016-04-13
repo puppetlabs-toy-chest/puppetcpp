@@ -26,47 +26,45 @@ namespace puppet { namespace runtime { namespace types {
         return "Collection";
     }
 
-    bool collection::is_instance(values::value const& value) const
+    bool collection::is_instance(values::value const& value, recursion_guard& guard) const
     {
-        // Check for array first
         int64_t size = 0;
-        auto array = value.as<values::array>();
-        if (array) {
+        if (auto array = value.as<values::array>()) {
             size = static_cast<int64_t>(array->size());
+        } else if (auto hash = value.as<values::hash>()) {
+            size = static_cast<int64_t>(hash->size());
         } else {
-            // Check for hash
-            auto hash = value.as<values::hash>();
-            if (hash) {
-                size = static_cast<int64_t>(hash->size());
-            } else {
-                // Not a collection
-                return false;
-            }
+            return false;
         }
-        // Check for size is range
         return _to < _from ? (size >= _to && size <= _from) : (size >= _from && size <= _to);
     }
 
-    bool collection::is_specialization(values::type const& other) const
+    bool collection::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Array and Hash are specializations
-        // So are any specializations of Array and Hash
-        return boost::get<array>(&other)        ||
-               boost::get<hash>(&other)         ||
-               array().is_specialization(other) ||
-               hash().is_specialization(other);
-    }
-
-    bool collection::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Collection is a real type
-        return true;
+        int64_t from, to;
+        if (auto array = boost::get<types::array>(&other)) {
+            from = array->from();
+            to = array->to();
+        } else if (auto tuple = boost::get<types::tuple>(&other)) {
+            from = tuple->from();
+            to = tuple->to();
+        } else if (auto hash = boost::get<types::hash>(&other)) {
+            from = hash->from();
+            to = hash->to();
+        } else if (auto collection = boost::get<types::collection>(&other)) {
+            from = collection->from();
+            to = collection->to();
+        } else {
+            return false;
+        }
+        return std::min(from, to) >= std::min(_from, _to) &&
+               std::max(from, to) <= std::max(_from, _to);
     }
 
     void collection::write(ostream& stream, bool expand) const
     {
         stream << collection::name();
-        bool from_default = _from == numeric_limits<int64_t>::min();
+        bool from_default = _from == 0;
         bool to_default = _to == numeric_limits<int64_t>::max();
         if (from_default && to_default) {
             // Only output the type name

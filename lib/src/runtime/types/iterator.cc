@@ -31,7 +31,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Iterator";
     }
 
-    bool iterator::is_instance(values::value const& value) const
+    bool iterator::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto iterator = value.as<values::iterator>();
         if (!iterator) {
@@ -52,9 +52,9 @@ namespace puppet { namespace runtime { namespace types {
                         match = false;
                         return false;
                     }
-                    match = types[0]->is_instance(*key) && types[1]->is_instance(value);
+                    match = types[0]->is_instance(*key, guard) && types[1]->is_instance(value, guard);
                 } else {
-                    match = _type->is_instance(value);
+                    match = _type->is_instance(value, guard);
                 }
                 return match;
             });
@@ -62,21 +62,19 @@ namespace puppet { namespace runtime { namespace types {
         return match;
     }
 
-    bool iterator::is_specialization(values::type const& other) const
+    bool iterator::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // If this iterator has a specialization, the other iterator cannot be a specialization
-        if (_type) {
+        auto iterator = boost::get<types::iterator>(&other);
+        if (!iterator) {
             return false;
         }
-        // Check that the other iterator is specialized
-        auto iterator = boost::get<types::iterator>(&other);
-        return iterator && iterator->type();
-    }
-
-    bool iterator::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Iterator is a real type
-        return true;
+        if (!_type) {
+            return true;
+        }
+        if (!iterator->type()) {
+            return false;
+        }
+        return _type->is_assignable(*iterator->type(), guard);
     }
 
     void iterator::write(ostream& stream, bool expand) const
@@ -98,12 +96,13 @@ namespace puppet { namespace runtime { namespace types {
 
     bool operator==(iterator const& left, iterator const& right)
     {
-        if (!left.type() && !right.type()) {
-            return true;
-        } else if (left.type() || right.type()) {
-            return false;
+        if (left.type() || right.type()) {
+            if (!left.type() || !right.type()) {
+                return false;
+            }
+            return *left.type() == *right.type();
         }
-        return *left.type() == *right.type();
+        return true;
     }
 
     bool operator!=(iterator const& left, iterator const& right)

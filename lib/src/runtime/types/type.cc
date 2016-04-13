@@ -32,36 +32,30 @@ namespace puppet { namespace runtime { namespace types {
         return "Type";
     }
 
-    bool type::is_instance(values::value const& value) const
+    bool type::is_instance(values::value const& value, recursion_guard& guard) const
     {
-        // Check for type
         auto ptr = value.as<values::type>();
         if (!ptr) {
             return false;
         }
-        // Unparameterized Type matches all types
-        if (!_parameter) {
-            return true;
-        }
-        // Compare the types
-        return *ptr == *_parameter || _parameter->is_specialization(*ptr);
+        return !_parameter || _parameter->is_assignable(*ptr, guard);
     }
 
-    bool type::is_specialization(values::type const& other) const
+    bool type::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // If this Type has a specialization, the other type cannot be a specialization
-        if (_parameter) {
+        auto type = boost::get<types::type>(&other);
+        if (!type) {
             return false;
         }
-        // Check that the other Type is specialized
-        auto type = boost::get<types::type>(&other);
-        return type && type->parameter();
-    }
-
-    bool type::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Type is a real type
-        return true;
+        if (!_parameter) {
+            // Any type can be assigned to Type
+            return true;
+        }
+        if (!type->_parameter) {
+            // Type cannot assign to Type[T]
+            return false;
+        }
+        return _parameter->is_assignable(*type->_parameter, guard);
     }
 
     void type::write(ostream& stream, bool expand) const

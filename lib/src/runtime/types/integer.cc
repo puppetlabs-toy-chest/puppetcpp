@@ -5,6 +5,8 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    integer const integer::instance;
+
     integer::integer(int64_t from, int64_t to) :
         _from(from),
         _to(to)
@@ -49,7 +51,7 @@ namespace puppet { namespace runtime { namespace types {
         }
     }
 
-    bool integer::is_instance(values::value const& value) const
+    bool integer::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<int64_t>();
         if (!ptr) {
@@ -58,25 +60,15 @@ namespace puppet { namespace runtime { namespace types {
         return _to < _from ? (*ptr >= _to && *ptr <= _from) : (*ptr >= _from && *ptr <= _to);
     }
 
-    bool integer::is_specialization(values::type const& other) const
+    bool integer::is_assignable(values::type const& other, recursion_guard& guard) const
     {
         // Check for an Integer with a range inside of this type's range
         auto ptr = boost::get<integer>(&other);
         if (!ptr) {
             return false;
         }
-        // Check for equality
-        if (ptr->from() == _from && ptr->to() == _to) {
-            return false;
-        }
         return std::min(ptr->from(), ptr->to()) >= std::min(_from, _to) &&
                std::max(ptr->from(), ptr->to()) <= std::max(_from, _to);
-    }
-
-    bool integer::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Integer is a real type
-        return true;
     }
 
     void integer::write(ostream& stream, bool expand) const

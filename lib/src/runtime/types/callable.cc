@@ -87,50 +87,52 @@ namespace puppet { namespace runtime { namespace types {
         return "Callable";
     }
 
-    bool callable::is_instance(values::value const& value) const
+    bool callable::is_instance(values::value const& value, recursion_guard& guard) const
     {
-        // Currently functions cannot be represented as a value,
-        // This will need to change once functions can be properly treated as a value.
+        // Currently functions cannot be represented as a value.
         return false;
     }
 
-    bool callable::is_specialization(values::type const& other) const
+    bool callable::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Check for another Callable
         auto ptr = boost::get<callable>(&other);
         if (!ptr) {
             return false;
         }
 
-        // Check for less types (i.e. this type is more specialized)
-        auto& other_types = ptr->types();
-        if (other_types.size() < _types.size()) {
+        // Check to see if this type is simply Callable; if so, the other is always assignable
+        if (_types.empty() && _min == 0 && _max == numeric_limits<int64_t>::max() && !_block_type) {
+            return true;
+        }
+
+        if (std::min(ptr->min(), ptr->max()) < std::min(_min, _max) ||
+            std::max(ptr->min(), ptr->max()) > std::max(_min, _max)) {
             return false;
         }
-        // All types must match
-        for (size_t i = 0; i < _types.size(); ++i) {
-            if (*_types[i] != *other_types[i]) {
+
+        // Ensure that the other Callable's types are assignable to this one's.
+        // This is intentionally backwards because Callable only accepts types that it can be invoked with.
+        // Thus, Callable[Numeric] cannot be assigned to Callable[Any] (Any is not assignable to Numeric), but
+        // Callable[Numeric] can be assigned to Callable[Integer] (Integer is assignable to Numeric).
+        size_t i = 0;
+        for (auto& type : ptr->_types) {
+            if (i >= _types.size()) {
+                break;
+            }
+
+            if (!type->is_assignable(*_types[i++], guard)) {
                 return false;
             }
         }
 
-        // The blocks must match
-        if ((_block_type && !ptr->_block_type) || (!_block_type && ptr->_block_type) || (*_block_type != *ptr->_block_type)) {
-            return false;
+        if (_block_type || ptr->_block_type) {
+            if (!_block_type || !ptr->_block_type) {
+                return false;
+            }
+            if (!ptr->_block_type->is_assignable(*_block_type, guard)) {
+                return false;
+            }
         }
-
-        // Check for equality
-        if (_min == ptr->min() && _max == ptr->max()) {
-            return false;
-        }
-        // Check for a more specialized min/max
-        return std::min(ptr->min(), ptr->max()) >= std::min(_min, _max) &&
-               std::max(ptr->min(), ptr->max()) <= std::max(_min, _max);
-    }
-
-    bool callable::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Callable is a real type
         return true;
     }
 
@@ -219,10 +221,11 @@ namespace puppet { namespace runtime { namespace types {
         }
 
         // Check the argument types
+        types::recursion_guard guard;
         auto argument_count = static_cast<int64_t>(arguments.size());
         for (int64_t i = 0; i < argument_count; ++i) {
             // Ensure the argument is of the specified type
-            if (!parameter_type(i)->is_instance(arguments[i])) {
+            if (!parameter_type(i)->is_instance(arguments[i], guard)) {
                 return i;
             }
         }
@@ -266,10 +269,11 @@ namespace puppet { namespace runtime { namespace types {
             }
         }
         // Check the block
-        if ((left.block_type() && !right.block_type()) ||
-            (!left.block_type() && right.block_type()) ||
-            *left.block_type() != *right.block_type()) {
-            return false;
+        if (left.block_type() || right.block_type()) {
+            if (!left.block_type() || !right.block_type()) {
+                return false;
+            }
+            return *left.block_type() == *right.block_type();
         }
         return true;
     }
@@ -285,7 +289,9 @@ namespace puppet { namespace runtime { namespace types {
 
         size_t seed = 0;
         boost::hash_combine(seed, name_hash);
-        boost::hash_range(seed, type.types().begin(), type.types().end());
+        for (auto& t : type.types()) {
+            boost::hash_combine(seed, *t);
+        }
         boost::hash_combine(seed, type.min());
         boost::hash_combine(seed, type.max());
         if (type.block_type()) {

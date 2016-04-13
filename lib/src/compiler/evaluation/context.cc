@@ -714,9 +714,8 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         *resolved = rvalue_cast(*type);
 
-        // Ensure the alias resolves to a "real" type
-        unordered_map<values::type const*, bool> map;
-        if (!resolved->is_real(map)) {
+        types::recursion_guard guard;
+        if (!resolved->is_real(guard)) {
             throw evaluation_exception(
                 (boost::format("%1% does not resolve to a real type.") %
                  *resolved

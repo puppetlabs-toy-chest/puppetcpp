@@ -43,59 +43,45 @@ namespace puppet { namespace runtime { namespace types {
         return "Variant";
     }
 
-    bool variant::is_instance(values::value const& value) const
+    bool variant::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Go through each type and ensure one matches
         for (auto const& type : _types) {
-            // Skip any self referencing aliases
-            if (is_self_referencing(*type)) {
-                continue;
-            }
-            if (type->is_instance(value)) {
+            if (type->is_instance(value, guard)) {
                 return true;
             }
         }
         return false;
     }
 
-    bool variant::is_specialization(values::type const& other) const
+    bool variant::is_assignable(values::type const& other, recursion_guard& guard) const
     {
         // Check for another Variant
         auto ptr = boost::get<variant>(&other);
-        if (!ptr) {
-            return false;
+        if (ptr) {
+            // A Variant with no types is assignable
+            for (auto& other_type : ptr->_types) {
+                bool found = false;
+                for (auto& type : _types) {
+                    found = type->is_assignable(*other_type, guard);
+                    if (found) {
+                        break;
+                    }
+                }
+                if (!found) {
+                    return false;
+                }
+            }
+            return true;
         }
 
-        // Check for less types (i.e. this type is more specialized)
-        auto& other_types = ptr->types();
-        if (other_types.size() < _types.size()) {
-            return false;
-        }
-        // All types must match
-        for (size_t i = 0; i < _types.size(); ++i) {
-            if (*_types[i] != *other_types[i]) {
-                return false;
+        // Check that the type is assignable to something in this Variant
+        for (auto& type : _types) {
+            if (type->is_assignable(other, guard)) {
+                return true;
             }
         }
-        // If the other type has more types, it is more specialized
-        return other_types.size() > _types.size();
-    }
-
-    bool variant::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // A Variant is real provided all of its types are real
-        bool is_real = false;
-        for (auto const& element : _types) {
-            // Skip over any directly self-referential type aliases to allow an alias such as `type Foo = Variant[String, Foo]`.
-            if (is_self_referencing(*element)) {
-                continue;
-            }
-            is_real = element->is_real(map);
-            if (!is_real) {
-                return false;
-            }
-        }
-        return is_real;
+        return false;
     }
 
     void variant::write(ostream& stream, bool expand) const
@@ -115,11 +101,6 @@ namespace puppet { namespace runtime { namespace types {
             element->write(stream, false);
         }
         stream << ']';
-    }
-
-    bool variant::is_self_referencing(values::type const& type) const
-    {
-        return boost::get<variant>(&type) == this;
     }
 
     ostream& operator<<(ostream& os, variant const& type)
@@ -158,7 +139,9 @@ namespace puppet { namespace runtime { namespace types {
 
         size_t seed = 0;
         boost::hash_combine(seed, name_hash);
-        boost::hash_range(seed, type.types().begin(), type.types().end());
+        for (auto& t : type.types()) {
+            boost::hash_combine(seed, *t);
+        }
         return seed;
     }
 

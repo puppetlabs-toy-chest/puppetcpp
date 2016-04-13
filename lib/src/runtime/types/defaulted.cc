@@ -10,21 +10,14 @@ namespace puppet { namespace runtime { namespace types {
         return "Default";
     }
 
-    bool defaulted::is_instance(values::value const& value) const
+    bool defaulted::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return value.is_default();
     }
 
-    bool defaulted::is_specialization(values::type const& other) const
+    bool defaulted::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // No specializations of Default
-        return false;
-    }
-
-    bool defaulted::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Default is a real type
-        return true;
+        return boost::get<defaulted>(&other);
     }
 
     void defaulted::write(ostream& stream, bool expand) const

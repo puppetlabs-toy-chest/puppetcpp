@@ -44,11 +44,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     values::value descriptor::dispatch(call_context& context) const
     {
+
         // Search for a dispatch descriptor with the matching left and right types
         // TODO: in the future, this should dispatch to the most specific overload rather than the first dispatchable overload
+        types::recursion_guard guard;
         for (auto& descriptor : _dispatch_descriptors) {
-            if (descriptor.left_type.is_instance(context.left()) &&
-                descriptor.right_type.is_instance(context.right())) {
+            if (descriptor.left_type.is_instance(context.left(), guard) && descriptor.right_type.is_instance(context.right(), guard)) {
                 return descriptor.callback(context);
             }
         }
@@ -60,7 +61,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
         for (auto& descriptor : _dispatch_descriptors) {
             // Check to see if the LHS matches
-            if (!matched_type && descriptor.left_type.is_instance(context.left())) {
+            if (!matched_type && descriptor.left_type.is_instance(context.left(), guard)) {
                 rhs_match = false;
                 matched_type = &descriptor.left_type;
                 set.clear();
@@ -68,12 +69,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
                 continue;
             }
             // Check to see if the RHS matched
-            if (!matched_type && descriptor.right_type.is_instance(context.right())) {
+            if (!matched_type && descriptor.right_type.is_instance(context.right(), guard)) {
                 matched_type = &descriptor.right_type;
                 set.clear();
                 set.add(descriptor.left_type);
                 continue;
             }
+
             // If nothing matched yet, assume the problem is on the LHS (no matches will add all LHS types)
             if (!matched_type) {
                 set.add(descriptor.left_type);

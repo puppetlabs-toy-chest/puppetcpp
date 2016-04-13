@@ -6,6 +6,8 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    tuple const tuple::instance;
+
     tuple::tuple(vector<unique_ptr<values::type>> types, int64_t from, int64_t to) :
         _types(rvalue_cast(types)),
         _from(from),
@@ -59,7 +61,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Tuple";
     }
 
-    bool tuple::is_instance(values::value const& value) const
+    bool tuple::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for array
         auto ptr = value.as<values::array>();
@@ -88,51 +90,52 @@ namespace puppet { namespace runtime { namespace types {
             // If this element's position is in the tuple, match the type
             // If not, match the last type
             if (i < _types.size()) {
-                if (!_types[i]->is_instance(*element)) {
+                if (!_types[i]->is_instance(*element, guard)) {
                     return false;
                 }
-            } else if (!last_type->is_instance(*element)) {
+            } else if (!last_type->is_instance(*element, guard)) {
                 return false;
             }
         }
         return true;
     }
 
-    bool tuple::is_specialization(values::type const& other) const
+    bool tuple::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Check for another Tuple
-        auto ptr = boost::get<types::tuple>(&other);
-        if (!ptr) {
-            return false;
-        }
-
-        // Check for less types (i.e. this type is more specialized)
-        auto& other_types = ptr->types();
-        if (other_types.size() < _types.size()) {
-            return false;
-        }
-        // All types must match
-        for (size_t i = 0; i < _types.size(); ++i) {
-            if (_types[i] != other_types[i]) {
-                return false;
+        int64_t from, to;
+        if (auto array = boost::get<types::array>(&other)) {
+            if (!_types.empty()) {
+                auto count = std::min(static_cast<int64_t>(_types.size()), _to);
+                for (int64_t i = 0; i < count; ++i) {
+                    if (!_types[i]->is_assignable(array->element_type(), guard)) {
+                        return false;
+                    }
+                }
             }
-        }
-        // If the other type has more types, it is more specialized
-        if (other_types.size() > _types.size()) {
-            return true;
-        }
-        // Check for equality
-        if (ptr->from() == _from && ptr->to() == _to) {
+            from = array->from();
+            to = array->to();
+        } else if (auto tuple = boost::get<types::tuple>(&other)) {
+            if (!_types.empty()) {
+                auto& other_types = tuple->types();
+                auto& last_type = _types.back();
+                for (size_t i = 0; i < other_types.size(); ++i) {
+                    if (i < _types.size()) {
+                        if (!_types[i]->is_assignable(*other_types[i], guard)) {
+                            return false;
+                        }
+                    } else {
+                        if (!last_type->is_assignable(*other_types[i], guard)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            from = tuple->from();
+            to = tuple->to();
+        } else {
             return false;
         }
-        return std::min(ptr->from(), ptr->to()) >= std::min(_from, _to) &&
-               std::max(ptr->from(), ptr->to()) <= std::max(_from, _to);
-    }
-
-    bool tuple::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Tuple is a real type
-        return true;
+        return std::min(from, to) >= std::min(_from, _to) && std::max(from, to) <= std::max(_from, _to);
     }
 
     void tuple::write(ostream& stream, bool expand) const
@@ -211,7 +214,9 @@ namespace puppet { namespace runtime { namespace types {
 
         size_t seed = 0;
         boost::hash_combine(seed, name_hash);
-        boost::hash_range(seed, type.types().begin(), type.types().end());
+        for (auto& t : type.types()) {
+            boost::hash_combine(seed, *t);
+        }
         boost::hash_combine(seed, type.from());
         boost::hash_combine(seed, type.to());
         return seed;

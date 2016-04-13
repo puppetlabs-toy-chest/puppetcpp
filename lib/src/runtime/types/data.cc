@@ -5,32 +5,23 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
-    bool data::is_instance(values::value const& value) const
+    bool data::is_instance(values::value const& value, recursion_guard& guard) const
     {
-        // Data is scalar, array, hash, or undef
-        return scalar().is_instance(value) ||
-               array().is_instance(value)  ||
-               hash().is_instance(value)   ||
-               undef().is_instance(value);
+        return scalar::instance.is_instance(value, guard) || array::instance.is_instance(value, guard) ||
+               hash::instance.is_instance(value, guard)   || undef::instance.is_instance(value, guard);
     }
 
-    bool data::is_specialization(values::type const& other) const
+    bool data::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Scalar, Array, Hash, and Undef are specializations of Data
-        // Also specializations of Scalar, Array, and Hash
-        return boost::get<scalar>(&other) ||
-               boost::get<array>(&other) ||
-               boost::get<hash>(&other) ||
-               boost::get<undef>(&other) ||
-               scalar().is_specialization(other) ||
-               array().is_specialization(other) ||
-               hash().is_specialization(other);
-    }
-
-    bool data::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Data is a real type
-        return true;
+        if (boost::get<data>(&other)) {
+            return true;
+        }
+        if (scalar::instance.is_assignable(other, guard) || array::instance.is_assignable(other, guard)  ||
+            hash::instance.is_assignable(other, guard)   || undef::instance.is_assignable(other, guard)  ||
+            tuple::instance.is_assignable(other, guard)) {
+            return true;
+        }
+        return false;
     }
 
     void data::write(ostream& stream, bool expand) const

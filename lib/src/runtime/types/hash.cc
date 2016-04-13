@@ -5,27 +5,29 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    hash const hash::instance;
+
     hash::hash(
         unique_ptr<values::type> key_type,
-        unique_ptr<values::type> element_type,
+        unique_ptr<values::type> value_type,
         int64_t from,
         int64_t to) :
             _key_type(rvalue_cast(key_type)),
-            _element_type(rvalue_cast(element_type)),
+            _value_type(rvalue_cast(value_type)),
             _from(from),
             _to(to)
     {
         if (!_key_type) {
             _key_type.reset(new values::type(scalar()));
         }
-        if (!_element_type) {
-            _element_type.reset(new values::type(data()));
+        if (!_value_type) {
+            _value_type.reset(new values::type(data()));
         }
     }
 
     hash::hash(hash const& other) :
         _key_type(new values::type(other.key_type())),
-        _element_type(new values::type(other.element_type())),
+        _value_type(new values::type(other.value_type())),
         _from(other.from()),
         _to(other.to())
     {
@@ -34,7 +36,7 @@ namespace puppet { namespace runtime { namespace types {
     hash& hash::operator=(hash const& other)
     {
         _key_type.reset(new values::type(other.key_type()));
-        _element_type.reset(new values::type(other.element_type()));
+        _value_type.reset(new values::type(other.value_type()));
         _from = other.from();
         _to = other.to();
         return *this;
@@ -45,9 +47,9 @@ namespace puppet { namespace runtime { namespace types {
         return *_key_type;
     }
 
-    values::type const& hash::element_type() const
+    values::type const& hash::value_type() const
     {
-        return *_element_type;
+        return *_value_type;
     }
 
     int64_t hash::from() const
@@ -65,7 +67,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Hash";
     }
 
-    bool hash::is_instance(values::value const& value) const
+    bool hash::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for hash
         auto ptr = value.as<values::hash>();
@@ -79,59 +81,42 @@ namespace puppet { namespace runtime { namespace types {
             return false;
         }
 
-        // Check that each key and element is of the appropriate types
+        // Check that each key and value is of the appropriate types
         for (auto const& kvp : *ptr) {
-            if (!_key_type->is_instance(kvp.key())) {
-                return false;
-            }
-            if (!_element_type->is_instance(kvp.value())) {
+            if (!_key_type->is_instance(kvp.key(), guard) || !_value_type->is_instance(kvp.value(), guard)) {
                 return false;
             }
         }
         return true;
     }
 
-    bool hash::is_specialization(values::type const& other) const
+    bool hash::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // For the other type to be a specialization, it must be an Hash or Struct
-        // The key types must match
-        // The element types must match
-        // And the range of other needs to be inside of this type's range
         int64_t from, to;
-        auto hash = boost::get<types::hash>(&other);
-        if (hash) {
-            // Check for key and element type match
-            if (hash->key_type() != *_key_type || hash->element_type() != *_element_type) {
+        if (auto hash = boost::get<types::hash>(&other)) {
+            // Ensure key and value types are assignable
+            if (!_key_type->is_assignable(*hash->_key_type, guard) ||
+                !_value_type->is_assignable(*hash->_value_type, guard)) {
                 return false;
             }
-            from = hash->from();
-            to = hash->to();
-        } else {
-            // Check for a Struct (the Hash must be Hash[String, T])
-            auto structure = boost::get<types::structure>(&other);
-            if (!structure || !boost::get<types::string>(_key_type.get())) {
-                return false;
-            }
-            // Ensure all elements of the structure are of the element type
+            from = hash->_from;
+            to = hash->_to;
+        } else if (auto structure = boost::get<types::structure>(&other)) {
+            // Ensure the struct's key is an instance of the key type (must be String) and the value types match
+            // Ensure value types are assignable
             for (auto& kvp : structure->schema()) {
-                if (*kvp.second != *_element_type) {
+                if (!_key_type->is_instance(types::structure::to_key(*kvp.first), guard) ||
+                    !_value_type->is_assignable(*kvp.second, guard)) {
                     return false;
                 }
             }
             from = to = structure->schema().size();
-        }
-        // Check for equality
-        if (from == _from && to == _to) {
+        } else {
+            // Not a Hash or Struct
             return false;
         }
         return std::min(from, to) >= std::min(_from, _to) &&
                std::max(from, to) <= std::max(_from, _to);
-    }
-
-    bool hash::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Hash is a real type
-        return true;
     }
 
     void hash::write(ostream& stream, bool expand) const
@@ -139,8 +124,8 @@ namespace puppet { namespace runtime { namespace types {
         stream << hash::name() << '[';
         _key_type->write(stream, false);
         stream << ", ";
-        _element_type->write(stream, false);
-        bool from_default = _from == numeric_limits<int64_t>::min();
+        _value_type->write(stream, false);
+        bool from_default = _from == 0;
         bool to_default = _to == numeric_limits<int64_t>::max();
         if (from_default && to_default) {
             // Only output the types
@@ -173,7 +158,7 @@ namespace puppet { namespace runtime { namespace types {
         return left.from() == right.from() &&
                left.to() == right.to() &&
                left.key_type() == right.key_type() &&
-               left.element_type() == right.element_type();
+               left.value_type() == right.value_type();
     }
 
     bool operator!=(hash const& left, hash const& right)
@@ -188,7 +173,7 @@ namespace puppet { namespace runtime { namespace types {
         size_t seed = 0;
         boost::hash_combine(seed, name_hash);
         boost::hash_combine(seed, type.key_type());
-        boost::hash_combine(seed, type.element_type());
+        boost::hash_combine(seed, type.value_type());
         boost::hash_combine(seed, type.from());
         boost::hash_combine(seed, type.to());
         return seed;

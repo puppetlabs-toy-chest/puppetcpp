@@ -32,7 +32,7 @@ namespace puppet { namespace runtime { namespace types {
         return "NotUndef";
     }
 
-    bool not_undef::is_instance(values::value const& value) const
+    bool not_undef::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Undef never matches
         if (value.is_undef()) {
@@ -45,24 +45,17 @@ namespace puppet { namespace runtime { namespace types {
         }
 
         // Check that the instance is of the given type
-        return _type->is_instance(value);
+        return _type->is_instance(value, guard);
     }
 
-    bool not_undef::is_specialization(values::type const& other) const
+    bool not_undef::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // If this type has a specialization, the other type cannot be a specialization
-        if (_type) {
+        // Can never be assigned from Undef
+        if (boost::get<types::undef>(&other)) {
             return false;
         }
-        // Check that the other type is specialized
-        auto not_undef = boost::get<types::not_undef>(&other);
-        return not_undef && not_undef->type();
-    }
 
-    bool not_undef::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // NotUndef is a real type
-        return true;
+        return !_type || _type->is_assignable(other, guard);
     }
 
     void not_undef::write(ostream& stream, bool expand) const

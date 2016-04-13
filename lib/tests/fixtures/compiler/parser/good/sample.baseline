@@ -7119,27 +7119,27 @@ statements:
               offset: 5107
               line: 342
             value: incorrect
-  - kind: if
+  - kind: unless
     begin:
       offset: 5110
       line: 344
     end:
-      offset: 5157
+      offset: 5161
       line: 346
     conditional:
       kind: binary
       first:
         kind: type
         begin:
-          offset: 5113
+          offset: 5117
           line: 344
         end:
-          offset: 5119
+          offset: 5123
           line: 344
         name: String
       operations:
         - operator_position:
-            offset: 5120
+            offset: 5124
             line: 344
           operator: ">"
           operand:
@@ -7147,36 +7147,36 @@ statements:
             primary:
               kind: type
               begin:
-                offset: 5122
+                offset: 5126
                 line: 344
               end:
-                offset: 5128
+                offset: 5132
                 line: 344
               name: String
             subexpressions:
               - kind: access
                 begin:
-                  offset: 5128
+                  offset: 5132
                   line: 344
                 end:
-                  offset: 5134
+                  offset: 5138
                   line: 344
                 arguments:
                   - kind: number
                     begin:
-                      offset: 5129
+                      offset: 5133
                       line: 344
                     end:
-                      offset: 5130
+                      offset: 5134
                       line: 344
                     base: decimal
                     value: 0
                   - kind: number
                     begin:
-                      offset: 5132
+                      offset: 5136
                       line: 344
                     end:
-                      offset: 5133
+                      offset: 5137
                       line: 344
                     base: decimal
                     value: 0
@@ -7185,24 +7185,24 @@ statements:
         function:
           kind: name
           begin:
-            offset: 5141
+            offset: 5145
             line: 345
           end:
-            offset: 5145
+            offset: 5149
             line: 345
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 5146
+              offset: 5150
               line: 345
             end:
-              offset: 5155
+              offset: 5159
               line: 345
             value: incorrect
-  - kind: unless
+  - kind: if
     begin:
-      offset: 5158
+      offset: 5162
       line: 347
     end:
       offset: 5209
@@ -8033,27 +8033,27 @@ statements:
               offset: 5720
               line: 388
             value: incorrect
-  - kind: if
+  - kind: unless
     begin:
       offset: 5723
       line: 390
     end:
-      offset: 5771
+      offset: 5775
       line: 392
     conditional:
       kind: binary
       first:
         kind: type
         begin:
-          offset: 5726
+          offset: 5730
           line: 390
         end:
-          offset: 5732
+          offset: 5736
           line: 390
         name: String
       operations:
         - operator_position:
-            offset: 5733
+            offset: 5737
             line: 390
           operator: ">="
           operand:
@@ -8061,36 +8061,36 @@ statements:
             primary:
               kind: type
               begin:
-                offset: 5736
+                offset: 5740
                 line: 390
               end:
-                offset: 5742
+                offset: 5746
                 line: 390
               name: String
             subexpressions:
               - kind: access
                 begin:
-                  offset: 5742
+                  offset: 5746
                   line: 390
                 end:
-                  offset: 5748
+                  offset: 5752
                   line: 390
                 arguments:
                   - kind: number
                     begin:
-                      offset: 5743
+                      offset: 5747
                       line: 390
                     end:
-                      offset: 5744
+                      offset: 5748
                       line: 390
                     base: decimal
                     value: 0
                   - kind: number
                     begin:
-                      offset: 5746
+                      offset: 5750
                       line: 390
                     end:
-                      offset: 5747
+                      offset: 5751
                       line: 390
                     base: decimal
                     value: 0
@@ -8099,24 +8099,24 @@ statements:
         function:
           kind: name
           begin:
-            offset: 5755
+            offset: 5759
             line: 391
           end:
-            offset: 5759
+            offset: 5763
             line: 391
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 5760
+              offset: 5764
               line: 391
             end:
-              offset: 5769
+              offset: 5773
               line: 391
             value: incorrect
-  - kind: unless
+  - kind: if
     begin:
-      offset: 5772
+      offset: 5776
       line: 393
     end:
       offset: 5824
@@ -10386,27 +10386,27 @@ statements:
               offset: 7200
               line: 490
             value: incorrect
-  - kind: unless
+  - kind: if
     begin:
       offset: 7203
       line: 492
     end:
-      offset: 7254
+      offset: 7250
       line: 494
     conditional:
       kind: binary
       first:
         kind: type
         begin:
-          offset: 7210
+          offset: 7206
           line: 492
         end:
-          offset: 7216
+          offset: 7212
           line: 492
         name: String
       operations:
         - operator_position:
-            offset: 7217
+            offset: 7213
             line: 492
           operator: <
           operand:
@@ -10414,36 +10414,36 @@ statements:
             primary:
               kind: type
               begin:
-                offset: 7219
+                offset: 7215
                 line: 492
               end:
-                offset: 7225
+                offset: 7221
                 line: 492
               name: String
             subexpressions:
               - kind: access
                 begin:
-                  offset: 7225
+                  offset: 7221
                   line: 492
                 end:
-                  offset: 7231
+                  offset: 7227
                   line: 492
                 arguments:
                   - kind: number
                     begin:
-                      offset: 7226
+                      offset: 7222
                       line: 492
                     end:
-                      offset: 7227
+                      offset: 7223
                       line: 492
                     base: decimal
                     value: 0
                   - kind: number
                     begin:
-                      offset: 7229
+                      offset: 7225
                       line: 492
                     end:
-                      offset: 7230
+                      offset: 7226
                       line: 492
                     base: decimal
                     value: 0
@@ -10452,24 +10452,24 @@ statements:
         function:
           kind: name
           begin:
-            offset: 7238
+            offset: 7234
             line: 493
           end:
-            offset: 7242
+            offset: 7238
             line: 493
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 7243
+              offset: 7239
               line: 493
             end:
-              offset: 7252
+              offset: 7248
               line: 493
             value: incorrect
-  - kind: if
+  - kind: unless
     begin:
-      offset: 7255
+      offset: 7251
       line: 495
     end:
       offset: 7302
@@ -11300,27 +11300,27 @@ statements:
               offset: 7813
               line: 536
             value: incorrect
-  - kind: unless
+  - kind: if
     begin:
       offset: 7816
       line: 538
     end:
-      offset: 7868
+      offset: 7864
       line: 540
     conditional:
       kind: binary
       first:
         kind: type
         begin:
-          offset: 7823
+          offset: 7819
           line: 538
         end:
-          offset: 7829
+          offset: 7825
           line: 538
         name: String
       operations:
         - operator_position:
-            offset: 7830
+            offset: 7826
             line: 538
           operator: <=
           operand:
@@ -11328,36 +11328,36 @@ statements:
             primary:
               kind: type
               begin:
-                offset: 7833
+                offset: 7829
                 line: 538
               end:
-                offset: 7839
+                offset: 7835
                 line: 538
               name: String
             subexpressions:
               - kind: access
                 begin:
-                  offset: 7839
+                  offset: 7835
                   line: 538
                 end:
-                  offset: 7845
+                  offset: 7841
                   line: 538
                 arguments:
                   - kind: number
                     begin:
-                      offset: 7840
+                      offset: 7836
                       line: 538
                     end:
-                      offset: 7841
+                      offset: 7837
                       line: 538
                     base: decimal
                     value: 0
                   - kind: number
                     begin:
-                      offset: 7843
+                      offset: 7839
                       line: 538
                     end:
-                      offset: 7844
+                      offset: 7840
                       line: 538
                     base: decimal
                     value: 0
@@ -11366,24 +11366,24 @@ statements:
         function:
           kind: name
           begin:
-            offset: 7852
+            offset: 7848
             line: 539
           end:
-            offset: 7856
+            offset: 7852
             line: 539
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 7857
+              offset: 7853
               line: 539
             end:
-              offset: 7866
+              offset: 7862
               line: 539
             value: incorrect
-  - kind: if
+  - kind: unless
     begin:
-      offset: 7869
+      offset: 7865
       line: 541
     end:
       offset: 7917
@@ -17953,7 +17953,7 @@ statements:
       offset: 11816
       line: 789
     end:
-      offset: 11913
+      offset: 11914
       line: 791
     conditional:
       kind: binary
@@ -17983,51 +17983,51 @@ statements:
         - operator_position:
             offset: 11838
             line: 789
-          operator: or
+          operator: and
           operand:
             kind: interpolated string
             begin:
-              offset: 11841
+              offset: 11842
               line: 789
             end:
-              offset: 11865
+              offset: 11866
               line: 789
             parts:
               - kind: literal text
                 begin:
-                  offset: 11842
+                  offset: 11843
                   line: 789
                 end:
-                  offset: 11859
+                  offset: 11860
                   line: 789
                 text: match group 1 = '
               - kind: variable
                 begin:
-                  offset: 11861
+                  offset: 11862
                   line: 789
                 end:
-                  offset: 11862
+                  offset: 11863
                   line: 789
                 name: 1
               - kind: literal text
                 begin:
-                  offset: 11863
+                  offset: 11864
                   line: 789
                 end:
-                  offset: 11864
+                  offset: 11865
                   line: 789
                 text: "'"
         - operator_position:
-            offset: 11866
+            offset: 11867
             line: 789
           operator: ==
           operand:
             kind: string
             begin:
-              offset: 11869
+              offset: 11870
               line: 789
             end:
-              offset: 11890
+              offset: 11891
               line: 789
             value: match group 1 = 'o'
     body:
@@ -18035,59 +18035,59 @@ statements:
         function:
           kind: name
           begin:
-            offset: 11897
+            offset: 11898
             line: 790
           end:
-            offset: 11901
+            offset: 11902
             line: 790
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 11902
+              offset: 11903
               line: 790
             end:
-              offset: 11911
+              offset: 11912
               line: 790
             value: incorrect
   - kind: unless
     begin:
-      offset: 11914
+      offset: 11915
       line: 792
     end:
-      offset: 11973
+      offset: 11974
       line: 794
     conditional:
       kind: binary
       first:
         kind: interpolated string
         begin:
-          offset: 11921
+          offset: 11922
           line: 792
         end:
-          offset: 11943
+          offset: 11944
           line: 792
         parts:
           - kind: variable
             begin:
-              offset: 11926
+              offset: 11927
               line: 792
             end:
-              offset: 11938
+              offset: 11939
               line: 792
             name: interpolated
       operations:
         - operator_position:
-            offset: 11944
+            offset: 11945
             line: 792
           operator: ==
           operand:
             kind: name
             begin:
-              offset: 11947
+              offset: 11948
               line: 792
             end:
-              offset: 11950
+              offset: 11951
               line: 792
             value: foo
     body:
@@ -18095,59 +18095,59 @@ statements:
         function:
           kind: name
           begin:
-            offset: 11957
+            offset: 11958
             line: 793
           end:
-            offset: 11961
+            offset: 11962
             line: 793
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 11962
+              offset: 11963
               line: 793
             end:
-              offset: 11971
+              offset: 11972
               line: 793
             value: incorrect
   - kind: unless
     begin:
-      offset: 11974
+      offset: 11975
       line: 795
     end:
-      offset: 12031
+      offset: 12032
       line: 797
     conditional:
       kind: binary
       first:
         kind: interpolated string
         begin:
-          offset: 11981
+          offset: 11982
           line: 795
         end:
-          offset: 12001
+          offset: 12002
           line: 795
         parts:
           - kind: variable
             begin:
-              offset: 11984
+              offset: 11985
               line: 795
             end:
-              offset: 11996
+              offset: 11997
               line: 795
             name: interpolated
       operations:
         - operator_position:
-            offset: 12002
+            offset: 12003
             line: 795
           operator: ==
           operand:
             kind: name
             begin:
-              offset: 12005
+              offset: 12006
               line: 795
             end:
-              offset: 12008
+              offset: 12009
               line: 795
             value: foo
     body:
@@ -18155,59 +18155,59 @@ statements:
         function:
           kind: name
           begin:
-            offset: 12015
+            offset: 12016
             line: 796
           end:
-            offset: 12019
+            offset: 12020
             line: 796
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12020
+              offset: 12021
               line: 796
             end:
-              offset: 12029
+              offset: 12030
               line: 796
             value: incorrect
   - kind: unless
     begin:
-      offset: 12032
+      offset: 12033
       line: 798
     end:
-      offset: 12089
+      offset: 12090
       line: 800
     conditional:
       kind: binary
       first:
         kind: interpolated string
         begin:
-          offset: 12039
+          offset: 12040
           line: 798
         end:
-          offset: 12059
+          offset: 12060
           line: 798
         parts:
           - kind: variable
             begin:
-              offset: 12045
+              offset: 12046
               line: 798
             end:
-              offset: 12057
+              offset: 12058
               line: 798
             name: interpolated
       operations:
         - operator_position:
-            offset: 12060
+            offset: 12061
             line: 798
           operator: ==
           operand:
             kind: name
             begin:
-              offset: 12063
+              offset: 12064
               line: 798
             end:
-              offset: 12066
+              offset: 12067
               line: 798
             value: foo
     body:
@@ -18215,93 +18215,93 @@ statements:
         function:
           kind: name
           begin:
-            offset: 12073
+            offset: 12074
             line: 799
           end:
-            offset: 12077
+            offset: 12078
             line: 799
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12078
+              offset: 12079
               line: 799
             end:
-              offset: 12087
+              offset: 12088
               line: 799
             value: incorrect
   - kind: resource defaults
     begin:
-      offset: 12111
+      offset: 12112
       line: 803
     end:
-      offset: 12134
+      offset: 12135
       line: 805
     type:
       kind: type
       begin:
-        offset: 12111
+        offset: 12112
         line: 803
       end:
-        offset: 12115
+        offset: 12116
         line: 803
       name: File
     operations:
       - name:
           kind: name
           begin:
-            offset: 12122
+            offset: 12123
             line: 804
           end:
-            offset: 12125
+            offset: 12126
             line: 804
           value: foo
         operator_position:
-          offset: 12126
+          offset: 12127
           line: 804
         operator: =>
         value:
           kind: name
           begin:
-            offset: 12129
+            offset: 12130
             line: 804
           end:
-            offset: 12132
+            offset: 12133
             line: 804
           value: bar
   - kind: resource
     begin:
-      offset: 12136
+      offset: 12137
       line: 807
     end:
-      offset: 12162
+      offset: 12163
       line: 808
     status: realized
     type:
       kind: name
       begin:
-        offset: 12136
+        offset: 12137
         line: 807
       end:
-        offset: 12140
+        offset: 12141
         line: 807
       value: file
     bodies:
       - title:
           kind: string
           begin:
-            offset: 12143
+            offset: 12144
             line: 807
           end:
-            offset: 12159
+            offset: 12160
             line: 807
           value: /default/check
   - kind: unless
     begin:
-      offset: 12164
+      offset: 12165
       line: 810
     end:
-      offset: 12228
+      offset: 12229
       line: 812
     conditional:
       kind: binary
@@ -18310,57 +18310,57 @@ statements:
         primary:
           kind: type
           begin:
-            offset: 12171
+            offset: 12172
             line: 810
           end:
-            offset: 12175
+            offset: 12176
             line: 810
           name: File
         subexpressions:
           - kind: access
             begin:
-              offset: 12175
+              offset: 12176
               line: 810
             end:
-              offset: 12193
+              offset: 12194
               line: 810
             arguments:
               - kind: string
                 begin:
-                  offset: 12176
+                  offset: 12177
                   line: 810
                 end:
-                  offset: 12192
+                  offset: 12193
                   line: 810
                 value: /default/check
           - kind: access
             begin:
-              offset: 12193
+              offset: 12194
               line: 810
             end:
-              offset: 12198
+              offset: 12199
               line: 810
             arguments:
               - kind: name
                 begin:
-                  offset: 12194
+                  offset: 12195
                   line: 810
                 end:
-                  offset: 12197
+                  offset: 12198
                   line: 810
                 value: foo
       operations:
         - operator_position:
-            offset: 12199
+            offset: 12200
             line: 810
           operator: ==
           operand:
             kind: name
             begin:
-              offset: 12202
+              offset: 12203
               line: 810
             end:
-              offset: 12205
+              offset: 12206
               line: 810
             value: bar
     body:
@@ -18368,85 +18368,85 @@ statements:
         function:
           kind: name
           begin:
-            offset: 12212
+            offset: 12213
             line: 811
           end:
-            offset: 12216
+            offset: 12217
             line: 811
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12217
+              offset: 12218
               line: 811
             end:
-              offset: 12226
+              offset: 12227
               line: 811
             value: incorrect
   - kind: resource override
     begin:
-      offset: 12252
+      offset: 12253
       line: 816
     end:
-      offset: 12294
+      offset: 12295
       line: 818
     reference:
       kind: postfix
       primary:
         kind: type
         begin:
-          offset: 12252
+          offset: 12253
           line: 816
         end:
-          offset: 12256
+          offset: 12257
           line: 816
         name: File
       subexpressions:
         - kind: access
           begin:
-            offset: 12256
+            offset: 12257
             line: 816
           end:
-            offset: 12274
+            offset: 12275
             line: 816
           arguments:
             - kind: string
               begin:
-                offset: 12257
+                offset: 12258
                 line: 816
               end:
-                offset: 12273
+                offset: 12274
                 line: 816
               value: /default/check
     operations:
       - name:
           kind: name
           begin:
-            offset: 12281
+            offset: 12282
             line: 817
           end:
-            offset: 12284
+            offset: 12285
             line: 817
           value: baz
         operator_position:
-          offset: 12285
+          offset: 12286
           line: 817
         operator: =>
         value:
           kind: name
           begin:
-            offset: 12288
+            offset: 12289
             line: 817
           end:
-            offset: 12292
+            offset: 12293
             line: 817
           value: cake
   - kind: unless
     begin:
-      offset: 12296
+      offset: 12297
       line: 820
     end:
-      offset: 12361
+      offset: 12362
       line: 822
     conditional:
       kind: binary
@@ -18455,57 +18455,57 @@ statements:
         primary:
           kind: type
           begin:
-            offset: 12303
+            offset: 12304
             line: 820
           end:
-            offset: 12307
+            offset: 12308
             line: 820
           name: File
         subexpressions:
           - kind: access
             begin:
-              offset: 12307
+              offset: 12308
               line: 820
             end:
-              offset: 12325
+              offset: 12326
               line: 820
             arguments:
               - kind: string
                 begin:
-                  offset: 12308
+                  offset: 12309
                   line: 820
                 end:
-                  offset: 12324
+                  offset: 12325
                   line: 820
                 value: /default/check
           - kind: access
             begin:
-              offset: 12325
+              offset: 12326
               line: 820
             end:
-              offset: 12330
+              offset: 12331
               line: 820
             arguments:
               - kind: name
                 begin:
-                  offset: 12326
+                  offset: 12327
                   line: 820
                 end:
-                  offset: 12329
+                  offset: 12330
                   line: 820
                 value: baz
       operations:
         - operator_position:
-            offset: 12331
+            offset: 12332
             line: 820
           operator: ==
           operand:
             kind: name
             begin:
-              offset: 12334
+              offset: 12335
               line: 820
             end:
-              offset: 12338
+              offset: 12339
               line: 820
             value: cake
     body:
@@ -18513,138 +18513,138 @@ statements:
         function:
           kind: name
           begin:
-            offset: 12345
+            offset: 12346
             line: 821
           end:
-            offset: 12349
+            offset: 12350
             line: 821
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12350
+              offset: 12351
               line: 821
             end:
-              offset: 12359
+              offset: 12360
               line: 821
             value: incorrect
   - kind: function
     begin:
-      offset: 12381
+      offset: 12382
       line: 826
     end:
-      offset: 12417
+      offset: 12418
       line: 828
     name:
       kind: name
       begin:
-        offset: 12390
+        offset: 12391
         line: 826
       end:
-        offset: 12404
+        offset: 12405
         line: 826
       value: test::noparams
     body:
       - kind: boolean
         begin:
-          offset: 12411
+          offset: 12412
           line: 827
         end:
-          offset: 12415
+          offset: 12416
           line: 827
         value: true
   - kind: unless
     begin:
-      offset: 12419
+      offset: 12420
       line: 830
     end:
-      offset: 12465
+      offset: 12466
       line: 832
     conditional:
       kind: function call
       function:
         kind: name
         begin:
-          offset: 12426
+          offset: 12427
           line: 830
         end:
-          offset: 12440
+          offset: 12441
           line: 830
         value: test::noparams
       end:
-        offset: 12442
+        offset: 12443
         line: 830
     body:
       - kind: function call
         function:
           kind: name
           begin:
-            offset: 12449
+            offset: 12450
             line: 831
           end:
-            offset: 12453
+            offset: 12454
             line: 831
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12454
+              offset: 12455
               line: 831
             end:
-              offset: 12463
+              offset: 12464
               line: 831
             value: incorrect
   - kind: function
     begin:
-      offset: 12467
+      offset: 12468
       line: 834
     end:
-      offset: 12546
+      offset: 12547
       line: 836
     name:
       kind: name
       begin:
-        offset: 12476
+        offset: 12477
         line: 834
       end:
-        offset: 12493
+        offset: 12494
         line: 834
       value: test::typedparams
     parameters:
       - type:
           kind: type
           begin:
-            offset: 12494
+            offset: 12495
             line: 834
           end:
-            offset: 12501
+            offset: 12502
             line: 834
           name: Integer
         variable:
           kind: variable
           begin:
-            offset: 12502
+            offset: 12503
             line: 834
           end:
-            offset: 12504
+            offset: 12505
             line: 834
           name: a
       - type:
           kind: type
           begin:
-            offset: 12506
+            offset: 12507
             line: 834
           end:
-            offset: 12512
+            offset: 12513
             line: 834
           name: String
         variable:
           kind: variable
           begin:
-            offset: 12513
+            offset: 12514
             line: 834
           end:
-            offset: 12515
+            offset: 12516
             line: 834
           name: b
     body:
@@ -18652,157 +18652,157 @@ statements:
         first:
           kind: variable
           begin:
-            offset: 12523
+            offset: 12524
             line: 835
           end:
-            offset: 12525
+            offset: 12526
             line: 835
           name: a
         operations:
           - operator_position:
-              offset: 12526
+              offset: 12527
               line: 835
             operator: ==
             operand:
               kind: number
               begin:
-                offset: 12529
+                offset: 12530
                 line: 835
               end:
-                offset: 12530
+                offset: 12531
                 line: 835
               base: decimal
               value: 1
           - operator_position:
-              offset: 12531
+              offset: 12532
               line: 835
             operator: and
             operand:
               kind: variable
               begin:
-                offset: 12535
+                offset: 12536
                 line: 835
               end:
-                offset: 12537
+                offset: 12538
                 line: 835
               name: b
           - operator_position:
-              offset: 12538
+              offset: 12539
               line: 835
             operator: ==
             operand:
               kind: name
               begin:
-                offset: 12541
+                offset: 12542
                 line: 835
               end:
-                offset: 12544
+                offset: 12545
                 line: 835
               value: foo
   - kind: unless
     begin:
-      offset: 12548
+      offset: 12549
       line: 838
     end:
-      offset: 12603
+      offset: 12604
       line: 840
     conditional:
       kind: function call
       function:
         kind: name
         begin:
-          offset: 12555
+          offset: 12556
           line: 838
         end:
-          offset: 12572
+          offset: 12573
           line: 838
         value: test::typedparams
       arguments:
         - kind: number
           begin:
-            offset: 12573
+            offset: 12574
             line: 838
           end:
-            offset: 12574
+            offset: 12575
             line: 838
           base: decimal
           value: 1
         - kind: name
           begin:
-            offset: 12576
+            offset: 12577
             line: 838
           end:
-            offset: 12579
+            offset: 12580
             line: 838
           value: foo
       end:
-        offset: 12580
+        offset: 12581
         line: 838
     body:
       - kind: function call
         function:
           kind: name
           begin:
-            offset: 12587
+            offset: 12588
             line: 839
           end:
-            offset: 12591
+            offset: 12592
             line: 839
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12592
+              offset: 12593
               line: 839
             end:
-              offset: 12601
+              offset: 12602
               line: 839
             value: incorrect
   - kind: function
     begin:
-      offset: 12605
+      offset: 12606
       line: 842
     end:
-      offset: 12692
+      offset: 12693
       line: 844
     name:
       kind: name
       begin:
-        offset: 12614
+        offset: 12615
         line: 842
       end:
-        offset: 12628
+        offset: 12629
         line: 842
       value: test::function
     parameters:
       - variable:
           kind: variable
           begin:
-            offset: 12629
+            offset: 12630
             line: 842
           end:
-            offset: 12631
+            offset: 12632
             line: 842
           name: a
       - variable:
           kind: variable
           begin:
-            offset: 12633
+            offset: 12634
             line: 842
           end:
-            offset: 12635
+            offset: 12636
             line: 842
           name: b
       - captures:
-          offset: 12637
+          offset: 12638
           line: 842
         variable:
           kind: variable
           begin:
-            offset: 12638
+            offset: 12639
             line: 842
           end:
-            offset: 12640
+            offset: 12641
             line: 842
           name: c
     body:
@@ -18810,167 +18810,167 @@ statements:
         first:
           kind: variable
           begin:
-            offset: 12648
+            offset: 12649
             line: 843
           end:
-            offset: 12650
+            offset: 12651
             line: 843
           name: a
         operations:
           - operator_position:
-              offset: 12651
+              offset: 12652
               line: 843
             operator: ==
             operand:
               kind: number
               begin:
-                offset: 12654
+                offset: 12655
                 line: 843
               end:
-                offset: 12655
+                offset: 12656
                 line: 843
               base: decimal
               value: 1
           - operator_position:
-              offset: 12656
+              offset: 12657
               line: 843
             operator: and
             operand:
               kind: variable
               begin:
-                offset: 12660
+                offset: 12661
                 line: 843
               end:
-                offset: 12662
+                offset: 12663
                 line: 843
               name: b
           - operator_position:
-              offset: 12663
+              offset: 12664
               line: 843
             operator: ==
             operand:
               kind: name
               begin:
-                offset: 12666
+                offset: 12667
                 line: 843
               end:
-                offset: 12669
+                offset: 12670
                 line: 843
               value: foo
           - operator_position:
-              offset: 12670
+              offset: 12671
               line: 843
             operator: and
             operand:
               kind: variable
               begin:
-                offset: 12674
+                offset: 12675
                 line: 843
               end:
-                offset: 12676
+                offset: 12677
                 line: 843
               name: c
           - operator_position:
-              offset: 12677
+              offset: 12678
               line: 843
             operator: ==
             operand:
               kind: array
               begin:
-                offset: 12680
+                offset: 12681
                 line: 843
               end:
-                offset: 12690
+                offset: 12691
                 line: 843
               elements:
                 - kind: name
                   begin:
-                    offset: 12681
+                    offset: 12682
                     line: 843
                   end:
-                    offset: 12684
+                    offset: 12685
                     line: 843
                   value: bar
                 - kind: name
                   begin:
-                    offset: 12686
+                    offset: 12687
                     line: 843
                   end:
-                    offset: 12689
+                    offset: 12690
                     line: 843
                   value: baz
   - kind: unless
     begin:
-      offset: 12694
+      offset: 12695
       line: 846
     end:
-      offset: 12756
+      offset: 12757
       line: 848
     conditional:
       kind: function call
       function:
         kind: name
         begin:
-          offset: 12701
+          offset: 12702
           line: 846
         end:
-          offset: 12715
+          offset: 12716
           line: 846
         value: test::function
       arguments:
         - kind: number
           begin:
-            offset: 12716
+            offset: 12717
             line: 846
           end:
-            offset: 12717
+            offset: 12718
             line: 846
           base: decimal
           value: 1
         - kind: name
           begin:
-            offset: 12719
+            offset: 12720
             line: 846
           end:
-            offset: 12722
+            offset: 12723
             line: 846
           value: foo
         - kind: name
           begin:
-            offset: 12724
+            offset: 12725
             line: 846
           end:
-            offset: 12727
+            offset: 12728
             line: 846
           value: bar
         - kind: name
           begin:
-            offset: 12729
+            offset: 12730
             line: 846
           end:
-            offset: 12732
+            offset: 12733
             line: 846
           value: baz
       end:
-        offset: 12733
+        offset: 12734
         line: 846
     body:
       - kind: function call
         function:
           kind: name
           begin:
-            offset: 12740
+            offset: 12741
             line: 847
           end:
-            offset: 12744
+            offset: 12745
             line: 847
           value: fail
         arguments:
           - kind: name
             begin:
-              offset: 12745
+              offset: 12746
               line: 847
             end:
-              offset: 12754
+              offset: 12755
               line: 847
             value: incorrect

@@ -5,6 +5,8 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    floating const floating::instance;
+
     floating::floating(double from, double to) :
         _from(from),
         _to(to)
@@ -26,7 +28,7 @@ namespace puppet { namespace runtime { namespace types {
         return "Float";
     }
 
-    bool floating::is_instance(values::value const& value) const
+    bool floating::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<double>();
         if (!ptr) {
@@ -35,25 +37,14 @@ namespace puppet { namespace runtime { namespace types {
         return _to < _from ? (*ptr >= _to && *ptr <= _from) : (*ptr >= _from && *ptr <= _to);
     }
 
-    bool floating::is_specialization(values::type const& other) const
+    bool floating::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // Check for an Float with a range inside of this type's range
         auto ptr = boost::get<floating>(&other);
         if (!ptr) {
             return false;
         }
-        // Check for equality
-        if (ptr->from() == _from && ptr->to() == _to) {
-            return false;
-        }
-        return std::min(ptr->from(), ptr->to()) >= std::min(_from, _to) &&
-               std::max(ptr->from(), ptr->to()) <= std::max(_from, _to);
-    }
-
-    bool floating::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Float is a real type
-        return true;
+        return std::min(ptr->_from, ptr->_to) >= std::min(_from, _to) &&
+               std::max(ptr->_from, ptr->_to) <= std::max(_from, _to);
     }
 
     void floating::write(ostream& stream, bool expand) const

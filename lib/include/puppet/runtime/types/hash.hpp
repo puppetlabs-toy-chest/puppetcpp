@@ -7,12 +7,11 @@
 #include "../values/forward.hpp"
 #include <ostream>
 #include <limits>
-#include <unordered_map>
 
 namespace puppet { namespace runtime { namespace types {
 
-    // Forward declaration of alias
-    struct alias;
+    // Forward declaration of recursion_guard
+    struct recursion_guard;
 
     /**
      * Represents the Puppet Hash type.
@@ -22,14 +21,14 @@ namespace puppet { namespace runtime { namespace types {
         /**
          * Constructs a Hash type.
          * @param key_type The key type of the hash.  Defaults to the Scalar type.
-         * @param element_type The element type of the hash.  Defaults to the Data type.
+         * @param value_type The value type of the hash.  Defaults to the Data type.
          * @param from The "from" type parameter.
          * @param to The "to" type parameter.
          */
         explicit hash(
             std::unique_ptr<values::type> key_type = nullptr,
-            std::unique_ptr<values::type> element_type = nullptr,
-            int64_t from = std::numeric_limits<int64_t>::min(),
+            std::unique_ptr<values::type> value_type = nullptr,
+            int64_t from = 0,
             int64_t to = std::numeric_limits<int64_t>::max());
 
         /**
@@ -60,15 +59,15 @@ namespace puppet { namespace runtime { namespace types {
 
         /**
          * Gets the key type of the hash.
-         * @return Returns the element type of the hash.
+         * @return Returns the value type of the hash.
          */
         values::type const& key_type() const;
 
         /**
-         * Gets the element type of the hash.
-         * @return Returns the element type of the hash.
+         * Gets the value type of the hash.
+         * @return Returns the value type of the hash.
          */
-        values::type const& element_type() const;
+        values::type const& value_type() const;
 
         /**
         * Gets the "from" type parameter.
@@ -91,23 +90,18 @@ namespace puppet { namespace runtime { namespace types {
         /**
          * Determines if the given value is an instance of this type.
          * @param value The value to determine if it is an instance of this type.
+         * @param guard The recursion guard to use for aliases.
          * @return Returns true if the given value is an instance of this type or false if not.
          */
-        bool is_instance(values::value const& value) const;
+        bool is_instance(values::value const& value, recursion_guard& guard) const;
 
         /**
-         * Determines if the given type is a specialization (i.e. more specific) of this type.
-         * @param other The other type to check for specialization.
-         * @return Returns true if the other type is a specialization or false if not.
+         * Determines if the given type is assignable to this type.
+         * @param guard The recursion guard to use for aliases.
+         * @param other The other type to check for assignability.
+         * @return Returns true if the given type is assignable to this type or false if the given type is not assignable to this type.
          */
-        bool is_specialization(values::type const& other) const;
-
-        /**
-         * Determines if the type is real (i.e. actual type vs. an alias/variant that never resolves to an actual type).
-         * @param map The map to keep track of encountered type aliases.
-         * @return Returns true if the type is real or false if it never resolves to an actual type.
-         */
-        bool is_real(std::unordered_map<values::type const*, bool>& map) const;
+        bool is_assignable(values::type const& other, recursion_guard& guard) const;
 
         /**
          * Writes a representation of the type to the given stream.
@@ -116,9 +110,14 @@ namespace puppet { namespace runtime { namespace types {
          */
         void write(std::ostream& stream, bool expand = true) const;
 
+        /**
+         * Stores a default shared instance used internally by other Puppet types.
+         */
+        static hash const instance;
+
      private:
         std::unique_ptr<values::type> _key_type;
-        std::unique_ptr<values::type> _element_type;
+        std::unique_ptr<values::type> _value_type;
         int64_t _from;
         int64_t _to;
     };

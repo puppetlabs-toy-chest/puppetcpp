@@ -31,13 +31,18 @@ namespace puppet { namespace runtime { namespace types {
         return "Iterable";
     }
 
-    bool iterable::is_instance(values::value const& value) const
+    bool iterable::is_instance(values::value const& value, recursion_guard& guard) const
     {
+        // Check for string
+        if (value.as<std::string>()) {
+            return true;
+        }
+
         // Check for array
         if (auto array = value.as<values::array>()) {
             if (_type) {
                 for (auto& element : *array) {
-                    if (!_type->is_instance(*element)) {
+                    if (!_type->is_instance(*element, guard)) {
                         return false;
                     }
                 }
@@ -60,10 +65,7 @@ namespace puppet { namespace runtime { namespace types {
 
                 // Check that all the keys and values are instances of the tuple
                 for (auto& kvp : *hash) {
-                    if (!types[0]->is_instance(kvp.key())) {
-                        return false;
-                    }
-                    if (!types[1]->is_instance(kvp.value())) {
+                    if (!types[0]->is_instance(kvp.key(), guard) || !types[1]->is_instance(kvp.value(), guard)) {
                         return false;
                     }
                 }
@@ -117,9 +119,9 @@ namespace puppet { namespace runtime { namespace types {
                             match = false;
                             return false;
                         }
-                        match = types[0]->is_instance(*key) && types[1]->is_instance(value);
+                        match = types[0]->is_instance(*key, guard) && types[1]->is_instance(value, guard);
                     } else {
-                        match = _type->is_instance(value);
+                        match = _type->is_instance(value, guard);
                     }
                     return match;
                 });
@@ -129,21 +131,53 @@ namespace puppet { namespace runtime { namespace types {
         return false;
     }
 
-    bool iterable::is_specialization(values::type const& other) const
+    bool iterable::is_assignable(values::type const& other, recursion_guard& guard) const
     {
-        // If this iterable has a specialization, the other iterable cannot be a specialization
-        if (_type) {
-            return false;
+        // Check for string
+        if (boost::get<types::string>(&other)) {
+            return !_type || _type->is_assignable(other, guard);
         }
-        // Check that the other iterable is specialized
-        auto iterable = boost::get<types::iterable>(&other);
-        return iterable && iterable->type();
-    }
-
-    bool iterable::is_real(unordered_map<values::type const*, bool>& map) const
-    {
-        // Iterable is a real type
-        return true;
+        // Check for array
+        if (auto array = boost::get<types::array>(&other)) {
+            return !_type || _type->is_assignable(array->element_type(), guard);
+        }
+        // Check for hash
+        if (auto hash = boost::get<types::hash>(&other)) {
+            if (!_type) {
+                return true;
+            }
+            auto tuple = boost::get<types::tuple>(_type.get());
+            if (!tuple) {
+                return false;
+            }
+            auto& types = tuple->types();
+            if (types.size() != 2) {
+                return false;
+            }
+            return types[0]->is_assignable(hash->key_type(), guard) && types[1]->is_assignable(hash->value_type(), guard);
+        }
+        // Check for Integer
+        if (auto integer = boost::get<types::integer>(&other)) {
+            if (!integer->iterable()) {
+                return false;
+            }
+            return !_type || _type->is_assignable(other, guard);
+        }
+        // Check for Enum
+        if (boost::get<types::enumeration>(&other)) {
+            return !_type || _type->is_assignable(other, guard);
+        }
+        // Check for Iterator
+        if (auto iterator = boost::get<types::iterator>(&other)) {
+            if (!_type) {
+                return true;
+            }
+            if (!iterator->type()) {
+                return false;
+            }
+            return _type->is_assignable(*iterator->type(), guard);
+        }
+        return false;
     }
 
     void iterable::write(ostream& stream, bool expand) const
@@ -165,12 +199,13 @@ namespace puppet { namespace runtime { namespace types {
 
     bool operator==(iterable const& left, iterable const& right)
     {
-        if (!left.type() && !right.type()) {
-            return true;
-        } else if (left.type() || right.type()) {
-            return false;
+        if (left.type() || right.type()) {
+            if (!left.type() || !right.type()) {
+                return false;
+            }
+            return *left.type() == *right.type();
         }
-        return *left.type() == *right.type();
+        return true;
     }
 
     bool operator!=(iterable const& left, iterable const& right)

@@ -238,7 +238,7 @@ namespace puppet { namespace runtime { namespace values {
 
         struct indirect_comparer
         {
-            bool operator()(values::value const* right, values::value const* left) const;
+            bool operator()(values::value const* left, values::value const* right) const;
         };
 
         sequence_type _elements;
