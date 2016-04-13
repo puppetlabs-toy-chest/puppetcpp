@@ -1,0 +1,3 @@
+function bar::bar::baz() {
+
+}

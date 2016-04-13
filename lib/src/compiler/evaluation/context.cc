@@ -623,7 +623,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto klass = registry.find_class(name);
         if (!klass && import && _node) {
             // Attempt to import the class
-            _node->environment().import(_node->logger(), find_type::manifest, boost::to_lower_copy(name));
+            _node->environment().import(_node->logger(), find_type::manifest, name);
             klass = registry.find_class(name);
         }
         return klass;
@@ -639,7 +639,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto definition = registry.find_defined_type(name);
         if (!definition && import && _node) {
             // Attempt to import the defined type
-            _node->environment().import(_node->logger(), find_type::manifest, boost::to_lower_copy(name));
+            _node->environment().import(_node->logger(), find_type::manifest, name);
 
             // Find it again
             definition = registry.find_defined_type(name);
@@ -658,7 +658,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto descriptor = dispatcher.find(name);
         if (!descriptor && import && _node) {
             // Attempt to import the function and find it again
-            _node->environment().import(_node->logger(), find_type::function, boost::to_lower_copy(name));
+            _node->environment().import(_node->logger(), find_type::function, name);
             descriptor = dispatcher.find(name);
         }
         return descriptor;
@@ -676,7 +676,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto alias = registry.find_type_alias(name);
         if (!alias && import && _node) {
             // Attempt to import the alias using a lowercase name and find it again
-            _node->environment().import(_node->logger(), find_type::type, boost::to_lower_copy(name));
+            _node->environment().import(_node->logger(), find_type::type, name);
             alias = registry.find_type_alias(name);
         }
         return alias;

@@ -1,0 +1,3 @@
+define bar::baz::cake {
+
+}

@@ -31,7 +31,7 @@ namespace puppet { namespace compiler {
     bool module::is_valid_name(string const& name)
     {
         static const regex valid_name{R"(^[a-z][a-z0-9_]*$)"};
-        return regex_match(name, valid_name);
+        return name != "environment" && regex_match(name, valid_name);
     }
 
 }}  // namespace puppet::compiler
