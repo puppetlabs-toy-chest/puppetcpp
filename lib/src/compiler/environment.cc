@@ -257,14 +257,24 @@ namespace puppet { namespace compiler {
         }
     }
 
-    void environment::import(logging::logger& logger, find_type type, string const& name)
+    void environment::import(logging::logger& logger, find_type type, string name)
     {
+        boost::to_lower(name);
+        if (boost::starts_with(name, "::")) {
+            name = name.substr(2);
+        }
+
         string path;
         compiler::module const* module = nullptr;
         auto pos = name.find("::");
         if (pos == string::npos) {
             // If not a manifest, the name could not be imported
             if (type != find_type::manifest) {
+                return;
+            }
+
+            if (name == "environment") {
+                // Don't load manifests from the environment
                 return;
             }
 
@@ -276,24 +286,28 @@ namespace puppet { namespace compiler {
             }
             path = module->find_file(type, "init");
         } else {
-            // Split into module name and subpath
-            auto module_name = name.substr(0, pos);
-            auto qualified_name = name.substr(pos + 2);
-            module = find_module(module_name);
-            if (!module) {
-                LOG(debug, "could not load a file for '%1%' because module '%2%' does not exist.", name, module_name);
-                return;
-            }
-            path = module->find_file(type, qualified_name);
-        }
+            // Split into namespace and subname
+            auto ns = name.substr(0, pos);
+            auto subname = name.substr(pos + 2);
 
-        if (path.empty()) {
-            return;
+            if (ns == "environment") {
+                if (type == find_type::manifest) {
+                    // Don't load manifests from the environment
+                    return;
+                }
+                path = this->find_file(type, subname);
+            } else {
+                module = find_module(ns);
+                if (!module) {
+                    LOG(debug, "could not load a file for '%1%' because module '%2%' does not exist.", name, ns);
+                    return;
+                }
+                path = module->find_file(type, subname);
+            }
         }
 
         // Ignore files that don't exist
-        sys::error_code ec;
-        if (!fs::is_regular_file(path, ec)) {
+        if (path.empty()) {
             return;
         }
 

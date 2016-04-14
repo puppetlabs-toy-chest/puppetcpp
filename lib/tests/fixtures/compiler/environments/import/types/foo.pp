@@ -1,0 +1,1 @@
+type Environment::Foo = Integer

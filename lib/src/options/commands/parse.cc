@@ -398,7 +398,11 @@ namespace puppet { namespace options { namespace commands {
         }
 
         if (options.count(ENVIRONMENT_OPTION)) {
-            settings.set(settings::environment, options[ENVIRONMENT_OPTION].as<string>());
+            auto environment = options[ENVIRONMENT_OPTION].as<string>();
+            if (environment == "environment") {
+                throw option_exception("'environment' is not a valid environment name because it conflicts with the built-in 'environment' namespace.", this);
+            }
+            settings.set(settings::environment, rvalue_cast(environment));
         }
 
         if (options.count(ENVIRONMENT_PATH_OPTION)) {

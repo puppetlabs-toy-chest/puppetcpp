@@ -116,7 +116,7 @@ namespace puppet { namespace compiler {
          * @param type The type of file to find.
          * @param name The qualified name to translated into a file (e.g. 'foo::bar::baz' => '.../modules/foo/bar/baz').
          */
-        void import(logging::logger& logger, find_type type, std::string const& name);
+        void import(logging::logger& logger, find_type type, std::string name);
 
      private:
         environment(std::string name, std::string directory, compiler::settings settings);
