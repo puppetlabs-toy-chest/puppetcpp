@@ -32,7 +32,7 @@ namespace puppet { namespace runtime { namespace values {
          * @param step The iterator step size.
          * @param reverse True to reverse the iteration or false if not.
          */
-        explicit iterator(wrapper<values::value> value, size_t step = 1, bool reverse = false);
+        explicit iterator(wrapper<values::value> value, int64_t step = 1, bool reverse = false);
 
         /**
         * Gets the underlying iterable value.
@@ -45,7 +45,7 @@ namespace puppet { namespace runtime { namespace values {
          * Gets the iterator's step count.
          * @return Returns the iterator's step count.
          */
-        size_t step() const;
+        int64_t step() const;
 
         /**
          * Gets whether or not the iterator traverses in a reverse direction.
@@ -62,7 +62,7 @@ namespace puppet { namespace runtime { namespace values {
 
      private:
         wrapper<values::value> _value;
-        size_t _step;
+        int64_t _step;
         bool _reverse;
     };
 
@@ -108,7 +108,7 @@ namespace puppet { namespace runtime { namespace values {
          * @param step The iteration step count.
          * @param reverse True to reverse the iteration or false if not.
          */
-        iteration_visitor(iterator::callback_type const& callback, size_t step = 1, bool reverse = false);
+        iteration_visitor(iterator::callback_type const& callback, int64_t step = 1, bool reverse = false);
 
      private:
         template<class> friend class ::boost::detail::variant::invoke_visitor;
@@ -129,7 +129,7 @@ namespace puppet { namespace runtime { namespace values {
         void operator()(values::iterator const& value) const;
 
         iterator::callback_type const& _callback;
-        size_t _step;
+        int64_t _step;
         bool _reverse;
     };
 

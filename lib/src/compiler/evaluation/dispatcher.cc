@@ -21,6 +21,7 @@
 #include <puppet/compiler/evaluation/functions/require.hpp>
 #include <puppet/compiler/evaluation/functions/reverse_each.hpp>
 #include <puppet/compiler/evaluation/functions/split.hpp>
+#include <puppet/compiler/evaluation/functions/step.hpp>
 #include <puppet/compiler/evaluation/functions/tag.hpp>
 #include <puppet/compiler/evaluation/functions/tagged.hpp>
 #include <puppet/compiler/evaluation/functions/versioncmp.hpp>
@@ -87,6 +88,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::require::create_descriptor());
         add(functions::reverse_each::create_descriptor());
         add(functions::split::create_descriptor());
+        add(functions::step::create_descriptor());
         add(functions::tag::create_descriptor());
         add(functions::tagged::create_descriptor());
         add(functions::versioncmp::create_descriptor());
