@@ -181,7 +181,7 @@ add_custom_target(generate_files ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include
 add_library(puppet SHARED ${PUPPET_COMMON_SOURCES} ${PUPPET_PLATFORM_SOURCES})
 add_dependencies(puppet generate_files)
 
-set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LIBPUPPET_VERSION_MINOR}.${LIBPUPPET_VERSION_PATCH}" COTIRE_UNITY_LINK_LIBRARIES_INIT "COPY_UNITY")
+set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LIBPUPPET_VERSION_MINOR}.${LIBPUPPET_VERSION_PATCH}")
 
 target_link_libraries(puppet
     ${Boost_LIBRARIES}
@@ -191,5 +191,8 @@ target_link_libraries(puppet
 )
 
 install(TARGETS puppet DESTINATION lib)
+
+cotire(generate_static_lexer)
+cotire(puppet)
 
 add_subdirectory(tests)
