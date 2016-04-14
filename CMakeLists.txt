@@ -7,7 +7,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
+include(cotire)
 enable_testing()
 
 # Disable PCH date-time check because Boost Spirit Lex uses __DATE__ and __TIME__ for static lexer generation
@@ -15,6 +15,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -ftemplate-depth=512 -Wall -W
 
 if (${TEST_COVERAGE})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -coverage")
+endif()
+
+set_property(DIRECTORY PROPERTY COTIRE_ADD_UNITY_BUILD FALSE)
+if (${DISABLE_PCH})
+    set_property(DIRECTORY PROPERTY COTIRE_ENABLE_PRECOMPILED_HEADER FALSE)
+else()
+    set_property(DIRECTORY PROPERTY COTIRE_ENABLE_PRECOMPILED_HEADER TRUE)
 endif()
 
 # Set RPATH if not installing to a system library directory

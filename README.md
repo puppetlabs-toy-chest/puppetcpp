@@ -206,14 +206,18 @@ To generate a fully debug build use `-DCMAKE_BUILD_TYPE=Debug` when invoking `cm
 To speed up builds, it is recommended to use [ccache](https://ccache.samba.org/) as the "compiler":
 
     $ cd release
-    $ cmake .. -DCMAKE_C_COMPILER=$(which ccache) -DCMAKE_C_COMPILER_ARG1=cc -DCMAKE_CXX_COMPILER=$(which ccache) -DCMAKE_CXX_COMPILER_ARG1=c++
+    $ CCACHE_SLOPPINESS=pch_defines,time_macros cmake .. -DCMAKE_C_COMPILER=$(which ccache) -DCMAKE_C_COMPILER_ARG1=cc -DCMAKE_CXX_COMPILER=$(which ccache) -DCMAKE_CXX_COMPILER_ARG1=c++
+
+**Note: the environment variable `CCACHE_SLOPPINESS` must be set to `pch_defines,time_macros` for precompiled headers to work with ccache.**
 
 Also consider using [Ninja](https://ninja-build.org/) as a replacement for GNU Make:
 
     $ cd release
-    $ cmake .. -GNinja -DCMAKE_C_COMPILER=$(which ccache) -DCMAKE_C_COMPILER_ARG1=cc -DCMAKE_CXX_COMPILER=$(which ccache) -DCMAKE_CXX_COMPILER_ARG1=c++
+    $ cmake .. -GNinja -DDISABLE_PCH=1 -DCMAKE_C_COMPILER=$(which ccache) -DCMAKE_C_COMPILER_ARG1=cc -DCMAKE_CXX_COMPILER=$(which ccache) -DCMAKE_CXX_COMPILER_ARG1=c++
 
 Then use `ninja` instead of `make` in the examples below.
+
+**Note: tracking precompiled header changes with Nina is [currently unsupported in CMake](https://cmake.org/Bug/view.php?id=13234) so it is recommended to set `DISABLE_PCH=1`.** 
 
 Build
 -----
