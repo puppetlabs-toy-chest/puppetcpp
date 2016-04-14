@@ -5,7 +5,7 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace values {
 
-    iterator::iterator(wrapper<values::value> value, size_t step, bool reverse) :
+    iterator::iterator(wrapper<values::value> value, int64_t step, bool reverse) :
         _value(rvalue_cast(value)),
         _step(step),
         _reverse(reverse)
@@ -23,7 +23,7 @@ namespace puppet { namespace runtime { namespace values {
         return _value;
     }
 
-    size_t iterator::step() const
+    int64_t iterator::step() const
     {
         return _step;
     }
@@ -98,7 +98,7 @@ namespace puppet { namespace runtime { namespace values {
         return seed;
     }
 
-    iteration_visitor::iteration_visitor(iterator::callback_type const& callback, size_t step, bool reverse) :
+    iteration_visitor::iteration_visitor(iterator::callback_type const& callback, int64_t step, bool reverse) :
         _callback(callback),
         _step(step),
         _reverse(reverse)
@@ -144,7 +144,7 @@ namespace puppet { namespace runtime { namespace values {
 
     void iteration_visitor::operator()(std::string const& value) const
     {
-        size_t step = 0;
+        int64_t step = 0;
         each_code_point(
             value,
             [&](auto character) {
@@ -213,7 +213,8 @@ namespace puppet { namespace runtime { namespace values {
         if (value.empty()) {
             return;
         }
-        for (size_t i = (_reverse ? value.size() - 1 : 0); _reverse ? true : i < value.size(); i += (_reverse ? -_step : _step)) {
+        int64_t size = static_cast<int64_t>(value.size());
+        for (int64_t i = (_reverse ? size - 1 : 0); _reverse ? true : i < size; i += (_reverse ? -_step : _step)) {
             if (!_callback(nullptr, value[i])) {
                 break;
             }
@@ -230,7 +231,7 @@ namespace puppet { namespace runtime { namespace values {
             return;
         }
         if (_reverse) {
-            size_t step = 0;
+            int64_t step = 0;
             for (auto it = value.rbegin(); it != value.rend(); ++it) {
                 if (step > 0) {
                     --step;
@@ -243,7 +244,7 @@ namespace puppet { namespace runtime { namespace values {
             }
             return;
         }
-        size_t step = 0;
+        int64_t step = 0;
         for (auto& kvp : value) {
             if (step > 0) {
                 --step;
@@ -258,7 +259,7 @@ namespace puppet { namespace runtime { namespace values {
 
     void iteration_visitor::operator()(values::iterator const& value) const
     {
-        size_t step = 0;
+        int64_t step = 0;
         value.each(
             [&](auto const* key, auto const& value) {
                 if (step > 0) {
