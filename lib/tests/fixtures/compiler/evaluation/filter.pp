@@ -61,4 +61,22 @@ notice Enum[foo, bar, baz].filter |$index, $value| {
     $value =~ /^b/
 }
 
-# TODO: add tests for iterators when they can be instantiated
+notice [1, 2, 3].reverse_each.filter |$value| {
+    notice "value = $value"
+    $value > 1
+}
+
+notice [1, 2, 3].reverse_each.filter |$index, $value| {
+    notice "index = $index, value = $value"
+    $value > 1
+}
+
+notice { foo => bar, bar => baz, baz => cake }.reverse_each.filter |$value| {
+    notice "value = $value"
+    $value[0] =~ /^b/
+}
+
+notice { foo => bar, bar => baz, baz => cake }.reverse_each.filter |$key, $value| {
+    notice "key = $key, value = $value"
+    $key =~ /^b/
+}

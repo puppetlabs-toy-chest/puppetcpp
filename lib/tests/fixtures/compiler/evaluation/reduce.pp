@@ -64,4 +64,22 @@ notice Enum[bar, baz].reduce(foo) |$memo, $value| {
     "$memo$value"
 }
 
-# TODO: add tests for iterators when they can be instantiated
+notice [1, 2, 3].reverse_each.reduce |$memo, $value| {
+    notice "memo = $memo, value = $value"
+    $memo + $value
+}
+
+notice [1, 2].reverse_each.reduce(3) |$memo, $value| {
+    notice "memo = $memo, value = $value"
+    $memo + $value
+}
+
+notice { foo => bar, bar => baz, baz => cake }.reverse_each.reduce |$memo, $value| {
+    notice "value = $value"
+    $memo << $value[0] << $value[1]
+}
+
+notice { foo => bar, bar => baz }.reverse_each.reduce([baz, cake]) |$memo, $value| {
+    notice "key = $key, value = $value"
+    $memo + $value
+}

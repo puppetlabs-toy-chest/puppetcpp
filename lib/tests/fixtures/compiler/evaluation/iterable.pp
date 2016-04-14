@@ -87,4 +87,10 @@ unless Enum[foo, bar] =~ Iterable[Enum[foo, bar]] {
     fail incorrect
 }
 
-# TODO: add check for iterators in the future
+unless [1, 2, 3].reverse_each =~ Iterable {
+    fail incorrect
+}
+
+unless [1, foo, 3].reverse_each =~ Iterable[Variant[String, Integer]] {
+    fail incorrect
+}

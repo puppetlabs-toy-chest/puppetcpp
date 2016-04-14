@@ -61,4 +61,22 @@ notice Enum[foo, bar, baz].map |$index, $value| {
     "value = $value"
 }
 
-# TODO: add tests for iterators when they can be instantiated
+notice [1, 2, 3].reverse_each.map |$value| {
+    notice "value = $value"
+    $value - 1
+}
+
+notice [1, 2, 3].reverse_each.map |$index, $value| {
+    notice "index = $index, value = $value"
+    $value - 1
+}
+
+notice { foo => bar, bar => baz, baz => cake }.reverse_each.map |$value| {
+    notice "value = $value"
+    $value[0]
+}
+
+notice { foo => bar, bar => baz, baz => cake }.reverse_each.map |$key, $value| {
+    notice "key = $key, value = $value"
+    $key
+}

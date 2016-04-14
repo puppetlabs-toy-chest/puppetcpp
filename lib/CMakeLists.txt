@@ -39,6 +39,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/realize.cc
     src/compiler/evaluation/functions/reduce.cc
     src/compiler/evaluation/functions/require.cc
+    src/compiler/evaluation/functions/reverse_each.cc
     src/compiler/evaluation/functions/split.cc
     src/compiler/evaluation/functions/tag.cc
     src/compiler/evaluation/functions/tagged.cc
