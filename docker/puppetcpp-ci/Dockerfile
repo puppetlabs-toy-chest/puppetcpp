@@ -1,6 +1,6 @@
 FROM gliderlabs/alpine:edge
 MAINTAINER Peter Huene <peterhuene@gmail.com>
-RUN apk add --no-cache make cmake gcc g++ boost-dev boost-program_options curl-dev readline-dev git py-pip && \
+RUN apk add --no-cache make cmake gcc g++ boost-dev boost-program_options curl-dev libedit-dev git py-pip && \
     pip install --user codecov && \
     git clone https://github.com/jbeder/yaml-cpp.git /tmp/yaml-cpp && \
     cd /tmp/yaml-cpp && \

@@ -1,6 +1,6 @@
 FROM gliderlabs/alpine:edge
 MAINTAINER Peter Huene <peterhuene@gmail.com>
-RUN apk add --no-cache make cmake gcc g++ boost-dev curl-dev readline-dev git && \
+RUN apk add --no-cache make cmake gcc g++ boost-dev curl-dev libedit-dev git && \
     git clone https://github.com/jbeder/yaml-cpp.git /tmp/yaml-cpp && \
     cd /tmp/yaml-cpp && \
     cmake . -DBUILD_SHARED_LIBS=ON && \
@@ -31,6 +31,6 @@ RUN apk add --no-cache make cmake gcc g++ boost-dev curl-dev readline-dev git &&
     cd && \
     rm -rf /tmp/puppetcpp && \
     mkdir -p /etc/puppetlabs/code/environments/production && \
-    apk --no-cache del make cmake gcc g++ boost-dev curl-dev readline-dev git && \
-    apk --no-cache add libstdc++ boost boost-program_options libcurl readline
+    apk --no-cache del make cmake gcc g++ boost-dev curl-dev libedit-dev git && \
+    apk --no-cache add libstdc++ boost boost-program_options libcurl libedit
 ENTRYPOINT ["/usr/bin/puppetcpp"]

@@ -5,9 +5,8 @@
 #include <puppet/utility/filesystem/helpers.hpp>
 #include <boost/filesystem.hpp>
 
-#ifdef USE_Readline
-#include <readline/readline.h>
-#include <readline/history.h>
+#ifdef USE_Editline
+#include <editline/readline.h>
 #endif
 
 using namespace std;
@@ -24,7 +23,7 @@ static void output_result(puppet::runtime::values::value const& result)
     cout << " => " << result << endl;
 }
 
-#ifdef USE_Readline
+#ifdef USE_Editline
 static void repl_loop(evaluation::context& context)
 {
     auto history_file = home_directory();
