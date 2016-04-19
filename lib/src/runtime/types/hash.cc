@@ -121,17 +121,32 @@ namespace puppet { namespace runtime { namespace types {
 
     void hash::write(ostream& stream, bool expand) const
     {
-        stream << hash::name() << '[';
+        stream << hash::name();
+
+        // Write empty hashes in a special format, without the key and value types
+        if (_from == 0 && _to == 0) {
+            stream << "[0, 0]";
+            return;
+        }
+
+        bool from_default = _from == 0;
+        bool to_default = _to == numeric_limits<int64_t>::max();
+
+        if (from_default && to_default) {
+            if (*_key_type != scalar::instance || *_value_type != data::instance) {
+                stream << '[';
+                _key_type->write(stream, false);
+                stream << ", ";
+                _value_type->write(stream, false);
+                stream << ']';
+            }
+            return;
+        }
+
+        stream << '[';
         _key_type->write(stream, false);
         stream << ", ";
         _value_type->write(stream, false);
-        bool from_default = _from == 0;
-        bool to_default = _to == numeric_limits<int64_t>::max();
-        if (from_default && to_default) {
-            // Only output the types
-            stream << ']';
-            return;
-        }
         stream << ", ";
         if (from_default) {
             stream << "default";
