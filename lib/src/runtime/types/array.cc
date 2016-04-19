@@ -109,15 +109,29 @@ namespace puppet { namespace runtime { namespace types {
 
     void array::write(ostream& stream, bool expand) const
     {
-        stream << array::name() << '[';
-        _element_type->write(stream, false);
-        bool from_default = _from == 0;
-        bool to_default = _to == numeric_limits<int64_t>::max();
-        if (from_default && to_default) {
-            // Only output the type
-            stream << ']';
+        stream << array::name();
+
+        // Write empty arrays in a special format, without the element type
+        if (_from == 0 && _to == 0) {
+            stream << "[0, 0]";
             return;
         }
+
+        bool from_default = _from == 0;
+        bool to_default = _to == numeric_limits<int64_t>::max();
+
+        if (from_default && to_default) {
+            // Only output the type, provided it is not default
+            if (*_element_type != data::instance) {
+                stream << '[';
+                _element_type->write(stream, false);
+                stream << ']';
+            }
+            return;
+        }
+
+        stream << '[';
+        _element_type->write(stream, false);
         stream << ", ";
         if (from_default) {
             stream << "default";
