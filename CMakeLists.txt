@@ -37,7 +37,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
 find_package(Boost 1.60.0 REQUIRED COMPONENTS program_options filesystem system)
 find_package(Facter REQUIRED)
 find_package(YAMLCPP REQUIRED)
-find_package(Readline)
+find_package(Editline)
 
 # Display a summary of the features
 include(FeatureSummary)

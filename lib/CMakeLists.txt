@@ -8,7 +8,6 @@ include_directories(
     ${Facter_INCLUDE_DIRS}
     ${RAPIDJSON_INCLUDE_DIRS}
     ${UTF8CPP_INCLUDE_DIRS}
-    ${Readline_INCLUDE_DIR}
 )
 
 # Set common sources
@@ -189,8 +188,12 @@ target_link_libraries(puppet
     ${Boost_LIBRARIES}
     ${Facter_LIBRARY}
     ${YAMLCPP_LIBRARIES}
-    ${Readline_LIBRARY}
 )
+
+if (Editline_FOUND)
+    include_directories(puppet ${Editline_INCLUDE_DIR})
+    target_link_libraries(puppet ${Editline_LIBRARY})
+endif()
 
 install(TARGETS puppet DESTINATION lib)
 

@@ -184,11 +184,11 @@ Build Requirements
 
 * OSX or Linux
 * GCC >= 5.0 or Clang >= 3.4 (with libc++)
-* CMake >= 3.0
-* Boost Libraries >= 1.60.0
+* [CMake](https://cmake.org/) >= 3.0
+* [Boost Libraries](http://www.boost.org/) >= 1.60.0
 * [Facter](https://github.com/puppetlabs/facter) >= 3.0
-* yaml-cpp >= 0.5.1
-* GNU readline (optional - improves the REPL experience)
+* [yaml-cpp](https://github.com/jbeder/yaml-cpp) >= 0.5.1
+* [Editline](http://thrysoee.dk/editline/) (optional - improves the REPL experience)
 
 Pre-Build
 ---------
