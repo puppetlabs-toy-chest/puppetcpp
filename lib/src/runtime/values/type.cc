@@ -293,16 +293,6 @@ namespace puppet { namespace runtime { namespace values {
         return *_types[index];
     }
 
-    size_t type_set::indirect_hasher::operator()(values::type const* type) const
-    {
-        return hash_value(*type);
-    }
-
-    bool type_set::indirect_comparer::operator()(type const* right, type const* left) const
-    {
-        return *right == *left;
-    }
-
     ostream& operator<<(ostream& os, type_set const& set)
     {
         auto count = set.size();
