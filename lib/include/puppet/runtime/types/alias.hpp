@@ -178,8 +178,19 @@ namespace puppet { namespace runtime { namespace types {
         map_type _map;
     };
 
+    /**
+     * Compares two recursion guard keys.
+     * @param left The left recursion guard key to compare.
+     * @param right The right recursion guard key to compare.
+     * @return Returns true if the two keys are equal or false if they are not equal.
+     */
     bool operator==(recursion_guard::key const& left, recursion_guard::key const& right);
-    size_t hash_value(recursion_guard::key const& key);
 
+    /**
+     * Hashes a recursion guard key.
+     * @param key The recursion guard key to hash.
+     * @return Returns the hash value.
+     */
+    size_t hash_value(recursion_guard::key const& key);
 
 }}}  // namespace puppet::runtime::types
