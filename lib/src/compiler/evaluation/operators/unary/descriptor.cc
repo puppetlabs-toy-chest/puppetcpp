@@ -69,7 +69,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             (boost::format("unary operator '%1%' expects %2% but was given %3%.") %
              _operator %
              set %
-             context.operand().get_type()
+             context.operand().infer_type()
             ).str(),
             context.operand_context(),
             evaluation_context.backtrace()

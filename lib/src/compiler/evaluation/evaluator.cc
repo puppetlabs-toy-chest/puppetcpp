@@ -384,7 +384,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 (boost::format("expected %1% or qualified %2% for resource type but found %3%.") %
                     types::string::name() %
                     types::resource::name() %
-                    type_value.get_type()
+                    type_value.infer_type()
                 ).str(),
                 expression.type.context(),
                 _context.backtrace()
@@ -436,7 +436,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception(
                     (boost::format("expected qualified %1% but found %2%.") %
                      types::resource::name() %
-                     value(type).get_type()
+                     value(type).infer_type()
                     ).str(),
                     resource_context,
                     context.backtrace()
@@ -473,7 +473,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     throw evaluation_exception(
                         (boost::format("expected qualified %1% for array element but found %2%.") %
                          types::resource::name() %
-                         element->get_type()
+                         element->infer_type()
                         ).str(),
                         context,
                         _context.backtrace()
@@ -503,7 +503,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             throw evaluation_exception(
                 (boost::format("expected qualified %1% for resource reference but found %2%.") %
                  types::resource::name() %
-                 reference.get_type()
+                 reference.infer_type()
                 ).str(),
                 context,
                 _context.backtrace()
@@ -521,7 +521,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             throw evaluation_exception(
                 (boost::format("expected %1% type but found %2%.") %
                  types::resource::name() %
-                 value.get_type()
+                 value.infer_type()
                 ).str(),
                 expression.type,
                 _context.backtrace()
@@ -534,7 +534,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             throw evaluation_exception(
                 (boost::format("expected %1% type but found %2%.") %
                  types::resource::name() %
-                 value.get_type()
+                 value.infer_type()
                 ).str(),
                 expression.type,
                 _context.backtrace()
@@ -548,7 +548,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception(
                     (boost::format("expected %1% type but found %2%.") %
                      types::resource::name() %
-                     value.get_type()
+                     value.infer_type()
                     ).str(),
                     expression.type,
                     _context.backtrace()
@@ -753,7 +753,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             throw evaluation_exception(
                 (boost::format("expected a %1% but found %2%.") %
                  types::hash::name() %
-                 value.get_type()
+                 value.infer_type()
                 ).str(),
                 context,
                 _context.backtrace()
@@ -768,7 +768,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception(
                     (boost::format("expected all keys in hash to be %1% but found %2%.") %
                      types::string::name() %
-                     kvp.key().get_type()
+                     kvp.key().infer_type()
                     ).str(),
                     context,
                     _context.backtrace()
@@ -858,7 +858,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 (boost::format("expected %1% for attribute '%2%' but found %3%.") %
                  *type %
                  name %
-                 (original ? original->get_type() : value.get_type())
+                 (original ? original->infer_type() : value.infer_type())
                 ).str(),
                 context,
                 _context.backtrace()
@@ -1079,7 +1079,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             throw evaluation_exception(
                 (boost::format("expected %1% for parameter type but found %2%.") %
                  types::type::name() %
-                 result.get_type()
+                 result.infer_type()
                 ).str(),
                 parameter.type->context(),
                 context.backtrace()
@@ -1087,7 +1087,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
         types::recursion_guard guard;
         if (!type->is_instance(value, guard)) {
-            error((boost::format("parameter $%1% has expected type %2% but was given %3%.") % parameter.variable.name % *type % value.get_type()).str());
+            error((boost::format("parameter $%1% has expected type %2% but was given %3%.") % parameter.variable.name % *type % value.infer_type()).str());
         }
     }
 
@@ -1303,7 +1303,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw argument_exception(
                     (boost::format("expected %1% for argument key but found %2%.") %
                      types::string::name() %
-                     kvp.key().get_type()
+                     kvp.key().infer_type()
                     ).str(),
                     index
                 );

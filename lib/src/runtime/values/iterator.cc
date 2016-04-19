@@ -23,6 +23,41 @@ namespace puppet { namespace runtime { namespace values {
         return _value;
     }
 
+    values::type iterator::infer_produced_type() const
+    {
+        auto& value = this->value();
+
+        if (value.as<int64_t>()) {
+            return types::integer{};
+        }
+        if (value.as<std::string>()) {
+            return types::string{};
+        }
+        if (auto type = value.as<values::type>()) {
+            if (boost::get<types::integer>(type)) {
+                return types::integer{};
+            }
+            if (boost::get<types::enumeration>(type)) {
+                return types::string{};
+            }
+            throw runtime_error("value is not iterable.");
+        }
+        if (value.as<values::array>()) {
+            auto type = value.infer_type();
+            auto& array_type = boost::get<types::array>(type);
+            return array_type.element_type();
+        }
+        if (value.as<values::hash>()) {
+            auto type = value.infer_type();
+            auto& hash_type = boost::get<types::hash>(type);
+            vector<unique_ptr<values::type>> types;
+            types.emplace_back(make_unique<values::type>(hash_type.key_type()));
+            types.emplace_back(make_unique<values::type>(hash_type.value_type()));
+            return types::tuple{ rvalue_cast(types), 2, 2 };
+        }
+        throw runtime_error("value is not iterable.");
+    }
+
     int64_t iterator::step() const
     {
         return _step;

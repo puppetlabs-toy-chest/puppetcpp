@@ -1,5 +1,6 @@
 #include <puppet/runtime/values/value.hpp>
 #include <puppet/compiler/evaluation/collectors/collector.hpp>
+#include <puppet/utility/indirect_collection.hpp>
 #include <puppet/cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
@@ -69,75 +70,285 @@ namespace puppet { namespace runtime { namespace values {
         return true;
     }
 
-    struct type_visitor : boost::static_visitor<values::type>
+    struct type_inference_visitor : boost::static_visitor<values::type>
     {
-        result_type operator()(undef const&) const
+        result_type operator()(undef const&)
         {
-            return types::undef();
+            return types::undef{};
         }
 
-        result_type operator()(defaulted const&) const
+        result_type operator()(defaulted const&)
         {
-            return types::defaulted();
+            return types::defaulted{};
         }
 
-        result_type operator()(int64_t) const
+        result_type operator()(int64_t value)
         {
-            return types::integer();
+            return types::integer{ value, value };
         }
 
-        result_type operator()(double) const
+        result_type operator()(double value)
         {
-            return types::floating();
+            return types::floating{ value, value };
         }
 
-        result_type operator()(bool) const
+        result_type operator()(bool)
         {
-            return types::boolean();
+            return types::boolean{};
         }
 
-        result_type operator()(string const&) const
+        result_type operator()(string const& value)
         {
-            return types::string();
+            return types::string{
+                static_cast<int64_t>(value.size()),
+                static_cast<int64_t>(value.size())
+            };
         }
 
-        result_type operator()(values::regex const&) const
+        result_type operator()(values::regex const& value)
         {
-            return types::regexp();
+            return types::regexp{ value.pattern() };
         }
 
-        result_type operator()(type const& t) const
+        result_type operator()(type const& t)
         {
-            return types::type(make_unique<type>(t));
+            return types::type{ make_unique<type>(t) };
         }
 
-        result_type operator()(variable const& var) const
+        result_type operator()(variable const& var)
         {
             return boost::apply_visitor(*this, var.value());
         }
 
-        result_type operator()(array const&) const
+        result_type operator()(array const& value)
         {
-            // TODO: infer the type argument
-            return types::array(make_unique<type>(types::any()));
+            if (value.empty()) {
+                return types::array{ nullptr, 0, 0 };
+            }
+
+            bool first = true;
+            result_type element_type;
+            for (auto& element : value) {
+                if (first) {
+                    element_type = boost::apply_visitor(*this, *element);
+                    first = false;
+                    continue;
+                }
+
+                element_type = infer_common_type(boost::apply_visitor(*this, *element), element_type);
+            }
+            return types::array{
+                make_unique<type>(rvalue_cast(element_type)),
+                static_cast<int64_t>(value.size()),
+                static_cast<int64_t>(value.size())
+            };
         }
 
-        result_type operator()(hash const&) const
+        result_type operator()(hash const& value)
         {
-            // TODO: infer the type arguments
-            return types::hash(make_unique<type>(types::any()), make_unique<type>(types::any()));
+            if (value.empty()) {
+                return types::hash{ nullptr, nullptr, 0, 0 };
+            }
+
+            bool first = true;
+            result_type key_type;
+            result_type value_type;
+            for (auto& kvp : value) {
+                if (first) {
+                    key_type = boost::apply_visitor(*this, kvp.key());
+                    value_type = boost::apply_visitor(*this, kvp.value());
+                    first = false;
+                    continue;
+                }
+                key_type = infer_common_type(boost::apply_visitor(*this, kvp.key()), key_type);
+                value_type = infer_common_type(boost::apply_visitor(*this, kvp.value()), value_type);
+            }
+            return types::hash{
+                make_unique<type>(rvalue_cast(key_type)),
+                make_unique<type>(rvalue_cast(value_type)),
+                static_cast<int64_t>(value.size()),
+                static_cast<int64_t>(value.size())
+            };
         }
 
-        result_type operator()(iterator const&) const
+        result_type operator()(iterator const& value)
         {
-            // TODO: infer the type argument
-            return types::iterator();
+            return types::iterator{ make_unique<type>(value.infer_produced_type()) };
         }
+
+     private:
+        result_type infer_common_type(result_type const& left, result_type const& right)
+        {
+            // Check for right is assignable to left and vice versa
+            if (left.is_assignable(right, _guard)) {
+                return left;
+            }
+            if (right.is_assignable(left, _guard)) {
+                return right;
+            }
+            // Check for both Array
+            if (auto left_array = boost::get<types::array>(&left)) {
+                if (auto right_array = boost::get<types::array>(&right)) {
+                    return types::array{
+                        make_unique<values::type>(infer_common_type(left_array->element_type(), right_array->element_type()))
+                    };
+                }
+            }
+            // Check for both Hash
+            if (auto left_hash = boost::get<types::hash>(&left)) {
+                if (auto right_hash = boost::get<types::hash>(&right)) {
+                    return types::hash{
+                        make_unique<values::type>(infer_common_type(left_hash->key_type(), right_hash->key_type())),
+                        make_unique<values::type>(infer_common_type(left_hash->value_type(), right_hash->value_type()))
+                    };
+                }
+            }
+            // Check for both Class
+            if (boost::get<types::klass>(&left) && boost::get<types::klass>(&right)) {
+                // Unparameterized Class is the common type because neither was assignable above
+                return types::klass{};
+            }
+            // Check for both Resource
+            if (auto left_resource = boost::get<types::resource>(&left)) {
+                if (auto right_resource = boost::get<types::resource>(&right)) {
+                    if (left_resource->type_name() == right_resource->type_name()) {
+                        return types::resource{ left_resource->type_name() };
+                    }
+                    // Unparameterized Resource is the common type because neither was assignable above
+                    return types::resource{};
+                }
+            }
+            // Check for both Integer
+            if (auto left_integer = boost::get<types::integer>(&left)) {
+                if (auto right_integer = boost::get<types::integer>(&right)) {
+                    return types::integer{
+                        std::min(left_integer->from(), right_integer->from()),
+                        std::max(left_integer->to(), right_integer->to())
+                    };
+                }
+            }
+            // Check for both Float
+            if (auto left_float = boost::get<types::floating>(&left)) {
+                if (auto right_float = boost::get<types::floating>(&right)) {
+                    return types::floating{
+                        std::min(left_float->from(), right_float->from()),
+                        std::max(left_float->to(), right_float->to())
+                    };
+                }
+            }
+            // Check for both String
+            if (auto left_string = boost::get<types::string>(&left)) {
+                if (auto right_string = boost::get<types::string>(&right)) {
+                    return types::string{
+                        std::min(left_string->from(), right_string->from()),
+                        std::max(left_string->to(), right_string->to())
+                    };
+                }
+            }
+            // Check for both Pattern
+            if (auto left_pattern = boost::get<types::pattern>(&left)) {
+                if (auto right_pattern = boost::get<types::pattern>(&right)) {
+                    return types::pattern{ join_sets<values::regex>(left_pattern->patterns(), right_pattern->patterns()) };
+                }
+            }
+            // Check for both Enum
+            if (auto left_enum = boost::get<types::enumeration>(&left)) {
+                if (auto right_enum = boost::get<types::enumeration>(&right)) {
+                    return types::enumeration{ join_sets<std::string>(left_enum->strings(), right_enum->strings())};
+                }
+            }
+            // Check for both Variant
+            if (auto left_variant = boost::get<types::variant>(&left)) {
+                if (auto right_variant = boost::get<types::variant>(&right)) {
+                    return types::variant{ join_sets<values::type>(left_variant->types(), right_variant->types()) };
+                }
+            }
+            // Check for both Type
+            if (auto left_type = boost::get<types::type>(&left)) {
+                if (auto right_type = boost::get<types::type>(&right)) {
+                    if (!left_type->parameter() || !right_type->parameter()) {
+                        return types::type{};
+                    }
+                    return types::type{
+                        make_unique<values::type>(infer_common_type(*left_type->parameter(), *right_type->parameter()))
+                    };
+                }
+            }
+            // Check for both Regexp
+            if (boost::get<types::regexp>(&left) && boost::get<types::regexp>(&right)) {
+                // Unparameterized Regexp is the common type because neither was assignable above
+                return types::regexp{};
+            }
+            // Check for both Callable
+            if (boost::get<types::callable>(&left) && boost::get<types::callable>(&right)) {
+                // Unparameterized Callable is the common type because neither was assignable above
+                return types::callable{};
+            }
+            // Check for both Runtime
+            if (boost::get<types::runtime>(&left) && boost::get<types::runtime>(&right)) {
+                // Unparameterized Runtime is the common type because neither was assignable above
+                return types::runtime{};
+            }
+            // Check fror both Numeric
+            if (types::numeric::instance.is_assignable(left, _guard) && types::numeric::instance.is_assignable(right, _guard)) {
+                return types::numeric{};
+            }
+            // Check fror both Scalar
+            if (types::scalar::instance.is_assignable(left, _guard) && types::scalar::instance.is_assignable(right, _guard)) {
+                return types::scalar{};
+            }
+            // Check fror both Data
+            if (types::data::instance.is_assignable(left, _guard) && types::data::instance.is_assignable(right, _guard)) {
+                return types::data{};
+            }
+
+            // None of the above, return Any
+            return types::any{};
+        }
+
+        template <typename T>
+        static vector<T> join_sets(vector<T> const& left, vector<T> const& right)
+        {
+            vector<T> result;
+            utility::indirect_set<T> set;
+            for (auto& element : left) {
+                if (set.insert(&element).second) {
+                    result.push_back(element);
+                }
+            }
+            for (auto& element : right) {
+                if (set.insert(&element).second) {
+                    result.push_back(element);
+                }
+            }
+            return result;
+        }
+
+        template <typename T>
+        static vector<unique_ptr<T>> join_sets(vector<unique_ptr<T>> const& left, vector<unique_ptr<T>> const& right)
+        {
+            vector<unique_ptr<T>> result;
+            utility::indirect_set<T> set;
+            for (auto& element : left) {
+                if (set.insert(element.get()).second) {
+                    result.push_back(make_unique<T>(*element));
+                }
+            }
+            for (auto& element : right) {
+                if (set.insert(element.get()).second) {
+                    result.push_back(make_unique<T>(*element));
+                }
+            }
+            return result;
+        }
+
+        runtime::types::recursion_guard _guard;
     };
 
-    values::type value::get_type() const
+    values::type value::infer_type() const
     {
-        return boost::apply_visitor(type_visitor(), *this);
+        type_inference_visitor visitor;
+        return boost::apply_visitor(visitor, *this);
     }
 
     array value::to_array(bool convert_hash)
@@ -281,7 +492,7 @@ namespace puppet { namespace runtime { namespace values {
             error((boost::format("expected %1% or fully qualified %2% for relationship but found %3%.") %
                 pt::string::name() %
                 pt::resource::name() %
-                get_type()
+                infer_type()
             ).str());
         }
     }

@@ -58,7 +58,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 return;
             }
         }
-        throw evaluation_exception((boost::format("cannot declare class with argument type %1%.") % name.get_type()).str(), declaration_context, context.backtrace());
+        throw evaluation_exception((boost::format("cannot declare class with argument type %1%.") % name.infer_type()).str(), declaration_context, context.backtrace());
     }
 
     void declare_class(call_context& context, boost::optional<compiler::relationship> relationship = boost::none)

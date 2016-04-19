@@ -1,6 +1,6 @@
 Notice: Scope(Class[main]): [1, 2, [42, 4], [[[5]]]]
 Notice: Scope(Class[main]): [1, 2, [hello, 4], [[[5, deep]]]]
-Error: type_aliases.pp:48:8: node 'test': parameter $x has expected type MixedTree (alias for Array[Variant[Mix, MixedTree]]) but was given Array[Any].
+Error: type_aliases.pp:48:8: node 'test': parameter $x has expected type MixedTree (alias for Array[Variant[Mix, MixedTree]]) but was given Array[Data, 4, 4].
   mixed( [1, 2, [hello, 4], [[[ //, deep ]]] ] )
          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   backtrace:

@@ -45,6 +45,11 @@ namespace puppet { namespace runtime { namespace types {
          * @param expand True to specify that type aliases should be expanded or false if not.
          */
         void write(std::ostream& stream, bool expand = true) const;
+
+        /**
+         * Stores a default shared instance used internally by other Puppet types.
+         */
+        static data const instance;
     };
 
     /**

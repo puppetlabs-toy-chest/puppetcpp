@@ -58,7 +58,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
              types::string::name() %
              types::array::name() %
              types::resource::name() %
-             argument.get_type()
+             argument.infer_type()
             ).str(),
             argument_context,
             context.backtrace()

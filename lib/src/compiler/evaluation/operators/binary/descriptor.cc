@@ -112,7 +112,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             (boost::format("binary operator '%1%' expects %2% but was given %3%.") %
              _operator %
              set %
-             (!rhs_match ? context.right() : context.left()).get_type()
+             (!rhs_match ? context.right() : context.left()).infer_type()
             ).str(),
             !rhs_match ? context.right_context() : context.left_context(),
             evaluation_context.backtrace()

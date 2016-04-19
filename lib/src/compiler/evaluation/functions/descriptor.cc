@@ -303,7 +303,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             (boost::format("function '%1%' expects %2% but was given %3%.") %
              _name %
              set %
-             context.argument(min_argument_mismatch).get_type()
+             context.argument(min_argument_mismatch).infer_type()
             ).str(),
             context.argument_context(min_argument_mismatch),
             evaluation_context.backtrace()

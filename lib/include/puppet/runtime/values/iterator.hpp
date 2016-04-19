@@ -35,11 +35,18 @@ namespace puppet { namespace runtime { namespace values {
         explicit iterator(wrapper<values::value> value, int64_t step = 1, bool reverse = false);
 
         /**
-        * Gets the underlying iterable value.
-        * This never returns an iterator, only an underlying value.
-        * @return Returns the underlying iterable value.
-        */
+         * Gets the underlying iterable value.
+         * This never returns an iterator, only an underlying value.
+         * @return Returns the underlying iterable value.
+         */
         values::value const& value() const;
+
+        /**
+         * Infers the type for the produced values of the iterator.
+         * For example, Integer produces Integer, String produces String, Array[T] produces T, etc.
+         * @return Returns the inferred type.
+         */
+        values::type infer_produced_type() const;
 
         /**
          * Gets the iterator's step count.

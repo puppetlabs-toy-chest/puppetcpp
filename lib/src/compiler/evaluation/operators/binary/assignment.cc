@@ -24,7 +24,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             if (!var) {
                 throw evaluation_exception(
                     (boost::format("cannot assign to %1%: assignment can only be performed on variables.") %
-                     left.get_type()
+                     left.infer_type()
                     ).str(),
                     left_context,
                     evaluation_context.backtrace()
