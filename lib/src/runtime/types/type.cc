@@ -79,7 +79,9 @@ namespace puppet { namespace runtime { namespace types {
     {
         if (!left.parameter() && !right.parameter()) {
             return true;
-        } else if (left.parameter() || right.parameter()) {
+        } else if (!left.parameter()) {
+            return false;
+        } else if (!right.parameter()) {
             return false;
         }
         return *left.parameter() == *right.parameter();
