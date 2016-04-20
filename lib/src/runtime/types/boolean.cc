@@ -12,6 +12,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Boolean";
     }
 
+    values::type boolean::generalize() const
+    {
+        return *this;
+    }
+
     bool boolean::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return value.as<bool>();

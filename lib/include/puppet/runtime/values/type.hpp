@@ -209,6 +209,13 @@ namespace puppet { namespace runtime { namespace values {
         type const& dereference() const;
 
         /**
+         * Creates a generalized version of the type.
+         * A new type is created that does not have type constraints.
+         * @return Returns the generalized type.
+         */
+        type generalize() const;
+
+        /**
          * Determines if the value is an instance of this type.
          * @param value The value to check if being an instance of this type.
          * @param guard The recursion guard to use for aliases.

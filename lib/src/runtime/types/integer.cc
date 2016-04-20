@@ -51,6 +51,11 @@ namespace puppet { namespace runtime { namespace types {
         }
     }
 
+    values::type integer::generalize() const
+    {
+        return types::integer{};
+    }
+
     bool integer::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<int64_t>();

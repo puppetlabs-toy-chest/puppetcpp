@@ -33,6 +33,20 @@ namespace puppet { namespace runtime { namespace values {
         return *this;
     }
 
+    struct generalize_visitor : boost::static_visitor<type>
+    {
+        template <typename T>
+        result_type operator()(T const& type) const
+        {
+            return type.generalize();
+        }
+    };
+
+    type type::generalize() const
+    {
+        return boost::apply_visitor(generalize_visitor{}, _value);
+    }
+
     struct is_instance_visitor : boost::static_visitor<bool>
     {
         is_instance_visitor(values::value const& value, types::recursion_guard& guard) :

@@ -1,4 +1,5 @@
 #include <puppet/runtime/values/value.hpp>
+#include <puppet/utility/indirect_collection.hpp>
 #include <puppet/cast.hpp>
 #include <boost/functional/hash.hpp>
 
@@ -6,12 +7,16 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
-    variant::variant(vector<unique_ptr<values::type>> types) :
-        _types(rvalue_cast(types))
+    variant::variant(vector<unique_ptr<values::type>> types)
     {
-        for (auto const& type : _types) {
+        utility::indirect_set<values::type> set;
+        for (auto& type : types) {
             if (!type) {
                 throw runtime_error("a non-null type was expected.");
+            }
+
+            if (set.insert(type.get()).second) {
+                _types.emplace_back(rvalue_cast(type));
             }
         }
     }
@@ -41,6 +46,23 @@ namespace puppet { namespace runtime { namespace types {
     char const* variant::name()
     {
         return "Variant";
+    }
+
+    values::type variant::unwrap()
+    {
+        if (_types.size() == 1) {
+            return values::type{ rvalue_cast(*_types.front()) };
+        }
+        return values::type{ rvalue_cast(*this) };
+    }
+
+    values::type variant::generalize() const
+    {
+        vector<unique_ptr<values::type>> types;
+        for (auto& type : _types) {
+            types.emplace_back(make_unique<values::type>(type->generalize()));
+        }
+        return types::variant{ rvalue_cast(types) };
     }
 
     bool variant::is_instance(values::value const& value, recursion_guard& guard) const

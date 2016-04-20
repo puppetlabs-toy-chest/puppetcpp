@@ -26,6 +26,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Collection";
     }
 
+    values::type collection::generalize() const
+    {
+        return types::collection{};
+    }
+
     bool collection::is_instance(values::value const& value, recursion_guard& guard) const
     {
         int64_t size = 0;

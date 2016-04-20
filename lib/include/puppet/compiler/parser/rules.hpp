@@ -52,6 +52,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(else_,                         "else",                          ast::else_)
     DECLARE_RULE(unless_expression,             "unless expression",             ast::unless_expression)
     DECLARE_RULE(function_call_expression,      "function call expression",      ast::function_call_expression)
+    DECLARE_RULE(function_name,                 "function name",                 ast::name)
     DECLARE_RULE(parameters,                    "parameters",                    std::vector<ast::parameter>)
     DECLARE_RULE(parameter,                     "parameter",                     ast::parameter)
     DECLARE_RULE(type_expression,               "type expression",               ast::postfix_expression)
@@ -224,7 +225,16 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         function_call_expression,
-        name >> (raw('(') > (raw(')', false) | expressions) > end(')') > -lambda_expression)
+        function_name >> (raw('(') > (raw(')', false) | expressions) > end(')') > -lambda_expression)
+    )
+    DEFINE_RULE(
+        function_name,
+        name |
+        (
+            (
+                begin(lexer::token_id::keyword_type, false)
+            ) > value > end() > tree
+        )
     )
     DEFINE_RULE(
         parameters,
@@ -638,7 +648,7 @@ namespace puppet { namespace compiler { namespace parser {
     // Type alias
     DEFINE_RULE(
         type_alias_expression,
-        begin(lexer::token_id::keyword_type) > type > raw('=') > type_expression
+        (begin(lexer::token_id::keyword_type) >> type) > raw('=') > type_expression
     )
 
     // These macros associate the above rules with their definitions
@@ -673,6 +683,7 @@ namespace puppet { namespace compiler { namespace parser {
         else_,
         unless_expression,
         function_call_expression,
+        function_name,
         parameters,
         parameter,
         type_expression,

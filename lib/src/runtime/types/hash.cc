@@ -67,6 +67,14 @@ namespace puppet { namespace runtime { namespace types {
         return "Hash";
     }
 
+    values::type hash::generalize() const
+    {
+        return types::hash{
+            make_unique<values::type>(_key_type->generalize()),
+            make_unique<values::type>(_value_type->generalize())
+        };
+    }
+
     bool hash::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for hash

@@ -43,6 +43,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/step.cc
     src/compiler/evaluation/functions/tag.cc
     src/compiler/evaluation/functions/tagged.cc
+    src/compiler/evaluation/functions/type.cc
     src/compiler/evaluation/functions/versioncmp.cc
     src/compiler/evaluation/functions/warning.cc
     src/compiler/evaluation/functions/with.cc

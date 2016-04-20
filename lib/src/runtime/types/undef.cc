@@ -12,6 +12,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Undef";
     }
 
+    values::type undef::generalize() const
+    {
+        return *this;
+    }
+
     bool undef::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return value.is_undef();

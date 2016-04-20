@@ -7,6 +7,7 @@
 #include <boost/lexical_cast.hpp>
 #include <rapidjson/document.h>
 #include <utf8.h>
+#include <algorithm>
 
 using namespace std;
 using namespace rapidjson;
@@ -72,6 +73,11 @@ namespace puppet { namespace runtime { namespace values {
 
     struct type_inference_visitor : boost::static_visitor<values::type>
     {
+        explicit type_inference_visitor(bool detailed) :
+            _detailed(detailed)
+        {
+        }
+
         result_type operator()(undef const&)
         {
             return types::undef{};
@@ -126,6 +132,10 @@ namespace puppet { namespace runtime { namespace values {
                 return types::array{ nullptr, 0, 0 };
             }
 
+            if (_detailed) {
+                return infer_detailed_array(value);
+            }
+
             bool first = true;
             result_type element_type;
             for (auto& element : value) {
@@ -148,6 +158,10 @@ namespace puppet { namespace runtime { namespace values {
         {
             if (value.empty()) {
                 return types::hash{ nullptr, nullptr, 0, 0 };
+            }
+
+            if (_detailed) {
+                return infer_detailed_hash(value);
             }
 
             bool first = true;
@@ -177,6 +191,52 @@ namespace puppet { namespace runtime { namespace values {
         }
 
      private:
+        result_type infer_detailed_array(values::array const& array)
+        {
+            vector<unique_ptr<values::type>> elements;
+            for (auto& element : array) {
+                elements.emplace_back(make_unique<values::type>(boost::apply_visitor(*this, *element)));
+            }
+            return runtime::types::tuple{
+                rvalue_cast(elements),
+                static_cast<int64_t>(array.size()),
+                static_cast<int64_t>(array.size())
+            };
+        }
+
+        result_type infer_detailed_hash(values::hash const& hash)
+        {
+            // If all keys are String, return a Struct
+            if (all_of(hash.begin(), hash.end(), [&](auto const& kvp) {
+                return kvp.key().template as<std::string>();
+            })) {
+                runtime::types::structure::schema_type schema;
+
+                for (auto& kvp : hash) {
+                    schema.emplace_back(
+                        make_unique<values::type>(runtime::types::enumeration{ { *kvp.key().as<std::string>() } }),
+                        make_unique<values::type>(boost::apply_visitor(*this, kvp.value()))
+                    );
+                }
+                return runtime::types::structure{ rvalue_cast(schema) };
+            }
+
+            // At least one key is not a string so build up a list of key and value types
+            vector<unique_ptr<values::type>> key_types;
+            vector<unique_ptr<values::type>> value_types;
+            for (auto& kvp : hash) {
+                key_types.emplace_back(make_unique<values::type>(boost::apply_visitor(*this, kvp.key())));
+                value_types.emplace_back(make_unique<values::type>(boost::apply_visitor(*this, kvp.value())));
+            }
+
+            return runtime::types::hash{
+                make_unique<values::type>(runtime::types::variant{ rvalue_cast(key_types) }.unwrap()),
+                make_unique<values::type>(runtime::types::variant{ rvalue_cast(value_types) }.unwrap()),
+                static_cast<int64_t>(hash.size()),
+                static_cast<int64_t>(hash.size())
+            };
+        }
+
         result_type infer_common_type(result_type const& left, result_type const& right)
         {
             // Check for right is assignable to left and vice versa
@@ -343,11 +403,12 @@ namespace puppet { namespace runtime { namespace values {
         }
 
         runtime::types::recursion_guard _guard;
+        bool _detailed;
     };
 
-    values::type value::infer_type() const
+    values::type value::infer_type(bool detailed) const
     {
-        type_inference_visitor visitor;
+        type_inference_visitor visitor{ detailed };
         return boost::apply_visitor(visitor, *this);
     }
 

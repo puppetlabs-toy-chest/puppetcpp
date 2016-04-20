@@ -12,6 +12,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Numeric";
     }
 
+    values::type numeric::generalize() const
+    {
+        return *this;
+    }
+
     bool numeric::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return integer::instance.is_instance(value, guard) || floating::instance.is_instance(value, guard);

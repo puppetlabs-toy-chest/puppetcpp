@@ -32,6 +32,11 @@ namespace puppet { namespace runtime { namespace types {
         return "NotUndef";
     }
 
+    values::type not_undef::generalize() const
+    {
+        return types::not_undef{ _type ? make_unique<values::type>(_type->generalize()) : nullptr };
+    }
+
     bool not_undef::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Undef never matches

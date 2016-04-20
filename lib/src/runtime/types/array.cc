@@ -53,6 +53,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Array";
     }
 
+    values::type array::generalize() const
+    {
+        return types::array{ make_unique<values::type>(_element_type->generalize()) };
+    }
+
     bool array::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for array

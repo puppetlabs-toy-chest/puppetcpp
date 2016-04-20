@@ -51,6 +51,15 @@ namespace puppet { namespace runtime { namespace types {
         return "Struct";
     }
 
+    values::type structure::generalize() const
+    {
+        schema_type schema;
+        for (auto& kvp : _schema) {
+            schema.emplace_back(make_unique<values::type>(kvp.first->generalize()), make_unique<values::type>(kvp.second->generalize()));
+        }
+        return types::structure{ rvalue_cast(schema) };
+    }
+
     bool structure::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for hash

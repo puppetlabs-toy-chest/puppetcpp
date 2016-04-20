@@ -31,6 +31,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Iterator";
     }
 
+    values::type iterator::generalize() const
+    {
+        return types::iterator{ _type ? make_unique<values::type>(_type->generalize()) : nullptr };
+    }
+
     bool iterator::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto iterator = value.as<values::iterator>();

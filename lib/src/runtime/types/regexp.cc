@@ -23,6 +23,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Regexp";
     }
 
+    values::type regexp::generalize() const
+    {
+        return *this;
+    }
+
     bool regexp::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<values::regex>();

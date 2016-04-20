@@ -87,6 +87,21 @@ namespace puppet { namespace runtime { namespace types {
         return "Callable";
     }
 
+    values::type callable::generalize() const
+    {
+        vector<unique_ptr<values::type>> types;
+        for (auto& type : _types) {
+            types.emplace_back(make_unique<values::type>(type->generalize()));
+        }
+        auto size = static_cast<int64_t>(_types.size());
+        return types::callable{
+            rvalue_cast(types),
+            size,
+            size,
+            _block_type ? make_unique<values::type>(_block_type->generalize()) : nullptr
+        };
+    }
+
     bool callable::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Currently functions cannot be represented as a value.
