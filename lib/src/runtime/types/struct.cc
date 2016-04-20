@@ -145,7 +145,7 @@ namespace puppet { namespace runtime { namespace types {
         if (_schema.empty()) {
             return;
         }
-        stream << "[";
+        stream << "[{";
         bool first = true;
         for (auto const& kvp : _schema) {
             if (first) {
@@ -153,11 +153,15 @@ namespace puppet { namespace runtime { namespace types {
             } else {
                 stream << ", ";
             }
-            kvp.first->write(stream, false);
+            if (boost::get<enumeration>(kvp.first.get())) {
+                stream << to_key(*kvp.first);
+            } else {
+                kvp.first->write(stream, false);
+            }
             stream << " => ";
             kvp.second->write(stream, false);
         }
-        stream << "]";
+        stream << "}]";
     }
 
     std::string const& structure::to_key(values::type const& type)
