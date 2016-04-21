@@ -1445,7 +1445,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Verify the value matches the parameter type
             validate_parameter_type(_context, parameter, *value, [&](std::string message) {
-                throw evaluation_exception(rvalue_cast(message), parameter.default_value->context(), _context.backtrace());
+                throw evaluation_exception(rvalue_cast(message), context, _context.backtrace());
             });
 
             // Set the parameter in the scope
