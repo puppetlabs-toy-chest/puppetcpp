@@ -144,8 +144,8 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(ast::regex const& expression)
     {
         try {
-            return values::regex(expression.value);
-        } catch (regex_error const& ex) {
+            return values::regex{ expression.value };
+        } catch (utility::regex_exception const& ex) {
             throw evaluation_exception(
                 (boost::format("invalid regular expression: %1%") %
                  ex.what()

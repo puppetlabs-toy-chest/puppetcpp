@@ -17,7 +17,6 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <regex>
 #include <iostream>
 
 namespace puppet { namespace compiler { namespace evaluation {
@@ -352,11 +351,11 @@ namespace puppet { namespace compiler { namespace evaluation {
         std::shared_ptr<scope> find_scope(std::string const& name) const;
 
         /**
-         * Sets the given matches into the context.
+         * Sets the given capture groups into the context.
          * Note: This member function has no effect unless a match scope is present.
-         * @param matches The matches to set.
+         * @param captures The capture groups to set.
          */
-        void set(std::smatch const& matches);
+        void set(std::vector<std::string> captures);
 
         /**
          * Looks up a variable's value.

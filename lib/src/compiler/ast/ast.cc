@@ -1,9 +1,9 @@
 #include <puppet/compiler/ast/ast.hpp>
 #include <puppet/compiler/lexer/lexer.hpp>
+#include <puppet/utility/regex.hpp>
 #include <puppet/cast.hpp>
 #include <boost/lexical_cast.hpp>
 #include <yaml-cpp/yaml.h>
-#include <regex>
 
 using namespace std;
 namespace x3 = boost::spirit::x3;
@@ -1147,12 +1147,12 @@ namespace puppet { namespace compiler { namespace ast {
 
     bool hostname::is_valid() const
     {
-        static const std::regex illegal{ R"([^-\w.])" };
+        static const utility::regex illegal{ R"([^-\w.])" };
 
         if (is_default() || is_regex()) {
             return true;
         }
-        return !regex_search(to_string(), illegal);
+        return !illegal.search(to_string());
     }
 
     struct hostname_visitor : boost::static_visitor<>

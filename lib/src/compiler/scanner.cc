@@ -758,9 +758,9 @@ namespace puppet { namespace compiler {
     void scanner::validate_parameter_name(ast::parameter const& parameter) const
     {
         static char const* valid_name_pattern = "[a-z_]\\w*";
-        static const std::regex valid_name_regex(valid_name_pattern);
+        static const utility::regex valid_name_regex{ valid_name_pattern };
 
-        if (!regex_match(parameter.variable.name, valid_name_regex)) {
+        if (!valid_name_regex.match(parameter.variable.name)) {
             throw parse_exception(
                 (boost::format("parameter $%1% has an unacceptable name: the name must conform to /%2%/.") %
                  parameter.variable.name %

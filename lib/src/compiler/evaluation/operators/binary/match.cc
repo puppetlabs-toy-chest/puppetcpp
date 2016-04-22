@@ -13,11 +13,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         auto& evaluation_context = context.context();
 
         try {
-            smatch matches;
-            bool result = right.empty() || regex_search(left, matches, std::regex(right));
-            evaluation_context.set(matches);
+            utility::regex::regions regions;
+            bool result = right.empty() || utility::regex{ right }.search(left, &regions);
+            evaluation_context.set(regions.substrings(left));
             return result;
-        } catch (regex_error const& ex) {
+        } catch (utility::regex_exception const& ex) {
             throw evaluation_exception(
                 (boost::format("invalid regular expression: %1%") %
                  ex.what()
@@ -30,9 +30,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     bool is_match(call_context& context, string const& left, values::regex const& right)
     {
-        smatch matches;
-        bool result = right.pattern().empty() || regex_search(left, matches, right.value());
-        context.context().set(matches);
+        utility::regex::regions regions;
+        bool result = right.pattern().empty() || right.search(left, &regions);
+        context.context().set(regions.substrings(left));
         return result;
     }
 

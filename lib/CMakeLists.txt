@@ -5,6 +5,7 @@ set(LIBPUPPET_VERSION_PATCH 0)
 include_directories(
     include/
     ${Boost_INCLUDE_DIRS}
+    ${Onigmo_INCLUDE_DIRS}
     ${Facter_INCLUDE_DIRS}
     ${RAPIDJSON_INCLUDE_DIRS}
     ${UTF8CPP_INCLUDE_DIRS}
@@ -153,6 +154,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/values/variable.cc
     src/runtime/values/wrapper.cc
     src/utility/filesystem/helpers.cc
+    src/utility/regex.cc
 )
 
 # Set platform-specific sources
@@ -173,8 +175,9 @@ add_executable(
     src/compiler/lexer/lexer.cc
     src/compiler/lexer/position.cc
     src/compiler/lexer/tokens.cc
+    src/utility/regex.cc
 )
-target_link_libraries(generate_static_lexer ${Boost_LIBRARIES})
+target_link_libraries(generate_static_lexer ${Boost_LIBRARIES} ${Onigmo_LIBRARIES})
 
 # Add the command to generate the static lexer
 add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer/static_lexer.hpp)
@@ -187,6 +190,7 @@ set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LI
 
 target_link_libraries(puppet
     ${Boost_LIBRARIES}
+    ${Onigmo_LIBRARIES}
     ${Facter_LIBRARY}
     ${YAMLCPP_LIBRARIES}
 )

@@ -116,7 +116,7 @@ namespace puppet { namespace compiler {
             }
             // Next, check by looking at every regex
             for (auto const& kvp : _regex_nodes) {
-                if (regex_search(name, kvp.first.value())) {
+                if (kvp.first.search(name)) {
                     node_name = "/" + kvp.first.pattern() + "/";
                     definition = &_nodes[kvp.second];
                     return false;
@@ -182,7 +182,7 @@ namespace puppet { namespace compiler {
             }
             try {
                 regexes.emplace_back(hostname.to_string());
-            } catch (regex_error const& ex) {
+            } catch (utility::regex_exception const& ex) {
                 throw parse_exception(
                     (boost::format("invalid regular expression: %1%") %
                      ex.what()

@@ -408,7 +408,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return it->second;
     }
 
-    void context::set(smatch const& matches)
+    void context::set(vector<string> captures)
     {
         if (_match_stack.empty()) {
             return;
@@ -416,16 +416,16 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         auto& scope = _match_stack.back();
 
-        // If there is no scope or a closure has captured the matches, reset
+        // If there is no scope or a closure has captured the match scope, reset
         if (!scope || !scope.unique()) {
             scope = make_shared<vector<shared_ptr<values::value const>>>();
         }
 
         scope->clear();
-        scope->reserve(matches.size());
+        scope->reserve(captures.size());
 
-        for (auto const& match : matches) {
-            scope->emplace_back(make_shared<values::value const>(match.str()));
+        for (auto& capture : captures) {
+            scope->emplace_back(make_shared<values::value const>(rvalue_cast(capture)));
         }
     }
 
