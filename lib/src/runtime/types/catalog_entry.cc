@@ -11,6 +11,11 @@ namespace puppet { namespace runtime { namespace types {
         return "CatalogEntry";
     }
 
+    values::type catalog_entry::generalize() const
+    {
+        return *this;
+    }
+
     bool catalog_entry::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return resource::instance.is_instance(value, guard) || klass::instance.is_instance(value, guard);

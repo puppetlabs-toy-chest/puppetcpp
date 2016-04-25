@@ -21,6 +21,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Pattern";
     }
 
+    values::type pattern::generalize() const
+    {
+        return *this;
+    }
+
     bool pattern::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for string

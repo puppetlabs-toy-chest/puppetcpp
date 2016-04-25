@@ -32,6 +32,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Optional";
     }
 
+    values::type optional::generalize() const
+    {
+        return types::optional{ _type ? make_unique<values::type>(_type->generalize()) : nullptr };
+    }
+
     bool optional::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Undef always matches

@@ -21,6 +21,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Enum";
     }
 
+    values::type enumeration::generalize() const
+    {
+        return *this;
+    }
+
     bool enumeration::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<std::string>();

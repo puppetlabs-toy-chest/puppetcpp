@@ -42,6 +42,12 @@ namespace puppet { namespace runtime { namespace types {
         static char const* name();
 
         /**
+         * Creates a generalized version of the type.
+         * @return Returns the generalized type.
+         */
+        values::type generalize() const;
+
+        /**
          * Determines if the given value is an instance of this type.
          * @param value The value to determine if it is an instance of this type.
          * @param guard The recursion guard to use for aliases.

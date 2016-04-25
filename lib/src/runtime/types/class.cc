@@ -30,6 +30,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Class";
     }
 
+    values::type klass::generalize() const
+    {
+        return *this;
+    }
+
     bool klass::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<values::type>();

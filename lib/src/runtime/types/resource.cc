@@ -117,6 +117,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Resource";
     }
 
+    values::type resource::generalize() const
+    {
+        return *this;
+    }
+
     bool resource::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for type

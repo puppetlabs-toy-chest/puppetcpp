@@ -38,6 +38,12 @@ namespace puppet { namespace runtime { namespace types {
         values::type const& resolved_type() const;
 
         /**
+         * Creates a generalized version of the type.
+         * @return Returns the generalized type.
+         */
+        values::type generalize() const;
+
+        /**
          * Determines if the given value is an instance of this type.
          * @param value The value to determine if it is an instance of this type.
          * @param guard The recursion guard to use for aliases.
@@ -178,8 +184,19 @@ namespace puppet { namespace runtime { namespace types {
         map_type _map;
     };
 
+    /**
+     * Compares two recursion guard keys.
+     * @param left The left recursion guard key to compare.
+     * @param right The right recursion guard key to compare.
+     * @return Returns true if the two keys are equal or false if they are not equal.
+     */
     bool operator==(recursion_guard::key const& left, recursion_guard::key const& right);
-    size_t hash_value(recursion_guard::key const& key);
 
+    /**
+     * Hashes a recursion guard key.
+     * @param key The recursion guard key to hash.
+     * @return Returns the hash value.
+     */
+    size_t hash_value(recursion_guard::key const& key);
 
 }}}  // namespace puppet::runtime::types

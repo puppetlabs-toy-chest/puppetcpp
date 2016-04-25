@@ -39,7 +39,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                         (boost::format("expected %1% or %2%[%1%] of %1% but found %3%.") %
                          types::string::name() %
                          types::array::name() %
-                         argument.get_type()
+                         argument.infer_type()
                         ).str(),
                         context.argument_context(i),
                         evaluation_context.backtrace()

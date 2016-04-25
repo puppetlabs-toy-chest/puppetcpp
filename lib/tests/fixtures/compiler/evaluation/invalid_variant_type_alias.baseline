@@ -1,4 +1,4 @@
-Error: invalid_variant_type_alias.pp:1:16: node 'test': Variant[Invalid, Invalid, Invalid] does not resolve to a real type.
+Error: invalid_variant_type_alias.pp:1:16: node 'test': Variant[Invalid] does not resolve to a real type.
   type Invalid = Variant[Invalid, Invalid, Invalid]
                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   backtrace:

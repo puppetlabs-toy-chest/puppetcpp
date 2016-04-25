@@ -158,16 +158,6 @@ namespace puppet { namespace runtime { namespace values {
         return true;
     }
 
-    size_t hash::indirect_hasher::operator()(values::value const* value) const
-    {
-        return hash_value(*value);
-    }
-
-    bool hash::indirect_comparer::operator()(values::value const* left, values::value const* right) const
-    {
-        return *left == *right;
-    }
-
     ostream& operator<<(ostream& os, values::hash const& hash)
     {
         os << '{';

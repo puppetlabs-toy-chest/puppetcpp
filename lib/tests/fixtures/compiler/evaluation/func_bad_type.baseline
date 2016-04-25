@@ -1,5 +1,5 @@
 Notice: Scope(Class[main]): peter
-Error: func_bad_type.pp:6:6: node 'test': parameter $x has expected type String but was given Integer.
+Error: func_bad_type.pp:6:6: node 'test': parameter $x has expected type String but was given Integer[5, 5].
   test(5)
        ^
   backtrace:

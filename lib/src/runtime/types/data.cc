@@ -5,6 +5,13 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
+    data const data::instance{};
+
+    values::type data::generalize() const
+    {
+        return *this;
+    }
+
     bool data::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return scalar::instance.is_instance(value, guard) || array::instance.is_instance(value, guard) ||

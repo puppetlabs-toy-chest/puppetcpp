@@ -10,6 +10,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Default";
     }
 
+    values::type defaulted::generalize() const
+    {
+        return *this;
+    }
+
     bool defaulted::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return value.is_default();

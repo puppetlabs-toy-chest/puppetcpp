@@ -35,6 +35,11 @@ namespace puppet { namespace runtime { namespace types {
         return "String";
     }
 
+    values::type string::generalize() const
+    {
+        return types::string{};
+    }
+
     bool string::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<std::string>();

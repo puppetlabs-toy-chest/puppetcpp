@@ -35,6 +35,7 @@
 #include "../types/type.hpp"
 #include "../types/undef.hpp"
 #include "../types/variant.hpp"
+#include "../../utility/indirect_collection.hpp"
 #include "../../cast.hpp"
 #include <vector>
 #include <unordered_set>
@@ -208,6 +209,13 @@ namespace puppet { namespace runtime { namespace values {
         type const& dereference() const;
 
         /**
+         * Creates a generalized version of the type.
+         * A new type is created that does not have type constraints.
+         * @return Returns the generalized type.
+         */
+        type generalize() const;
+
+        /**
          * Determines if the value is an instance of this type.
          * @param value The value to check if being an instance of this type.
          * @param guard The recursion guard to use for aliases.
@@ -368,18 +376,8 @@ namespace puppet { namespace runtime { namespace values {
         values::type const& operator[](size_t index) const;
 
      private:
-        struct indirect_hasher
-        {
-            size_t operator()(values::type const* type) const;
-        };
-
-        struct indirect_comparer
-        {
-            bool operator()(type const* right, type const* left) const;
-        };
-
         std::vector<type const*> _types;
-        std::unordered_set<type const*, indirect_hasher, indirect_comparer> _set;
+        utility::indirect_set<type> _set;
     };
 
     /**

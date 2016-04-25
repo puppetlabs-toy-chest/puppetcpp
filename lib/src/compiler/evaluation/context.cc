@@ -582,7 +582,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 throw evaluation_exception(
                     (boost::format("expected %1% for 'stage' metaparameter but found %2%.") %
                      types::string::name() %
-                     attribute->value().get_type()
+                     attribute->value().infer_type()
                     ).str(),
                     attribute->value_context(),
                     backtrace()

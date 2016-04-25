@@ -51,6 +51,15 @@ namespace puppet { namespace runtime { namespace types {
         return "Struct";
     }
 
+    values::type structure::generalize() const
+    {
+        schema_type schema;
+        for (auto& kvp : _schema) {
+            schema.emplace_back(make_unique<values::type>(kvp.first->generalize()), make_unique<values::type>(kvp.second->generalize()));
+        }
+        return types::structure{ rvalue_cast(schema) };
+    }
+
     bool structure::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for hash
@@ -145,7 +154,7 @@ namespace puppet { namespace runtime { namespace types {
         if (_schema.empty()) {
             return;
         }
-        stream << "[";
+        stream << "[{";
         bool first = true;
         for (auto const& kvp : _schema) {
             if (first) {
@@ -153,11 +162,15 @@ namespace puppet { namespace runtime { namespace types {
             } else {
                 stream << ", ";
             }
-            kvp.first->write(stream, false);
+            if (boost::get<enumeration>(kvp.first.get())) {
+                stream << to_key(*kvp.first);
+            } else {
+                kvp.first->write(stream, false);
+            }
             stream << " => ";
             kvp.second->write(stream, false);
         }
-        stream << "]";
+        stream << "}]";
     }
 
     std::string const& structure::to_key(values::type const& type)

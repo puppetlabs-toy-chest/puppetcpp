@@ -288,10 +288,11 @@ namespace puppet { namespace runtime { namespace values {
         bool is_truthy() const;
 
         /**
-         * Gets the type of the value.
+         * Infers the type of the value.
+         * @param detailed True to do a detailed inference or false to do a reduced inference.
          * @return Returns the runtime type of the value.
          */
-        values::type get_type() const;
+        values::type infer_type(bool detailed = false) const;
 
         /**
          * Converts the value to an array; the value is returned as an array if already an array.

@@ -92,7 +92,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             (boost::format("expected %1% or %2% for type parameter but found %3%.") %
              types::resource::name() %
              types::klass::name() %
-             values::value(*argument.parameter()).get_type()
+             values::value(*argument.parameter()).infer_type()
             ).str(),
             argument_context,
             context.backtrace()
@@ -115,7 +115,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
              types::resource::name() %
              types::klass::name() %
              types::type::name() %
-             values::value(argument).get_type()
+             values::value(argument).infer_type()
             ).str(),
             argument_context,
             context.backtrace()
@@ -135,7 +135,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             (boost::format("expected %1% or %2% but found %3%.") %
              types::string::name() %
              types::type::name() %
-             argument.get_type()
+             argument.infer_type()
             ).str(),
             argument_context,
             context.backtrace()

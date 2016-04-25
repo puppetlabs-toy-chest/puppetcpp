@@ -32,6 +32,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Type";
     }
 
+    values::type type::generalize() const
+    {
+        return types::type{ _parameter ? make_unique<values::type>(_parameter->generalize()) : nullptr };
+    }
+
     bool type::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<values::type>();
@@ -79,7 +84,9 @@ namespace puppet { namespace runtime { namespace types {
     {
         if (!left.parameter() && !right.parameter()) {
             return true;
-        } else if (left.parameter() || right.parameter()) {
+        } else if (!left.parameter()) {
+            return false;
+        } else if (!right.parameter()) {
             return false;
         }
         return *left.parameter() == *right.parameter();

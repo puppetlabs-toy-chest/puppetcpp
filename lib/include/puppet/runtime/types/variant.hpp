@@ -63,6 +63,20 @@ namespace puppet { namespace runtime { namespace types {
         static char const* name();
 
         /**
+         * Unwraps the variant.
+         * If the variant has only one type, that type is returned. Otherwise, this variant is moved into the return value.
+         * Note: because the
+         * @return Returns the unwraped type.
+         */
+        values::type unwrap();
+
+        /**
+         * Creates a generalized version of the type.
+         * @return Returns the generalized type.
+         */
+        values::type generalize() const;
+
+        /**
          * Determines if the given value is an instance of this type.
          * @param value The value to determine if it is an instance of this type.
          * @param guard The recursion guard to use for aliases.

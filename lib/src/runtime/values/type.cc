@@ -33,6 +33,20 @@ namespace puppet { namespace runtime { namespace values {
         return *this;
     }
 
+    struct generalize_visitor : boost::static_visitor<type>
+    {
+        template <typename T>
+        result_type operator()(T const& type) const
+        {
+            return type.generalize();
+        }
+    };
+
+    type type::generalize() const
+    {
+        return boost::apply_visitor(generalize_visitor{}, _value);
+    }
+
     struct is_instance_visitor : boost::static_visitor<bool>
     {
         is_instance_visitor(values::value const& value, types::recursion_guard& guard) :
@@ -291,16 +305,6 @@ namespace puppet { namespace runtime { namespace values {
     type const& type_set::operator[](size_t index) const
     {
         return *_types[index];
-    }
-
-    size_t type_set::indirect_hasher::operator()(values::type const* type) const
-    {
-        return hash_value(*type);
-    }
-
-    bool type_set::indirect_comparer::operator()(type const* right, type const* left) const
-    {
-        return *right == *left;
     }
 
     ostream& operator<<(ostream& os, type_set const& set)

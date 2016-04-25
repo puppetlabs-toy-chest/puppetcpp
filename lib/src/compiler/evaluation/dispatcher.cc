@@ -24,6 +24,7 @@
 #include <puppet/compiler/evaluation/functions/step.hpp>
 #include <puppet/compiler/evaluation/functions/tag.hpp>
 #include <puppet/compiler/evaluation/functions/tagged.hpp>
+#include <puppet/compiler/evaluation/functions/type.hpp>
 #include <puppet/compiler/evaluation/functions/versioncmp.hpp>
 #include <puppet/compiler/evaluation/functions/warning.hpp>
 #include <puppet/compiler/evaluation/functions/with.hpp>
@@ -91,6 +92,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::step::create_descriptor());
         add(functions::tag::create_descriptor());
         add(functions::tagged::create_descriptor());
+        add(functions::type::create_descriptor());
         add(functions::versioncmp::create_descriptor());
         add(functions::warning::create_descriptor());
         add(functions::with::create_descriptor());

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "wrapper.hpp"
+#include "../../utility/indirect_collection.hpp"
 #include <boost/functional/hash.hpp>
 #include <ostream>
 #include <functional>
@@ -231,18 +232,8 @@ namespace puppet { namespace runtime { namespace values {
         bool erase(value const& key);
 
      private:
-        struct indirect_hasher
-        {
-            size_t operator()(values::value const* value) const;
-        };
-
-        struct indirect_comparer
-        {
-            bool operator()(values::value const* left, values::value const* right) const;
-        };
-
         sequence_type _elements;
-        std::unordered_map<value const*, iterator, indirect_hasher, indirect_comparer> _index;
+        utility::indirect_map<value, iterator> _index;
     };
 
     /**

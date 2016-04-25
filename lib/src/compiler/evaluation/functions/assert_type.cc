@@ -22,7 +22,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             throw evaluation_exception(
                 (boost::format("type assertion failure: expected %1% but found %2%.") %
                  type %
-                 instance.get_type()
+                 instance.infer_type()
                 ).str(),
                 context.argument_context(1),
                 context.context().backtrace()
@@ -30,7 +30,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         }
 
         // Call the block and give it the type of the argument as the second argument
-        instance = instance.get_type();
+        instance = instance.infer_type();
         return context.yield(context.arguments());
     }
 

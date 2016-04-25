@@ -24,6 +24,12 @@ namespace puppet { namespace runtime { namespace types {
         return *_resolved_type;
     }
 
+    values::type alias::generalize() const
+    {
+        // Aliases don't generalize the resolved type; they generalize to themselves
+        return *this;
+    }
+
     bool alias::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto result = guard.add(*this, &value);

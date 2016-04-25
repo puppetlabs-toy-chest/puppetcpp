@@ -41,7 +41,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                     throw evaluation_exception(
                         (boost::format("expected %1% or array of %1% but found %2%.") %
                          types::string::name() %
-                         argument.get_type()
+                         argument.infer_type()
                         ).str(),
                         context.argument_context(i),
                         evaluation_context.backtrace()

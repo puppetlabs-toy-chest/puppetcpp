@@ -10,6 +10,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Any";
     }
 
+    values::type any::generalize() const
+    {
+        return *this;
+    }
+
     bool any::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // All values are an instance of Any

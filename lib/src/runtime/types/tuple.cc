@@ -61,6 +61,16 @@ namespace puppet { namespace runtime { namespace types {
         return "Tuple";
     }
 
+    values::type tuple::generalize() const
+    {
+        vector<unique_ptr<values::type>> types;
+        for (auto& type : _types) {
+            types.emplace_back(make_unique<values::type>(type->generalize()));
+        }
+        // A Tuple does not modify the from/to like other types
+        return types::tuple{ rvalue_cast(types), _from, _to };
+    }
+
     bool tuple::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for array

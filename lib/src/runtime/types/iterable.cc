@@ -31,6 +31,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Iterable";
     }
 
+    values::type iterable::generalize() const
+    {
+        return types::iterable{ _type ? make_unique<values::type>(_type->generalize()) : nullptr };
+    }
+
     bool iterable::is_instance(values::value const& value, recursion_guard& guard) const
     {
         // Check for string

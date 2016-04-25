@@ -28,6 +28,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Float";
     }
 
+    values::type floating::generalize() const
+    {
+        return types::floating{};
+    }
+
     bool floating::is_instance(values::value const& value, recursion_guard& guard) const
     {
         auto ptr = value.as<double>();

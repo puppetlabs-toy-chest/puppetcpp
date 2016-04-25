@@ -12,6 +12,11 @@ namespace puppet { namespace runtime { namespace types {
         return "Scalar";
     }
 
+    values::type scalar::generalize() const
+    {
+        return *this;
+    }
+
     bool scalar::is_instance(values::value const& value, recursion_guard& guard) const
     {
         return numeric::instance.is_instance(value, guard) || string::instance.is_instance(value, guard) ||
