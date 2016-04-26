@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include <regex>
+#include "../../utility/regex.hpp"
 #include <string>
 #include <ostream>
 
@@ -13,13 +13,8 @@ namespace puppet { namespace runtime { namespace values {
     /**
      * Represents a runtime regex.
      */
-    struct regex
+    struct regex : utility::regex
     {
-        /**
-         * Default constructor for regex.
-         */
-        regex();
-
         /**
          * Constructs a regex with the given pattern.
          * @param pattern The pattern for the regex.
@@ -32,15 +27,8 @@ namespace puppet { namespace runtime { namespace values {
          */
         std::string const& pattern() const;
 
-        /**
-         * Gets the value of the regex.
-         * @return Returns the value of the regex.
-         */
-        std::regex const& value() const;
-
     private:
         std::string _pattern;
-        std::regex _regex;
     };
 
     /**

@@ -5,15 +5,47 @@
 #include <puppet/options/commands/repl.hpp>
 #include <puppet/options/commands/version.hpp>
 #include <puppet/logging/logger.hpp>
+#include <oniguruma.h>
 
 using namespace std;
 using namespace puppet;
 using namespace puppet::options;
 using namespace puppet::logging;
 
+// Simple helper to initialize and deinitialize Onigmo
+// This is done in main() to ensure thread-safe initialization of the library.
+struct onigmo_helper
+{
+    onigmo_helper() :
+        _result(onig_init())
+    {
+    }
+
+    ~onigmo_helper()
+    {
+        onig_end();
+    }
+
+    int init_result() const
+    {
+        return _result;
+    }
+
+ private:
+    int _result;
+};
+
 int main(int argc, char const* argv[])
 {
     console_logger logger;
+
+    onigmo_helper onigmo;
+    if (onigmo.init_result() != ONIG_NORMAL) {
+        OnigUChar message[ONIG_MAX_ERROR_MESSAGE_LEN] = {};
+        onig_error_code_to_str(message, onigmo.init_result());
+        LOG(critical, "failed to initialize Onigmo library: %1%.", reinterpret_cast<char const*>(message));
+        return EXIT_FAILURE;
+    }
 
     vector<string> arguments;
     for (int i = 1; i < argc; ++i) {

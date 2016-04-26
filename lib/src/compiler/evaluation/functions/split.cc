@@ -46,9 +46,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             if (second.pattern().empty()) {
                 return split_characters(first);
             }
+
             values::array result;
-            for (sregex_token_iterator begin{ first.begin(), first.end(), second.value(), -1}, end; begin != end; ++begin) {
-                result.emplace_back(string(*begin));
+            utility::regex_split_iterator end;
+            for (utility::regex_split_iterator it{ second, first }; it != end; ++it) {
+                result.emplace_back(string{ it->begin(), it->end() });
             }
             return result;
         });
@@ -59,10 +61,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             if (second.pattern().empty()) {
                 return split_characters(first);
             }
+
+            utility::regex regex{ second.pattern() };
+
             values::array result;
-            std::regex pattern(second.pattern());
-            for (sregex_token_iterator begin{ first.begin(), first.end(), pattern, -1}, end; begin != end; ++begin) {
-                result.emplace_back(string(*begin));
+            utility::regex_split_iterator end;
+            for (utility::regex_split_iterator it{ regex, first }; it != end; ++it) {
+                result.emplace_back(string{ it->begin(), it->end() });
             }
             return result;
         });

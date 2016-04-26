@@ -2,7 +2,6 @@
 #include <puppet/compiler/environment.hpp>
 #include <puppet/cast.hpp>
 #include <boost/filesystem.hpp>
-#include <regex>
 
 namespace fs = boost::filesystem;
 namespace sys = boost::system;
@@ -30,8 +29,8 @@ namespace puppet { namespace compiler {
 
     bool module::is_valid_name(string const& name)
     {
-        static const regex valid_name{R"(^[a-z][a-z0-9_]*$)"};
-        return name != "environment" && regex_match(name, valid_name);
+        static const utility::regex valid_name{R"(^[a-z][a-z0-9_]*$)"};
+        return name != "environment" && valid_name.match(name);
     }
 
 }}  // namespace puppet::compiler

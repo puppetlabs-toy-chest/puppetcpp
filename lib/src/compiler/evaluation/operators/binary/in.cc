@@ -9,9 +9,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     static bool is_in(call_context& context, values::regex const& left, string const& right)
     {
-        smatch matches;
-        bool result = left.pattern().empty() || regex_search(right, matches, left.value());
-        context.context().set(matches);
+        utility::regex::regions regions;
+        bool result = left.pattern().empty() || left.search(right, &regions);
+        context.context().set(regions.substrings(right));
         return result;
     }
 

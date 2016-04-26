@@ -3,7 +3,6 @@
 #include <boost/functional/hash.hpp>
 #include <boost/algorithm/string.hpp>
 #include <unordered_set>
-#include <regex>
 
 using namespace std;
 
@@ -169,14 +168,14 @@ namespace puppet { namespace runtime { namespace types {
 
     boost::optional<resource> resource::parse(std::string const& specification)
     {
-        static std::regex specification_regex("^((?:(?:::)?[A-Z]\\w*)+)\\[([^\\]]+)\\]$");
+        static utility::regex specification_regex{ R"(^((?:(?:::)?[A-Z]\w*)+)\[([^\]]+)\]$)" };
 
-        smatch matches;
-        if (!regex_match(specification, matches, specification_regex) || matches.size() != 3) {
+        utility::regex::regions regions;
+        if (!specification_regex.match(specification, &regions) || regions.count() != 3) {
             return boost::none;
         }
 
-        auto title = matches[2].str();
+        auto title = regions.substring(specification, 2);
         boost::trim(title);
         // Strip quotes if present in the title
         if (!title.empty()) {
@@ -185,7 +184,7 @@ namespace puppet { namespace runtime { namespace types {
                 title = title.substr(1, title.size() - 2);
             }
         }
-        return resource(matches[1].str(), rvalue_cast(title));
+        return resource(regions.substring(specification, 1), rvalue_cast(title));
     }
 
     ostream& operator<<(ostream& os, resource const& type)

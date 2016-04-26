@@ -41,7 +41,7 @@ namespace puppet { namespace runtime { namespace types {
 
         // Check for a matching pattern
         for (auto const& regex : _patterns) {
-            if (regex.pattern().empty() || std::regex_search(*ptr, regex.value())) {
+            if (regex.pattern().empty() || regex.search(*ptr)) {
                 return true;
             }
         }
@@ -65,7 +65,7 @@ namespace puppet { namespace runtime { namespace types {
             // All strings in the enum must match a pattern
             for (auto& string : enumeration->strings()) {
                 auto match = find_if(_patterns.begin(), _patterns.end(), [&](auto const& regex) {
-                    return regex_search(string, regex.value());
+                    return regex.search(string);
                 });
                 if (match == _patterns.end()) {
                     return false;

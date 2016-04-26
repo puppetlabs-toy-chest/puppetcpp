@@ -9,6 +9,7 @@
 #include "tokens.hpp"
 #include "../exceptions.hpp"
 #include "../../logging/logger.hpp"
+#include "../../utility/regex.hpp"
 #include "../../cast.hpp"
 #include <limits>
 #include <boost/iterator/iterator_adaptor.hpp>
@@ -32,7 +33,6 @@
 #include <sstream>
 #include <exception>
 #include <tuple>
-#include <regex>
 #include <functional>
 #include <array>
 
@@ -386,21 +386,19 @@ namespace puppet { namespace compiler { namespace lexer {
 
         void lex_heredoc(input_iterator_type const& begin, input_iterator_type& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            using namespace std;
-
-            static const regex pattern(HEREDOC_PATTERN);
+            static const utility::regex heredoc_regex(HEREDOC_PATTERN);
 
             // regex needs bi-directional iterators, so we need to copy the token range (just the @(...) part)
             string_type token{ begin, end };
 
             // Extract the tag, format, and escapes from the token
-            match_results<typename string_type::const_iterator> match;
-            if (!regex_match(token, match, pattern) || match.size() != 6) {
+            utility::regex::regions regions;
+            if (!heredoc_regex.match(token, &regions) || regions.count() != 6) {
                 throw lexer_exception<input_iterator_type>("internal error: unexpected heredoc format.", begin, end);
             }
 
             // Trim the tag
-            string_type tag{ match[1].first, match[1].second };
+            string_type tag = regions.substring(token, 1);
             boost::trim(tag);
 
             // Check for interpolation
@@ -412,16 +410,16 @@ namespace puppet { namespace compiler { namespace lexer {
 
             // Check for optional format
             string_type format;
-            if (match[2].first != match[2].second) {
-                format.assign(match[3].first, match[3].second);
+            if (!regions.empty(2)) {
+                format = regions.substring(token, 3);
             }
 
             // Check for optional escapes
             string_type escapes;
-            if (match[4].first != match[4].second) {
+            if (!regions.empty(4)) {
                 static char const HEREDOC_ESCAPES[] = R"(trnsuL$)";
 
-                escapes.assign(match[5].first, match[5].second);
+                escapes = regions.substring(token, 5);
                 if (escapes.empty()) {
                     // Enable all heredoc escapes
                     escapes = HEREDOC_ESCAPES;
@@ -1053,13 +1051,11 @@ namespace puppet { namespace compiler { namespace lexer {
 
         static void lex_number(input_iterator_type const& begin, input_iterator_type const& end, boost::spirit::lex::pass_flags& matched, id_type& id, context_type& context)
         {
-            using namespace std;
-
-            static const regex hex_pattern(R"(0[xX][0-9A-Fa-f]+)");
-            static const regex octal_pattern(R"(0\d+)");
-            static const regex valid_octal_pattern(R"(0[0-7]+)");
-            static const regex decimal_pattern(R"(0|([1-9]\d*))");
-            static const regex double_pattern(R"([0-9]\d*(\.\d+)?([eE]-?\d+)?)");
+            static const utility::regex hex_pattern(R"(0[xX][0-9A-Fa-f]+)");
+            static const utility::regex octal_pattern(R"(0\d+)");
+            static const utility::regex valid_octal_pattern(R"(0[0-7]+)");
+            static const utility::regex decimal_pattern(R"(0|([1-9]\d*))");
+            static const utility::regex double_pattern(R"([0-9]\d*(\.\d+)?([eE]-?\d+)?)");
 
             // Force any following '/' to be interpreted as a '/' token
             force_slash(context);
@@ -1069,15 +1065,15 @@ namespace puppet { namespace compiler { namespace lexer {
 
             // Match integral numbers
             int base = 0;
-            if (regex_match(token, hex_pattern)) {
+            if (hex_pattern.match(token)) {
                 base = 16;
-            } else if (regex_match(token, octal_pattern)) {
+            } else if (octal_pattern.match(token)) {
                 // Make sure the number is valid for an octal
-                if (!regex_match(token, valid_octal_pattern)) {
+                if (!valid_octal_pattern.match(token)) {
                     throw lexer_exception<input_iterator_type>((boost::format("'%1%' is not a valid number.") % token).str(), begin, end);
                 }
                 base = 8;
-            } else if (regex_match(token, decimal_pattern)) {
+            } else if (decimal_pattern.match(token)) {
                 base = 10;
             }
 
@@ -1091,12 +1087,12 @@ namespace puppet { namespace compiler { namespace lexer {
                             base == 16 ? numeric_base::hexadecimal : (base == 8 ? numeric_base::octal : numeric_base::decimal)
                         }
                     );
-                } catch (out_of_range const& ex) {
+                } catch (std::out_of_range const& ex) {
                     throw lexer_exception<input_iterator_type>(
                         (boost::format("'%1%' is not in the range of %2% to %3%.") %
                             token %
-                            numeric_limits<int64_t>::min() %
-                            numeric_limits<int64_t>::max()
+                            std::numeric_limits<int64_t>::min() %
+                            std::numeric_limits<int64_t>::max()
                         ).str(),
                         begin,
                         end
@@ -1106,15 +1102,15 @@ namespace puppet { namespace compiler { namespace lexer {
             }
 
             // Match double
-            if (regex_match(token, double_pattern)) {
+            if (double_pattern.match(token)) {
                 try {
                     context.set_value(number_token{ begin.position(), end.position(), stod(token, 0) });
-                } catch (out_of_range const& ex) {
+                } catch (std::out_of_range const& ex) {
                     throw lexer_exception<input_iterator_type>(
                         (boost::format("'%1%' is not in the range of %2% to %3%.") %
                             token %
-                            numeric_limits<double>::lowest() %
-                            numeric_limits<double>::max()
+                            std::numeric_limits<double>::lowest() %
+                            std::numeric_limits<double>::max()
                         ).str(),
                         begin,
                         end

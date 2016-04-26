@@ -37,3 +37,11 @@ $b = { $a => foo }
 unless $b[$a] == foo {
     fail incorrect
 }
+
+# Test capture groups with options
+unless 'Fedora' ? {
+   /(?i-mx:ubuntu|debian)/        => 'apache2',
+   /(?i-mx:centos|fedora|redhat)/ => 'httpd',
+} == 'httpd' {
+    fail incorrect
+}
