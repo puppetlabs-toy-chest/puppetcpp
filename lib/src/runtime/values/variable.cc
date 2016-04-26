@@ -28,9 +28,9 @@ namespace puppet { namespace runtime { namespace values {
         return _value;
     }
 
-    void variable::assign(shared_ptr<values::value const> const& value)
+    void variable::assign(shared_ptr<values::value const> value)
     {
-        _value = value;
+        _value = rvalue_cast(value);
     }
 
     bool operator==(variable const& left, variable const& right)

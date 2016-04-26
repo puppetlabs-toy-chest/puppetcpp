@@ -1,0 +1,5 @@
+Error: match_variable_assignment.pp:1:1: node 'test': cannot assign to $1: the name is reserved as a match variable.
+  $1 = bar
+  ^~
+  backtrace:
+    in '<class main>' at match_variable_assignment.pp:1

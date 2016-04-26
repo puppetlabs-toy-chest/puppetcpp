@@ -44,7 +44,7 @@ namespace puppet { namespace runtime { namespace values {
          * Assigns the given value to the variable.
          * @param value The new value of the variable.
          */
-        void assign(std::shared_ptr<values::value const> const& value);
+        void assign(std::shared_ptr<values::value const> value);
 
     private:
         std::string _name;
