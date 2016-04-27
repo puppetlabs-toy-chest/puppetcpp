@@ -1,0 +1,8 @@
+Warning: non_local_assignment.pp:1:1: could not look up variable $foo::bar because class 'foo' is not defined.
+  $foo::bar = baz
+  ^~~~~~~~~
+Error: non_local_assignment.pp:1:1: node 'test': cannot assign to $foo::bar: assignment can only be performed on variables local to the current scope.
+  $foo::bar = baz
+  ^~~~~~~~~
+  backtrace:
+    in '<class main>' at non_local_assignment.pp:1

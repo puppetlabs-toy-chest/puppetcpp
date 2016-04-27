@@ -1,0 +1,5 @@
+Error: missing_hash_assignment.pp:1:8: node 'test': cannot assign to variable $a: a matching key was not found in the hash.
+  [$a] = { foo => bar }
+         ^~~~~~~~~~~~~~
+  backtrace:
+    in '<class main>' at missing_hash_assignment.pp:1

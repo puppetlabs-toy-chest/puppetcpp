@@ -1,0 +1,5 @@
+Error: bad_array_assignment.pp:1:16: node 'test': expected Array or Hash when assigning to Array but found Integer[1, 1].
+  [$a, $b, $c] = 1
+                 ^
+  backtrace:
+    in '<class main>' at bad_array_assignment.pp:1

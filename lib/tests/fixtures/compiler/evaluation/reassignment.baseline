@@ -1,0 +1,5 @@
+Error: reassignment.pp:2:1: node 'test': cannot assign to $a: variable was previously assigned at reassignment.pp:1.
+  $a = bar
+  ^~
+  backtrace:
+    in '<class main>' at reassignment.pp:2

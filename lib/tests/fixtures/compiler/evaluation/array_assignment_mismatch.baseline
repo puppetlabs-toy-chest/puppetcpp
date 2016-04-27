@@ -1,0 +1,5 @@
+Error: array_assignment_mismatch.pp:1:16: node 'test': cannot assign to array of size 3 from an array of size 4.
+  [$a, $b, $c] = [1, 2, 3, 4]
+                 ^~~~~~~~~~~~
+  backtrace:
+    in '<class main>' at array_assignment_mismatch.pp:1
