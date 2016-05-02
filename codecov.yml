@@ -1,0 +1,10 @@
+coverage:
+  ignore:
+  - vendor/.*
+  - lib/tests/.*
+  status:
+    patch: false
+  round: up
+  range: "50...85"
+comment: off
+
