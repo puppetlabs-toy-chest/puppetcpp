@@ -1,0 +1,1 @@
+notice('foo' + 1)

@@ -1,0 +1,63 @@
+Notice: Scope(Class[main]): 15
+Notice: Scope(Class[main]): 3.6
+Notice: Scope(Class[main]): 11.2
+Notice: Scope(Class[main]): 2.25
+Notice: Scope(Class[main]): 18
+Notice: Scope(Class[main]): 11
+Notice: Scope(Class[main]): 72
+Notice: Scope(Class[main]): 7.5
+Notice: Scope(Class[main]): 6
+Notice: Scope(Class[main]): -20
+Notice: Scope(Class[main]): 24
+Notice: Scope(Class[main]): -128
+Notice: Scope(Class[main]): 0.024
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

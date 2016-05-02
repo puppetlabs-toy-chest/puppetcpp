@@ -1,0 +1,5 @@
+Error: plus_bad_right_string.pp:1:12: node 'test': string 'foo' cannot be converted to Integer.
+  notice(1 + 'foo')
+             ^~~~~
+  backtrace:
+    in '<class main>' at plus_bad_right_string.pp:1
