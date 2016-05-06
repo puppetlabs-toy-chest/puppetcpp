@@ -1,7 +1,9 @@
 Puppet Compiler in C++
 ======================
 
-[![Build Status](https://travis-ci.org/puppetlabs/puppetcpp.svg?branch=master)](https://travis-ci.org/puppetlabs/puppetcpp) [![codecov](https://codecov.io/gh/puppetlabs/puppetcpp/branch/master/graph/badge.svg)](https://codecov.io/gh/puppetlabs/puppetcpp)
+[![Build Status](https://travis-ci.org/puppetlabs/puppetcpp.svg?branch=master)](https://travis-ci.org/puppetlabs/puppetcpp) [![Code Coverage](https://codecov.io/gh/puppetlabs/puppetcpp/branch/master/graph/badge.svg)](https://codecov.io/gh/puppetlabs/puppetcpp)
+
+[![Build History](https://buildstats.info/travisci/chart/puppetlabs/puppetcpp)](https://travis-ci.org/puppetlabs/puppetcpp)
 
 This is a (very early) attempt to write a Puppet 4.x compiler in C++14.
 
