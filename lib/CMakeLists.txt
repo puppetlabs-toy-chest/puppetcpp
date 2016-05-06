@@ -200,7 +200,7 @@ if (Editline_FOUND)
     target_link_libraries(puppet ${Editline_LIBRARY})
 endif()
 
-install(TARGETS puppet DESTINATION lib)
+install(TARGETS puppet DESTINATION lib${LIB_SUFFIX})
 
 cotire(generate_static_lexer)
 cotire(puppet)

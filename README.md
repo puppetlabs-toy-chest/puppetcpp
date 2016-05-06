@@ -67,7 +67,7 @@ Expression evaluator status:
 * [x] local scope
 * [x] node scope
 * [x] string interpolation
-* [ ] Puppet type aliases
+* [x] Puppet type aliases
 * [x] custom functions written in Puppet
 * [ ] custom functions written in Ruby
 * [ ] custom types written in Puppet
@@ -155,11 +155,11 @@ Puppet functions implemented:
 * [ ] slice
 * [x] split
 * [ ] sprintf
-* [ ] step
+* [x] step
 * [x] tag
 * [x] tagged
 * [ ] template
-* [ ] type
+* [x] type
 * [x] versioncmp
 * [x] warning
 * [x] with
@@ -220,7 +220,7 @@ Also consider using [Ninja](https://ninja-build.org/) as a replacement for GNU M
 
 Then use `ninja` instead of `make` in the examples below.
 
-**Note: tracking precompiled header changes with Nina is [currently unsupported in CMake](https://cmake.org/Bug/view.php?id=13234) so it is recommended to set `DISABLE_PCH=1`.** 
+**Note: tracking precompiled header changes with ninja is [currently unsupported in CMake](https://cmake.org/Bug/view.php?id=13234) so it is recommended to add `-DDISABLE_PCH=1` when running cmake.**
 
 Build
 -----
