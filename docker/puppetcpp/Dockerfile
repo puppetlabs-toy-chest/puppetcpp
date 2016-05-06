@@ -33,8 +33,7 @@ RUN apk add --no-cache make cmake gcc g++ boost-dev curl-dev libedit-dev git && 
     cd /tmp/puppetcpp && \
     cmake . && \
     make -j 4 && \
-    cp bin/puppetcpp /usr/bin/ && \
-    cp lib/libpuppet.so.0.1.0 /usr/lib/ && \
+    make install && \
     cd && \
     rm -rf /tmp/puppetcpp && \
     mkdir -p /etc/puppetlabs/code/environments/production && \
