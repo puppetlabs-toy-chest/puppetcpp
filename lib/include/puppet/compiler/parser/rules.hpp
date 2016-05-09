@@ -55,6 +55,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(function_name,                 "function name",                 ast::name)
     DECLARE_RULE(parameters,                    "parameters",                    std::vector<ast::parameter>)
     DECLARE_RULE(parameter,                     "parameter",                     ast::parameter)
+    DECLARE_RULE(new_expression,                "new expression",                ast::new_expression)
     DECLARE_RULE(type_expression,               "type expression",               ast::postfix_expression)
     DECLARE_RULE(lambda_expression,             "lambda expression",             ast::lambda_expression)
     DECLARE_RULE(statement_call_expression,     "statement call expression",     ast::function_call_expression)
@@ -243,6 +244,10 @@ namespace puppet { namespace compiler { namespace parser {
     DEFINE_RULE(
         parameter,
         -type_expression >> -begin('*') >> (variable > -(raw('=') > expression))
+    )
+    DEFINE_RULE(
+        new_expression,
+        type_expression >> (raw('(') > (raw(')', false) | expressions) > end(')') > -lambda_expression)
     )
     DEFINE_RULE(
         type_expression,
@@ -581,6 +586,7 @@ namespace puppet { namespace compiler { namespace parser {
         if_expression                 |
         unless_expression             |
         function_call_expression      |
+        new_expression                |
         collector_expression          |
         exported_collector_expression |
         undef                         |
@@ -686,6 +692,7 @@ namespace puppet { namespace compiler { namespace parser {
         function_name,
         parameters,
         parameter,
+        new_expression,
         type_expression,
         lambda_expression,
         statement_call_expression,

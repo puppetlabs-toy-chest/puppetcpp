@@ -43,6 +43,21 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         evaluate_arguments(expression.arguments);
     }
 
+    call_context::call_context(evaluation::context& context, ast::new_expression const& expression, ast::name const& name) :
+        _context(context),
+        _name(name),
+        _block(expression.lambda)
+    {
+        _arguments.reserve(expression.arguments.size() + 1);
+
+        // Push back the type as the first argument
+        evaluation::evaluator evaluator{ _context };
+        _argument_contexts.emplace_back(expression.type.context());
+        _arguments.emplace_back(evaluator.evaluate(expression.type));
+
+        evaluate_arguments(expression.arguments);
+    }
+
     evaluation::context& call_context::context() const
     {
         return _context;

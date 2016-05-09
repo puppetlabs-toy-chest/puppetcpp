@@ -34,6 +34,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         call_context(evaluation::context& context, ast::method_call_expression const& expression, runtime::values::value& instance, ast::context const& instance_context, bool splat);
 
         /**
+         * Constructs a function call context from a new expression.
+         * @param context The current evaluation context.
+         * @param expression The new expression.
+         * @param name The AST function name to use for the call.
+         */
+        call_context(evaluation::context& context, ast::new_expression const& expression, ast::name const& name);
+
+        /**
          * Gets the current evaluation context.
          * @return Returns the current evaluation context.
          */
@@ -80,7 +88,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         /**
          * Gets the optional block passed to the function.
-         * @return Returns the optional block passed to the function.
+         * @return Returns the optional block passed to the function or nullptr if no block were passed.
          */
         boost::optional<ast::lambda_expression> const& block() const;
 

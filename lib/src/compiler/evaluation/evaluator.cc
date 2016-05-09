@@ -358,6 +358,20 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _context.dispatcher().dispatch(context);
     }
 
+    value evaluator::operator()(new_expression const& expression)
+    {
+        // Treat a new expression as a call to the "new" function.
+        auto type_context = expression.type.context();
+        ast::name name;
+        name.begin = type_context.begin;
+        name.end = type_context.end;
+        name.tree = type_context.tree;
+        name.value = "new";
+
+        functions::call_context context{ _context, expression, name };
+        return _context.dispatcher().dispatch(context);
+    }
+
     value evaluator::operator()(resource_expression const& expression)
     {
         // Evaluate the type name

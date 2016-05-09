@@ -302,6 +302,7 @@ namespace puppet { namespace compiler { namespace ast {
             boost::get<x3::forward_ast<if_expression>>(this) ||
             boost::get<x3::forward_ast<unless_expression>>(this) ||
             boost::get<x3::forward_ast<function_call_expression>>(this) ||
+            boost::get<x3::forward_ast<new_expression>>(this) ||
             boost::get<x3::forward_ast<resource_expression>>(this) ||
             boost::get<x3::forward_ast<resource_override_expression>>(this) ||
             boost::get<x3::forward_ast<resource_defaults_expression>>(this) ||
@@ -955,6 +956,29 @@ namespace puppet { namespace compiler { namespace ast {
     ostream& operator<<(ostream& os, function_call_expression const& node)
     {
         os << node.function << "(";
+        pretty_print(os, node.arguments, ", ");
+        os << ")";
+        if (node.lambda) {
+            os << " " << *node.lambda;
+        }
+        return os;
+    }
+
+    ast::context new_expression::context() const
+    {
+        ast::context context = type.context();
+
+        if (lambda) {
+            context.end = lambda->end;
+        } else {
+            context.end = end;
+        }
+        return context;
+    }
+
+    ostream& operator<<(ostream& os, new_expression const& node)
+    {
+        os << node.type << "(";
         pretty_print(os, node.arguments, ", ");
         os << ")";
         if (node.lambda) {
@@ -1857,6 +1881,16 @@ namespace puppet { namespace compiler { namespace ast {
             write("function", node.function);
             write("arguments", node.arguments);
             write("lambda", node.lambda);
+            write("end", node.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(new_expression const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "new");
+            write("type", node.type);
+            write("arguments", node.arguments);
             write("end", node.end);
             _emitter << YAML::EndMap;
         }

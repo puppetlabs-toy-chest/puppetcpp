@@ -143,6 +143,7 @@ Puppet functions implemented:
 * [x] map
 * [ ] match
 * [ ] md5
+* [ ] new
 * [x] notice
 * [x] realize
 * [x] reduce

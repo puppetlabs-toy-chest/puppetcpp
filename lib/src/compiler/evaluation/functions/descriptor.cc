@@ -183,7 +183,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     void descriptor::check_block_parameters(call_context const& context, vector<dispatch_descriptor const*> const& invocable) const
     {
         auto& evaluation_context = context.context();
-        auto& block = context.block();
+        auto block = context.block();
 
         // If the invocable set is empty, then there was a block mismatch
         if (invocable.empty()) {

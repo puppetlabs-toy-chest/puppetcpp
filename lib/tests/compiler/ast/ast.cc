@@ -232,6 +232,15 @@ static function_call_expression create_function_call(std::string function, vecto
     return node;
 }
 
+static new_expression create_new_expression(postfix_expression type, vector<expression> arguments = {})
+{
+    new_expression node;
+    node.type = rvalue_cast(type);
+    node.arguments = rvalue_cast(arguments);
+    node.end = create_position();
+    return node;
+}
+
 static attribute_operation create_attribute(std::string name, attribute_operator operator_, expression value)
 {
     attribute_operation node;
@@ -917,7 +926,7 @@ SCENARIO("primary expression", "[ast]")
 {
     primary_expression node;
     THEN("it should have the expected number of types") {
-        REQUIRE(boost::mpl::size<primary_expression::types>::value == 35);
+        REQUIRE(boost::mpl::size<primary_expression::types>::value == 36);
     }
     WHEN("using a primary expression") {
         GIVEN("an undef") {
@@ -1309,6 +1318,39 @@ SCENARIO("primary expression", "[ast]")
             }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "notice()");
+            }
+        }
+        GIVEN("a new expression") {
+            auto subnode = create_new_expression(
+                create_postfix(primary(create_type("Integer")),
+                    {
+                        subexpression(create_access(
+                            {
+                                create_expression(primary(create_number(0))),
+                                create_expression(primary(create_number(20)))
+                            }
+                        ))
+                    }
+                ),
+                {
+                    create_expression(primary(create_string("10")))
+                }
+            );
+            node = subnode;
+            THEN("the same context should be returned") {
+                REQUIRE(node.context() == subnode.context());
+            }
+            THEN("it should not be default") {
+                REQUIRE_FALSE(node.is_default());
+            }
+            THEN("it should be productive") {
+                REQUIRE(node.is_productive());
+            }
+            THEN("it should not be a splat expression") {
+                REQUIRE_FALSE(node.is_splat());
+            }
+            THEN("it should output the expected format") {
+                REQUIRE(lexical_cast<std::string>(node) == "Integer[0, 20]('10')");
             }
         }
         GIVEN("a resource expression") {
@@ -2966,6 +3008,52 @@ SCENARIO("function call expression", "[ast]")
         }
         THEN("it should output the expected format") {
             REQUIRE(lexical_cast<std::string>(node) == "foo(1, 'bar', []) |$foo, $bar| { }");
+        }
+        GIVEN("another non-equal object") {
+            decltype(node) other;
+            THEN("the objects should not be equal") {
+                REQUIRE(node.context() != other.context());
+            }
+        }
+    }
+}
+
+SCENARIO("new expression", "[ast]")
+{
+    auto node = create_new_expression(
+        create_postfix(primary(create_type("Integer")),
+                       {
+                           subexpression(create_access(
+                               {
+                                   create_expression(primary(create_number(0))),
+                                   create_expression(primary(create_number(20)))
+                               }
+                           ))
+                       }
+        ),
+        {
+            create_expression(primary(create_number(10)))
+        }
+    );
+
+    WHEN("using new expression") {
+        THEN("it should be copy constructible") {
+            auto node2 = node;
+            REQUIRE(node2.context() == node.context());
+        }
+        THEN("it should be movable") {
+            auto node2 = node;
+            auto node3 = rvalue_cast(node2);
+            REQUIRE(node3.context() == node.context());
+        }
+        THEN("the context should be the same as the type and the end") {
+            context ctx = node.context();
+            REQUIRE(ctx.begin == node.type.context().begin);
+            REQUIRE(ctx.end == node.end);
+            REQUIRE(ctx.tree == node.type.context().tree);
+        }
+        THEN("it should output the expected format") {
+            REQUIRE(lexical_cast<std::string>(node) == "Integer[0, 20](10)");
         }
         GIVEN("another non-equal object") {
             decltype(node) other;

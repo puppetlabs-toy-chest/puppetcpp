@@ -230,6 +230,17 @@ namespace puppet { namespace compiler {
         }
     }
 
+    void scanner::operator()(ast::new_expression const& expression)
+    {
+        scope_helper scope{ _scopes };
+
+        operator()(expression.type);
+
+        for (auto const& argument : expression.arguments) {
+            operator()(argument);
+        }
+    }
+
     void scanner::operator()(ast::resource_expression const& expression)
     {
         scope_helper scope{ _scopes };
