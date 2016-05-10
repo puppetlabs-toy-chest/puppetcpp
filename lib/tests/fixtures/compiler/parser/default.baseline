@@ -1,3 +1,4 @@
+path: default.pp
 statements:
   - kind: default
     begin:

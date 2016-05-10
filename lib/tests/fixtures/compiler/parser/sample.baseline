@@ -1,3 +1,4 @@
+path: sample.pp
 statements:
   - kind: binary
     first:

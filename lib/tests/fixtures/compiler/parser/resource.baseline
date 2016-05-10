@@ -1,3 +1,4 @@
+path: resource.pp
 statements:
   - kind: resource
     begin:

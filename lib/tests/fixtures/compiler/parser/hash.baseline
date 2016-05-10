@@ -1,3 +1,4 @@
+path: hash.pp
 statements:
   - kind: hash
     begin:

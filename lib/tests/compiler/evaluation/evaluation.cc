@@ -128,6 +128,7 @@ SCENARIO("evaluating manifests", "[evaluation]")
             }
 
             ofstream output{ baseline_path.string() };
+            REQUIRE(output);
             output << normalize(buffer.str());
         }
 

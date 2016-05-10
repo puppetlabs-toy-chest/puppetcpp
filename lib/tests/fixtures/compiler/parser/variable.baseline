@@ -1,3 +1,4 @@
+path: variable.pp
 statements:
   - kind: variable
     begin:

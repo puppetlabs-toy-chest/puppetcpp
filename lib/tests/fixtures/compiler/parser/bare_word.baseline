@@ -1,3 +1,4 @@
+path: bare_word.pp
 statements:
   - kind: bare word
     begin:

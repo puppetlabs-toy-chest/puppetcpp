@@ -1,3 +1,4 @@
+path: regex.pp
 statements:
   - kind: regex
     begin:
