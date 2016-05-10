@@ -291,7 +291,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         resource_body,
-        (expression >> raw(':')) > (attributes | boost::spirit::x3::eps)
+        (expression >> !raw(lexer::token_id::fat_arrow)) > raw(':') > (attributes | boost::spirit::x3::eps)
     )
     DEFINE_RULE(
         attributes,
