@@ -1,3 +1,4 @@
+path: simple.epp
 statements:
   - kind: binary
     first:

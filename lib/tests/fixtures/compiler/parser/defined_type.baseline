@@ -1,3 +1,4 @@
+path: defined_type.pp
 statements:
   - kind: defined type
     begin:

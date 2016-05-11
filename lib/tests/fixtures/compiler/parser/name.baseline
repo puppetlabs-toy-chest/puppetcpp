@@ -1,3 +1,4 @@
+path: name.pp
 statements:
   - kind: name
     begin:

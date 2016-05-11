@@ -1,3 +1,4 @@
+path: class.pp
 statements:
   - kind: class
     begin:

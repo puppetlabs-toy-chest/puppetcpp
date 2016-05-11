@@ -1,3 +1,4 @@
+path: type_alias.pp
 statements:
   - kind: type alias
     alias:

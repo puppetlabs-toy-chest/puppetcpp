@@ -1,3 +1,4 @@
+path: node.pp
 statements:
   - kind: node
     begin:

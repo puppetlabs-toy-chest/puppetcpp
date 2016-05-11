@@ -1,3 +1,4 @@
+path: number.pp
 statements:
   - kind: number
     begin:
