@@ -211,6 +211,12 @@ namespace puppet { namespace runtime { namespace values {
         {
         }
 
+        result_type operator()(types::integer const&)
+        {
+            check_max_arguments(1);
+            return types::integer::instantiate(rvalue_cast(_from), get_radix());
+        }
+
         result_type operator()(types::alias const& type)
         {
             return boost::apply_visitor(*this, type.resolved_type());
@@ -248,6 +254,35 @@ namespace puppet { namespace runtime { namespace values {
             }
         }
 
+        int get_radix() const
+        {
+            if (argument_count() == 0) {
+                return 0;
+            }
+            auto& radix_argument = argument(0);
+            if (radix_argument.is_default()) {
+                return 0;
+            }
+            if (auto integer = radix_argument.as<int64_t>()) {
+                if (*integer != 2 && *integer != 8 && *integer != 10 && *integer != 16) {
+                    throw conversion_argument_exception(
+                        (boost::format("expected a radix value of 2, 8, 10, or 16, but was given %1%.") %
+                         *integer
+                        ).str(),
+                        0
+                    );
+                }
+                return static_cast<int>(*integer);
+            }
+            throw conversion_argument_exception(
+                (boost::format("expected %1% for radix value but was given %2%.") %
+                 types::integer::name() %
+                 radix_argument.infer_type()
+                ).str(),
+                0
+            );
+        }
+
         values::value _from;
         values::array const& _arguments;
         size_t _offset;
@@ -256,7 +291,18 @@ namespace puppet { namespace runtime { namespace values {
     value type::instantiate(value from, values::array const& arguments, size_t offset) const
     {
         instantiation_visitor visitor{ rvalue_cast(from), arguments, offset };
-        return boost::apply_visitor(visitor, *this);
+        auto value = boost::apply_visitor(visitor, *this);
+
+        types::recursion_guard guard;
+        if (!is_instance(value, guard)) {
+            throw values::type_conversion_exception(
+                (boost::format("cannot convert %1% to %2%.") %
+                 value.infer_type() %
+                 *this
+                ).str()
+            );
+        }
+        return value;
     }
 
     type const* type::find(string const& name)

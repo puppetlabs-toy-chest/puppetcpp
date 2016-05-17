@@ -1,0 +1,6 @@
+Error: invalid_radix_type.pp:1:21: node 'test': expected Integer for radix value but was given String[1, 1].
+  notice Integer('2', '6')
+                      ^~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at invalid_radix_type.pp:1

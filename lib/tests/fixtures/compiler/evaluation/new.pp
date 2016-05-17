@@ -1,0 +1,16 @@
+# Integer tests
+notice Integer(1)
+notice Integer.new(2.6)
+notice Integer(true)
+notice new(Integer, false)
+notice Integer.new('2')
+notice Integer.new(' 0b11 ')
+notice new(Integer, '0111')
+notice Integer.new(' -0x1111 ')
+notice Integer.new('11', 2)
+notice Integer('11', 8)
+notice Integer.new('11', 10)
+notice Integer('11', 16)
+notice Integer[100, 1000]('123')
+type IntegerAlias = Integer
+notice IntegerAlias.new('0xff')
