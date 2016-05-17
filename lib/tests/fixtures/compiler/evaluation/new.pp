@@ -26,3 +26,21 @@ notice NotUndef[Integer]('1')
 notice NotUndef[Integer[default, 10]]('5', 8)
 type NotUndefAlias = NotUndef[Integer]
 notice NotUndefAlias.new('0xff')
+
+# Boolean tests
+notice Boolean(1)
+notice Boolean.new(100)
+notice new(Boolean, 0)
+notice Boolean(1.0)
+notice Boolean.new(100.0)
+notice new(Boolean, 0.0)
+notice Boolean(false)
+notice Boolean.new(true)
+notice Boolean('TrUe')
+notice Boolean.new('yEs')
+notice new(Boolean, 'y')
+notice Boolean('False')
+notice Boolean.new('NO')
+notice new(Boolean, 'N')
+type BooleanAlias = Boolean
+notice BooleanAlias('y')

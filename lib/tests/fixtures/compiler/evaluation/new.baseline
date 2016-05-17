@@ -18,6 +18,21 @@ Notice: Scope(Class[main]): 255
 Notice: Scope(Class[main]): 1
 Notice: Scope(Class[main]): 5
 Notice: Scope(Class[main]): 255
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): true
 {
   "name": "test",
   "version": 123456789
