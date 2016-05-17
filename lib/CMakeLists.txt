@@ -35,6 +35,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/info.cc
     src/compiler/evaluation/functions/inline_epp.cc
     src/compiler/evaluation/functions/map.cc
+    src/compiler/evaluation/functions/new.cc
     src/compiler/evaluation/functions/notice.cc
     src/compiler/evaluation/functions/realize.cc
     src/compiler/evaluation/functions/reduce.cc

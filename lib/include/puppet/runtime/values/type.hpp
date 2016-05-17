@@ -37,11 +37,12 @@
 #include "../types/variant.hpp"
 #include "../../utility/indirect_collection.hpp"
 #include "../../cast.hpp"
-#include <vector>
-#include <unordered_set>
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
 #include <boost/mpl/contains.hpp>
+#include <vector>
+#include <unordered_set>
+#include <exception>
 
 namespace puppet { namespace compiler { namespace evaluation {
 
@@ -51,6 +52,44 @@ namespace puppet { namespace compiler { namespace evaluation {
 }}}  // namespace puppet::compiler::evaluation
 
 namespace puppet { namespace runtime { namespace values {
+
+    /**
+     * Exception for type instantiation errors.
+     */
+    struct instantiation_exception : std::runtime_error
+    {
+        using std::runtime_error::runtime_error;
+    };
+
+    /**
+     * Exception for type conversion errors.
+     */
+    struct type_conversion_exception : std::runtime_error
+    {
+        using std::runtime_error::runtime_error;
+    };
+
+    /**
+     * Exception for conversion argument errors.
+     */
+    struct conversion_argument_exception : std::runtime_error
+    {
+        /**
+        * Constructs a new conversion argument exception.
+        * @param message The exception message.
+        * @param index The index of the argument.
+        */
+        conversion_argument_exception(std::string const& message, size_t index);
+
+        /**
+         * Gets the index of the conversion argument that caused the exception.
+         * @return Returns the index of the conversion argument that caused the exception.
+         */
+        size_t index() const;
+
+     private:
+        size_t _index;
+    };
 
     /**
      * The variant representing all possible types.
@@ -255,6 +294,16 @@ namespace puppet { namespace runtime { namespace values {
          * @param expand True to specify that type aliases should be expanded or false if not.
          */
         void write(std::ostream& stream, bool expand = true) const;
+
+        /**
+         * Instantiates a new value for the type, performing any required type conversions or formatting.
+         * Note: not all types support instantiation.
+         * @param from The value to convert from.
+         * @param arguments The array of conversion arguments.
+         * @param offset The offset in the array where the arguments start; defaults to 0.
+         * @return Returns the intantiated value.
+         */
+        value instantiate(value from, values::array const& arguments = values::array{}, size_t offset = 0) const;
 
         /**
          * Finds a type in the Puppet type system.

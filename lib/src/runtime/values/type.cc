@@ -10,6 +10,17 @@ using namespace puppet::compiler;
 
 namespace puppet { namespace runtime { namespace values {
 
+    conversion_argument_exception::conversion_argument_exception(std::string const& message, size_t index) :
+        runtime_error(message),
+        _index(index)
+    {
+    }
+
+    size_t conversion_argument_exception::index() const
+    {
+        return _index;
+    }
+
     type_variant& type::get()
     {
         return _value;
@@ -191,6 +202,63 @@ namespace puppet { namespace runtime { namespace values {
         boost::apply_visitor(write_visitor{ stream, expand }, _value);
     }
 
+    struct instantiation_visitor : boost::static_visitor<value>
+    {
+        explicit instantiation_visitor(values::value from, values::array const& arguments, size_t offset) :
+            _from(rvalue_cast(from)),
+            _arguments(arguments),
+            _offset(offset)
+        {
+        }
+
+        result_type operator()(types::alias const& type)
+        {
+            return boost::apply_visitor(*this, type.resolved_type());
+        }
+
+        template <typename T>
+        result_type operator()(T const& type) const
+        {
+            throw instantiation_exception((boost::format("cannot create an instance of type %1%.") % type).str());
+        }
+
+     private:
+        size_t argument_count() const
+        {
+            return _arguments.size() - _offset;
+        }
+
+        value const& argument(size_t i) const
+        {
+            return _arguments[i + _offset];
+        }
+
+        void check_max_arguments(size_t max) const
+        {
+            auto count = argument_count();
+            if (count > max) {
+                throw conversion_argument_exception(
+                    (boost::format("expected at most %1% type conversion %2% but was given %3%.") %
+                     max %
+                     (max == 1 ? "argument" : "arguments") %
+                     count
+                    ).str(),
+                    max
+                );
+            }
+        }
+
+        values::value _from;
+        values::array const& _arguments;
+        size_t _offset;
+    };
+
+    value type::instantiate(value from, values::array const& arguments, size_t offset) const
+    {
+        instantiation_visitor visitor{ rvalue_cast(from), arguments, offset };
+        return boost::apply_visitor(visitor, *this);
+    }
+
     type const* type::find(string const& name)
     {
         static const unordered_map<string, type> puppet_types = {
@@ -281,6 +349,12 @@ namespace puppet { namespace runtime { namespace values {
 
     void type_set::add(values::type const& type)
     {
+        if (auto variant = boost::get<types::variant>(&type)) {
+            for (auto const& t : variant->types()) {
+                add(*t);
+            }
+            return;
+        }
         if (_set.emplace(&type).second) {
             _types.emplace_back(&type);
         }

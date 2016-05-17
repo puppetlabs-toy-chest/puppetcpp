@@ -15,6 +15,7 @@
 #include <puppet/compiler/evaluation/functions/info.hpp>
 #include <puppet/compiler/evaluation/functions/inline_epp.hpp>
 #include <puppet/compiler/evaluation/functions/map.hpp>
+#include <puppet/compiler/evaluation/functions/new.hpp>
 #include <puppet/compiler/evaluation/functions/notice.hpp>
 #include <puppet/compiler/evaluation/functions/realize.hpp>
 #include <puppet/compiler/evaluation/functions/reduce.hpp>
@@ -82,6 +83,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::include::create_descriptor());
         add(functions::info::create_descriptor());
         add(functions::inline_epp::create_descriptor());
+        add(functions::new_::create_descriptor());
         add(functions::map::create_descriptor());
         add(functions::notice::create_descriptor());
         add(functions::realize::create_descriptor());
