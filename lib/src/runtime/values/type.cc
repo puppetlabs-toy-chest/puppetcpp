@@ -217,6 +217,22 @@ namespace puppet { namespace runtime { namespace values {
             return types::integer::instantiate(rvalue_cast(_from), get_radix());
         }
 
+        result_type operator()(types::optional const& type)
+        {
+            if (!type.type()) {
+                invalid_type(type);
+            }
+            return boost::apply_visitor(*this, *type.type());
+        }
+
+        result_type operator()(types::not_undef const& type)
+        {
+            if (!type.type()) {
+                invalid_type(type);
+            }
+            return boost::apply_visitor(*this, *type.type());
+        }
+
         result_type operator()(types::alias const& type)
         {
             return boost::apply_visitor(*this, type.resolved_type());
@@ -225,10 +241,17 @@ namespace puppet { namespace runtime { namespace values {
         template <typename T>
         result_type operator()(T const& type) const
         {
-            throw instantiation_exception((boost::format("cannot create an instance of type %1%.") % type).str());
+            invalid_type(type);
+            return values::undef{};
         }
 
      private:
+        template <typename T>
+        static void invalid_type(T const& type)
+        {
+            throw instantiation_exception((boost::format("cannot create an instance of type %1%.") % type).str());
+        }
+
         size_t argument_count() const
         {
             return _arguments.size() - _offset;

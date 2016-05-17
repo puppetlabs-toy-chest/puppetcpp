@@ -1,0 +1,6 @@
+Error: new_optional.pp:1:8: node 'test': cannot create an instance of type Undef.
+  notice Optional.new(undef)
+         ^~~~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_optional.pp:1

@@ -14,3 +14,15 @@ notice Integer('11', 16)
 notice Integer[100, 1000]('123')
 type IntegerAlias = Integer
 notice IntegerAlias.new('0xff')
+
+# Optional tests
+notice Optional[Integer](1)
+notice Optional[Integer[10, default]](55)
+type OptionalAlias = Optional[Integer]
+notice OptionalAlias.new('0xff')
+
+# NotUndef tests
+notice NotUndef[Integer]('1')
+notice NotUndef[Integer[default, 10]]('5', 8)
+type NotUndefAlias = NotUndef[Integer]
+notice NotUndefAlias.new('0xff')

@@ -12,6 +12,12 @@ Notice: Scope(Class[main]): 11
 Notice: Scope(Class[main]): 17
 Notice: Scope(Class[main]): 123
 Notice: Scope(Class[main]): 255
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 55
+Notice: Scope(Class[main]): 255
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): 255
 {
   "name": "test",
   "version": 123456789

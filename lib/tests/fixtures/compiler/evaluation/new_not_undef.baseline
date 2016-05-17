@@ -1,0 +1,6 @@
+Error: new_not_undef.pp:1:8: node 'test': cannot create an instance of type NotUndef.
+  notice NotUndef.new(undef)
+         ^~~~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_not_undef.pp:1
