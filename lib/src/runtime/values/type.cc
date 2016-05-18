@@ -223,6 +223,18 @@ namespace puppet { namespace runtime { namespace values {
             return types::array::instantiate(rvalue_cast(_from), get_wrap());
         }
 
+        result_type operator()(types::hash const&)
+        {
+            check_max_arguments(0);
+            return types::hash::instantiate(rvalue_cast(_from));
+        }
+
+        result_type operator()(types::structure const&)
+        {
+            check_max_arguments(0);
+            return types::hash::instantiate(rvalue_cast(_from));
+        }
+
         result_type operator()(types::boolean const&)
         {
             check_max_arguments(0);

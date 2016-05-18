@@ -92,6 +92,23 @@ Notice: Scope(Class[main]): [1, 2, 3]
 Notice: Scope(Class[main]): [{foo => bar, bar => baz}]
 Notice: Scope(Class[main]): [3, 2, 1]
 Notice: Scope(Class[main]): [0, 1, 2, 3, 4]
+Notice: Scope(Class[main]): {0 => 1, 2 => 3, 4 => 5, 6 => 7, 8 => 9}
+Notice: Scope(Class[main]): {f => o, o => b, a => r}
+Notice: Scope(Class[main]): {0 => 1, 2 => 3, 4 => 5}
+Notice: Scope(Class[main]): {bar => baz, foo => jam}
+Notice: Scope(Class[main]): {foo => bar, bar => baz}
+Notice: Scope(Class[main]): {4 => 3, 2 => 1}
+Notice: Scope(Class[main]): {1 => 2, 3 => 4}
+Notice: Scope(Class[main]): {1 => 2, 3 => 4}
+Notice: Scope(Class[main]): {}
+Notice: Scope(Class[main]): {}
+Notice: Scope(Class[main]): {0 => 1, 2 => 3, 4 => 5}
+Notice: Scope(Class[main]): {}
+Notice: Scope(Class[main]): {}
+Notice: Scope(Class[main]): {f => o, o => b, a => r}
+Notice: Scope(Class[main]): {bar => baz, foo => jam}
+Notice: Scope(Class[main]): {foo => bar, bar => baz}
+Notice: Scope(Class[main]): {foo => bar, bar => 1}
 {
   "name": "test",
   "version": 123456789

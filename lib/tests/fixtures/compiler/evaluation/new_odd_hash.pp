@@ -1,0 +1,1 @@
+notice Hash(3)

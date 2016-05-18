@@ -1,0 +1,6 @@
+Error: new_odd_hash.pp:1:13: node 'test': expected an even number of elements to convert to Hash.
+  notice Hash(3)
+              ^
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_odd_hash.pp:1

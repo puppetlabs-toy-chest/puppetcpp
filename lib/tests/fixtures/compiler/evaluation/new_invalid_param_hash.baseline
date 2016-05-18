@@ -1,0 +1,6 @@
+Error: new_invalid_param_hash.pp:1:31: node 'test': cannot convert Hash[String[3, 3], String[3, 3], 1, 1] to Hash[Integer, Integer].
+  notice Hash[Integer, Integer]([foo, bar])
+                                ^~~~~~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_param_hash.pp:1

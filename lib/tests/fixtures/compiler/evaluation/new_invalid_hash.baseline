@@ -1,0 +1,6 @@
+Error: new_invalid_hash.pp:1:13: node 'test': cannot convert Undef to Hash.
+  notice Hash(undef)
+              ^~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_hash.pp:1

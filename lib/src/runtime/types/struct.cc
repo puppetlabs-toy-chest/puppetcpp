@@ -1,7 +1,8 @@
 #include <puppet/runtime/values/value.hpp>
+#include <puppet/runtime/types/not_undef.hpp>
 #include <puppet/cast.hpp>
 #include <boost/functional/hash.hpp>
-#include <puppet/runtime/types/not_undef.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 

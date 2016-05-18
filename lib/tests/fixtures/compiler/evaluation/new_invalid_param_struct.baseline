@@ -1,0 +1,6 @@
+Error: new_invalid_param_struct.pp:1:48: node 'test': cannot convert Hash[String[3, 3], String[3, 3], 2, 2] to Struct[{foo => String, bar => Integer}].
+  notice Struct[{foo => String, bar => Integer}]([foo, bar, bar, baz])
+                                                 ^~~~~~~~~~~~~~~~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_param_struct.pp:1

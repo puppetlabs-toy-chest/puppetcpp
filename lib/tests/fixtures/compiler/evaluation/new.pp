@@ -115,3 +115,26 @@ notice Tuple[Hash].new({foo => bar, bar => baz}, true)
 notice Tuple[Integer, 3, 3]([1, 2, 3].reverse_each, true)
 type TupleAlias = Tuple[Integer, 5, 5]
 notice TupleAlias.new(5)
+
+# Hash tests
+notice Hash(10)
+notice Hash.new(foobar)
+notice Hash.new(Integer[0, 5])
+notice new(Hash, Enum[foo, bar, baz, jam])
+notice Hash({foo => bar, bar => baz })
+notice Hash.new([1, 2, 3, 4].reverse_each)
+notice Hash([1, 2, 3, 4])
+notice new(Hash, [[1, 2], [3, 4]])
+notice Hash([])
+notice Hash({})
+type HashAlias = Hash
+notice HashAlias.new(6)
+
+# Struct tests
+notice Struct([])
+notice Struct({})
+notice Struct[{ f => String, o => String, a => String }].new(foobar)
+notice new(Struct[{ bar => Enum[baz], foo => Enum[jam] }], Enum[foo, bar, baz, jam])
+notice Struct[{foo => Enum[bar], bar => Enum[baz]}]({foo => bar, bar => baz })
+type StructAlias = Struct[{foo => String, bar => Integer}]
+notice StructAlias([foo, bar, bar, 1])
