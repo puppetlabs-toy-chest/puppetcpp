@@ -435,7 +435,7 @@ namespace puppet { namespace runtime { namespace values {
             // Copy the iteration into the result
             iterator->each([&](auto const* key, auto const& value) {
                 if (key) {
-                    array kvp;
+                    array kvp(2);
                     kvp[0] = *key;
                     kvp[1] = value;
                     result.emplace_back(rvalue_cast(kvp));
