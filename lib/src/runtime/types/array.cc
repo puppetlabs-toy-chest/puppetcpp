@@ -1,6 +1,7 @@
 #include <puppet/runtime/values/value.hpp>
 #include <puppet/cast.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -150,6 +151,28 @@ namespace puppet { namespace runtime { namespace types {
             stream << _to;
         }
         stream << ']';
+    }
+
+    values::value array::instantiate(values::value from, bool wrap)
+    {
+        if (wrap) {
+            return from.to_array(false);
+        }
+        if (from.as<values::array>()) {
+            return rvalue_cast(from);
+        }
+
+        values::value iterator = values::iterator{ rvalue_cast(from) };
+        try {
+            return iterator.to_array(false);
+        } catch (values::type_not_iterable_exception const&) {
+            throw values::type_conversion_exception(
+                (boost::format("cannot convert %1% to %2%.") %
+                 iterator.require<values::iterator>().value().infer_type() %
+                 name()
+                ).str()
+            );
+        }
     }
 
     ostream& operator<<(ostream& os, array const& type)

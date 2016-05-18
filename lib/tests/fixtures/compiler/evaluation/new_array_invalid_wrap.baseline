@@ -1,0 +1,6 @@
+Error: new_array_invalid_wrap.pp:1:22: node 'test': expected Boolean for wrap argument but was given String[5, 5].
+  notice Array.new(10, wrong)
+                       ^~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_array_invalid_wrap.pp:1

@@ -211,6 +211,18 @@ namespace puppet { namespace runtime { namespace values {
         {
         }
 
+        result_type operator()(types::array const&)
+        {
+            check_max_arguments(1);
+            return types::array::instantiate(rvalue_cast(_from), get_wrap());
+        }
+
+        result_type operator()(types::tuple const&)
+        {
+            check_max_arguments(1);
+            return types::array::instantiate(rvalue_cast(_from), get_wrap());
+        }
+
         result_type operator()(types::boolean const&)
         {
             check_max_arguments(0);
@@ -322,6 +334,24 @@ namespace puppet { namespace runtime { namespace values {
                 ).str(),
                 0
             );
+        }
+
+        bool get_wrap() const
+        {
+            if (argument_count() == 0) {
+                return false;
+            }
+            auto& wrap_argument = argument(0);
+            if (!wrap_argument.as<bool>()) {
+                throw conversion_argument_exception(
+                    (boost::format("expected %1% for wrap argument but was given %2%.") %
+                     types::boolean::name() %
+                     wrap_argument.infer_type()
+                    ).str(),
+                    0
+                );
+            }
+            return *wrap_argument.as<bool>();
         }
 
         values::value _from;

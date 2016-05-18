@@ -1,0 +1,6 @@
+Error: new_invalid_param_array.pp:1:23: node 'test': cannot convert Array[String[1, 1], 3, 3] to Array[Integer].
+  notice Array[Integer](foo)
+                        ^~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_param_array.pp:1
