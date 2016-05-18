@@ -44,3 +44,20 @@ notice Boolean.new('NO')
 notice new(Boolean, 'N')
 type BooleanAlias = Boolean
 notice BooleanAlias('y')
+
+# Float tests
+notice Float(1)
+notice Float.new(2.6)
+notice Float(true)
+notice new(Float, false)
+notice Float.new('2')
+notice Float.new(' 0b11 ')
+notice new(Float, '0111.2')
+notice Float.new(' - 0x1111 ')
+notice Float.new('11')
+notice Float('+0X11')
+notice Float[100, 1000](123.6)
+notice Float("31.41e-1")
+notice Float("314.1E-2")
+type FloatAlias = Float
+notice FloatAlias('123.456')

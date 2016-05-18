@@ -217,6 +217,12 @@ namespace puppet { namespace runtime { namespace values {
             return types::boolean::instantiate(rvalue_cast(_from));
         }
 
+        result_type operator()(types::floating const&)
+        {
+            check_max_arguments(0);
+            return types::floating::instantiate(rvalue_cast(_from));
+        }
+
         result_type operator()(types::integer const&)
         {
             check_max_arguments(1);

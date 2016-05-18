@@ -1,0 +1,6 @@
+Error: new_invalid_float.pp:1:25: node 'test': cannot convert Float[-16, -16] to Float[0, 10].
+  notice Float[0.0, 10.0]('-0x10')
+                          ^~~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_float.pp:1
