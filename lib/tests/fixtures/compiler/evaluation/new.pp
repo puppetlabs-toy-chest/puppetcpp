@@ -61,3 +61,20 @@ notice Float("31.41e-1")
 notice Float("314.1E-2")
 type FloatAlias = Float
 notice FloatAlias('123.456')
+
+# Numeric tests
+notice Numeric(1)
+notice Numeric.new(2.6)
+notice Numeric(true)
+notice new(Numeric, false)
+notice Numeric.new('2')
+notice Numeric.new(' 0b11 ')
+notice new(Numeric, '0111.2')
+notice Numeric.new(' - 0x1111 ')
+notice Numeric.new('11')
+notice Numeric('+ 0X11')
+notice Numeric("31.41e-1")
+notice Numeric("314.1E-2")
+type NumericAlias = Numeric
+notice NumericAlias.new('0111')
+notice NumericAlias('123.456')

@@ -47,6 +47,20 @@ Notice: Scope(Class[main]): 123.6
 Notice: Scope(Class[main]): 3.141
 Notice: Scope(Class[main]): 3.141
 Notice: Scope(Class[main]): 123.456
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 2.6
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 0
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): 3
+Notice: Scope(Class[main]): 111.2
+Notice: Scope(Class[main]): -4369
+Notice: Scope(Class[main]): 11
+Notice: Scope(Class[main]): 17
+Notice: Scope(Class[main]): 3.141
+Notice: Scope(Class[main]): 3.141
+Notice: Scope(Class[main]): 73
+Notice: Scope(Class[main]): 123.456
 {
   "name": "test",
   "version": 123456789

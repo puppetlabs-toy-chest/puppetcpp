@@ -229,6 +229,12 @@ namespace puppet { namespace runtime { namespace values {
             return types::integer::instantiate(rvalue_cast(_from), get_radix());
         }
 
+        result_type operator()(types::numeric const&)
+        {
+            check_max_arguments(0);
+            return types::numeric::instantiate(rvalue_cast(_from));
+        }
+
         result_type operator()(types::optional const& type)
         {
             if (!type.type()) {
