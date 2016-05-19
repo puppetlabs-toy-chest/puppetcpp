@@ -231,7 +231,16 @@ namespace puppet { namespace runtime { namespace values {
 
     void iteration_visitor::operator()(types::enumeration const& enumeration) const
     {
-        for (auto& string : enumeration.strings()) {
+        auto& strings = enumeration.strings();
+        if (_reverse) {
+            for (auto it = strings.rbegin(); it != strings.rend(); ++it) {
+                if (!_callback(nullptr, *it)) {
+                    break;
+                }
+            }
+            return;
+        }
+        for (auto& string : strings) {
             if (!_callback(nullptr, string)) {
                 break;
             }

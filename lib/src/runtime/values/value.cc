@@ -367,6 +367,19 @@ namespace puppet { namespace runtime { namespace values {
         }
 
         template <typename T>
+        static set<T> join_sets(set<T> const& left, set<T> const& right)
+        {
+            set<T> result;
+            for (auto& element : left) {
+                result.insert(element);
+            }
+            for (auto& element : right) {
+                result.insert(element);
+            }
+            return result;
+        }
+
+        template <typename T>
         static vector<T> join_sets(vector<T> const& left, vector<T> const& right)
         {
             vector<T> result;

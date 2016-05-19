@@ -30,12 +30,12 @@ Notice: Scope(Class[main]): memo = 18, value = 8
 Notice: Scope(Class[main]): memo = 26, value = 9
 Notice: Scope(Class[main]): memo = 35, value = 10
 Notice: Scope(Class[main]): 45
-Notice: Scope(Class[main]): memo = foo, value = bar
-Notice: Scope(Class[main]): memo = foobar, value = baz
-Notice: Scope(Class[main]): foobarbaz
-Notice: Scope(Class[main]): memo = foo, value = bar
-Notice: Scope(Class[main]): memo = foobar, value = baz
-Notice: Scope(Class[main]): foobarbaz
+Notice: Scope(Class[main]): memo = bar, value = baz
+Notice: Scope(Class[main]): memo = barbaz, value = foo
+Notice: Scope(Class[main]): barbazfoo
+Notice: Scope(Class[main]): memo = bar, value = baz
+Notice: Scope(Class[main]): memo = barbaz, value = foo
+Notice: Scope(Class[main]): barbazfoo
 Notice: Scope(Class[main]): memo = 3, value = 2
 Notice: Scope(Class[main]): memo = 5, value = 1
 Notice: Scope(Class[main]): 6

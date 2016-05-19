@@ -198,7 +198,7 @@ namespace puppet { namespace runtime { namespace types {
             }
         }
 
-        return enumeration && !enumeration->strings().empty() ? enumeration->strings().front() : empty;
+        return enumeration && !enumeration->strings().empty() ? *enumeration->strings().begin() : empty;
     }
 
     ostream& operator<<(ostream& os, structure const& type)

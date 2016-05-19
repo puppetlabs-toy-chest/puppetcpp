@@ -1,6 +1,7 @@
 #include <puppet/compiler/evaluation/access_evaluator.hpp>
 #include <puppet/compiler/evaluation/evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
+#include <puppet/utility/indirect_collection.hpp>
 #include <puppet/cast.hpp>
 #include <utf8.h>
 
@@ -372,9 +373,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         value operator()(enumeration const& target)
         {
             // Ensure each argument is a string
-            vector<std::string> strings;
-            strings.reserve(_arguments.size());
-
+            set<std::string> strings;
             for (size_t i = 0; i < _arguments.size(); ++i) {
                 if (!_arguments[i]->as<std::string>()) {
                     throw evaluation_exception(
@@ -386,26 +385,31 @@ namespace puppet { namespace compiler { namespace evaluation {
                         _context.backtrace()
                     );
                 }
-                strings.emplace_back(_arguments[i]->move_as<std::string>());
+                strings.emplace(_arguments[i]->move_as<std::string>());
             }
             return enumeration(rvalue_cast(strings));
         }
 
         value operator()(pattern const& target)
         {
+            utility::indirect_set<std::string> set;
             vector<values::regex> patterns;
             patterns.reserve(_arguments.size());
 
             // Each argument can be a string, regex value, Regexp type or another Pattern type
             for (size_t i = 0; i < _arguments.size(); ++i) {
                 // Check for string
-                if (_arguments[i]->as<std::string>()) {
-                    patterns.emplace_back(_arguments[i]->move_as<std::string>());
+                if (auto ptr = _arguments[i]->as<std::string>()) {
+                    if (set.insert(ptr).second) {
+                        patterns.emplace_back(_arguments[i]->move_as<std::string>());
+                    }
                     continue;
                 }
                 // Check for regex
-                if (_arguments[i]->as<values::regex>()) {
-                    patterns.emplace_back(_arguments[i]->move_as<values::regex>());
+                if (auto ptr = _arguments[i]->as<values::regex>()) {
+                    if (set.insert(&ptr->pattern()).second) {
+                        patterns.emplace_back(_arguments[i]->move_as<values::regex>());
+                    }
                     continue;
                 }
                 // Check for Type
@@ -413,15 +417,17 @@ namespace puppet { namespace compiler { namespace evaluation {
                 if (type) {
                     auto regexp = boost::get<types::regexp>(type);
                     if (regexp) {
-                        patterns.emplace_back(regexp->pattern());
+                        if (set.insert(&regexp->pattern()).second) {
+                            patterns.emplace_back(regexp->pattern());
+                        }
                         continue;
                     }
                     // Check for Pattern type
                     auto pattern = boost::get<types::pattern>(type);
-                    if (pattern) {
-                        patterns.reserve(patterns.size() + pattern->patterns().size());
-                        patterns.insert(patterns.end(), pattern->patterns().begin(), pattern->patterns().end());
-                        continue;
+                    for (auto& p : pattern->patterns()) {
+                        if (set.insert(&p.pattern()).second) {
+                            patterns.emplace_back(p);
+                        }
                     }
                 }
                 throw evaluation_exception(
@@ -608,8 +614,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
             // Check for string argument (treat as Optional[Enum[<string>]])
             if (_arguments[0]->as<std::string>()) {
-                vector<std::string> values;
-                values.emplace_back(_arguments[0]->move_as<std::string>());
+                set<std::string> values;
+                values.emplace(_arguments[0]->move_as<std::string>());
                 return types::optional(make_unique<values::type>(types::enumeration(rvalue_cast(values))));
             }
             throw evaluation_exception(
@@ -643,8 +649,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
             // Check for string argument (treat as Optional[Enum[<string>]])
             if (_arguments[0]->as<std::string>()) {
-                vector<std::string> values;
-                values.emplace_back(_arguments[0]->move_as<std::string>());
+                set<std::string> values;
+                values.emplace(_arguments[0]->move_as<std::string>());
                 return types::not_undef(make_unique<values::type>(types::enumeration(rvalue_cast(values))));
             }
             throw evaluation_exception(

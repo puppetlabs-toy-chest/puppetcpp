@@ -43,13 +43,13 @@ Notice: Scope(Class[main]): index = 4, value = 6
 Notice: Scope(Class[main]): index = 5, value = 5
 Notice: Scope(Class[main]): [10, 9, 8, 7, 6, 5]
 Notice: Scope(Class[main]): value = foo
-Notice: Scope(Class[main]): value = bar
 Notice: Scope(Class[main]): value = baz
-Notice: Scope(Class[main]): [foo, bar, baz]
+Notice: Scope(Class[main]): value = bar
+Notice: Scope(Class[main]): [foo, baz, bar]
 Notice: Scope(Class[main]): index = 0, value = foo
-Notice: Scope(Class[main]): index = 1, value = bar
-Notice: Scope(Class[main]): index = 2, value = baz
-Notice: Scope(Class[main]): [foo, bar, baz]
+Notice: Scope(Class[main]): index = 1, value = baz
+Notice: Scope(Class[main]): index = 2, value = bar
+Notice: Scope(Class[main]): [foo, baz, bar]
 Notice: Scope(Class[main]): 1
 Notice: Scope(Class[main]): 2
 Notice: Scope(Class[main]): 3
