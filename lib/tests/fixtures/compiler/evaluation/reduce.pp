@@ -59,7 +59,7 @@ notice Enum[foo, bar, baz].reduce |$memo, $value| {
     "$memo$value"
 }
 
-notice Enum[bar, baz].reduce(foo) |$memo, $value| {
+notice Enum[foo, baz].reduce(bar) |$memo, $value| {
     notice "memo = $memo, value = $value"
     "$memo$value"
 }

@@ -1,0 +1,6 @@
+Error: new_invalid_param_not_undef.pp:1:12: node 'test': cannot create an instance of type Class.
+  notice new(NotUndef[Class], 'Foo')
+             ^~~~~~~~~~~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_param_not_undef.pp:1

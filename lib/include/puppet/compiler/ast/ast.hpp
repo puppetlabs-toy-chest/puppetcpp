@@ -33,6 +33,7 @@ namespace puppet { namespace compiler { namespace ast {
     struct unless_expression;
     struct access_expression;
     struct function_call_expression;
+    struct new_expression;
     struct resource_expression;
     struct resource_defaults_expression;
     struct resource_override_expression;
@@ -461,6 +462,7 @@ namespace puppet { namespace compiler { namespace ast {
         boost::spirit::x3::forward_ast<if_expression>,
         boost::spirit::x3::forward_ast<unless_expression>,
         boost::spirit::x3::forward_ast<function_call_expression>,
+        boost::spirit::x3::forward_ast<new_expression>,
         boost::spirit::x3::forward_ast<resource_expression>,
         boost::spirit::x3::forward_ast<resource_override_expression>,
         boost::spirit::x3::forward_ast<resource_defaults_expression>,
@@ -1436,14 +1438,14 @@ namespace puppet { namespace compiler { namespace ast {
         std::vector<expression> arguments;
 
         /**
-         * Stores the optional lambda.
-         */
-        boost::optional<lambda_expression> lambda;
-
-        /**
          * Stores the optional ending position.
          */
         boost::optional<lexer::position> end;
+
+        /**
+         * Stores the optional lambda.
+         */
+        boost::optional<lambda_expression> lambda;
 
         /**
          * Get the context of the function call expression.
@@ -1459,6 +1461,46 @@ namespace puppet { namespace compiler { namespace ast {
      * @return Returns the given output stream.
      */
     std::ostream& operator<<(std::ostream& os, function_call_expression const& node);
+
+    /**
+     * Represents a new expression.
+     */
+    struct new_expression
+    {
+        /**
+         * Stores the type postfix expression.
+         */
+        postfix_expression type;
+
+        /**
+         * Stores the arguments to new.
+         */
+        std::vector<expression> arguments;
+
+        /**
+         * Stores the ending position.
+         */
+        lexer::position end;
+
+        /**
+         * Stores the optional lambda.
+         */
+        boost::optional<lambda_expression> lambda;
+
+        /**
+         * Get the context of the function call expression.
+         * @return Returns the context of the function call expression.
+         */
+        ast::context context() const;
+    };
+
+    /**
+     * Stream insertion operator for new expression.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, new_expression const& node);
 
     /**
      * Represents a resource attribute operator.

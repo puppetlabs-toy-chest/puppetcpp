@@ -1,0 +1,6 @@
+Error: new_invalid_integer.pp:1:16: node 'test': string 'nope' cannot be converted to Integer.
+  notice Integer('nope')
+                 ^~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_integer.pp:1

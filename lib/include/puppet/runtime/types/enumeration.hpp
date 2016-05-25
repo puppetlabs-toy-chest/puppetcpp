@@ -6,7 +6,7 @@
 
 #include "../values/forward.hpp"
 #include <ostream>
-#include <vector>
+#include <set>
 
 namespace puppet { namespace runtime { namespace types {
 
@@ -22,13 +22,13 @@ namespace puppet { namespace runtime { namespace types {
          * Constructs an Enum type.
          * @param strings The strings that make up the enumeration.
          */
-        explicit enumeration(std::vector<std::string> strings = std::vector<std::string>());
+        explicit enumeration(std::set<std::string> strings = std::set<std::string>());
 
         /**
          * Gets the strings of the enumeration.
          * @return Returns the strings of the enumeration.
          */
-        std::vector<std::string> const& strings() const;
+        std::set<std::string> const& strings() const;
 
         /**
          * Gets the name of the type.
@@ -66,7 +66,7 @@ namespace puppet { namespace runtime { namespace types {
         void write(std::ostream& stream, bool expand = true) const;
 
      private:
-        std::vector<std::string> _strings;
+        std::set<std::string> _strings;
     };
 
     /**

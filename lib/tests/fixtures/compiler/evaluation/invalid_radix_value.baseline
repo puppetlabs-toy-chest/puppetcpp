@@ -1,0 +1,6 @@
+Error: invalid_radix_value.pp:1:21: node 'test': expected a radix value of 2, 8, 10, or 16, but was given 6.
+  notice Integer('2', 6)
+                      ^
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at invalid_radix_value.pp:1

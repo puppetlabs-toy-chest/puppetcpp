@@ -35,6 +35,24 @@ namespace puppet { namespace runtime { namespace types {
         stream << numeric::name();
     }
 
+    values::value numeric::instantiate(values::value from)
+    {
+        // If converting from a string, check for '.' or 'e/E' to determine if the value is floating point
+        if (auto string = from.as<std::string>()) {
+            for (auto c : *string) {
+                if (c == '.' || c == 'e' || c == 'E') {
+                    return types::floating::instantiate(rvalue_cast(from));
+                }
+            }
+        } else if (from.as<double>()) {
+            // If converting from a Float, keep as a Float
+            return types::floating::instantiate(rvalue_cast(from));
+        }
+
+        // Otherwise, everything else is an Integer
+        return types::integer::instantiate(rvalue_cast(from));
+    }
+
     ostream& operator<<(ostream& os, numeric const& type)
     {
         type.write(os);

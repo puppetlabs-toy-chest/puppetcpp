@@ -1,0 +1,6 @@
+Error: invalid_boolean_string.pp:1:16: node 'test': string 'nope' cannot be converted to Boolean.
+  notice Boolean('nope')
+                 ^~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at invalid_boolean_string.pp:1

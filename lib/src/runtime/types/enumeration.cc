@@ -6,12 +6,12 @@ using namespace std;
 
 namespace puppet { namespace runtime { namespace types {
 
-    enumeration::enumeration(vector<std::string> strings) :
+    enumeration::enumeration(set<std::string> strings) :
         _strings(rvalue_cast(strings))
     {
     }
 
-    vector<std::string> const& enumeration::strings() const
+    set<std::string> const& enumeration::strings() const
     {
         return _strings;
     }
@@ -92,8 +92,8 @@ namespace puppet { namespace runtime { namespace types {
         if (lstrings.size() != rstrings.size()) {
             return false;
         }
-        for (size_t i = 0; i < lstrings.size(); ++i) {
-            if (lstrings[i] != rstrings[i]) {
+        for (auto& lstring : lstrings) {
+            if (right.strings().count(lstring) == 0) {
                 return false;
             }
         }

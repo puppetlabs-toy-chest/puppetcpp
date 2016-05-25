@@ -1,7 +1,8 @@
 #include <puppet/runtime/values/value.hpp>
+#include <puppet/runtime/types/not_undef.hpp>
 #include <puppet/cast.hpp>
 #include <boost/functional/hash.hpp>
-#include <puppet/runtime/types/not_undef.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -198,7 +199,7 @@ namespace puppet { namespace runtime { namespace types {
             }
         }
 
-        return enumeration && !enumeration->strings().empty() ? enumeration->strings().front() : empty;
+        return enumeration && !enumeration->strings().empty() ? *enumeration->strings().begin() : empty;
     }
 
     ostream& operator<<(ostream& os, structure const& type)

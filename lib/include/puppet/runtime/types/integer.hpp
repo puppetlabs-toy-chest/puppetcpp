@@ -87,6 +87,14 @@ namespace puppet { namespace runtime { namespace types {
         void write(std::ostream& stream, bool expand = true) const;
 
         /**
+         * Instantiates a new instance of the type.
+         * @param from The value to convert from.
+         * @param radix The radix to use (0 means 'detect from string prefix'). This parameter is only used for conversions from string.
+         * @return Returns the instantiated value.
+         */
+        static values::value instantiate(values::value from, int radix = 0);
+
+        /**
          * Stores a default shared instance used internally by other Puppet types.
          */
         static integer const instance;

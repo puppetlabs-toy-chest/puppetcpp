@@ -1,5 +1,7 @@
 #include <puppet/runtime/values/value.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -98,6 +100,100 @@ namespace puppet { namespace runtime { namespace types {
             stream << _to;
         }
         stream << ']';
+    }
+
+    values::value integer::instantiate(values::value from, int radix)
+    {
+        values::value value;
+        if (auto integer = from.as<int64_t>()) {
+            value = *integer;
+        } else if (auto floating = from.as<double>()) {
+            value = static_cast<int64_t>(*floating);
+        } else if (auto boolean = from.as<bool>()) {
+            value = static_cast<int64_t>(*boolean ? 1 : 0);
+        } else if (from.as<std::string>()) {
+            auto string = from.move_as<std::string>();
+
+            // Puppet supports whitespace between the sign and first digit and stoll does not
+            // Thus, we need to handle that by parsing the sign ourselves (sigh)
+
+            // Skip leading whitespace
+            size_t start = 0;
+            bool negate = false;
+            bool invalid = false;
+            for(; start < string.size() && isspace(string[start]); ++start);
+
+            // Check for the sign
+            if (start < string.size()) {
+                if (string[start] == '+') {
+                    ++start;
+                } else if (string[start] == '-') {
+                    ++start;
+                    negate = true;
+                }
+            }
+
+            // Skip whitespace between sign and digit
+            for(; start < string.size() && isspace(string[start]); ++start);
+
+            // Check for now invalid sign characters
+            if (start < string.size() && (string[start] == '+' || string[start] == '-')) {
+                invalid = true;
+            }
+
+            if (!invalid) {
+                try {
+                    size_t pos = 0;
+
+                     if (radix == 0) {
+                        // stroll does not support a binary prefix, so check for one here
+                        if (start + 2 < string.size() && string[start] == '0' && (string[start + 1] == 'b' || string[start + 1] == 'B')) {
+                            start += 2;
+                            radix = 2;
+
+                            // Can't have whitespace following the prefix
+                            if (start < string.size() && isspace(string[start])) {
+                                invalid = true;
+                            }
+                        }
+                    }
+
+                    if (!invalid) {
+                        value = static_cast<int64_t>(stoll(start == 0 ? string : string.substr(start), &pos, radix)) * (negate ? -1 : 1);
+
+                        // The conversion must consume the entire string, but allow trailing whitespace
+                        if (!std::all_of(string.begin() + pos + start, string.end(), boost::is_space())) {
+                            invalid = true;
+                        }
+                   }
+                } catch (invalid_argument const&) {
+                    invalid = true;
+                } catch (out_of_range const&) {
+                    throw values::type_conversion_exception(
+                        (boost::format("string '%1%' is out of range for %2%.") %
+                         string %
+                         name()
+                        ).str()
+                    );
+                }
+            }
+            if (invalid) {
+                throw values::type_conversion_exception(
+                    (boost::format("string '%1%' cannot be converted to %2%.") %
+                     string %
+                     name()
+                    ).str()
+                );
+            }
+        } else {
+            throw values::type_conversion_exception(
+                (boost::format("cannot convert %1% to %2%.") %
+                 from.infer_type() %
+                 name()
+                ).str()
+            );
+        }
+        return value;
     }
 
     ostream& operator<<(ostream& os, integer const& type)

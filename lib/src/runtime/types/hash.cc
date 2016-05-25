@@ -1,5 +1,6 @@
 #include <puppet/runtime/values/value.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -168,6 +169,57 @@ namespace puppet { namespace runtime { namespace types {
             stream << _to;
         }
         stream << ']';
+    }
+
+    values::value hash::instantiate(values::value from)
+    {
+        if (from.as<values::hash>()) {
+            return rvalue_cast(from);
+        }
+
+        values::hash hash;
+        values::array elements;
+
+        if (from.as<values::array>()) {
+            elements = from.move_as<values::array>();
+        } else {
+            values::value iterator = values::iterator{ rvalue_cast(from) };
+            try {
+                elements = iterator.to_array(false);
+            } catch (values::type_not_iterable_exception const&) {
+                throw values::type_conversion_exception(
+                    (boost::format("cannot convert %1% to %2%.") %
+                     iterator.as<values::iterator>()->value().infer_type() %
+                     name()
+                    ).str()
+                );
+            }
+        }
+
+        // Check if all elements are arrays of 2 elements (key and value pairs)
+        if (std::all_of(elements.begin(), elements.end(), [](values::value const& v) {
+            auto array = v.as<values::array>();
+            return array && array->size() == 2;
+        })) {
+            for (auto& element : elements) {
+                auto array = element->move_as<values::array>();
+                hash.set(rvalue_cast(array[0].get()), rvalue_cast(array[1].get()));
+            }
+        } else {
+            // Otherwise, the array size must not be odd
+            if (elements.size() & 0x1) {
+                throw values::type_conversion_exception(
+                    (boost::format("expected an even number of elements to convert to %1%.") %
+                     name()
+                    ).str()
+                );
+            }
+
+            for (size_t i = 0; i < elements.size(); i += 2) {
+                hash.set(rvalue_cast(elements[i].get()), rvalue_cast(elements[i + 1].get()));
+            }
+        }
+        return rvalue_cast(hash);
     }
 
     ostream& operator<<(ostream& os, hash const& type)

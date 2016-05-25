@@ -1,5 +1,7 @@
 #include <puppet/runtime/values/value.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -75,6 +77,104 @@ namespace puppet { namespace runtime { namespace types {
             stream << _to;
         }
         stream << ']';
+    }
+
+    values::value floating::instantiate(values::value from)
+    {
+        if (auto integer = from.as<int64_t>()) {
+            return static_cast<double>(*integer);
+        }
+        if (auto floating = from.as<double>()) {
+            return *floating;
+        }
+        if (auto boolean = from.as<bool>()) {
+            return *boolean ? 1.0 : 0.0;
+        }
+        if (from.as<std::string>()) {
+            auto string = from.move_as<std::string>();
+
+            // Puppet supports whitespace between the sign and first digit and stod does not
+            // Thus, we need to handle that by parsing the sign ourselves (sigh)
+
+            // Skip leading whitespace
+            size_t start = 0;
+            bool negate = false;
+            for(; start < string.size() && isspace(string[start]); ++start);
+
+            // Check for the sign
+            if (start < string.size()) {
+                if (string[start] == '+') {
+                    ++start;
+                } else if (string[start] == '-') {
+                    ++start;
+                    negate = true;
+                }
+            }
+
+            // Skip whitespace between sign and digit
+            for(; start < string.size() && isspace(string[start]); ++start);
+
+            // Check for duplicate sign characters
+            if (start < string.size() && string[start] != '+' && string[start] != '-') {
+                try {
+                    size_t pos = 0;
+                    int radix = 0;
+
+                    // stod does not support integer prefixes, so check for them here (binary and hex only; octal is illegal)
+                    if (start + 2 < string.size() && string[start] == '0') {
+                        if (string[start + 1] == 'b' || string[start + 1] == 'B') {
+                            start += 2;
+                            radix = 2;
+                        } else if (string[start + 1] == 'x' || string[start + 1] == 'X') {
+                            start += 2;
+                            radix = 16;
+                        }
+
+                        if (radix != 0) {
+                            // Can't have whitespace following the prefix
+                            if (start < string.size() && isspace(string[start])) {
+                                // Set to less than 0 to indicate an invalid value
+                                radix = -1;
+                            }
+                        }
+                    }
+
+                    if (radix >= 0) {
+                        values::value value;
+                        if (radix != 0) {
+                            value = stoll(string.substr(start), &pos, radix) * (negate ? -1.0 : 1.0);
+                        } else {
+                            value = stod(start == 0 ? string : string.substr(start), &pos);
+                        }
+
+                        // The conversion must consume the entire string, but allow trailing whitespace
+                        if (std::all_of(string.begin() + pos + start, string.end(), boost::is_space())) {
+                            return value;
+                        }
+                    }
+                } catch (invalid_argument const&) {
+                } catch (out_of_range const&) {
+                    throw values::type_conversion_exception(
+                        (boost::format("string '%1%' is out of range for %2%.") %
+                         string %
+                         name()
+                        ).str()
+                    );
+                }
+            }
+            throw values::type_conversion_exception(
+                (boost::format("string '%1%' cannot be converted to %2%.") %
+                 string %
+                 name()
+                ).str()
+            );
+        }
+        throw values::type_conversion_exception(
+            (boost::format("cannot convert %1% to %2%.") %
+             from.infer_type() %
+             name()
+            ).str()
+        );
     }
 
     ostream& operator<<(ostream& os, floating const& type)

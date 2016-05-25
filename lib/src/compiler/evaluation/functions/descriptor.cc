@@ -157,10 +157,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         // Check for argument count mismatch
         if (argument_count != min_arguments && min_arguments == max_arguments) {
             throw evaluation_exception(
-                (boost::format("function '%1%' expects %2% %3%.") %
+                (boost::format("function '%1%' expects %2% %3% but was given %4%.") %
                  _name %
                  min_arguments %
-                 (min_arguments == 1 ? "argument" : "arguments")
+                 (min_arguments == 1 ? "argument" : "arguments") %
+                 argument_count
                 ).str(),
                 (argument_count == 0 || argument_count < min_arguments) ? context.name() : context.argument_context(argument_count - 1),
                 evaluation_context.backtrace()
@@ -168,10 +169,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         }
         if (argument_count < min_arguments) {
             throw evaluation_exception(
-                (boost::format("function '%1%' expects at least %2% %3%.") %
+                (boost::format("function '%1%' expects at least %2% %3% but was given %4%.") %
                  _name %
                  min_arguments %
-                 (min_arguments == 1 ? "argument" : "arguments")
+                 (min_arguments == 1 ? "argument" : "arguments") %
+                 argument_count
                 ).str(),
                 context.name(),
                 evaluation_context.backtrace()
@@ -179,10 +181,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         }
         if (argument_count > max_arguments) {
             throw evaluation_exception(
-                (boost::format("function '%1%' expects at most %2% %3%.") %
+                (boost::format("function '%1%' expects at most %2% %3% but was given %4%.") %
                  _name %
                  max_arguments %
-                 (max_arguments == 1 ? "argument" : "arguments")
+                 (max_arguments == 1 ? "argument" : "arguments") %
+                 argument_count
                 ).str(),
                 argument_count == 0 ? context.name() : context.argument_context(argument_count - 1),
                 evaluation_context.backtrace()
@@ -194,7 +197,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     void descriptor::check_block_parameters(call_context const& context, vector<dispatch_descriptor const*> const& invocable) const
     {
         auto& evaluation_context = context.context();
-        auto& block = context.block();
+        auto block = context.block();
 
         // If the invocable set is empty, then there was a block mismatch
         if (invocable.empty()) {
@@ -247,10 +250,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         // Check for parameter count mismatch
         if (block_parameter_count != min_block_parameters && min_block_parameters == max_block_parameters) {
             throw evaluation_exception(
-                (boost::format("function '%1%' expects %2% block %3%.") %
+                (boost::format("function '%1%' expects %2% block %3% but was given %4%.") %
                  _name %
                  min_block_parameters %
-                 (min_block_parameters == 1 ? "parameter" : "parameters")
+                 (min_block_parameters == 1 ? "parameter" : "parameters") %
+                 block_parameter_count
                 ).str(),
                 (block_parameter_count == 0 || block_parameter_count < min_block_parameters) ?
                 static_cast<ast::context>(*block) :
@@ -260,10 +264,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         }
         if (block_parameter_count < min_block_parameters) {
             throw evaluation_exception(
-                (boost::format("function '%1%' expects at least %2% block %3%.") %
+                (boost::format("function '%1%' expects at least %2% block %3% but was given %4%.") %
                  _name %
                  min_block_parameters %
-                 (min_block_parameters == 1 ? "parameter" : "parameters")
+                 (min_block_parameters == 1 ? "parameter" : "parameters") %
+                 block_parameter_count
                 ).str(),
                 *block,
                 evaluation_context.backtrace()
@@ -271,10 +276,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         }
         if (block_parameter_count > max_block_parameters) {
             throw evaluation_exception(
-                (boost::format("function '%1%' expects at least %2% block %3%.") %
+                (boost::format("function '%1%' expects at least %2% block %3% but was given %4%.") %
                  _name %
                  max_block_parameters %
-                 (max_block_parameters == 1 ? "parameter" : "parameters")
+                 (max_block_parameters == 1 ? "parameter" : "parameters") %
+                 block_parameter_count
                 ).str(),
                 block_parameter_count == 0 ?
                 static_cast<ast::context>(*block) :

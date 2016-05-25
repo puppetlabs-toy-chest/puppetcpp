@@ -125,6 +125,12 @@ namespace puppet { namespace compiler { namespace validation {
             throw parse_exception("function call expressions cannot be used in type specifications.", context.begin, context.end);
         }
 
+        void operator()(ast::new_expression const& expression)
+        {
+            auto context = expression.context();
+            throw parse_exception("new expressions cannot be used in type specifications.", context.begin, context.end);
+        }
+
         void operator()(ast::resource_expression const& expression)
         {
             throw parse_exception("resource expressions cannot be used in type specifications.", expression.begin, expression.end);

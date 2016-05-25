@@ -63,6 +63,7 @@ namespace puppet { namespace compiler {
         void operator()(ast::if_expression const& expression);
         void operator()(ast::unless_expression const& expression);
         void operator()(ast::function_call_expression const& expression);
+        void operator()(ast::new_expression const& expression);
         void operator()(ast::resource_expression const& expression);
         void operator()(ast::resource_override_expression const& expression);
         void operator()(ast::resource_defaults_expression const& expression);

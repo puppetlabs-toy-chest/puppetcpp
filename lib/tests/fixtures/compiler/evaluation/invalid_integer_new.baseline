@@ -1,0 +1,6 @@
+Error: invalid_integer_new.pp:1:25: node 'test': expected at most 1 type conversion argument but was given 2.
+  notice Integer('1', 10, wrong)
+                          ^~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at invalid_integer_new.pp:1

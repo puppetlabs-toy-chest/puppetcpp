@@ -1,0 +1,161 @@
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 0
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): 3
+Notice: Scope(Class[main]): 73
+Notice: Scope(Class[main]): -4369
+Notice: Scope(Class[main]): 3
+Notice: Scope(Class[main]): 9
+Notice: Scope(Class[main]): 11
+Notice: Scope(Class[main]): 17
+Notice: Scope(Class[main]): 123
+Notice: Scope(Class[main]): 255
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 55
+Notice: Scope(Class[main]): 255
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): 255
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): false
+Notice: Scope(Class[main]): true
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 2.6
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 0
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): 3
+Notice: Scope(Class[main]): 111.2
+Notice: Scope(Class[main]): -4369
+Notice: Scope(Class[main]): 11
+Notice: Scope(Class[main]): 17
+Notice: Scope(Class[main]): 123.6
+Notice: Scope(Class[main]): 3.141
+Notice: Scope(Class[main]): 3.141
+Notice: Scope(Class[main]): 123.456
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 2.6
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 0
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): 3
+Notice: Scope(Class[main]): 111.2
+Notice: Scope(Class[main]): -4369
+Notice: Scope(Class[main]): 11
+Notice: Scope(Class[main]): 17
+Notice: Scope(Class[main]): 3.141
+Notice: Scope(Class[main]): 3.141
+Notice: Scope(Class[main]): 73
+Notice: Scope(Class[main]): 123.456
+Notice: Scope(Class[main]): [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Notice: Scope(Class[main]): [f, o, o]
+Notice: Scope(Class[main]): [0, 1, 2, 3, 4, 5]
+Notice: Scope(Class[main]): [bar, baz, foo]
+Notice: Scope(Class[main]): [1, 2, 3]
+Notice: Scope(Class[main]): [[foo, bar], [bar, baz]]
+Notice: Scope(Class[main]): [3, 2, 1]
+Notice: Scope(Class[main]): []
+Notice: Scope(Class[main]): [10]
+Notice: Scope(Class[main]): [foo]
+Notice: Scope(Class[main]): [Integer[0, 5]]
+Notice: Scope(Class[main]): [Enum[bar, baz, foo]]
+Notice: Scope(Class[main]): [1, 2, 3]
+Notice: Scope(Class[main]): [{foo => bar, bar => baz}]
+Notice: Scope(Class[main]): [3, 2, 1]
+Notice: Scope(Class[main]): [0, 1, 2, 3, 4]
+Notice: Scope(Class[main]): [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+Notice: Scope(Class[main]): [f, o, o]
+Notice: Scope(Class[main]): [0, 1, 2, 3, 4, 5]
+Notice: Scope(Class[main]): [bar, baz, foo]
+Notice: Scope(Class[main]): [1, 2, 3]
+Notice: Scope(Class[main]): [[foo, bar], [bar, baz]]
+Notice: Scope(Class[main]): [3, 2, 1]
+Notice: Scope(Class[main]): [10]
+Notice: Scope(Class[main]): [foo]
+Notice: Scope(Class[main]): [Integer[0, 5]]
+Notice: Scope(Class[main]): [Enum[bar, baz, foo]]
+Notice: Scope(Class[main]): [1, 2, 3]
+Notice: Scope(Class[main]): [{foo => bar, bar => baz}]
+Notice: Scope(Class[main]): [3, 2, 1]
+Notice: Scope(Class[main]): [0, 1, 2, 3, 4]
+Notice: Scope(Class[main]): {0 => 1, 2 => 3, 4 => 5, 6 => 7, 8 => 9}
+Notice: Scope(Class[main]): {f => o, o => b, a => r}
+Notice: Scope(Class[main]): {0 => 1, 2 => 3, 4 => 5}
+Notice: Scope(Class[main]): {bar => baz, foo => jam}
+Notice: Scope(Class[main]): {foo => bar, bar => baz}
+Notice: Scope(Class[main]): {4 => 3, 2 => 1}
+Notice: Scope(Class[main]): {1 => 2, 3 => 4}
+Notice: Scope(Class[main]): {1 => 2, 3 => 4}
+Notice: Scope(Class[main]): {}
+Notice: Scope(Class[main]): {}
+Notice: Scope(Class[main]): {0 => 1, 2 => 3, 4 => 5}
+Notice: Scope(Class[main]): {}
+Notice: Scope(Class[main]): {}
+Notice: Scope(Class[main]): {f => o, o => b, a => r}
+Notice: Scope(Class[main]): {bar => baz, foo => jam}
+Notice: Scope(Class[main]): {foo => bar, bar => baz}
+Notice: Scope(Class[main]): {foo => bar, bar => 1}
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

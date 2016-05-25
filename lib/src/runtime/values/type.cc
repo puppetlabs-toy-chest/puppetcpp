@@ -10,6 +10,17 @@ using namespace puppet::compiler;
 
 namespace puppet { namespace runtime { namespace values {
 
+    conversion_argument_exception::conversion_argument_exception(std::string const& message, size_t index) :
+        runtime_error(message),
+        _index(index)
+    {
+    }
+
+    size_t conversion_argument_exception::index() const
+    {
+        return _index;
+    }
+
     type_variant& type::get()
     {
         return _value;
@@ -191,6 +202,192 @@ namespace puppet { namespace runtime { namespace values {
         boost::apply_visitor(write_visitor{ stream, expand }, _value);
     }
 
+    struct instantiation_visitor : boost::static_visitor<value>
+    {
+        explicit instantiation_visitor(values::value from, values::array const& arguments, size_t offset) :
+            _from(rvalue_cast(from)),
+            _arguments(arguments),
+            _offset(offset)
+        {
+        }
+
+        result_type operator()(types::array const&)
+        {
+            check_max_arguments(1);
+            return types::array::instantiate(rvalue_cast(_from), get_wrap());
+        }
+
+        result_type operator()(types::tuple const&)
+        {
+            check_max_arguments(1);
+            return types::array::instantiate(rvalue_cast(_from), get_wrap());
+        }
+
+        result_type operator()(types::hash const&)
+        {
+            check_max_arguments(0);
+            return types::hash::instantiate(rvalue_cast(_from));
+        }
+
+        result_type operator()(types::structure const&)
+        {
+            check_max_arguments(0);
+            return types::hash::instantiate(rvalue_cast(_from));
+        }
+
+        result_type operator()(types::boolean const&)
+        {
+            check_max_arguments(0);
+            return types::boolean::instantiate(rvalue_cast(_from));
+        }
+
+        result_type operator()(types::floating const&)
+        {
+            check_max_arguments(0);
+            return types::floating::instantiate(rvalue_cast(_from));
+        }
+
+        result_type operator()(types::integer const&)
+        {
+            check_max_arguments(1);
+            return types::integer::instantiate(rvalue_cast(_from), get_radix());
+        }
+
+        result_type operator()(types::numeric const&)
+        {
+            check_max_arguments(0);
+            return types::numeric::instantiate(rvalue_cast(_from));
+        }
+
+        result_type operator()(types::optional const& type)
+        {
+            if (!type.type()) {
+                invalid_type(type);
+            }
+            return boost::apply_visitor(*this, *type.type());
+        }
+
+        result_type operator()(types::not_undef const& type)
+        {
+            if (!type.type()) {
+                invalid_type(type);
+            }
+            return boost::apply_visitor(*this, *type.type());
+        }
+
+        result_type operator()(types::alias const& type)
+        {
+            return boost::apply_visitor(*this, type.resolved_type());
+        }
+
+        template <typename T>
+        result_type operator()(T const& type) const
+        {
+            invalid_type(type);
+            return values::undef{};
+        }
+
+     private:
+        template <typename T>
+        static void invalid_type(T const& type)
+        {
+            throw instantiation_exception((boost::format("cannot create an instance of type %1%.") % type).str());
+        }
+
+        size_t argument_count() const
+        {
+            return _arguments.size() - _offset;
+        }
+
+        value const& argument(size_t i) const
+        {
+            return _arguments[i + _offset];
+        }
+
+        void check_max_arguments(size_t max) const
+        {
+            auto count = argument_count();
+            if (count > max) {
+                throw conversion_argument_exception(
+                    (boost::format("expected at most %1% type conversion %2% but was given %3%.") %
+                     max %
+                     (max == 1 ? "argument" : "arguments") %
+                     count
+                    ).str(),
+                    max
+                );
+            }
+        }
+
+        int get_radix() const
+        {
+            if (argument_count() == 0) {
+                return 0;
+            }
+            auto& radix_argument = argument(0);
+            if (radix_argument.is_default()) {
+                return 0;
+            }
+            if (auto integer = radix_argument.as<int64_t>()) {
+                if (*integer != 2 && *integer != 8 && *integer != 10 && *integer != 16) {
+                    throw conversion_argument_exception(
+                        (boost::format("expected a radix value of 2, 8, 10, or 16, but was given %1%.") %
+                         *integer
+                        ).str(),
+                        0
+                    );
+                }
+                return static_cast<int>(*integer);
+            }
+            throw conversion_argument_exception(
+                (boost::format("expected %1% for radix value but was given %2%.") %
+                 types::integer::name() %
+                 radix_argument.infer_type()
+                ).str(),
+                0
+            );
+        }
+
+        bool get_wrap() const
+        {
+            if (argument_count() == 0) {
+                return false;
+            }
+            auto& wrap_argument = argument(0);
+            if (!wrap_argument.as<bool>()) {
+                throw conversion_argument_exception(
+                    (boost::format("expected %1% for wrap argument but was given %2%.") %
+                     types::boolean::name() %
+                     wrap_argument.infer_type()
+                    ).str(),
+                    0
+                );
+            }
+            return *wrap_argument.as<bool>();
+        }
+
+        values::value _from;
+        values::array const& _arguments;
+        size_t _offset;
+    };
+
+    value type::instantiate(value from, values::array const& arguments, size_t offset) const
+    {
+        instantiation_visitor visitor{ rvalue_cast(from), arguments, offset };
+        auto value = boost::apply_visitor(visitor, *this);
+
+        types::recursion_guard guard;
+        if (!is_instance(value, guard)) {
+            throw values::type_conversion_exception(
+                (boost::format("cannot convert %1% to %2%.") %
+                 value.infer_type() %
+                 *this
+                ).str()
+            );
+        }
+        return value;
+    }
+
     type const* type::find(string const& name)
     {
         static const unordered_map<string, type> puppet_types = {
@@ -281,6 +478,12 @@ namespace puppet { namespace runtime { namespace values {
 
     void type_set::add(values::type const& type)
     {
+        if (auto variant = boost::get<types::variant>(&type)) {
+            for (auto const& t : variant->types()) {
+                add(*t);
+            }
+            return;
+        }
         if (_set.emplace(&type).second) {
             _types.emplace_back(&type);
         }

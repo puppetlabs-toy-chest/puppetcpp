@@ -1,0 +1,6 @@
+Error: invalid_boolean_type.pp:1:16: node 'test': cannot convert Undef to Boolean.
+  notice Boolean(undef)
+                 ^~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at invalid_boolean_type.pp:1

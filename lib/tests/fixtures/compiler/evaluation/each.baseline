@@ -42,14 +42,14 @@ Notice: Scope(Class[main]): index = 3, value = 8
 Notice: Scope(Class[main]): index = 4, value = 9
 Notice: Scope(Class[main]): index = 5, value = 10
 Notice: Scope(Class[main]): Integer[5, 10]
-Notice: Scope(Class[main]): value = foo
 Notice: Scope(Class[main]): value = bar
 Notice: Scope(Class[main]): value = baz
-Notice: Scope(Class[main]): Enum[foo, bar, baz]
-Notice: Scope(Class[main]): index = 0, value = foo
-Notice: Scope(Class[main]): index = 1, value = bar
-Notice: Scope(Class[main]): index = 2, value = baz
-Notice: Scope(Class[main]): Enum[foo, bar, baz]
+Notice: Scope(Class[main]): value = foo
+Notice: Scope(Class[main]): Enum[bar, baz, foo]
+Notice: Scope(Class[main]): index = 0, value = bar
+Notice: Scope(Class[main]): index = 1, value = baz
+Notice: Scope(Class[main]): index = 2, value = foo
+Notice: Scope(Class[main]): Enum[bar, baz, foo]
 Notice: Scope(Class[main]): value = 3
 Notice: Scope(Class[main]): value = 2
 Notice: Scope(Class[main]): value = 1

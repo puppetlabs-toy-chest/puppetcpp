@@ -1,0 +1,6 @@
+Error: new_invalid_param_tuple.pp:1:22: node 'test': cannot convert Array[Integer[0, 0], 1, 1] to Tuple[String].
+  notice Tuple[String](1)
+                       ^
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_param_tuple.pp:1

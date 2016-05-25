@@ -1,0 +1,6 @@
+Error: new_integer_invalid_type.pp:1:16: node 'test': cannot convert Undef to Integer.
+  notice Integer(undef)
+                 ^~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_integer_invalid_type.pp:1

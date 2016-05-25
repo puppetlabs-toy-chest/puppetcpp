@@ -1,0 +1,6 @@
+Error: new_invalid_array.pp:1:14: node 'test': cannot convert Undef to Array.
+  notice Array(undef)
+               ^~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_array.pp:1

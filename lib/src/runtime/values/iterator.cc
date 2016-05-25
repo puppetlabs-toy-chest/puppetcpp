@@ -40,7 +40,7 @@ namespace puppet { namespace runtime { namespace values {
             if (boost::get<types::enumeration>(type)) {
                 return types::string{};
             }
-            throw runtime_error("value is not iterable.");
+            throw type_not_iterable_exception("value is not iterable.");
         }
         if (value.as<values::array>()) {
             auto type = value.infer_type();
@@ -55,7 +55,7 @@ namespace puppet { namespace runtime { namespace values {
             types.emplace_back(make_unique<values::type>(hash_type.value_type()));
             return types::tuple{ rvalue_cast(types), 2, 2 };
         }
-        throw runtime_error("value is not iterable.");
+        throw type_not_iterable_exception("value is not iterable.");
     }
 
     int64_t iterator::step() const
@@ -142,12 +142,12 @@ namespace puppet { namespace runtime { namespace values {
 
     void iteration_visitor::operator()(undef const&) const
     {
-        throw runtime_error("undef is not iterable.");
+        throw type_not_iterable_exception("undef is not iterable.");
     }
 
     void iteration_visitor::operator()(defaulted const&) const
     {
-        throw runtime_error("defaulted is not iterable.");
+        throw type_not_iterable_exception("defaulted is not iterable.");
     }
 
     void iteration_visitor::operator()(int64_t value) const
@@ -169,12 +169,12 @@ namespace puppet { namespace runtime { namespace values {
 
     void iteration_visitor::operator()(double) const
     {
-        throw runtime_error("double is not iterable.");
+        throw type_not_iterable_exception("double is not iterable.");
     }
 
     void iteration_visitor::operator()(bool) const
     {
-        throw runtime_error("boolean is not iterable.");
+        throw type_not_iterable_exception("boolean is not iterable.");
     }
 
     void iteration_visitor::operator()(std::string const& value) const
@@ -196,7 +196,7 @@ namespace puppet { namespace runtime { namespace values {
 
     void iteration_visitor::operator()(values::regex const& value) const
     {
-        throw runtime_error("regex is not iterable.");
+        throw type_not_iterable_exception("regex is not iterable.");
     }
 
     void iteration_visitor::operator()(values::type const& value) const
@@ -209,7 +209,7 @@ namespace puppet { namespace runtime { namespace values {
             operator()(*enumeration);
             return;
         }
-        throw runtime_error("type is not iterable.");
+        throw type_not_iterable_exception("type is not iterable.");
     }
 
     void iteration_visitor::operator()(types::integer const& range) const
@@ -231,7 +231,16 @@ namespace puppet { namespace runtime { namespace values {
 
     void iteration_visitor::operator()(types::enumeration const& enumeration) const
     {
-        for (auto& string : enumeration.strings()) {
+        auto& strings = enumeration.strings();
+        if (_reverse) {
+            for (auto it = strings.rbegin(); it != strings.rend(); ++it) {
+                if (!_callback(nullptr, *it)) {
+                    break;
+                }
+            }
+            return;
+        }
+        for (auto& string : strings) {
             if (!_callback(nullptr, string)) {
                 break;
             }

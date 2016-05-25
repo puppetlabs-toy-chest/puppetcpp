@@ -1,0 +1,6 @@
+Error: new_invalid_param_integer.pp:1:24: node 'test': cannot convert Integer[1000, 1000] to Integer[0, 100].
+  notice Integer[0, 100]('1000')
+                         ^~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_param_integer.pp:1

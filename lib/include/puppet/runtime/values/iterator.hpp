@@ -12,8 +12,17 @@
 #include <boost/variant.hpp>
 #include <ostream>
 #include <functional>
+#include <exception>
 
 namespace puppet { namespace runtime { namespace values {
+
+    /**
+     * Exception for type not iterable errors.
+     */
+    struct type_not_iterable_exception : std::runtime_error
+    {
+        using std::runtime_error::runtime_error;
+    };
 
     /**
      * Represents the iterator value.

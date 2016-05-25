@@ -1,5 +1,7 @@
 #include <puppet/runtime/values/value.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 
@@ -30,6 +32,44 @@ namespace puppet { namespace runtime { namespace types {
     void boolean::write(ostream& stream, bool expand) const
     {
         stream << boolean::name();
+    }
+
+    values::value boolean::instantiate(values::value from)
+    {
+        if (auto integer = from.as<int64_t>()) {
+            return *integer != 0;
+        }
+        if (auto floating = from.as<double>()) {
+            return *floating != 0;
+        }
+        if (auto boolean = from.as<bool>()) {
+            return *boolean;
+        }
+        if (from.as<std::string>()) {
+            auto string = from.move_as<std::string>();
+            boost::to_lower(string);
+
+            if (string == "true" || string == "yes" || string == "y") {
+                return true;
+            }
+            if (string == "false" || string == "no" || string == "n") {
+                return false;
+            }
+
+            throw values::type_conversion_exception(
+                (boost::format("string '%1%' cannot be converted to %2%.") %
+                 string %
+                 name()
+                ).str()
+            );
+        }
+
+        throw values::type_conversion_exception(
+            (boost::format("cannot convert %1% to %2%.") %
+             from.infer_type() %
+             name()
+            ).str()
+        );
     }
 
     ostream& operator<<(ostream& os, boolean const& type)

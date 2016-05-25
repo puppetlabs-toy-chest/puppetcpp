@@ -201,7 +201,15 @@ BOOST_FUSION_ADAPT_STRUCT(
     function,
     arguments,
     end,
-    lambda,
+    lambda
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::new_expression,
+    type,
+    arguments,
+    end,
+    lambda
 )
 
 BOOST_FUSION_ADAPT_STRUCT(

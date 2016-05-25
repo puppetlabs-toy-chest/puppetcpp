@@ -1,0 +1,6 @@
+Error: new_outofrange_integer.pp:1:16: node 'test': string '9223372036854775808' is out of range for Integer.
+  notice Integer('9223372036854775808')
+                 ^~~~~~~~~~~~~~~~~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_outofrange_integer.pp:1

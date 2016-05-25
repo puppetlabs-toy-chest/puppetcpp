@@ -1,0 +1,6 @@
+Error: new_invalid_param_optional.pp:1:8: node 'test': cannot create an instance of type Default.
+  notice Optional[Default](default)
+         ^~~~~~~~~~~~~~~~~
+  backtrace:
+    in 'new' (no source)
+    in '<class main>' at new_invalid_param_optional.pp:1

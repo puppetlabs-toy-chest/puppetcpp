@@ -106,6 +106,14 @@ namespace puppet { namespace runtime { namespace types {
         void write(std::ostream& stream, bool expand = true) const;
 
         /**
+         * Instantiates a new instance of the type.
+         * @param from The value to convert from.
+         * @param wrap True to wrap the value as an array (if not already an array) or false to convert the value.
+         * @return Returns the instantiated value.
+         */
+        static values::value instantiate(values::value from, bool wrap = false);
+
+        /**
          * Stores a default shared instance used internally by other Puppet types.
          */
         static array const instance;
