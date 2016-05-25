@@ -9,6 +9,7 @@ include_directories(
     ${Facter_INCLUDE_DIRS}
     ${RAPIDJSON_INCLUDE_DIRS}
     ${UTF8CPP_INCLUDE_DIRS}
+    ${ICU_INCLUDE_DIRS}
 )
 
 # Set common sources
@@ -154,6 +155,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/values/value.cc
     src/runtime/values/variable.cc
     src/runtime/values/wrapper.cc
+    src/unicode/string.cc
     src/utility/filesystem/helpers.cc
     src/utility/regex.cc
 )
@@ -194,6 +196,7 @@ target_link_libraries(puppet
     ${Onigmo_LIBRARIES}
     ${Facter_LIBRARY}
     ${YAMLCPP_LIBRARIES}
+    ${ICU_LIBRARIES}
 )
 
 if (Editline_FOUND)

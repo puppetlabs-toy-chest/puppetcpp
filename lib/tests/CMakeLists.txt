@@ -18,6 +18,7 @@ add_executable(puppet_test
     options/commands/repl.cc
     options/commands/version.cc
     options/parser.cc
+    unicode/string.cc
     main.cc
 )
 
@@ -25,7 +26,7 @@ add_definitions(
     -DFIXTURES_DIR="${CMAKE_CURRENT_LIST_DIR}/fixtures/"
 )
 
-target_link_libraries(puppet_test puppet ${Boost_LIBRARIES})
+target_link_libraries(puppet_test puppet ${Boost_LIBRARIES} ${ICU_LIBRARIES})
 
 cotire(puppet_test)
 

@@ -189,6 +189,7 @@ Build Requirements
 * GCC >= 5.0 or Clang >= 3.4 (with libc++)
 * [CMake](https://cmake.org/) >= 3.0
 * [Boost Libraries](http://www.boost.org/) >= 1.60.0
+* [ICU](http://site.icu-project.org/) >= 57.1
 * [Onigmo](https://github.com/k-takata/Onigmo) >= 5.15.0 (build with `--enable-multithread`)
 * [Facter](https://github.com/puppetlabs/facter) >= 3.0
 * [yaml-cpp](https://github.com/jbeder/yaml-cpp) >= 0.5.1
