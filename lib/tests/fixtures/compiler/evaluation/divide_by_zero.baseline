@@ -1,0 +1,5 @@
+Error: divide_by_zero.pp:1:12: node 'test': cannot divide by zero.
+  notice(1 / 0)
+             ^
+  backtrace:
+    in '<class main>' at divide_by_zero.pp:1

@@ -7,6 +7,7 @@
 
 using namespace std;
 using namespace puppet::runtime::values;
+using namespace puppet::runtime::types;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace operators { namespace binary {
 
@@ -60,21 +61,48 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         return result;
     }
 
+    static value divide_by(call_context& context, value const& left, value const& right)
+    {
+        if (left.as<int64_t>() && right.as<int64_t>()) {
+            return divide_by(context, left.require<int64_t>(), right.require<int64_t>());
+        }
+        if (left.as<int64_t>()) {
+            return divide_by(context, static_cast<double>(left.require<int64_t>()), right.require<double>());
+        }
+        if (right.as<int64_t>()) {
+            return divide_by(context, left.require<double>(), static_cast<double>(right.require<int64_t>()));
+        }
+        return divide_by(context, left.require<double>(), right.require<double>());
+    }
+
+    value arithmetic_string_conversion(call_context& context, bool left = true)
+    {
+        try {
+            return numeric::instantiate(rvalue_cast(left ? context.left() : context.right()));
+        } catch (type_conversion_exception const& ex) {
+            throw evaluation_exception(
+                ex.what(),
+                (left ? context.left_context() : context.right_context()),
+                context.context().backtrace()
+            );
+        }
+    }
+
     descriptor divide::create_descriptor()
     {
         binary::descriptor descriptor{ ast::binary_operator::divide };
 
-        descriptor.add("Integer", "Integer", [](call_context& context) {
-            return divide_by(context, context.left().require<int64_t>(), context.right().require<int64_t>());
+        descriptor.add("Numeric", "Numeric", [](call_context& context) {
+            return divide_by(context, context.left(), context.right());
         });
-        descriptor.add("Integer", "Float", [](call_context& context) {
-            return divide_by(context, static_cast<double>(context.left().require<int64_t>()), context.right().require<double>());
+        descriptor.add("String", "Numeric", [](call_context& context) {
+            return divide_by(context, arithmetic_string_conversion(context), context.right());
         });
-        descriptor.add("Float", "Integer", [](call_context& context) {
-            return divide_by(context, context.left().require<double>(), static_cast<double>(context.right().require<int64_t>()));
+        descriptor.add("Numeric", "String", [](call_context& context) {
+            return divide_by(context, context.left(), arithmetic_string_conversion(context, false));
         });
-        descriptor.add("Float", "Float", [](call_context& context) {
-            return divide_by(context, context.left().require<double>(), context.right().require<double>());
+        descriptor.add("String", "String", [](call_context& context) {
+            return divide_by(context, arithmetic_string_conversion(context), arithmetic_string_conversion(context, false));
         });
         return descriptor;
     }
