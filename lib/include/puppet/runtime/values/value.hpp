@@ -359,6 +359,13 @@ namespace puppet { namespace runtime { namespace values {
     bool operator!=(value const& left, value const& right);
 
     /**
+     * Hashes a runtime value.
+     * @param value The 'type' type to hash.
+     * @return Returns the hash value for the values.
+     */
+    size_t hash_value(values::value const& value);
+
+    /**
      * Equality visitor for values that handles variable comparison.
      */
     struct equality_visitor : boost::static_visitor<bool>
