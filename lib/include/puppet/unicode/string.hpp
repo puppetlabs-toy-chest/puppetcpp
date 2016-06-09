@@ -8,8 +8,6 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/optional.hpp>
 #include <unicode/utext.h>
-#include <unicode/utf8.h>
-#include <unicode/ubrk.h>
 #include <string>
 #include <exception>
 #include <limits>
@@ -449,6 +447,14 @@ namespace puppet { namespace unicode {
          * @return Returns the end of string pointer.
          */
         char const* eos() const noexcept;
+
+        /**
+         * Appends a codepoint in UTF-8 to the given string.
+         * @param codepoint The codepoint to append.
+         * @param string The string to append the UTF-8 code units to.
+         * @return Returns true if the codepoint was valid or false if not.
+         */
+        static bool append_utf8(char32_t codepoint, std::string& string);
 
      private:
         friend struct split_iterator;

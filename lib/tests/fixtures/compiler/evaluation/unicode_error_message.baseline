@@ -1,0 +1,5 @@
+Error: unicode_error_message.pp:12:8: node 'test': function 'split' expects String but was given Array[String[1, 1], 5, 5].
+  notice 'ஸ்றீனிவாஸ'.split('').split('')
+         ^~~~~~~~~~~~~~~~~
+  backtrace:
+    in '<class main>' at unicode_error_message.pp:12

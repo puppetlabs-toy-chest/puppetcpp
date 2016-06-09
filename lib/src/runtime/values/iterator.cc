@@ -1,4 +1,5 @@
 #include <puppet/runtime/values/value.hpp>
+#include <puppet/unicode/string.hpp>
 #include <puppet/cast.hpp>
 
 using namespace std;
@@ -179,19 +180,20 @@ namespace puppet { namespace runtime { namespace values {
 
     void iteration_visitor::operator()(std::string const& value) const
     {
+        unicode::string string{ value };
+
+        auto it = _reverse ? string.rbegin() : string.begin();
+        auto end = _reverse ? string.rend() : string.end();
+
         int64_t step = 0;
-        each_code_point(
-            value,
-            [&](auto character) {
-                if (step > 0) {
-                    --step;
-                    return true;
-                }
-                step = _step - 1;
-                return _callback(nullptr, character);
-            },
-            _reverse
-        );
+        for (; it != end; ++it) {
+            if (step > 0) {
+                --step;
+                continue;
+            }
+            step = _step - 1;
+            _callback(nullptr, std::string{ it->begin(), it->end() });
+        }
     }
 
     void iteration_visitor::operator()(values::regex const& value) const

@@ -7,6 +7,7 @@
 #include <unicode/ucol.h>
 #include <unicode/ucasemap.h>
 #include <unicode/utypes.h>
+#include <unicode/ubrk.h>
 
 using namespace std;
 
@@ -767,6 +768,33 @@ namespace puppet { namespace unicode {
     char const* string::eos() const noexcept
     {
         return _data + _units;
+    }
+
+    bool string::append_utf8(char32_t codepoint, std::string& string)
+    {
+        // Unfortunately ICU doesn't have a direct UTF-32 to UTF-8 conversion
+        UChar utf16[U16_MAX_LENGTH];
+        int32_t utf16_length = 0;
+
+        // Convert first to UTF-16
+        UErrorCode status = U_ZERO_ERROR;
+        u_strFromUTF32(utf16, U16_MAX_LENGTH, &utf16_length, reinterpret_cast<UChar32*>(&codepoint), 1, &status);
+        if (U_FAILURE(status)) {
+            return false;
+        }
+
+        // Now convert to UTF-8
+        char utf8[U8_MAX_LENGTH];
+        int32_t utf8_length = 0;
+        status = U_ZERO_ERROR;
+        u_strToUTF8(utf8, U8_MAX_LENGTH, &utf8_length, utf16, utf16_length, &status);
+        if (U_FAILURE(status)) {
+            return false;
+        }
+
+        // Append the code units
+        string.append(utf8, utf8 + utf8_length);
+        return true;
     }
 
     bool string::starts_with(char const* data, size_t length) const

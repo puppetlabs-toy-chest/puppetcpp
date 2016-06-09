@@ -67,3 +67,11 @@ unless "\$array[1] == ${$array[1]}!" == '$array[1] == 2!' {
 unless "filtered: ${array.filter|$x| { x == 2 }}!" != "filtered: [2]!" {
     fail incorrect
 }
+
+if 'ฉันกินกระจกได้'[1, 4] != 'นกินก' {
+    fail incorrect
+}
+
+unless 'ฉันกินกระจกได้'[-1] == 'ด้' {
+    fail incorrect
+}

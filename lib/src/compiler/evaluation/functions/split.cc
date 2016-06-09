@@ -1,6 +1,7 @@
 #include <puppet/compiler/evaluation/functions/split.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
+#include <puppet/unicode/string.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
@@ -12,10 +13,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     static values::value split_characters(string const& str)
     {
         values::array result;
-        values::each_code_point(str, [&](string codepoint) {
-            result.emplace_back(rvalue_cast(codepoint));
-            return true;
-        });
+
+        unicode::string string{ str };
+        for (auto& grapheme : string) {
+            result.emplace_back(std::string{ grapheme.begin(), grapheme.end() });
+        }
         return result;
     }
 

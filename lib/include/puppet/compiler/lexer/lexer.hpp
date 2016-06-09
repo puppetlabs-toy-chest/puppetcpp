@@ -10,6 +10,7 @@
 #include "../exceptions.hpp"
 #include "../../logging/logger.hpp"
 #include "../../utility/regex.hpp"
+#include "../../unicode/string.hpp"
 #include "../../cast.hpp"
 #include <limits>
 #include <boost/iterator/iterator_adaptor.hpp>
@@ -22,7 +23,6 @@
 #include <boost/utility/string_ref.hpp>
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
-#include <utf8.h>
 #include <string>
 #include <stack>
 #include <memory>
@@ -665,9 +665,9 @@ namespace puppet { namespace compiler { namespace lexer {
                 if (!isxdigit(*begin)) {
                     if (_log) {
                         if (variable_length) {
-                            _log(logging::level::warning, "a closing '}' was not found before encountering a non-hexadecimal character in unicode escape sequence.", start_position, 1);
+                            _log(logging::level::warning, "a closing '}' was not found before encountering a non-hexadecimal character in Unicode escape sequence.", start_position, 1);
                         } else {
-                            _log(logging::level::warning, (boost::format("unicode escape sequence contains non-hexadecimal character '%1%'.") % *begin).str(), begin.position(), 1);
+                            _log(logging::level::warning, (boost::format("Unicode escape sequence contains non-hexadecimal character '%1%'.") % *begin).str(), begin.position(), 1);
                         }
                     }
                     return false;
@@ -684,13 +684,13 @@ namespace puppet { namespace compiler { namespace lexer {
             if (variable_length) {
                 if (begin == end || *begin != '}') {
                     if (_log) {
-                        _log(logging::level::warning, "a closing '}' was not found for unicode escape sequence.", start_position, 1);
+                        _log(logging::level::warning, "a closing '}' was not found for Unicode escape sequence.", start_position, 1);
                     }
                     return false;
                 }
                 if (digits.empty() || digits.size() > 6) {
                     if (_log) {
-                        _log(logging::level::warning, "expected at least 1 and at most 6 hexadecimal digits for unicode escape sequence.", start_position, begin.position().offset() - start_position.offset() + 1);
+                        _log(logging::level::warning, "expected at least 1 and at most 6 hexadecimal digits for Unicode escape sequence.", start_position, begin.position().offset() - start_position.offset() + 1);
                     }
                     return false;
                 }
@@ -698,15 +698,14 @@ namespace puppet { namespace compiler { namespace lexer {
 
             // Convert the input to a unicode character
             try {
-                char32_t character = static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(digits));
-                utf8::utf32to8(&character, &character + 1, std::back_inserter(output));
-                return true;
+                if (unicode::string::append_utf8(static_cast<char32_t>(boost::lexical_cast<hex_to<uint32_t>>(digits)), output)) {
+                    return true;
+                }
             } catch (boost::bad_lexical_cast const&) {
-            } catch (utf8::invalid_code_point const&) {
             }
             if (_log) {
                 start_position.increment(false);
-                _log(logging::level::warning, (boost::format("'%1%' is not a valid unicode codepoint.") % digits).str(), start_position, begin.position().offset() - start_position.offset());
+                _log(logging::level::warning, (boost::format("'%1%' is not a valid Unicode codepoint.") % digits).str(), start_position, begin.position().offset() - start_position.offset());
             }
             return false;
         }
@@ -1432,22 +1431,45 @@ namespace puppet { namespace compiler { namespace lexer {
     lexer_string_iterator lex_end(boost::iterator_range<lexer_string_iterator> const& range);
 
     /**
-     * Gets the text and column for the given position in a file.
-     * @param fs The file stream of the file.
-     * @param position The position inside the file.
-     * @param tab_width Specifies the width of a tab character for column calculations.
-     * @return Returns a tuple of the line's text and the column of the position.
+     * Represents line information for display source code context.
      */
-    std::tuple<std::string, std::size_t> get_text_and_column(std::ifstream& fs, std::size_t position, std::size_t tab_width = LEXER_TAB_WIDTH);
+    struct line_info
+    {
+        /**
+         * Stores the line text.
+         */
+        std::string text;
+
+        /**
+         * Stores the column in graphemes.
+         */
+        size_t column = 0;
+
+        /**
+         * Stores the length of the source being highlighted in graphemes.
+         */
+        size_t length = 0;
+    };
 
     /**
-     * Gets the text and column for the given position in a string.
-     * @param input The input string to get the line and position in.
-     * @param position The position inside the string.
+     * Gets the line info given a position and length inside of a file stream.
+     * @param input The input stream.
+     * @param position The position (byte offset) inside the file.
+     * @param length The length, in bytes, of the source being highlighted.
      * @param tab_width Specifies the width of a tab character for column calculations.
-     * @return Returns a tuple of the line's text and the column of the position.
+     * @return Returns the line information.
      */
-    std::tuple<std::string, std::size_t> get_text_and_column(std::string const& input, std::size_t position, std::size_t tab_width = LEXER_TAB_WIDTH);
+    line_info get_line_info(std::ifstream& input, size_t position, size_t length, size_t tab_width = LEXER_TAB_WIDTH);
+
+    /**
+     * Gets the line info given a position and length inside of a string.
+     * @param input The input string.
+     * @param position The position (byte offset) inside the string.
+     * @param length The length, in bytes, of the source being highlighted.
+     * @param tab_width Specifies the width of a tab character for column calculations.
+     * @return Returns the line information.
+     */
+    line_info get_line_info(std::string const& input, size_t position, size_t length, size_t tab_width = LEXER_TAB_WIDTH);
 
     /**
      * Gets the last position for the given file stream.

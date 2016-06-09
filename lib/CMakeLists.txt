@@ -178,9 +178,10 @@ add_executable(
     src/compiler/lexer/lexer.cc
     src/compiler/lexer/position.cc
     src/compiler/lexer/tokens.cc
+    src/unicode/string.cc
     src/utility/regex.cc
 )
-target_link_libraries(generate_static_lexer ${Boost_LIBRARIES} ${Onigmo_LIBRARIES})
+target_link_libraries(generate_static_lexer ${Boost_LIBRARIES} ${Onigmo_LIBRARIES} ${ICU_LIBRARIES})
 
 # Add the command to generate the static lexer
 add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer/static_lexer.hpp)

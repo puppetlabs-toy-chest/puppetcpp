@@ -99,11 +99,8 @@ namespace puppet { namespace compiler { namespace parser {
                 return;
             }
 
-            size_t column = 0;
-            std::string text;
-            tie(text, column) = lexer::get_text_and_column(input, position.offset());
-
-            logger.log(level, position.line(), column, length, text, tree->path(), message);
+            auto info = lexer::get_line_info(input, position.offset(), length);
+            logger.log(level, position.line(), info.column, info.length, info.text, tree->path(), message);
         }};
 
         parse(lexer, input, *tree, epp);
@@ -119,11 +116,8 @@ namespace puppet { namespace compiler { namespace parser {
                 return;
             }
 
-            size_t column = 0;
-            std::string text;
-            tie(text, column) = lexer::get_text_and_column(source, position.offset());
-
-            logger.log(level, position.line(), column, length, text, tree->path(), message);
+            auto info = lexer::get_line_info(source, position.offset(), length);
+            logger.log(level, position.line(), info.column, info.length, info.text, tree->path(), message);
         }};
 
         parse(lexer, source, *tree, epp);

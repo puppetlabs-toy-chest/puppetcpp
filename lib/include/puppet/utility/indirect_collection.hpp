@@ -1,6 +1,6 @@
 /**
  * @file
- * Declares the indirect set.
+ * Declares utility indirect unordered collections.
  */
 #pragma once
 

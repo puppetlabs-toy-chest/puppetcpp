@@ -229,17 +229,17 @@ SCENARIO("getting ranges of tokens", "[lexer]")
         }
         REQUIRE(token == end);
 
-        string text;
-        size_t column;
         THEN("the text and column for a position should match what's expected") {
-            tie(text, column) = get_text_and_column(input, ranges[4].first.offset());
-            REQUIRE(column == 2);
-            REQUIRE(text == " 'this back\\\\slash is escaped'");
+            auto info = get_line_info(input, ranges[4].first.offset(), 1);
+            REQUIRE(info.column == 2);
+            REQUIRE(info.length == 1);
+            REQUIRE(info.text == " 'this back\\\\slash is escaped'");
         }
         THEN("the text and column for the last position should match the last line") {
-            tie(text, column) = get_text_and_column(input, get_last_position(input).offset());
-            REQUIRE(column == 2);
-            REQUIRE(text == "'");
+            auto info = get_line_info(input, get_last_position(input).offset(), 1);
+            REQUIRE(info.column == 2);
+            REQUIRE(info.length == 0);
+            REQUIRE(info.text == "'");
         }
     }
     WHEN("lexing a string") {
@@ -272,14 +272,16 @@ SCENARIO("getting ranges of tokens", "[lexer]")
             string text;
             size_t column;
             THEN("the text and column for a position should match what's expected") {
-                tie(text, column) = get_text_and_column(input, ranges[4].first.offset());
-                REQUIRE(column == 2);
-                REQUIRE(text == " 'this back\\\\slash is escaped'");
+                auto line = get_line_info(input, ranges[4].first.offset(), 1);
+                REQUIRE(line.column == 2);
+                REQUIRE(line.length == 1);
+                REQUIRE(line.text == " 'this back\\\\slash is escaped'");
             }
             THEN("the text and column for the last position should match the last line") {
-                tie(text, column) = get_text_and_column(input, get_last_position(input).offset());
-                REQUIRE(column == 2);
-                REQUIRE(text == "'");
+                auto line = get_line_info(input, get_last_position(input).offset(), 1);
+                REQUIRE(line.column == 2);
+                REQUIRE(line.length == 0);
+                REQUIRE(line.text == "'");
             }
         }
         AND_WHEN("using an iterator range as input") {
