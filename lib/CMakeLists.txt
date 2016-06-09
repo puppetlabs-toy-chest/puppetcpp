@@ -8,7 +8,6 @@ include_directories(
     ${Onigmo_INCLUDE_DIRS}
     ${Facter_INCLUDE_DIRS}
     ${RAPIDJSON_INCLUDE_DIRS}
-    ${UTF8CPP_INCLUDE_DIRS}
     ${ICU_INCLUDE_DIRS}
 )
 
