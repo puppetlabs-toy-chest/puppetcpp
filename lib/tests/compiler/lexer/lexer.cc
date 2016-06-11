@@ -14,7 +14,7 @@ void require_token(Iterator& token, Iterator const& end, token_id expected_id, s
     CAPTURE(expected_id);
     CAPTURE(expected_value);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == expected_id);
 
@@ -34,7 +34,7 @@ void require_string_token(
 {
     CAPTURE(expected_value);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::string);
 
@@ -55,7 +55,7 @@ void require_string_text_token(
 {
     CAPTURE(expected_text);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::string_text);
 
@@ -74,7 +74,7 @@ void require_interpolated_string_token(
     string const& expected_format = {},
     size_t expected_margin = 0)
 {
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::string_start);
     {
@@ -83,9 +83,9 @@ void require_interpolated_string_token(
         REQUIRE(value->format == expected_format);
     }
     ++token;
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     callback(token);
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::string_end);
     {
@@ -118,7 +118,7 @@ void require_number_token(Iterator& token, Iterator const& end, int64_t expected
 {
     CAPTURE(expected_string);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::number);
 
@@ -140,7 +140,7 @@ void require_number_token(Iterator& token, Iterator const& end, double expected_
 {
     CAPTURE(expected_string);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::number);
 
@@ -220,7 +220,7 @@ SCENARIO("getting ranges of tokens", "[lexer]")
         auto end = lexer.end();
 
         for (auto const& range : ranges) {
-            REQUIRE(token != end);
+            REQUIRE((token != end));
             position begin, end;
             tie(begin, end) = boost::apply_visitor(token_range_visitor(), token->value());
             REQUIRE(begin == range.first);
@@ -260,7 +260,7 @@ SCENARIO("getting ranges of tokens", "[lexer]")
             auto end = lexer.end();
 
             for (auto const& range : ranges) {
-                REQUIRE(token != end);
+                REQUIRE((token != end));
                 position begin, end;
                 tie(begin, end) = boost::apply_visitor(token_range_visitor(), token->value());
                 REQUIRE(begin == range.first);
@@ -295,7 +295,7 @@ SCENARIO("getting ranges of tokens", "[lexer]")
             auto end = lexer.end();
 
             for (auto const& range : ranges) {
-                REQUIRE(token != end);
+                REQUIRE((token != end));
                 position begin, end;
                 tie(begin, end) = boost::apply_visitor(token_range_visitor(), token->value());
                 REQUIRE(begin == range.first);
