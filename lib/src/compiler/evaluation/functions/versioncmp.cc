@@ -1,6 +1,6 @@
 #include <puppet/compiler/evaluation/functions/versioncmp.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
-#include <boost/algorithm/string.hpp>
+#include <puppet/unicode/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
@@ -27,7 +27,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             for (; iter_a != end && iter_b != end; ++iter_a, ++iter_b) {
                 string a = string{ iter_a->begin(), iter_a->end() };
                 string b = string{ iter_b->begin(), iter_b->end() };
-                if (a == b) {
+
+                auto result = unicode::string{ a }.compare(b, true);
+                if (result == 0) {
                     continue;
                 }
                 if (a == "-") {
@@ -52,16 +54,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                     }
                     return static_cast<int64_t>(0);
                 }
-                return static_cast<int64_t>(boost::ilexicographical_compare(a, b) ? -1 : 1);
+                return static_cast<int64_t>(result);
             }
-            auto result = version_a.compare(version_b);
-            if (result > 0) {
-                return static_cast<int64_t>(1);
-            }
-            if (result < 0) {
-                return static_cast<int64_t>(-1);
-            }
-            return static_cast<int64_t>(0);
+            return static_cast<int64_t>(unicode::string{ version_a }.compare(version_b, true));
         });
         return descriptor;
     }
