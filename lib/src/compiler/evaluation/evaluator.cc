@@ -51,7 +51,8 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Climb the expression
         auto begin = expression.operations.begin();
-        return climb_expression(expression.first, 0, begin, expression.operations.end());
+        auto result = climb_expression(expression.first, 0, begin, expression.operations.end());
+        return rvalue_cast(result.first);
     }
 
     value evaluator::evaluate(postfix_expression const& expression)
@@ -988,14 +989,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         return resources;
     }
 
-    values::value evaluator::climb_expression(
+    pair<values::value, ast::context> evaluator::climb_expression(
         ast::postfix_expression const& expression,
         unsigned int min_precedence,
         vector<binary_operation>::const_iterator& begin,
         vector<binary_operation>::const_iterator const& end)
     {
         // Evaluate the left-hand side
-        auto left = evaluate(expression);
+        auto lhs = make_pair(evaluate(expression), expression.context());
 
         // Climb the binary operations based on operator precedence
         unsigned int current = 0;
@@ -1005,43 +1006,36 @@ namespace puppet { namespace compiler { namespace evaluation {
             ++begin;
 
             // If the operator is a logical and/or operator, attempt short circuiting
-            if ((operation.operator_ == binary_operator::logical_and && !left.is_truthy()) ||
-                (operation.operator_ == binary_operator::logical_or && left.is_truthy())) {
-                left = operation.operator_ == binary_operator::logical_or;
+            if ((operation.operator_ == binary_operator::logical_and && !lhs.first.is_truthy()) ||
+                (operation.operator_ == binary_operator::logical_or && lhs.first.is_truthy())) {
+                lhs.first = operation.operator_ == binary_operator::logical_or;
+                lhs.second.end = operation.context().end;
                 begin = end;
-                return left;
+                break;
             }
 
-            // Recurse and climb the expression
+            // Recurse and climb the right-hand side
             unsigned int next = current + (is_right_associative(operation.operator_) ? 0 : 1);
-            auto right = climb_expression(operation.operand, next, begin, end);
+            auto rhs = climb_expression(operation.operand, next, begin, end);
 
-            // Evaluate the binary expression
-            evaluate(left, expression.context(), right, operation);
+            // Dispatch the operator "call"
+            binary::call_context context{
+                _context,
+                operation.operator_,
+                ast::context{
+                    operation.operator_position,
+                    lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
+                    rhs.second.tree
+                },
+                lhs.first,
+                lhs.second,
+                rhs.first,
+                rhs.second
+            };
+            lhs.first = _context.dispatcher().dispatch(context);
+            lhs.second.end = rhs.second.end;
         }
-        return left;
-    }
-
-    void evaluator::evaluate(
-        value& left,
-        ast::context const& left_context,
-        value& right,
-        ast::binary_operation const& operation)
-    {
-        binary::call_context context{
-            _context,
-            operation.operator_,
-            ast::context{
-                operation.operator_position,
-                lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
-                left_context.tree
-            },
-            left,
-            left_context,
-            right,
-            operation.operand.context()
-        };
-        left = _context.dispatcher().dispatch(context);
+        return lhs;
     }
 
     void evaluator::align_text(std::string const& text, size_t margin, size_t& current_margin, function<void(char const*, size_t)> const& callback)

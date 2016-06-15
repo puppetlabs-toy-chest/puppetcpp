@@ -118,17 +118,11 @@ namespace puppet { namespace compiler { namespace evaluation {
         void validate_attribute(std::string const& name, runtime::values::value& value, ast::context const& context);
         std::vector<resource*> create_resources(bool is_class, std::string const& type_name, ast::resource_expression const& expression, attributes const& defaults);
 
-        runtime::values::value climb_expression(
+        std::pair<runtime::values::value, ast::context> climb_expression(
             ast::postfix_expression const& expression,
             unsigned int min_precedence,
             std::vector<ast::binary_operation>::const_iterator& begin,
             std::vector<ast::binary_operation>::const_iterator const& end);
-
-        void evaluate(
-            runtime::values::value& left,
-            ast::context const& left_context,
-            runtime::values::value& right,
-            ast::binary_operation const& operation);
 
         void align_text(std::string const& text, size_t margin, size_t& current_margin, std::function<void(char const*, size_t)> const& callback);
 
