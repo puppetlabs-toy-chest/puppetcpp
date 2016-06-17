@@ -14,4 +14,4 @@ endif()
 
 include(FeatureSummary)
 set_package_properties(YAMLCPP PROPERTIES DESCRIPTION "A YAML emitter and parser written in C++" URL "https://code.google.com/p/yaml-cpp/")
-set_package_properties(YAMLCPP PROPERTIES TYPE REQUIRED PURPOSE "Enables support for outputting facts as YAML.")
+set_package_properties(YAMLCPP PROPERTIES TYPE REQUIRED PURPOSE "Used for reading and writing YAML files.")

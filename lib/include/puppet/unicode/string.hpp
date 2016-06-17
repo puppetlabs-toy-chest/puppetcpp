@@ -717,11 +717,11 @@ namespace puppet { namespace unicode {
      */
     std::ostream& operator<<(std::ostream& os, unicode::string const& string);
 
-     /**
-      * Hashes the string value.
-      * @param string The string value to hash.
-      * @return Returns the hash value for the value.
-      */
-     size_t hash_value(unicode::string const& string);
+    /**
+     * Hashes the string value.
+     * @param string The string value to hash.
+     * @return Returns the hash value for the value.
+     */
+    size_t hash_value(unicode::string const& string);
 
 }}  // namespace puppet::unicode

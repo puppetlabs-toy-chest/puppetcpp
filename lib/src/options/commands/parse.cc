@@ -81,7 +81,9 @@ namespace puppet { namespace options { namespace commands {
         ++stats.parsed;
 
         try {
+            // Parse and validate
             auto tree = compiler::parser::parse_file(logger, manifest);
+            tree->validate();
 
             // TODO: write in the actual XPP file format
             tree->write(compiler::ast::format::yaml, stream);

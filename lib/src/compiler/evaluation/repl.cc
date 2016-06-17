@@ -101,8 +101,11 @@ namespace puppet { namespace compiler { namespace evaluation {
                 // Copy the source into the tree
                 tree->source(_buffer);
 
+                // Validate the AST
+                tree->validate();
+
                 // If the expression contains a definition, we need to keep the tree around
-                if (_scanner.scan(statement)) {
+                if (_scanner.scan(*tree)) {
                     _trees.emplace_back(tree);
                 }
 

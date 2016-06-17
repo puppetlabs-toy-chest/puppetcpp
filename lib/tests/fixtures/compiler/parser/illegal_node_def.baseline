@@ -1,0 +1,3 @@
+Error: illegal_node_def.pp:3:5: node definitions can only be defined at top-level or inside a class.
+  node bar
+  ^~~~~~~~

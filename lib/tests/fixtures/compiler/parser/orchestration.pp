@@ -29,7 +29,7 @@ application lamp($x, $y) {
 application lamp(Integer $x) {
 }
 
-application lamp(Integer $x, String[0, 1] $y = 'X', *$rest) {
+application lamp(Integer $x, String[0, 1] $y = 'X') {
     notice hi
     $two = 1 + 1
     $three = $two + 1

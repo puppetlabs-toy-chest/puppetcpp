@@ -321,7 +321,7 @@ statements:
       offset: 312
       line: 32
     end:
-      offset: 428
+      offset: 420
       line: 36
     name:
       kind: name
@@ -407,74 +407,62 @@ statements:
             offset: 362
             line: 32
           value: X
-      - captures:
-          offset: 364
-          line: 32
-        variable:
-          kind: variable
-          begin:
-            offset: 365
-            line: 32
-          end:
-            offset: 370
-            line: 32
-          name: rest
     body:
       - kind: function call statement
         function:
           kind: name
           begin:
-            offset: 378
+            offset: 370
             line: 33
           end:
-            offset: 384
+            offset: 376
             line: 33
           value: notice
         arguments:
           - kind: name
             begin:
-              offset: 385
+              offset: 377
               line: 33
             end:
-              offset: 387
+              offset: 379
               line: 33
             value: hi
       - kind: binary expression
         operand:
           kind: variable
           begin:
-            offset: 392
+            offset: 384
             line: 34
           end:
-            offset: 396
+            offset: 388
             line: 34
           name: two
         operations:
           - operator_position:
-              offset: 397
+              offset: 389
               line: 34
             operator: =
             operand:
               kind: number
               begin:
-                offset: 399
+                offset: 391
                 line: 34
               end:
-                offset: 400
+                offset: 392
                 line: 34
               base: decimal
               value: 1
           - operator_position:
-              offset: 401
+              offset: 393
               line: 34
             operator: +
             operand:
               kind: number
               begin:
-                offset: 403
+                offset: 395
                 line: 34
               end:
-                offset: 404
+                offset: 396
                 line: 34
               base: decimal
               value: 1
@@ -482,37 +470,37 @@ statements:
         operand:
           kind: variable
           begin:
-            offset: 409
+            offset: 401
             line: 35
           end:
-            offset: 415
+            offset: 407
             line: 35
           name: three
         operations:
           - operator_position:
-              offset: 416
+              offset: 408
               line: 35
             operator: =
             operand:
               kind: variable
               begin:
-                offset: 418
+                offset: 410
                 line: 35
               end:
-                offset: 422
+                offset: 414
                 line: 35
               name: two
           - operator_position:
-              offset: 423
+              offset: 415
               line: 35
             operator: +
             operand:
               kind: number
               begin:
-                offset: 425
+                offset: 417
                 line: 35
               end:
-                offset: 426
+                offset: 418
                 line: 35
               base: decimal
               value: 1
@@ -520,77 +508,77 @@ statements:
     resource:
       kind: type
       begin:
-        offset: 430
+        offset: 422
         line: 38
       end:
-        offset: 439
+        offset: 431
         line: 38
       name: Mysql::Db
     capability:
       kind: type
       begin:
-        offset: 449
+        offset: 441
         line: 38
       end:
-        offset: 452
+        offset: 444
         line: 38
       name: Sql
     operations:
       - name:
           kind: name
           begin:
-            offset: 457
+            offset: 449
             line: 39
           end:
-            offset: 461
+            offset: 453
             line: 39
           value: user
         operator_position:
-          offset: 467
+          offset: 459
           line: 39
         operator: =>
         value:
           kind: variable
           begin:
-            offset: 470
+            offset: 462
             line: 39
           end:
-            offset: 475
+            offset: 467
             line: 39
           name: user
       - name:
           kind: name
           begin:
-            offset: 479
+            offset: 471
             line: 40
           end:
-            offset: 487
+            offset: 479
             line: 40
           value: password
         operator_position:
-          offset: 489
+          offset: 481
           line: 40
         operator: =>
         value:
           kind: variable
           begin:
-            offset: 492
+            offset: 484
             line: 40
           end:
-            offset: 501
+            offset: 493
             line: 40
           name: password
       - name:
           kind: name
           begin:
-            offset: 505
+            offset: 497
             line: 41
           end:
-            offset: 509
+            offset: 501
             line: 41
           value: host
         operator_position:
-          offset: 515
+          offset: 507
           line: 41
         operator: =>
         value:
@@ -598,194 +586,194 @@ statements:
           function:
             kind: name
             begin:
-              offset: 518
+              offset: 510
               line: 41
             end:
-              offset: 522
+              offset: 514
               line: 41
             value: pick
           arguments:
             - kind: variable
               begin:
-                offset: 523
+                offset: 515
                 line: 41
               end:
-                offset: 545
+                offset: 537
                 line: 41
               name: ::mysql_host_override
             - kind: variable
               begin:
-                offset: 547
+                offset: 539
                 line: 41
               end:
-                offset: 554
+                offset: 546
                 line: 41
               name: ::fqdn
           end:
-            offset: 555
+            offset: 547
             line: 41
       - name:
           kind: name
           begin:
-            offset: 633
+            offset: 625
             line: 43
           end:
-            offset: 641
+            offset: 633
             line: 43
           value: database
         operator_position:
-          offset: 643
+          offset: 635
           line: 43
         operator: =>
         value:
           kind: variable
           begin:
-            offset: 646
+            offset: 638
             line: 43
           end:
-            offset: 653
+            offset: 645
             line: 43
           name: dbname
       - name:
           kind: name
           begin:
-            offset: 657
+            offset: 649
             line: 44
           end:
-            offset: 661
+            offset: 653
             line: 44
           value: type
         operator_position:
-          offset: 667
+          offset: 659
           line: 44
         operator: =>
         value:
           kind: string
           begin:
-            offset: 670
+            offset: 662
             line: 44
           end:
-            offset: 677
+            offset: 669
             line: 44
           value: mysql
     end:
-      offset: 680
+      offset: 672
       line: 45
   - kind: application statement
     begin:
-      offset: 682
+      offset: 674
       line: 47
     end:
-      offset: 1067
+      offset: 1059
       line: 69
     name:
       kind: name
       begin:
-        offset: 694
+        offset: 686
         line: 47
       end:
-        offset: 698
+        offset: 690
         line: 47
       value: lamp
     parameters:
       - variable:
           kind: variable
           begin:
-            offset: 703
+            offset: 695
             line: 48
           end:
-            offset: 711
+            offset: 703
             line: 48
           name: db_user
       - variable:
           kind: variable
           begin:
-            offset: 715
+            offset: 707
             line: 49
           end:
-            offset: 727
+            offset: 719
             line: 49
           name: db_password
       - variable:
           kind: variable
           begin:
-            offset: 731
+            offset: 723
             line: 50
           end:
-            offset: 739
+            offset: 731
             line: 50
           name: docroot
         default_value:
           kind: string
           begin:
-            offset: 742
+            offset: 734
             line: 50
           end:
-            offset: 757
+            offset: 749
             line: 50
           value: /var/www/html
     body:
       - kind: resource declaration expression
         begin:
-          offset: 766
+          offset: 758
           line: 53
         end:
-          offset: 850
+          offset: 842
           line: 56
         status: realized
         type:
           kind: name
           begin:
-            offset: 766
+            offset: 758
             line: 53
           end:
-            offset: 775
+            offset: 767
             line: 53
           value: lamp::web
         bodies:
           - title:
               kind: variable
               begin:
-                offset: 778
+                offset: 770
                 line: 53
               end:
-                offset: 783
+                offset: 775
                 line: 53
               name: name
             operations:
               - name:
                   kind: name
                   begin:
-                    offset: 789
+                    offset: 781
                     line: 54
                   end:
-                    offset: 796
+                    offset: 788
                     line: 54
                   value: docroot
                 operator_position:
-                  offset: 797
+                  offset: 789
                   line: 54
                 operator: =>
                 value:
                   kind: variable
                   begin:
-                    offset: 800
+                    offset: 792
                     line: 54
                   end:
-                    offset: 808
+                    offset: 800
                     line: 54
                   name: docroot
               - name:
                   kind: name
                   begin:
-                    offset: 814
+                    offset: 806
                     line: 55
                   end:
-                    offset: 820
+                    offset: 812
                     line: 55
                   value: export
                 operator_position:
-                  offset: 822
+                  offset: 814
                   line: 55
                 operator: =>
                 value:
@@ -793,106 +781,106 @@ statements:
                   operand:
                     kind: type
                     begin:
-                      offset: 825
+                      offset: 817
                       line: 55
                     end:
-                      offset: 829
+                      offset: 821
                       line: 55
                     name: Http
                   operations:
                     - kind: access expression
                       begin:
-                        offset: 829
+                        offset: 821
                         line: 55
                       end:
-                        offset: 845
+                        offset: 837
                         line: 55
                       arguments:
                         - kind: interpolated string
                           begin:
-                            offset: 830
+                            offset: 822
                             line: 55
                           end:
-                            offset: 844
+                            offset: 836
                             line: 55
                           parts:
                             - kind: literal text
                               begin:
-                                offset: 831
+                                offset: 823
                                 line: 55
                               end:
-                                offset: 836
+                                offset: 828
                                 line: 55
                               text: lamp-
                             - kind: variable
                               begin:
-                                offset: 838
+                                offset: 830
                                 line: 55
                               end:
-                                offset: 842
+                                offset: 834
                                 line: 55
                               name: name
       - kind: resource declaration expression
         begin:
-          offset: 854
+          offset: 846
           line: 58
         end:
-          offset: 937
+          offset: 929
           line: 61
         status: realized
         type:
           kind: name
           begin:
-            offset: 854
+            offset: 846
             line: 58
           end:
-            offset: 863
+            offset: 855
             line: 58
           value: lamp::app
         bodies:
           - title:
               kind: variable
               begin:
-                offset: 866
+                offset: 858
                 line: 58
               end:
-                offset: 871
+                offset: 863
                 line: 58
               name: name
             operations:
               - name:
                   kind: name
                   begin:
-                    offset: 877
+                    offset: 869
                     line: 59
                   end:
-                    offset: 884
+                    offset: 876
                     line: 59
                   value: docroot
                 operator_position:
-                  offset: 885
+                  offset: 877
                   line: 59
                 operator: =>
                 value:
                   kind: variable
                   begin:
-                    offset: 888
+                    offset: 880
                     line: 59
                   end:
-                    offset: 896
+                    offset: 888
                     line: 59
                   name: docroot
               - name:
                   kind: name
                   begin:
-                    offset: 902
+                    offset: 894
                     line: 60
                   end:
-                    offset: 909
+                    offset: 901
                     line: 60
                   value: consume
                 operator_position:
-                  offset: 910
+                  offset: 902
                   line: 60
                 operator: =>
                 value:
@@ -900,128 +888,128 @@ statements:
                   operand:
                     kind: type
                     begin:
-                      offset: 913
+                      offset: 905
                       line: 60
                     end:
-                      offset: 916
+                      offset: 908
                       line: 60
                     name: Sql
                   operations:
                     - kind: access expression
                       begin:
-                        offset: 916
+                        offset: 908
                         line: 60
                       end:
-                        offset: 932
+                        offset: 924
                         line: 60
                       arguments:
                         - kind: interpolated string
                           begin:
-                            offset: 917
+                            offset: 909
                             line: 60
                           end:
-                            offset: 931
+                            offset: 923
                             line: 60
                           parts:
                             - kind: literal text
                               begin:
-                                offset: 918
+                                offset: 910
                                 line: 60
                               end:
-                                offset: 923
+                                offset: 915
                                 line: 60
                               text: lamp-
                             - kind: variable
                               begin:
-                                offset: 925
+                                offset: 917
                                 line: 60
                               end:
-                                offset: 929
+                                offset: 921
                                 line: 60
                               name: name
       - kind: resource declaration expression
         begin:
-          offset: 941
+          offset: 933
           line: 63
         end:
-          offset: 1064
+          offset: 1056
           line: 67
         status: realized
         type:
           kind: name
           begin:
-            offset: 941
+            offset: 933
             line: 63
           end:
-            offset: 949
+            offset: 941
             line: 63
           value: lamp::db
         bodies:
           - title:
               kind: variable
               begin:
-                offset: 952
+                offset: 944
                 line: 63
               end:
-                offset: 957
+                offset: 949
                 line: 63
               name: name
             operations:
               - name:
                   kind: name
                   begin:
-                    offset: 963
+                    offset: 955
                     line: 64
                   end:
-                    offset: 970
+                    offset: 962
                     line: 64
                   value: db_user
                 operator_position:
-                  offset: 975
+                  offset: 967
                   line: 64
                 operator: =>
                 value:
                   kind: variable
                   begin:
-                    offset: 978
+                    offset: 970
                     line: 64
                   end:
-                    offset: 986
+                    offset: 978
                     line: 64
                   name: db_user
               - name:
                   kind: name
                   begin:
-                    offset: 992
+                    offset: 984
                     line: 65
                   end:
-                    offset: 1003
+                    offset: 995
                     line: 65
                   value: db_password
                 operator_position:
-                  offset: 1004
+                  offset: 996
                   line: 65
                 operator: =>
                 value:
                   kind: variable
                   begin:
-                    offset: 1007
+                    offset: 999
                     line: 65
                   end:
-                    offset: 1019
+                    offset: 1011
                     line: 65
                   name: db_password
               - name:
                   kind: name
                   begin:
-                    offset: 1025
+                    offset: 1017
                     line: 66
                   end:
-                    offset: 1031
+                    offset: 1023
                     line: 66
                   value: export
                 operator_position:
-                  offset: 1037
+                  offset: 1029
                   line: 66
                 operator: =>
                 value:
@@ -1029,152 +1017,152 @@ statements:
                   operand:
                     kind: type
                     begin:
-                      offset: 1040
+                      offset: 1032
                       line: 66
                     end:
-                      offset: 1043
+                      offset: 1035
                       line: 66
                     name: Sql
                   operations:
                     - kind: access expression
                       begin:
-                        offset: 1043
+                        offset: 1035
                         line: 66
                       end:
-                        offset: 1059
+                        offset: 1051
                         line: 66
                       arguments:
                         - kind: interpolated string
                           begin:
-                            offset: 1044
+                            offset: 1036
                             line: 66
                           end:
-                            offset: 1058
+                            offset: 1050
                             line: 66
                           parts:
                             - kind: literal text
                               begin:
-                                offset: 1045
+                                offset: 1037
                                 line: 66
                               end:
-                                offset: 1050
+                                offset: 1042
                                 line: 66
                               text: lamp-
                             - kind: variable
                               begin:
-                                offset: 1052
+                                offset: 1044
                                 line: 66
                               end:
-                                offset: 1056
+                                offset: 1048
                                 line: 66
                               name: name
   - kind: site statement
     begin:
-      offset: 1069
+      offset: 1061
       line: 71
     end:
-      offset: 1077
+      offset: 1069
       line: 72
   - kind: site statement
     begin:
-      offset: 1079
+      offset: 1071
       line: 74
     end:
-      offset: 1297
+      offset: 1289
       line: 83
     body:
       - kind: resource declaration expression
         begin:
-          offset: 1088
+          offset: 1080
           line: 75
         end:
-          offset: 1295
+          offset: 1287
           line: 82
         status: realized
         type:
           kind: name
           begin:
-            offset: 1088
+            offset: 1080
             line: 75
           end:
-            offset: 1092
+            offset: 1084
             line: 75
           value: lamp
         bodies:
           - title:
               kind: name
               begin:
-                offset: 1095
+                offset: 1087
                 line: 75
               end:
-                offset: 1102
+                offset: 1094
                 line: 75
               value: example
             operations:
               - name:
                   kind: name
                   begin:
-                    offset: 1108
+                    offset: 1100
                     line: 76
                   end:
-                    offset: 1118
+                    offset: 1110
                     line: 76
                   value: wp_db_user
                 operator_position:
-                  offset: 1124
+                  offset: 1116
                   line: 76
                 operator: =>
                 value:
                   kind: name
                   begin:
-                    offset: 1127
+                    offset: 1119
                     line: 76
                   end:
-                    offset: 1130
+                    offset: 1122
                     line: 76
                   value: foo
               - name:
                   kind: name
                   begin:
-                    offset: 1136
+                    offset: 1128
                     line: 77
                   end:
-                    offset: 1150
+                    offset: 1142
                     line: 77
                   value: wp_db_password
                 operator_position:
-                  offset: 1152
+                  offset: 1144
                   line: 77
                 operator: =>
                 value:
                   kind: name
                   begin:
-                    offset: 1155
+                    offset: 1147
                     line: 77
                   end:
-                    offset: 1158
+                    offset: 1150
                     line: 77
                   value: bar
               - name:
                   kind: name
                   begin:
-                    offset: 1164
+                    offset: 1156
                     line: 78
                   end:
-                    offset: 1169
+                    offset: 1161
                     line: 78
                   value: nodes
                 operator_position:
-                  offset: 1180
+                  offset: 1172
                   line: 78
                 operator: =>
                 value:
                   kind: hash
                   begin:
-                    offset: 1183
+                    offset: 1175
                     line: 78
                   end:
-                    offset: 1291
+                    offset: 1283
                     line: 81
                   elements:
                     - first:
@@ -1182,63 +1170,63 @@ statements:
                         operand:
                           kind: type
                           begin:
-                            offset: 1191
+                            offset: 1183
                             line: 79
                           end:
-                            offset: 1195
+                            offset: 1187
                             line: 79
                           name: Node
                         operations:
                           - kind: access expression
                             begin:
-                              offset: 1195
+                              offset: 1187
                               line: 79
                             end:
-                              offset: 1210
+                              offset: 1202
                               line: 79
                             arguments:
                               - kind: string
                                 begin:
-                                  offset: 1196
+                                  offset: 1188
                                   line: 79
                                 end:
-                                  offset: 1209
+                                  offset: 1201
                                   line: 79
                                 value: database.vm
                       second:
                         kind: array
                         begin:
-                          offset: 1214
+                          offset: 1206
                           line: 79
                         end:
-                          offset: 1233
+                          offset: 1225
                           line: 79
                         elements:
                           - kind: postfix expression
                             operand:
                               kind: type
                               begin:
-                                offset: 1215
+                                offset: 1207
                                 line: 79
                               end:
-                                offset: 1223
+                                offset: 1215
                                 line: 79
                               name: Lamp::Db
                             operations:
                               - kind: access expression
                                 begin:
-                                  offset: 1223
+                                  offset: 1215
                                   line: 79
                                 end:
-                                  offset: 1232
+                                  offset: 1224
                                   line: 79
                                 arguments:
                                   - kind: name
                                     begin:
-                                      offset: 1224
+                                      offset: 1216
                                       line: 79
                                     end:
-                                      offset: 1231
+                                      offset: 1223
                                       line: 79
                                     value: example
                     - first:
@@ -1246,62 +1234,62 @@ statements:
                         operand:
                           kind: type
                           begin:
-                            offset: 1241
+                            offset: 1233
                             line: 80
                           end:
-                            offset: 1245
+                            offset: 1237
                             line: 80
                           name: Node
                         operations:
                           - kind: access expression
                             begin:
-                              offset: 1245
+                              offset: 1237
                               line: 80
                             end:
-                              offset: 1261
+                              offset: 1253
                               line: 80
                             arguments:
                               - kind: string
                                 begin:
-                                  offset: 1246
+                                  offset: 1238
                                   line: 80
                                 end:
-                                  offset: 1260
+                                  offset: 1252
                                   line: 80
                                 value: appserver.vm
                       second:
                         kind: array
                         begin:
-                          offset: 1265
+                          offset: 1257
                           line: 80
                         end:
-                          offset: 1285
+                          offset: 1277
                           line: 80
                         elements:
                           - kind: postfix expression
                             operand:
                               kind: type
                               begin:
-                                offset: 1266
+                                offset: 1258
                                 line: 80
                               end:
-                                offset: 1275
+                                offset: 1267
                                 line: 80
                               name: Lamp::Web
                             operations:
                               - kind: access expression
                                 begin:
-                                  offset: 1275
+                                  offset: 1267
                                   line: 80
                                 end:
-                                  offset: 1284
+                                  offset: 1276
                                   line: 80
                                 arguments:
                                   - kind: name
                                     begin:
-                                      offset: 1276
+                                      offset: 1268
                                       line: 80
                                     end:
-                                      offset: 1283
+                                      offset: 1275
                                       line: 80
                                     value: example

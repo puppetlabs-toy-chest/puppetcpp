@@ -417,6 +417,9 @@ namespace puppet { namespace compiler {
             LOG(debug, "parsed AST for '%1%':\n-----\n%2%\n-----", path, *tree);
             _parsed.emplace(path, tree);
 
+            // Validate the AST
+            tree->validate();
+
             // Scan the tree for definitions
             compiler::scanner scanner{ _registry, _dispatcher };
             scanner.scan(*tree);

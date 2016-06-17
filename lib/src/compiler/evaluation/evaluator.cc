@@ -1244,32 +1244,12 @@ namespace puppet { namespace compiler { namespace evaluation {
             scoped_stack_frame{ _context, stack_frame{ _name, scope } } :
             scoped_stack_frame{ _context, stack_frame{ _statement, scope } };
 
-        bool has_optional_parameters = false;
         for (size_t i = 0; i < _parameters.size(); ++i) {
             auto const& parameter = _parameters[i];
             auto const& name = parameter.variable.name;
 
-            // Check for "captures rest"
             values::value value;
             if (parameter.captures) {
-                if (i != (_parameters.size() - 1)) {
-                    throw evaluation_exception(
-                        (boost::format("parameter $%1% \"captures rest\" but is not the last parameter.") %
-                         name
-                        ).str(),
-                        parameter.context(),
-                        _context.backtrace()
-                    );
-                }
-                if (parameter.type) {
-                    throw evaluation_exception(
-                        (boost::format("parameter $%1% \"captures rest\" and cannot have a type specifier.") %
-                         name
-                        ).str(),
-                        parameter.type->context(),
-                        _context.backtrace()
-                    );
-                }
                 values::array captured;
                 if (i < arguments.size()) {
                     captured.reserve(arguments.size() - i);
@@ -1278,20 +1258,12 @@ namespace puppet { namespace compiler { namespace evaluation {
                     captured.emplace_back(evaluate_default_value(_context, *parameter.default_value));
                 }
                 value = rvalue_cast(captured);
+
+                // Verify the value matches the parameter type
+                validate_parameter_type(_context, parameter, value, [&](std::string message) {
+                    throw argument_exception(rvalue_cast(message), i);
+                });
             } else {
-                // Check for a required parameter after an optional parameter
-                if (has_optional_parameters && !parameter.default_value) {
-                    throw evaluation_exception(
-                        (boost::format("parameter $%1% is required but appears after optional parameters.") %
-                         name
-                        ).str(),
-                        parameter.context(),
-                        _context.backtrace()
-                    );
-                }
-
-                has_optional_parameters = static_cast<bool>(parameter.default_value);
-
                 // Check if the argument was given
                 if (i < arguments.size()) {
                     value = rvalue_cast(arguments[i]);
@@ -1406,10 +1378,10 @@ namespace puppet { namespace compiler { namespace evaluation {
                 );
             }
 
-            // Check for illegal "captures rest"
+            // Check for illegal capture parameter
             if (parameter->captures) {
                 throw evaluation_exception(
-                    (boost::format("parameter $%1% cannot \"captures rest\".") %
+                    (boost::format("parameter $%1% cannot be a capture parameter.") %
                      *name
                     ).str(),
                     parameter->variable,

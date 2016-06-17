@@ -29,6 +29,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
         void collect(evaluation::context& context) override;
 
      private:
+        std::shared_ptr<ast::syntax_tree> _tree;
         ast::collector_expression const& _expression;
         std::shared_ptr<scope> _scope;
         size_t _index;

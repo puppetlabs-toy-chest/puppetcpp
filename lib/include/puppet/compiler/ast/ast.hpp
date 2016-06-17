@@ -592,6 +592,18 @@ namespace puppet { namespace compiler { namespace ast {
         std::vector<postfix_operation> operations;
 
         /**
+         * Gets the context of the postfix expression.
+         * @return Returns the context of the postfix expression.
+         */
+        ast::context context() const;
+
+        /**
+         * Validates the postfix expression as a type specification.
+         * Throws parse exceptions if validation fails.
+         */
+        void validate_type() const;
+
+        /**
          * Determines if the expression is productive (i.e. has side effect).
          * @return Returns true if the expression is productive or false if not.
          */
@@ -608,12 +620,6 @@ namespace puppet { namespace compiler { namespace ast {
          * @return Returns true if the expression is default or false if not.
          */
         bool is_default() const;
-
-        /**
-         * Gets the context of the postfix expression.
-         * @return Returns the context of the postfix expression.
-         */
-        ast::context context() const;
     };
 
     /**
@@ -2826,6 +2832,13 @@ namespace puppet { namespace compiler { namespace ast {
          * @param include_path Specifies whether or not the serialized data should include the parsed file's path.
          */
         void write(ast::format format, std::ostream& stream, bool include_path = true) const;
+
+        /**
+         * Validates the AST.
+         * Throws parse exceptions if validation fails.
+         * @param epp True if the AST is from an EPP parse or false if not.
+         */
+        void validate(bool epp = false) const;
 
         /**
          * Creates a syntax tree.

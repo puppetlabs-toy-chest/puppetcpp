@@ -1,0 +1,3 @@
+Error: func_bad_optional.pp:1:25: parameter $y is required but appears after optional parameters.
+  function test($x = foo, $y)
+                          ^~

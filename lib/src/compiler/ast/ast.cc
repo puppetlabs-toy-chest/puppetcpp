@@ -1,4 +1,6 @@
 #include <puppet/compiler/ast/ast.hpp>
+#include <puppet/compiler/ast/visitors/type.hpp>
+#include <puppet/compiler/ast/visitors/validation.hpp>
 #include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/utility/regex.hpp>
 #include <puppet/cast.hpp>
@@ -359,6 +361,12 @@ namespace puppet { namespace compiler { namespace ast {
             context.end = operations.back().context().end;
         }
         return context;
+    }
+
+    void postfix_expression::validate_type() const
+    {
+        visitors::type visitor;
+        visitor.visit(*this);
     }
 
     bool postfix_expression::is_productive() const
@@ -2417,6 +2425,12 @@ namespace puppet { namespace compiler { namespace ast {
             default:
                 throw runtime_error("unexpected syntax tree format.");
         }
+    }
+
+    void syntax_tree::validate(bool epp) const
+    {
+        visitors::validation visitor;
+        visitor.visit(*this, epp);
     }
 
     shared_ptr<syntax_tree> syntax_tree::create(std::string path, compiler::module const* module)

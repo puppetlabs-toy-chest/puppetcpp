@@ -13,6 +13,9 @@ include_directories(
 
 # Set common sources
 set(PUPPET_COMMON_SOURCES
+    src/compiler/ast/visitors/definition.cc
+    src/compiler/ast/visitors/type.cc
+    src/compiler/ast/visitors/validation.cc
     src/compiler/ast/ast.cc
     src/compiler/evaluation/collectors/collector.cc
     src/compiler/evaluation/collectors/list_collector.cc
@@ -87,7 +90,6 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/lexer/position.cc
     src/compiler/lexer/tokens.cc
     src/compiler/parser/parser.cc
-    src/compiler/validation/type_validator.cc
     src/compiler/attribute.cc
     src/compiler/catalog.cc
     src/compiler/environment.cc

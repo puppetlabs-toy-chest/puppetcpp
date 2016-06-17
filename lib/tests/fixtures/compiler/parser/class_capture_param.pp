@@ -1,0 +1,3 @@
+class bad(*$params)
+{
+}

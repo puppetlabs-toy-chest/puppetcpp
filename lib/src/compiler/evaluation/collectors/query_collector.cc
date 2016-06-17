@@ -8,6 +8,7 @@ using namespace std;
 namespace puppet { namespace compiler { namespace evaluation { namespace collectors {
 
     query_collector::query_collector(ast::collector_expression const& expression, shared_ptr<evaluation::scope> scope) :
+        _tree(expression.type.tree->shared_from_this()),
         _expression(expression),
         _scope(rvalue_cast(scope)),
         _index(0)
