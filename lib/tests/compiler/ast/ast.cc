@@ -950,9 +950,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -968,9 +965,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should be default") {
                 REQUIRE(node.is_default());
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -988,9 +982,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1006,9 +997,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1026,9 +1014,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1044,9 +1029,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1064,9 +1046,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1082,9 +1061,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1102,9 +1078,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1121,9 +1094,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1131,7 +1101,7 @@ SCENARIO("basic expression", "[ast]")
                 REQUIRE(lexical_cast<std::string>(node) == "Foo::Bar");
             }
         }
-        GIVEN("a nested unproductive expression") {
+        GIVEN("a nested ineffective expression") {
             auto subnode = create_nested(create_expression(basic(create_variable("foo"))));
             node = subnode;
             THEN("the same context should be returned") {
@@ -1140,9 +1110,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1150,12 +1117,9 @@ SCENARIO("basic expression", "[ast]")
                 REQUIRE(lexical_cast<std::string>(node) == "($foo)");
             }
         }
-        GIVEN("a nested productive expression") {
+        GIVEN("a nested effective expression") {
             auto subnode = create_nested(create_expression(basic(create_function_call("notice"))));
             node = subnode;
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "(notice())");
             }
@@ -1170,22 +1134,16 @@ SCENARIO("basic expression", "[ast]")
                 REQUIRE(lexical_cast<std::string>(node) == "(default)");
             }
         }
-        GIVEN("a nested unproductive unary expression") {
+        GIVEN("a nested ineffective unary expression") {
             auto subnode = create_unary(unary_operator::logical_not, create_postfix(basic(create_variable("foo"))));
             node = subnode;
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "!$foo");
             }
         }
-        GIVEN("a nested productive unary expression") {
+        GIVEN("a nested effective unary expression") {
             auto subnode = create_unary(unary_operator::negate, create_postfix(basic(create_function_call("notice"))));
             node = subnode;
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "-notice()");
             }
@@ -1202,9 +1160,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1225,9 +1180,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1254,9 +1206,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1280,9 +1229,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1303,9 +1249,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1321,9 +1264,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1355,9 +1295,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1373,9 +1310,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1405,9 +1339,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1428,9 +1359,6 @@ SCENARIO("basic expression", "[ast]")
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
             }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1446,9 +1374,6 @@ SCENARIO("basic expression", "[ast]")
             }
             THEN("it should not be default") {
                 REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
             }
             THEN("it should not be a splat expression") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1518,21 +1443,15 @@ SCENARIO("postfix operation", "[ast]")
 SCENARIO("postfix expression", "[ast]")
 {
     postfix_expression node;
-    WHEN("the basic expression is productive") {
+    WHEN("the basic expression is effective") {
         node = create_postfix(basic(create_function_call("foo")));
-        THEN("the postfix expression is productive") {
-            REQUIRE(node.is_productive());
-        }
         THEN("it should output the expected format") {
             REQUIRE(lexical_cast<std::string>(node) == "foo()");
         }
     }
-    WHEN("the basic expression is not productive") {
+    WHEN("the basic expression is ineffective") {
         node = create_postfix(basic(create_variable("foo")));
         AND_WHEN("there is no method call") {
-            THEN("the postfix expression is not productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "$foo");
             }
@@ -1541,9 +1460,6 @@ SCENARIO("postfix expression", "[ast]")
             node.operations.emplace_back(
                 postfix_operation(create_method_call("bar"))
             );
-            THEN("the postfix expression is productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "$foo.bar()");
             }
@@ -1688,57 +1604,27 @@ SCENARIO("binary operator right associativity", "[ast]")
     REQUIRE_FALSE(is_right_associative(static_cast<binary_operator>(numeric_limits<size_t>::max())));
 }
 
-SCENARIO("binary operator productivity", "[ast]")
-{
-    REQUIRE_FALSE(is_productive(binary_operator::in));
-    REQUIRE_FALSE(is_productive(binary_operator::match));
-    REQUIRE_FALSE(is_productive(binary_operator::not_match));
-    REQUIRE_FALSE(is_productive(binary_operator::multiply));
-    REQUIRE_FALSE(is_productive(binary_operator::divide));
-    REQUIRE_FALSE(is_productive(binary_operator::modulo));
-    REQUIRE_FALSE(is_productive(binary_operator::plus));
-    REQUIRE_FALSE(is_productive(binary_operator::minus));
-    REQUIRE_FALSE(is_productive(binary_operator::left_shift));
-    REQUIRE_FALSE(is_productive(binary_operator::right_shift));
-    REQUIRE_FALSE(is_productive(binary_operator::equals));
-    REQUIRE_FALSE(is_productive(binary_operator::not_equals));
-    REQUIRE_FALSE(is_productive(binary_operator::greater_than));
-    REQUIRE_FALSE(is_productive(binary_operator::greater_equals));
-    REQUIRE_FALSE(is_productive(binary_operator::less_than));
-    REQUIRE_FALSE(is_productive(binary_operator::less_equals));
-    REQUIRE_FALSE(is_productive(binary_operator::logical_and));
-    REQUIRE_FALSE(is_productive(binary_operator::logical_or));
-    REQUIRE(is_productive(binary_operator::assignment));
-    REQUIRE_FALSE(is_productive(static_cast<binary_operator>(numeric_limits<size_t>::max())));
-}
-
 SCENARIO("expression", "[ast]")
 {
     expression node;
     WHEN("there are no binary operations") {
-        AND_WHEN("the postfix expression is productive") {
+        AND_WHEN("the postfix expression is effective") {
             node = create_expression(
                 basic(create_function_call("foo"))
             );
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "foo()");
             }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
             THEN("it should not be splat") {
                 REQUIRE_FALSE(node.is_splat());
             }
         }
-        AND_WHEN("the postfix expression is not productive") {
+        AND_WHEN("the postfix expression is ineffective") {
             node = create_expression(
                 basic(create_number(1234))
             );
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "1234");
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should not be splat") {
                 REQUIRE_FALSE(node.is_splat());
@@ -1750,9 +1636,6 @@ SCENARIO("expression", "[ast]")
             );
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "*[]");
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should be splat") {
                 REQUIRE(node.is_splat());
@@ -1774,11 +1657,8 @@ SCENARIO("expression", "[ast]")
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "$foo = 1");
             }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
         }
-        AND_WHEN("the postfix expression is not productive") {
+        AND_WHEN("the postfix expression is ineffective") {
             node = create_expression(
                 create_postfix(basic(create_number(1))),
                 {
@@ -1791,9 +1671,6 @@ SCENARIO("expression", "[ast]")
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "1 + 1");
             }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
-            }
             THEN("it should not be splat") {
                 REQUIRE_FALSE(node.is_splat());
             }
@@ -1804,9 +1681,6 @@ SCENARIO("expression", "[ast]")
             );
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "*[]");
-            }
-            THEN("it should not be productive") {
-                REQUIRE_FALSE(node.is_productive());
             }
             THEN("it should be splat") {
                 REQUIRE(node.is_splat());

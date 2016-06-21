@@ -36,16 +36,11 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
 
         // Evaluate the statements
-        for (auto& statement : tree.statements) {
-            evaluate(statement, true);
-        }
+        evaluate_body(tree.statements);
     }
 
-    value evaluator::evaluate(ast::statement const& statement, bool productive)
+    value evaluator::evaluate(ast::statement const& statement)
     {
-        if (productive && !statement.is_productive()) {
-            throw evaluation_exception("unproductive statements may only appear last in a block.", statement.context(), _context.backtrace());
-        }
         return boost::apply_visitor(*this, statement);
     }
 
@@ -763,13 +758,14 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::evaluate_body(vector<statement> const& body)
     {
-        value result;
-        for (size_t i = 0; i < body.size(); ++i) {
-            auto& statement = body[i];
-            // The last statement in the block is allowed to be unproductive (i.e. the return value)
-            result = evaluate(statement, i < (body.size() - 1));
+        if (body.empty()) {
+            return values::undef{};
         }
-        return result;
+
+        for (size_t i = 0; i < body.size() - 1; ++i) {
+            evaluate(body[i]);
+        }
+        return evaluate(body.back());
     }
 
     resource_body const* evaluator::find_default_body(resource_declaration_expression const& expression)
@@ -1187,18 +1183,15 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     static values::value evaluate_body(evaluation::context& context, vector<statement> const& body)
     {
-        evaluation::evaluator evaluator { context };
-
-        // Evaluate the body
-        values::value result;
-
-        for (size_t i = 0; i < body.size(); ++i) {
-            auto& statement = body[i];
-
-            // The last statement in the block is allowed to be unproductive (i.e. the return value)
-            result = evaluator.evaluate(statement, i < (body.size() - 1));
+        if (body.empty()) {
+            return values::undef{};
         }
-        return result;
+
+        evaluation::evaluator evaluator{ context };
+        for (size_t i = 0; i < body.size() - 1; ++i) {
+            evaluator.evaluate(body[i]);
+        }
+        return evaluator.evaluate(body.back());
     }
 
     function_evaluator::function_evaluator(evaluation::context& context, function_statement const& statement) :

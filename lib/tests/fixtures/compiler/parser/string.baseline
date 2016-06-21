@@ -1,35 +1,79 @@
 path: string.pp
 statements:
-  - kind: string
-    begin:
-      offset: 0
-      line: 1
-    end:
-      offset: 13
-      line: 1
-    value: hello world
-  - kind: string
-    begin:
-      offset: 15
-      line: 3
-    end:
-      offset: 27
-      line: 3
-    value: "foo\tbar\n"
-  - kind: string
-    begin:
-      offset: 29
-      line: 5
-    end:
-      offset: 38
-      line: 5
-    value: foo bar
-  - kind: string
-    begin:
-      offset: 51
-      line: 8
-    end:
-      offset: 68
-      line: 9
-    value: "  another string"
-    margin: 2
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 6
+        line: 1
+      value: notice
+    arguments:
+      - kind: string
+        begin:
+          offset: 7
+          line: 1
+        end:
+          offset: 20
+          line: 1
+        value: hello world
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 22
+        line: 3
+      end:
+        offset: 28
+        line: 3
+      value: notice
+    arguments:
+      - kind: string
+        begin:
+          offset: 29
+          line: 3
+        end:
+          offset: 41
+          line: 3
+        value: "foo\tbar\n"
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 43
+        line: 5
+      end:
+        offset: 49
+        line: 5
+      value: notice
+    arguments:
+      - kind: string
+        begin:
+          offset: 50
+          line: 5
+        end:
+          offset: 59
+          line: 5
+        value: foo bar
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 61
+        line: 7
+      end:
+        offset: 67
+        line: 7
+      value: notice
+    arguments:
+      - kind: string
+        begin:
+          offset: 79
+          line: 8
+        end:
+          offset: 96
+          line: 9
+        value: "  another string"
+        margin: 2

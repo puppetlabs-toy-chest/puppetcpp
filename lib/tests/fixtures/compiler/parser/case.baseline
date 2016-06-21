@@ -1,182 +1,204 @@
 path: case.pp
 statements:
-  - kind: case expression
-    begin:
-      offset: 0
-      line: 1
-    end:
-      offset: 319
-      line: 6
-    conditional:
-      kind: variable
+  - kind: function call statement
+    function:
+      kind: name
       begin:
-        offset: 5
+        offset: 0
         line: 1
       end:
-        offset: 21
+        offset: 6
         line: 1
-      name: operatingsystem
-    propositions:
-      - options:
-          - kind: string
-            begin:
-              offset: 26
-              line: 2
-            end:
-              offset: 35
-              line: 2
-            value: Solaris
-        body:
-          - kind: function call statement
-            function:
-              kind: name
-              begin:
-                offset: 48
-                line: 2
-              end:
-                offset: 55
-                line: 2
-              value: include
-            arguments:
-              - kind: name
+      value: notice
+    arguments:
+      - kind: case expression
+        begin:
+          offset: 7
+          line: 1
+        end:
+          offset: 326
+          line: 6
+        conditional:
+          kind: variable
+          begin:
+            offset: 12
+            line: 1
+          end:
+            offset: 28
+            line: 1
+          name: operatingsystem
+        propositions:
+          - options:
+              - kind: string
                 begin:
-                  offset: 56
+                  offset: 33
                   line: 2
                 end:
-                  offset: 69
+                  offset: 42
                   line: 2
-                value: role::solaris
-        end:
-          offset: 71
-          line: 2
-      - options:
-          - kind: string
-            begin:
-              offset: 100
-              line: 3
+                value: Solaris
+            body:
+              - kind: function call statement
+                function:
+                  kind: name
+                  begin:
+                    offset: 55
+                    line: 2
+                  end:
+                    offset: 62
+                    line: 2
+                  value: include
+                arguments:
+                  - kind: name
+                    begin:
+                      offset: 63
+                      line: 2
+                    end:
+                      offset: 76
+                      line: 2
+                    value: role::solaris
             end:
-              offset: 108
-              line: 3
-            value: RedHat
-          - kind: string
-            begin:
-              offset: 110
-              line: 3
-            end:
-              offset: 118
-              line: 3
-            value: CentOS
-        body:
-          - kind: function call statement
-            function:
-              kind: name
-              begin:
-                offset: 122
-                line: 3
-              end:
-                offset: 129
-                line: 3
-              value: include
-            arguments:
-              - kind: name
+              offset: 78
+              line: 2
+          - options:
+              - kind: string
                 begin:
-                  offset: 130
+                  offset: 107
                   line: 3
                 end:
-                  offset: 142
+                  offset: 115
                   line: 3
-                value: role::redhat
-        end:
-          offset: 145
-          line: 3
-      - options:
-          - kind: regex
-            begin:
-              offset: 173
-              line: 4
-            end:
-              offset: 192
-              line: 4
-            value: ^(Debian|Ubuntu)$
-        body:
-          - kind: function call statement
-            function:
-              kind: name
-              begin:
-                offset: 195
-                line: 4
-              end:
-                offset: 202
-                line: 4
-              value: include
-            arguments:
-              - kind: name
+                value: RedHat
+              - kind: string
                 begin:
-                  offset: 203
+                  offset: 117
+                  line: 3
+                end:
+                  offset: 125
+                  line: 3
+                value: CentOS
+            body:
+              - kind: function call statement
+                function:
+                  kind: name
+                  begin:
+                    offset: 129
+                    line: 3
+                  end:
+                    offset: 136
+                    line: 3
+                  value: include
+                arguments:
+                  - kind: name
+                    begin:
+                      offset: 137
+                      line: 3
+                    end:
+                      offset: 149
+                      line: 3
+                    value: role::redhat
+            end:
+              offset: 152
+              line: 3
+          - options:
+              - kind: regex
+                begin:
+                  offset: 180
                   line: 4
                 end:
-                  offset: 215
+                  offset: 199
                   line: 4
-                value: role::debian
-        end:
-          offset: 218
-          line: 4
-      - options:
-          - kind: default
-            begin:
-              offset: 246
-              line: 5
+                value: ^(Debian|Ubuntu)$
+            body:
+              - kind: function call statement
+                function:
+                  kind: name
+                  begin:
+                    offset: 202
+                    line: 4
+                  end:
+                    offset: 209
+                    line: 4
+                  value: include
+                arguments:
+                  - kind: name
+                    begin:
+                      offset: 210
+                      line: 4
+                    end:
+                      offset: 222
+                      line: 4
+                    value: role::debian
             end:
-              offset: 253
-              line: 5
-        body:
-          - kind: function call statement
-            function:
-              kind: name
-              begin:
-                offset: 268
-                line: 5
-              end:
-                offset: 275
-                line: 5
-              value: include
-            arguments:
-              - kind: name
+              offset: 225
+              line: 4
+          - options:
+              - kind: default
                 begin:
-                  offset: 276
+                  offset: 253
                   line: 5
                 end:
-                  offset: 289
+                  offset: 260
                   line: 5
-                value: role::generic
-        end:
-          offset: 291
-          line: 5
-  - kind: case expression
-    begin:
-      offset: 321
-      line: 8
-    end:
-      offset: 350
-      line: 10
-    conditional:
-      kind: boolean
+            body:
+              - kind: function call statement
+                function:
+                  kind: name
+                  begin:
+                    offset: 275
+                    line: 5
+                  end:
+                    offset: 282
+                    line: 5
+                  value: include
+                arguments:
+                  - kind: name
+                    begin:
+                      offset: 283
+                      line: 5
+                    end:
+                      offset: 296
+                      line: 5
+                    value: role::generic
+            end:
+              offset: 298
+              line: 5
+  - kind: function call statement
+    function:
+      kind: name
       begin:
-        offset: 326
+        offset: 328
         line: 8
       end:
-        offset: 330
+        offset: 334
         line: 8
-      value: true
-    propositions:
-      - options:
-          - kind: default
-            begin:
-              offset: 337
-              line: 9
-            end:
-              offset: 344
-              line: 9
+      value: notice
+    arguments:
+      - kind: case expression
+        begin:
+          offset: 335
+          line: 8
         end:
-          offset: 348
-          line: 9
+          offset: 364
+          line: 10
+        conditional:
+          kind: boolean
+          begin:
+            offset: 340
+            line: 8
+          end:
+            offset: 344
+            line: 8
+          value: true
+        propositions:
+          - options:
+              - kind: default
+                begin:
+                  offset: 351
+                  line: 9
+                end:
+                  offset: 358
+                  line: 9
+            end:
+              offset: 362
+              line: 9

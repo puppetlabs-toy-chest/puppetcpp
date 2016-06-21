@@ -287,32 +287,6 @@ namespace puppet { namespace compiler { namespace ast {
         return boost::apply_visitor(context_visitor(), *this);
     }
 
-    bool basic_expression::is_productive() const
-    {
-        // Check for nested expression
-        if (auto ptr = boost::get<x3::forward_ast<nested_expression>>(this)) {
-            return ptr->get().expression.is_productive();
-        }
-
-        // Check for unary expression
-        if (auto ptr = boost::get<x3::forward_ast<unary_expression>>(this)) {
-            return ptr->get().operand.is_productive();
-        }
-
-        // All control flow, catalog expressions, functions, and EPP expressions are considered to be productive
-        if (boost::get<x3::forward_ast<case_expression>>(this) ||
-            boost::get<x3::forward_ast<if_expression>>(this) ||
-            boost::get<x3::forward_ast<unless_expression>>(this) ||
-            boost::get<x3::forward_ast<function_call_expression>>(this) ||
-            boost::get<x3::forward_ast<new_expression>>(this) ||
-            boost::get<x3::forward_ast<epp_render_expression>>(this) ||
-            boost::get<x3::forward_ast<epp_render_block>>(this) ||
-            boost::get<x3::forward_ast<epp_render_string>>(this)) {
-            return true;
-        }
-        return false;
-    }
-
     bool basic_expression::is_splat() const
     {
         // Try for nested expression
@@ -367,21 +341,6 @@ namespace puppet { namespace compiler { namespace ast {
     {
         visitors::type visitor;
         visitor.visit(*this);
-    }
-
-    bool postfix_expression::is_productive() const
-    {
-        if (operand.is_productive()) {
-            return true;
-        }
-
-        // Postfix method calls are productive
-        for (auto const& operation : operations) {
-            if (boost::get<x3::forward_ast<method_call_expression>>(&operation)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     bool postfix_expression::is_splat() const
@@ -530,11 +489,6 @@ namespace puppet { namespace compiler { namespace ast {
         return op == binary_operator::assignment;
     }
 
-    bool is_productive(binary_operator op)
-    {
-        return op == binary_operator::assignment;
-    }
-
     size_t hash_value(binary_operator op)
     {
         using type = typename underlying_type<binary_operator>::type;
@@ -562,42 +516,6 @@ namespace puppet { namespace compiler { namespace ast {
             context.end = operations.back().context().end;
         }
         return context;
-    }
-
-    static void climb(
-        bool& productive,
-        unsigned int min_precedence,
-        vector<binary_operation>::const_iterator& begin,
-        vector<binary_operation>::const_iterator const& end)
-    {
-        // Climb the binary operations based on operator precedence
-        unsigned int current = 0;
-        while (begin != end && (current = precedence(begin->operator_)) >= min_precedence)
-        {
-            auto const& operation = *begin;
-            ++begin;
-
-            // Recurse and climb the expression
-            unsigned int next = current + (is_right_associative(operation.operator_) ? 0 : 1);
-            climb(productive, next, begin, end);
-
-            // Check for productive operator
-            productive = is_productive(operation.operator_);
-        }
-    }
-
-    bool expression::is_productive() const
-    {
-        // If it's not a binary expression, check the LHS operand
-        if (operations.empty()) {
-            return operand.is_productive();
-        }
-
-        // Climb the binary operations
-        bool productive = false;
-        auto begin = operations.begin();
-        climb(productive, 0, begin, operations.end());
-        return productive;
     }
 
     bool expression::is_splat() const
@@ -634,16 +552,10 @@ namespace puppet { namespace compiler { namespace ast {
         return boost::apply_visitor(context_visitor(), *this);
     }
 
-    bool statement::is_productive() const
+    void statement::validate(bool effective) const
     {
-        if (auto relationship = boost::get<boost::spirit::x3::forward_ast<relationship_statement>>(this)) {
-            if (!relationship->get().operations.empty()) {
-                return true;
-            }
-            return relationship->get().operand.is_productive();
-        }
-        // All other statements are productive
-        return true;
+        visitors::validation visitor;
+        visitor.visit(*this, effective);
     }
 
     ostream& operator<<(ostream& os, statement const& node)
@@ -1561,15 +1473,6 @@ namespace puppet { namespace compiler { namespace ast {
     ast::context relationship_expression::context() const
     {
         return boost::apply_visitor(context_visitor(), *this);
-    }
-
-    bool relationship_expression::is_productive() const
-    {
-        if (auto expression = boost::get<ast::expression>(this)) {
-            return expression->is_productive();
-        }
-        // All other expressions are productive
-        return true;
     }
 
     ostream& operator<<(ostream& os, relationship_expression const& node)

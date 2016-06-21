@@ -126,7 +126,7 @@ statements:
       offset: 338
       line: 13
     end:
-      offset: 351
+      offset: 364
       line: 15
     conditional:
       kind: boolean
@@ -137,66 +137,102 @@ statements:
         offset: 346
         line: 13
       value: false
+    body:
+      - kind: function call statement
+        function:
+          kind: name
+          begin:
+            offset: 353
+            line: 14
+          end:
+            offset: 359
+            line: 14
+          value: notice
+        arguments:
+          - kind: name
+            begin:
+              offset: 360
+              line: 14
+            end:
+              offset: 362
+              line: 14
+            value: hi
     elsifs:
       - begin:
-          offset: 352
+          offset: 365
           line: 15
         conditional:
           kind: boolean
           begin:
-            offset: 358
+            offset: 371
             line: 15
           end:
-            offset: 362
+            offset: 375
             line: 15
           value: true
         end:
-          offset: 367
+          offset: 380
           line: 17
       - begin:
-          offset: 368
+          offset: 381
           line: 17
         conditional:
           kind: binary expression
           operand:
             kind: boolean
             begin:
-              offset: 374
+              offset: 387
               line: 17
             end:
-              offset: 378
+              offset: 391
               line: 17
             value: true
           operations:
             - operator_position:
-                offset: 379
+                offset: 392
                 line: 17
               operator: and
               operand:
                 kind: boolean
                 begin:
-                  offset: 383
+                  offset: 396
                   line: 17
                 end:
-                  offset: 388
+                  offset: 401
                   line: 17
                 value: false
         end:
-          offset: 393
+          offset: 406
           line: 19
-  - kind: if expression
-    begin:
-      offset: 395
-      line: 21
-    end:
-      offset: 406
-      line: 21
-    conditional:
-      kind: boolean
+  - kind: binary expression
+    operand:
+      kind: variable
       begin:
-        offset: 398
+        offset: 408
         line: 21
       end:
-        offset: 403
+        offset: 410
         line: 21
-      value: false
+      name: a
+    operations:
+      - operator_position:
+          offset: 411
+          line: 21
+        operator: =
+        operand:
+          kind: if expression
+          begin:
+            offset: 413
+            line: 21
+          end:
+            offset: 424
+            line: 21
+          conditional:
+            kind: boolean
+            begin:
+              offset: 416
+              line: 21
+            end:
+              offset: 421
+              line: 21
+            value: false

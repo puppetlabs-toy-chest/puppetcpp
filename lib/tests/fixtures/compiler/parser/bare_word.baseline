@@ -1,26 +1,59 @@
 path: bare_word.pp
 statements:
-  - kind: bare word
-    begin:
-      offset: 0
-      line: 1
-    end:
-      offset: 3
-      line: 1
-    value: a-b
-  - kind: bare word
-    begin:
-      offset: 4
-      line: 2
-    end:
-      offset: 17
-      line: 2
-    value: _foo-bar_-baz
-  - kind: bare word
-    begin:
-      offset: 18
-      line: 3
-    end:
-      offset: 19
-      line: 3
-    value: _
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 6
+        line: 1
+      value: notice
+    arguments:
+      - kind: bare word
+        begin:
+          offset: 7
+          line: 1
+        end:
+          offset: 10
+          line: 1
+        value: a-b
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 11
+        line: 2
+      end:
+        offset: 17
+        line: 2
+      value: notice
+    arguments:
+      - kind: bare word
+        begin:
+          offset: 18
+          line: 2
+        end:
+          offset: 31
+          line: 2
+        value: _foo-bar_-baz
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 32
+        line: 3
+      end:
+        offset: 38
+        line: 3
+      value: notice
+    arguments:
+      - kind: bare word
+        begin:
+          offset: 39
+          line: 3
+        end:
+          offset: 40
+          line: 3
+        value: _

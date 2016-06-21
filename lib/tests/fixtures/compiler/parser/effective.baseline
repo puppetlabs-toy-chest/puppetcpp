@@ -1,0 +1,914 @@
+path: effective.pp
+statements:
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 2
+        line: 1
+      name: a
+    operations:
+      - operator_position:
+          offset: 3
+          line: 1
+        operator: =
+        operand:
+          kind: number
+          begin:
+            offset: 5
+            line: 1
+          end:
+            offset: 6
+            line: 1
+          base: decimal
+          value: 1
+      - operator_position:
+          offset: 7
+          line: 1
+        operator: +
+        operand:
+          kind: number
+          begin:
+            offset: 9
+            line: 1
+          end:
+            offset: 10
+            line: 1
+          base: decimal
+          value: 2
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 11
+        line: 2
+      end:
+        offset: 13
+        line: 2
+      name: b
+    operations:
+      - operator_position:
+          offset: 14
+          line: 2
+        operator: =
+        operand:
+          kind: if expression
+          begin:
+            offset: 16
+            line: 2
+          end:
+            offset: 33
+            line: 2
+          conditional:
+            kind: boolean
+            begin:
+              offset: 19
+              line: 2
+            end:
+              offset: 23
+              line: 2
+            value: true
+          body:
+            - kind: binary expression
+              operand:
+                kind: number
+                begin:
+                  offset: 26
+                  line: 2
+                end:
+                  offset: 27
+                  line: 2
+                base: decimal
+                value: 1
+              operations:
+                - operator_position:
+                    offset: 28
+                    line: 2
+                  operator: +
+                  operand:
+                    kind: number
+                    begin:
+                      offset: 30
+                      line: 2
+                    end:
+                      offset: 31
+                      line: 2
+                    base: decimal
+                    value: 1
+  - kind: postfix expression
+    operand:
+      kind: name
+      begin:
+        offset: 34
+        line: 3
+      end:
+        offset: 37
+        line: 3
+      value: foo
+    operations:
+      - kind: method call expression
+        begin:
+          offset: 37
+          line: 3
+        method:
+          kind: name
+          begin:
+            offset: 38
+            line: 3
+          end:
+            offset: 42
+            line: 3
+          value: each
+        lambda:
+          begin:
+            offset: 43
+            line: 3
+          end:
+            offset: 65
+            line: 5
+          parameters:
+            - variable:
+                kind: variable
+                begin:
+                  offset: 44
+                  line: 3
+                end:
+                  offset: 46
+                  line: 3
+                name: x
+          body:
+            - kind: function call statement
+              function:
+                kind: name
+                begin:
+                  offset: 54
+                  line: 4
+                end:
+                  offset: 60
+                  line: 4
+                value: notice
+              arguments:
+                - kind: variable
+                  begin:
+                    offset: 61
+                    line: 4
+                  end:
+                    offset: 63
+                    line: 4
+                  name: x
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 66
+        line: 6
+      end:
+        offset: 68
+        line: 6
+      name: c
+    operations:
+      - operator_position:
+          offset: 69
+          line: 6
+        operator: =
+        operand:
+          kind: postfix expression
+          operand:
+            kind: name
+            begin:
+              offset: 71
+              line: 6
+            end:
+              offset: 74
+              line: 6
+            value: foo
+          operations:
+            - kind: method call expression
+              begin:
+                offset: 74
+                line: 6
+              method:
+                kind: name
+                begin:
+                  offset: 75
+                  line: 6
+                end:
+                  offset: 79
+                  line: 6
+                value: each
+              lambda:
+                begin:
+                  offset: 80
+                  line: 6
+                end:
+                  offset: 87
+                  line: 6
+                parameters:
+                  - variable:
+                      kind: variable
+                      begin:
+                        offset: 81
+                        line: 6
+                      end:
+                        offset: 83
+                        line: 6
+                      name: x
+            - kind: access expression
+              begin:
+                offset: 87
+                line: 6
+              end:
+                offset: 90
+                line: 6
+              arguments:
+                - kind: number
+                  begin:
+                    offset: 88
+                    line: 6
+                  end:
+                    offset: 89
+                    line: 6
+                  base: decimal
+                  value: 0
+  - kind: if expression
+    begin:
+      offset: 92
+      line: 8
+    end:
+      offset: 127
+      line: 11
+    conditional:
+      kind: boolean
+      begin:
+        offset: 95
+        line: 8
+      end:
+        offset: 99
+        line: 8
+      value: true
+    body:
+      - kind: function call statement
+        function:
+          kind: name
+          begin:
+            offset: 106
+            line: 9
+          end:
+            offset: 112
+            line: 9
+          value: notice
+        arguments:
+          - kind: name
+            begin:
+              offset: 113
+              line: 9
+            end:
+              offset: 115
+              line: 9
+            value: hi
+      - kind: binary expression
+        operand:
+          kind: number
+          begin:
+            offset: 120
+            line: 10
+          end:
+            offset: 121
+            line: 10
+          base: decimal
+          value: 2
+        operations:
+          - operator_position:
+              offset: 122
+              line: 10
+            operator: +
+            operand:
+              kind: number
+              begin:
+                offset: 124
+                line: 10
+              end:
+                offset: 125
+                line: 10
+              base: decimal
+              value: 2
+  - kind: class statement
+    begin:
+      offset: 129
+      line: 13
+    end:
+      offset: 157
+      line: 15
+    name:
+      kind: name
+      begin:
+        offset: 135
+        line: 13
+      end:
+        offset: 138
+        line: 13
+      value: foo
+    body:
+      - kind: binary expression
+        operand:
+          kind: variable
+          begin:
+            offset: 145
+            line: 14
+          end:
+            offset: 147
+            line: 14
+          name: a
+        operations:
+          - operator_position:
+              offset: 148
+              line: 14
+            operator: =
+            operand:
+              kind: number
+              begin:
+                offset: 150
+                line: 14
+              end:
+                offset: 151
+                line: 14
+              base: decimal
+              value: 1
+          - operator_position:
+              offset: 152
+              line: 14
+            operator: +
+            operand:
+              kind: number
+              begin:
+                offset: 154
+                line: 14
+              end:
+                offset: 155
+                line: 14
+              base: decimal
+              value: 1
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 158
+        line: 16
+      end:
+        offset: 165
+        line: 16
+      value: include
+    arguments:
+      - kind: name
+        begin:
+          offset: 166
+          line: 16
+        end:
+          offset: 169
+          line: 16
+        value: foo
+  - kind: defined type statement
+    begin:
+      offset: 171
+      line: 18
+    end:
+      offset: 200
+      line: 20
+    name:
+      kind: name
+      begin:
+        offset: 178
+        line: 18
+      end:
+        offset: 181
+        line: 18
+      value: bar
+    body:
+      - kind: binary expression
+        operand:
+          kind: variable
+          begin:
+            offset: 188
+            line: 19
+          end:
+            offset: 190
+            line: 19
+          name: b
+        operations:
+          - operator_position:
+              offset: 191
+              line: 19
+            operator: =
+            operand:
+              kind: number
+              begin:
+                offset: 193
+                line: 19
+              end:
+                offset: 194
+                line: 19
+              base: decimal
+              value: 2
+          - operator_position:
+              offset: 195
+              line: 19
+            operator: +
+            operand:
+              kind: number
+              begin:
+                offset: 197
+                line: 19
+              end:
+                offset: 198
+                line: 19
+              base: decimal
+              value: 2
+  - kind: resource declaration expression
+    begin:
+      offset: 202
+      line: 22
+    end:
+      offset: 214
+      line: 23
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 202
+        line: 22
+      end:
+        offset: 205
+        line: 22
+      value: bar
+    bodies:
+      - title:
+          kind: name
+          begin:
+            offset: 208
+            line: 22
+          end:
+            offset: 211
+            line: 22
+          value: baz
+  - kind: resource declaration expression
+    begin:
+      offset: 216
+      line: 25
+    end:
+      offset: 232
+      line: 25
+    status: realized
+    type:
+      kind: name
+      begin:
+        offset: 216
+        line: 25
+      end:
+        offset: 220
+        line: 25
+      value: file
+    bodies:
+      - title:
+          kind: string
+          begin:
+            offset: 223
+            line: 25
+          end:
+            offset: 229
+            line: 25
+          value: /tmp
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 234
+        line: 27
+      end:
+        offset: 240
+        line: 27
+      value: notice
+    arguments:
+      - kind: string
+        begin:
+          offset: 241
+          line: 27
+        end:
+          offset: 257
+          line: 27
+        value: statement call
+  - kind: node statement
+    begin:
+      offset: 259
+      line: 29
+    end:
+      offset: 276
+      line: 31
+    hostnames:
+      - default: true
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 278
+        line: 33
+      end:
+        offset: 280
+        line: 33
+      name: z
+    operations:
+      - operator_position:
+          offset: 281
+          line: 33
+        operator: =
+        operand:
+          kind: unary expression
+          operator_position:
+            offset: 283
+            line: 33
+          operator: "-"
+          operand:
+            kind: nested expression
+            begin:
+              offset: 284
+              line: 33
+            end:
+              offset: 292
+              line: 33
+            expression:
+              kind: binary expression
+              operand:
+                kind: variable
+                begin:
+                  offset: 285
+                  line: 33
+                end:
+                  offset: 287
+                  line: 33
+                name: y
+              operations:
+                - operator_position:
+                    offset: 288
+                    line: 33
+                  operator: =
+                  operand:
+                    kind: number
+                    begin:
+                      offset: 290
+                      line: 33
+                    end:
+                      offset: 291
+                      line: 33
+                    base: decimal
+                    value: 5
+  - kind: function statement
+    begin:
+      offset: 294
+      line: 35
+    end:
+      offset: 321
+      line: 37
+    name:
+      kind: name
+      begin:
+        offset: 303
+        line: 35
+      end:
+        offset: 306
+        line: 35
+      value: foo
+    body:
+      - kind: binary expression
+        operand:
+          kind: number
+          begin:
+            offset: 313
+            line: 36
+          end:
+            offset: 315
+            line: 36
+          base: decimal
+          value: 10
+        operations:
+          - operator_position:
+              offset: 316
+              line: 36
+            operator: "-"
+            operand:
+              kind: number
+              begin:
+                offset: 318
+                line: 36
+              end:
+                offset: 319
+                line: 36
+              base: decimal
+              value: 5
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 323
+        line: 39
+      end:
+        offset: 329
+        line: 39
+      value: notice
+    arguments:
+      - kind: function call expression
+        function:
+          kind: name
+          begin:
+            offset: 330
+            line: 39
+          end:
+            offset: 333
+            line: 39
+          value: foo
+        end:
+          offset: 335
+          line: 39
+  - kind: postfix expression
+    operand:
+      kind: type
+      begin:
+        offset: 337
+        line: 41
+      end:
+        offset: 344
+        line: 41
+      name: Integer
+    operations:
+      - kind: method call expression
+        begin:
+          offset: 344
+          line: 41
+        method:
+          kind: name
+          begin:
+            offset: 345
+            line: 41
+          end:
+            offset: 348
+            line: 41
+          value: new
+        arguments:
+          - kind: string
+            begin:
+              offset: 349
+              line: 41
+            end:
+              offset: 352
+              line: 41
+            value: 5
+        end:
+          offset: 353
+          line: 41
+  - kind: resource defaults expression
+    begin:
+      offset: 355
+      line: 43
+    end:
+      offset: 378
+      line: 45
+    type:
+      kind: type
+      begin:
+        offset: 355
+        line: 43
+      end:
+        offset: 359
+        line: 43
+      name: File
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 366
+            line: 44
+          end:
+            offset: 369
+            line: 44
+          value: foo
+        operator_position:
+          offset: 370
+          line: 44
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 373
+            line: 44
+          end:
+            offset: 376
+            line: 44
+          value: bar
+  - kind: resource override expression
+    begin:
+      offset: 380
+      line: 47
+    end:
+      offset: 411
+      line: 49
+    reference:
+      kind: postfix expression
+      operand:
+        kind: type
+        begin:
+          offset: 380
+          line: 47
+        end:
+          offset: 384
+          line: 47
+        name: File
+      operations:
+        - kind: access expression
+          begin:
+            offset: 384
+            line: 47
+          end:
+            offset: 392
+            line: 47
+          arguments:
+            - kind: string
+              begin:
+                offset: 385
+                line: 47
+              end:
+                offset: 391
+                line: 47
+              value: /tmp
+    operations:
+      - name:
+          kind: name
+          begin:
+            offset: 399
+            line: 48
+          end:
+            offset: 402
+            line: 48
+          value: baz
+        operator_position:
+          offset: 403
+          line: 48
+        operator: =>
+        value:
+          kind: name
+          begin:
+            offset: 406
+            line: 48
+          end:
+            offset: 409
+            line: 48
+          value: jam
+  - kind: produces statement
+    resource:
+      kind: type
+      begin:
+        offset: 413
+        line: 51
+      end:
+        offset: 416
+        line: 51
+      name: Foo
+    capability:
+      kind: type
+      begin:
+        offset: 426
+        line: 51
+      end:
+        offset: 429
+        line: 51
+      name: Bar
+    end:
+      offset: 432
+      line: 51
+  - kind: produces statement
+    resource:
+      kind: type
+      begin:
+        offset: 433
+        line: 52
+      end:
+        offset: 436
+        line: 52
+      name: Bar
+    capability:
+      kind: type
+      begin:
+        offset: 446
+        line: 52
+      end:
+        offset: 449
+        line: 52
+      name: Foo
+    end:
+      offset: 452
+      line: 52
+  - kind: application statement
+    begin:
+      offset: 453
+      line: 53
+    end:
+      offset: 471
+      line: 53
+    name:
+      kind: name
+      begin:
+        offset: 465
+        line: 53
+      end:
+        offset: 468
+        line: 53
+      value: foo
+  - kind: site statement
+    begin:
+      offset: 472
+      line: 54
+    end:
+      offset: 479
+      line: 54
+  - kind: relationship statement
+    operand:
+      kind: postfix expression
+      operand:
+        kind: type
+        begin:
+          offset: 481
+          line: 56
+        end:
+          offset: 485
+          line: 56
+        name: File
+      operations:
+        - kind: access expression
+          begin:
+            offset: 485
+            line: 56
+          end:
+            offset: 493
+            line: 56
+          arguments:
+            - kind: string
+              begin:
+                offset: 486
+                line: 56
+              end:
+                offset: 492
+                line: 56
+              value: /tmp
+    operations:
+      - operator_position:
+          offset: 494
+          line: 56
+        operator: ->
+        operand:
+          kind: collector expression
+          type:
+            kind: type
+            begin:
+              offset: 497
+              line: 56
+            end:
+              offset: 500
+              line: 56
+            name: Baz
+          exported: false
+          end:
+            offset: 504
+            line: 56
+  - kind: collector expression
+    type:
+      kind: type
+      begin:
+        offset: 506
+        line: 58
+      end:
+        offset: 510
+        line: 58
+      name: File
+    exported: false
+    end:
+      offset: 514
+      line: 58
+  - kind: type alias statement
+    alias:
+      kind: type
+      begin:
+        offset: 521
+        line: 60
+      end:
+        offset: 530
+        line: 60
+      name: MyInteger
+    type:
+      kind: type
+      begin:
+        offset: 533
+        line: 60
+      end:
+        offset: 540
+        line: 60
+      name: Integer

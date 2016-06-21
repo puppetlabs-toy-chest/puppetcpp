@@ -1,0 +1,3 @@
+Error: ineffective_in_if.pp:1:1: ineffective statements may only appear as the last statement at top-level or inside functions and conditional expressions.
+  if true {
+  ^~~~~~~~~

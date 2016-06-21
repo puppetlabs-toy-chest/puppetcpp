@@ -40,10 +40,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Evaluates the given statement and returns the resulting runtime value.
          * @param statement The statement to evaluate.
-         * @param productive True if the statement is required to be productive (i.e. has side effect) or false if not.
          * @return Returns the runtime value that is the result of evaluating the statement.
          */
-        runtime::values::value evaluate(ast::statement const& statement, bool productive = false);
+        runtime::values::value evaluate(ast::statement const& statement);
 
         /**
          * Evaluates the given expression and returns the resulting runtime value.

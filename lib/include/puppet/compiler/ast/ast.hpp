@@ -490,12 +490,6 @@ namespace puppet { namespace compiler { namespace ast {
         ast::context context() const;
 
         /**
-         * Determines if the expression is productive (i.e. has side effect).
-         * @return Returns true if the expression is productive or false if not.
-         */
-        bool is_productive() const;
-
-        /**
          * Determines if the expression is a splat.
          * @return Returns true if the expression is a splat or false if not.
          */
@@ -602,12 +596,6 @@ namespace puppet { namespace compiler { namespace ast {
          * Throws parse exceptions if validation fails.
          */
         void validate_type() const;
-
-        /**
-         * Determines if the expression is productive (i.e. has side effect).
-         * @return Returns true if the expression is productive or false if not.
-         */
-        bool is_productive() const;
 
         /**
          * Determines if the expression is a splat.
@@ -736,13 +724,6 @@ namespace puppet { namespace compiler { namespace ast {
     bool is_right_associative(binary_operator op);
 
     /**
-     * Determines if the given binary operator is productive.
-     * @param op The operator to check for being productive.
-     * @return Returns true if the operator is productive or false if not.
-     */
-    bool is_productive(binary_operator op);
-
-    /**
      * Hashes a binary operator.
      * @param op The operator to hash.
      * @return Returns the hash value for the binary operator.
@@ -805,12 +786,6 @@ namespace puppet { namespace compiler { namespace ast {
          * @return Returns the context of the expression.
          */
         ast::context context() const;
-
-        /**
-         * Determines if the expression is productive (i.e. has side effect).
-         * @return Returns true if the expression is productive or false if not.
-         */
-        bool is_productive() const;
 
         /**
          * Determines if the expression is a splat.
@@ -901,10 +876,11 @@ namespace puppet { namespace compiler { namespace ast {
         ast::context context() const;
 
         /**
-         * Determines if the statement is productive (i.e. has side effect).
-         * @return Returns true if the statement is productive or false if not.
+         * Validates the statement.
+         * Throws parse exceptions if validation fails.
+         * @param effective True if the statement is required to be effective or false if not.
          */
-        bool is_productive() const;
+        void validate(bool effective = false) const;
     };
 
     /**
@@ -2646,12 +2622,6 @@ namespace puppet { namespace compiler { namespace ast {
          * @return Returns the context of the relationship expression.
          */
         ast::context context() const;
-
-        /**
-         * Determines if the expression is productive (i.e. has side effect).
-         * @return Returns true if the expression is productive or false if not.
-         */
-        bool is_productive() const;
     };
 
     /**

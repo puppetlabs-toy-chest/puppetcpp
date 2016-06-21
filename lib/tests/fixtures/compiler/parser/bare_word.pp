@@ -1,3 +1,3 @@
-a-b
-_foo-bar_-baz
-_
+notice a-b
+notice _foo-bar_-baz
+notice _

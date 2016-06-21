@@ -23,6 +23,13 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
          */
         void visit(syntax_tree const& tree, bool epp = false);
 
+        /**
+         * Visits the given statement.
+         * @param statement The statement to validate.
+         * @param effective True if the statement is required to be effective or false if not.
+         */
+        void visit(ast::statement const& statement, bool effective = false);
+
      private:
         enum class location
         {
@@ -72,7 +79,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void operator()(selector_expression const& expression);
         void operator()(access_expression const& expression);
         void operator()(method_call_expression const& expression);
-        void operator()(ast::statement const& statement);
+        void operator()(ast::statement const& statement, bool effective);
         void operator()(class_statement const& statement);
         void operator()(defined_type_statement const& statement);
         void operator()(node_statement const& statement);
@@ -95,9 +102,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void operator()(attribute_query const& expression);
 
         bool is_class_name_valid(std::string const& name) const;
-        void validate_parameters(std::vector<parameter> const& parameters, bool is_resource = false, bool allow_capture = true);
+        void validate_parameters(std::vector<parameter> const& parameters, bool is_resource = false, bool pass_by_hash = false);
         void validate_parameter_name(parameter const& parameter, bool is_resource_parameter) const;
         location current_location() const;
+        void validate_body(std::vector<statement> const& body, bool has_return_value);
         void validate_assignment_operand(postfix_expression const& operand);
         void validate_assignment_operand(ast::array const& operand);
         void validate_assignment_operand(variable const& operand);

@@ -11,11 +11,11 @@ else {
 }
 
 if false {
-
+    notice hi
 } elsif true {
 
 } elsif true and false {
 
 }
 
-if false {}
+$a = if false {}

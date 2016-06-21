@@ -1,56 +1,122 @@
 path: number.pp
 statements:
-  - kind: number
-    begin:
-      offset: 0
-      line: 1
-    end:
-      offset: 4
-      line: 1
-    base: decimal
-    value: 1234
-  - kind: number
-    begin:
-      offset: 5
-      line: 2
-    end:
-      offset: 11
-      line: 2
-    base: hexadecimal
-    value: 43981
-  - kind: number
-    begin:
-      offset: 12
-      line: 3
-    end:
-      offset: 19
-      line: 3
-    base: decimal
-    value: 123.123
-  - kind: number
-    begin:
-      offset: 20
-      line: 4
-    end:
-      offset: 24
-      line: 4
-    base: octal
-    value: 511
-  - kind: number
-    begin:
-      offset: 25
-      line: 5
-    end:
-      offset: 30
-      line: 5
-    base: decimal
-    value: 0.123
-  - kind: number
-    begin:
-      offset: 31
-      line: 6
-    end:
-      offset: 37
-      line: 6
-    base: decimal
-    value: 1e+101
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 6
+        line: 1
+      value: notice
+    arguments:
+      - kind: number
+        begin:
+          offset: 7
+          line: 1
+        end:
+          offset: 11
+          line: 1
+        base: decimal
+        value: 1234
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 12
+        line: 2
+      end:
+        offset: 18
+        line: 2
+      value: notice
+    arguments:
+      - kind: number
+        begin:
+          offset: 19
+          line: 2
+        end:
+          offset: 25
+          line: 2
+        base: hexadecimal
+        value: 43981
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 26
+        line: 3
+      end:
+        offset: 32
+        line: 3
+      value: notice
+    arguments:
+      - kind: number
+        begin:
+          offset: 33
+          line: 3
+        end:
+          offset: 40
+          line: 3
+        base: decimal
+        value: 123.123
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 41
+        line: 4
+      end:
+        offset: 47
+        line: 4
+      value: notice
+    arguments:
+      - kind: number
+        begin:
+          offset: 48
+          line: 4
+        end:
+          offset: 52
+          line: 4
+        base: octal
+        value: 511
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 53
+        line: 5
+      end:
+        offset: 59
+        line: 5
+      value: notice
+    arguments:
+      - kind: number
+        begin:
+          offset: 60
+          line: 5
+        end:
+          offset: 65
+          line: 5
+        base: decimal
+        value: 0.123
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 66
+        line: 6
+      end:
+        offset: 72
+        line: 6
+      value: notice
+    arguments:
+      - kind: number
+        begin:
+          offset: 73
+          line: 6
+        end:
+          offset: 79
+          line: 6
+        base: decimal
+        value: 1e+101

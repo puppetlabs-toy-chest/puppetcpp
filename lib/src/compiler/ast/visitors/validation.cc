@@ -1,4 +1,5 @@
 #include <puppet/compiler/ast/visitors/validation.hpp>
+#include <puppet/compiler/ast/visitors/ineffective.hpp>
 #include <puppet/compiler/exceptions.hpp>
 #include <puppet/compiler/resource.hpp>
 #include <puppet/runtime/values/type.hpp>
@@ -16,12 +17,15 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         location_helper helper{*this, epp ? location::epp : location::top };
 
         if (tree.parameters) {
-            validate_parameters(*tree.parameters, false, false);
+            validate_parameters(*tree.parameters, false, true);
         }
 
-        for (auto const& statement : tree.statements) {
-            operator()(statement);
-        }
+        validate_body(tree.statements, true);
+    }
+
+    void validation::visit(ast::statement const& statement, bool effective)
+    {
+        operator()(statement, effective);
     }
 
     void validation::operator()(basic_expression const& expression)
@@ -117,9 +121,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             for (auto const& option : proposition.options) {
                 operator()(option);
             }
-            for (auto const& statement : proposition.body) {
-                operator()(statement);
-            }
+
+            validate_body(proposition.body, true);
         }
     }
 
@@ -129,21 +132,15 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
         operator()(expression.conditional);
 
-        for (auto const& statement : expression.body) {
-            operator()(statement);
-        }
+        validate_body(expression.body, true);
 
         for (auto const& elsif : expression.elsifs) {
             operator()(elsif.conditional);
-            for (auto const& statement : elsif.body) {
-                operator()(statement);
-            }
+            validate_body(elsif.body, true);
         }
 
         if (expression.else_) {
-            for (auto const& statement : expression.else_->body) {
-                operator()(statement);
-            }
+            validate_body(expression.else_->body, true);
         }
     }
 
@@ -153,14 +150,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
         operator()(expression.conditional);
 
-        for (auto const& statement : expression.body) {
-            operator()(statement);
-        }
+        validate_body(expression.body, true);
 
         if (expression.else_) {
-            for (auto const& statement : expression.else_->body) {
-                operator()(statement);
-            }
+            validate_body(expression.else_->body, true);
         }
     }
 
@@ -179,11 +172,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         location_helper helper{*this, location::lambda };
 
         validate_parameters(expression.parameters);
-
-        // Treat a lambda like an anonymous function
-        for (auto const& statement : expression.body) {
-            operator()(statement);
-        }
+        validate_body(expression.body, true);
     }
 
     void validation::operator()(new_expression const& expression)
@@ -271,8 +260,15 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
     }
 
-    void validation::operator()(ast::statement const& statement)
+    void validation::operator()(ast::statement const& statement, bool effective)
     {
+        if (effective) {
+            visitors::ineffective visitor;
+            if (visitor.visit(statement)) {
+                auto context = statement.context();
+                throw parse_exception("ineffective statements may only appear as the last statement at top-level or inside functions and conditional expressions.", context.begin, context.end);
+            }
+        }
         boost::apply_visitor(*this, statement);
     }
 
@@ -289,10 +285,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
         location_helper helper{*this, location::class_ };
 
-        validate_parameters(statement.parameters, true, false);
-        for (auto const& stmt : statement.body) {
-            operator()(stmt);
-        }
+        validate_parameters(statement.parameters, true, true);
+        validate_body(statement.body, false);
     }
 
     void validation::operator()(ast::defined_type_statement const& statement)
@@ -309,10 +303,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
         location_helper helper{*this, location::defined_type };
 
-        validate_parameters(statement.parameters, true, false);
-        for (auto const& stmt : statement.body) {
-            operator()(stmt);
-        }
+        validate_parameters(statement.parameters, true, true);
+        validate_body(statement.body, false);
     }
 
     void validation::operator()(ast::node_statement const& statement)
@@ -337,10 +329,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
 
         location_helper helper{*this, location::node };
-
-        for (auto const& stmt : statement.body) {
-            operator()(stmt);
-        }
+        validate_body(statement.body, false);
     }
 
     void validation::operator()(ast::function_statement const& statement)
@@ -353,9 +342,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         location_helper helper{*this, location::function };
 
         validate_parameters(statement.parameters);
-        for (auto const& stmt : statement.body) {
-            operator()(stmt);
-        }
+        validate_body(statement.body, true);
     }
 
     void validation::operator()(ast::produces_statement const& statement)
@@ -393,10 +380,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
         location_helper helper{*this, location::application };
 
-        validate_parameters(statement.parameters, true, false);
-        for (auto const& stmt : statement.body) {
-            operator()(stmt);
-        }
+        validate_parameters(statement.parameters, true, true);
+        validate_body(statement.body, false);
     }
 
     void validation::operator()(ast::site_statement const& statement)
@@ -407,10 +392,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
 
         location_helper helper{*this, location::site };
-
-        for (auto const& stmt : statement.body) {
-            operator()(stmt);
-        }
+        validate_body(statement.body, false);
     }
 
     void validation::operator()(ast::type_alias_statement const& statement)
@@ -524,7 +506,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
                !(current_location() == location::top && (name == "main" || name == "settings"));
     }
 
-    void validation::validate_parameters(vector<parameter> const& parameters, bool is_resource, bool allow_capture)
+    void validation::validate_parameters(vector<parameter> const& parameters, bool is_resource, bool pass_by_hash)
     {
         utility::indirect_set<std::string> names;
 
@@ -549,6 +531,15 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             }
 
             if (parameter.captures) {
+                if (pass_by_hash) {
+                    throw parse_exception(
+                        (boost::format("parameter %1% cannot be a capture parameter.") %
+                         parameter.variable
+                        ).str(),
+                        parameter.variable.begin,
+                        parameter.variable.end
+                    );
+                }
                 if (i != (parameters.size() - 1)) {
                     throw parse_exception(
                         (boost::format("parameter %1% is a capture parameter but is not the last parameter.") %
@@ -558,17 +549,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
                         parameter.variable.end
                     );
                 }
-                if (!allow_capture) {
-                    throw parse_exception(
-                        (boost::format("parameter %1% cannot be a capture parameter.") %
-                         parameter.variable
-                        ).str(),
-                        parameter.variable.begin,
-                        parameter.variable.end
-                    );
-                }
             } else {
-                if (has_optional_parameters && !parameter.default_value) {
+                if (!pass_by_hash && has_optional_parameters && !parameter.default_value) {
                     throw parse_exception(
                         (boost::format("parameter %1% is required but appears after optional parameters.") %
                          parameter.variable
@@ -633,6 +615,16 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             return location::top;
         }
         return _locations.back();
+    }
+
+    void validation::validate_body(vector<statement> const& body, bool has_return_value)
+    {
+        for (size_t i = 0; i < body.size(); ++i) {
+            auto& statement = body[i];
+
+            // The last statement in the block is allowed to be ineffective if there is a return value
+            operator()(statement, !has_return_value || i < (body.size() - 1));
+        }
     }
 
     void validation::validate_assignment_operand(postfix_expression const& operand)
