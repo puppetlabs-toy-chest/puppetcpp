@@ -105,9 +105,9 @@ namespace puppet { namespace compiler { namespace evaluation {
          */
         resource_relationship(
             compiler::relationship relationship,
-            runtime::values::value source,
+            std::shared_ptr<runtime::values::value> source,
             ast::context source_context,
-            runtime::values::value target,
+            std::shared_ptr<runtime::values::value> target,
             ast::context target_context);
 
         /**
@@ -146,9 +146,9 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         std::shared_ptr<ast::syntax_tree> _tree;
         compiler::relationship _relationship;
-        runtime::values::value _source;
+        std::shared_ptr<runtime::values::value> _source;
         ast::context _source_context;
-        runtime::values::value _target;
+        std::shared_ptr<runtime::values::value> _target;
         ast::context _target_context;
     };
 

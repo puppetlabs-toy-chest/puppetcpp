@@ -162,7 +162,7 @@ static ast::hash create_hash(vector<ast::pair> elements = {})
     return node;
 }
 
-static proposition create_proposition(vector<expression> options, vector<expression> body)
+static proposition create_proposition(vector<expression> options, vector<statement> body)
 {
     proposition node;
     node.options = rvalue_cast(options);
@@ -180,7 +180,7 @@ static case_expression create_case(expression conditional, vector<proposition> p
     return node;
 }
 
-static else_ create_else(vector<expression> body = {})
+static else_ create_else(vector<statement> body = {})
 {
     else_ node;
     node.begin = create_position();
@@ -189,7 +189,7 @@ static else_ create_else(vector<expression> body = {})
     return node;
 }
 
-static elsif create_elsif(expression conditional, vector<expression> body = {})
+static elsif create_elsif(expression conditional, vector<statement> body = {})
 {
     elsif node;
     node.begin = create_position();
@@ -199,7 +199,7 @@ static elsif create_elsif(expression conditional, vector<expression> body = {})
     return node;
 }
 
-static if_expression create_if(expression conditional, vector<expression> body = {}, vector<elsif> elsifs = {}, boost::optional<ast::else_> else_ = boost::none)
+static if_expression create_if(expression conditional, vector<statement> body = {}, vector<elsif> elsifs = {}, boost::optional<ast::else_> else_ = boost::none)
 {
     if_expression node;
     node.begin = create_position();
@@ -211,7 +211,7 @@ static if_expression create_if(expression conditional, vector<expression> body =
     return node;
 }
 
-static unless_expression create_unless(expression conditional, vector<expression> body = {}, boost::optional<ast::else_> else_ = boost::none)
+static unless_expression create_unless(expression conditional, vector<statement> body = {}, boost::optional<ast::else_> else_ = boost::none)
 {
     unless_expression node;
     node.begin = create_position();
@@ -259,9 +259,9 @@ static resource_body create_resource_body(expression title, vector<attribute_ope
     return node;
 }
 
-static resource_expression create_resource(resource_status status, postfix_expression type, vector<resource_body> bodies)
+static resource_declaration_expression create_resource(resource_status status, postfix_expression type, vector<resource_body> bodies)
 {
-    resource_expression node;
+    resource_declaration_expression node;
     set_dummy_context(node);
     node.status = status;
     node.type = rvalue_cast(type);
@@ -299,9 +299,9 @@ static parameter create_parameter(std::string name, boost::optional<postfix_expr
     return node;
 }
 
-static class_expression create_class(std::string name, vector<parameter> parameters = {}, boost::optional<ast::name> parent = boost::none, vector<expression> body = {})
+static class_statement create_class(std::string name, vector<parameter> parameters = {}, boost::optional<ast::name> parent = boost::none, vector<statement> body = {})
 {
-    class_expression node;
+    class_statement node;
     set_dummy_context(node);
     node.name = create_name(rvalue_cast(name));
     node.parameters = rvalue_cast(parameters);
@@ -310,9 +310,9 @@ static class_expression create_class(std::string name, vector<parameter> paramet
     return node;
 }
 
-static defined_type_expression create_defined_type(std::string name, vector<parameter> parameters = {}, vector<expression> body = {})
+static defined_type_statement create_defined_type(std::string name, vector<parameter> parameters = {}, vector<statement> body = {})
 {
-    defined_type_expression node;
+    defined_type_statement node;
     set_dummy_context(node);
     node.name = create_name(rvalue_cast(name));
     node.parameters = rvalue_cast(parameters);
@@ -320,16 +320,16 @@ static defined_type_expression create_defined_type(std::string name, vector<para
     return node;
 }
 
-static node_expression create_node(vector<hostname> hostnames, vector<expression> body = {})
+static node_statement create_node(vector<hostname> hostnames, vector<statement> body = {})
 {
-    node_expression node;
+    node_statement node;
     set_dummy_context(node);
     node.hostnames = rvalue_cast(hostnames);
     node.body = rvalue_cast(body);
     return node;
 }
 
-static attribute_query create_attribute_query(std::string name, query_operator operator_, primary_expression value)
+static attribute_query create_attribute_query(std::string name, query_operator operator_, basic_expression value)
 {
     attribute_query node;
     node.attribute = create_name(name);
@@ -340,12 +340,12 @@ static attribute_query create_attribute_query(std::string name, query_operator o
 }
 
 template <typename T>
-primary_query_expression primary_query(T&& node)
+basic_query_expression basic_query(T&& node)
 {
-    return primary_query_expression(std::forward<T>(node));
+    return basic_query_expression(std::forward<T>(node));
 }
 
-static binary_query_operation create_binary_query(binary_query_operator operator_, primary_query_expression operand)
+static binary_query_operation create_binary_query(binary_query_operator operator_, basic_query_expression operand)
 {
     binary_query_operation node;
     node.operator_position = create_position();
@@ -354,10 +354,10 @@ static binary_query_operation create_binary_query(binary_query_operator operator
     return node;
 }
 
-static query_expression create_query(primary_query_expression primary, vector<binary_query_operation> operations = {})
+static query_expression create_query(basic_query_expression operand, vector<binary_query_operation> operations = {})
 {
     query_expression node;
-    node.primary = rvalue_cast(primary);
+    node.operand = rvalue_cast(operand);
     node.operations = rvalue_cast(operations);
     return node;
 }
@@ -404,9 +404,9 @@ static epp_render_string create_render_string(std::string string)
     return node;
 }
 
-static function_expression create_function(std::string name, vector<parameter> parameters = {}, vector<expression> body = {})
+static function_statement create_function(std::string name, vector<parameter> parameters = {}, vector<statement> body = {})
 {
-    function_expression node;
+    function_statement node;
     set_dummy_context(node);
     node.name = create_name(rvalue_cast(name));
     node.parameters = rvalue_cast(parameters);
@@ -414,9 +414,9 @@ static function_expression create_function(std::string name, vector<parameter> p
     return node;
 }
 
-static produces_expression create_produces(std::string resource, std::string capability, vector<attribute_operation> operations = {})
+static produces_statement create_produces(std::string resource, std::string capability, vector<attribute_operation> operations = {})
 {
-    produces_expression node;
+    produces_statement node;
     node.resource = create_type(rvalue_cast(resource));
     node.capability = create_type(rvalue_cast(capability));
     node.operations = rvalue_cast(operations);
@@ -424,9 +424,9 @@ static produces_expression create_produces(std::string resource, std::string cap
     return node;
 }
 
-static consumes_expression create_consumes(std::string resource, std::string capability, vector<attribute_operation> operations = {})
+static consumes_statement create_consumes(std::string resource, std::string capability, vector<attribute_operation> operations = {})
 {
-    consumes_expression node;
+    consumes_statement node;
     node.resource = create_type(rvalue_cast(resource));
     node.capability = create_type(rvalue_cast(capability));
     node.operations = rvalue_cast(operations);
@@ -434,9 +434,9 @@ static consumes_expression create_consumes(std::string resource, std::string cap
     return node;
 }
 
-static application_expression create_application(std::string name, vector<parameter> parameters = {}, vector<expression> body = {})
+static application_statement create_application(std::string name, vector<parameter> parameters = {}, vector<statement> body = {})
 {
-    application_expression node;
+    application_statement node;
     set_dummy_context(node);
     node.name = create_name(rvalue_cast(name));
     node.parameters = rvalue_cast(parameters);
@@ -444,17 +444,17 @@ static application_expression create_application(std::string name, vector<parame
     return node;
 }
 
-static site_expression create_site(vector<expression> body = {})
+static site_statement create_site(vector<statement> body = {})
 {
-    site_expression node;
+    site_statement node;
     set_dummy_context(node);
     node.body = rvalue_cast(body);
     return node;
 }
 
-static type_alias_expression create_alias(ast::type alias, postfix_expression type)
+static type_alias_statement create_alias(ast::type alias, postfix_expression type)
 {
-    type_alias_expression node;
+    type_alias_statement node;
     node.begin = create_position();
     node.alias = rvalue_cast(alias);
     node.type = rvalue_cast(type);
@@ -478,12 +478,6 @@ static nested_expression create_nested(ast::expression expression)
     return node;
 }
 
-template <typename T>
-static postfix_subexpression subexpression(T&& node)
-{
-    return postfix_subexpression(std::forward<T>(node));
-}
-
 static selector_expression create_selector(vector<ast::pair> cases)
 {
     selector_expression node;
@@ -500,7 +494,7 @@ static access_expression create_access(vector<expression> arguments)
     return node;
 }
 
-static lambda_expression create_lambda(vector<parameter> parameters = {}, vector<expression> body = {})
+static lambda_expression create_lambda(vector<parameter> parameters = {}, vector<statement> body = {})
 {
     lambda_expression node;
     set_dummy_context(node);
@@ -520,18 +514,18 @@ static method_call_expression create_method_call(std::string method, vector<expr
     return node;
 }
 
-static postfix_expression create_postfix(primary_expression primary, vector<postfix_subexpression> subexpressions = {})
+static postfix_expression create_postfix(basic_expression operand, vector<postfix_operation> operations = {})
 {
     postfix_expression node;
-    node.primary = rvalue_cast(primary);
-    node.subexpressions = rvalue_cast(subexpressions);
+    node.operand = rvalue_cast(operand);
+    node.operations = rvalue_cast(operations);
     return node;
 }
 
-static expression create_expression(primary_expression primary)
+static expression create_expression(basic_expression operand)
 {
     expression node;
-    node.first = create_postfix(rvalue_cast(primary));
+    node.operand = create_postfix(rvalue_cast(operand));
     return node;
 }
 
@@ -544,21 +538,39 @@ static binary_operation create_binary(binary_operator operator_, postfix_express
     return node;
 }
 
-static expression create_expression(postfix_expression postfix, vector<binary_operation> operations = {})
+static expression create_expression(postfix_expression operand, vector<binary_operation> operations = {})
 {
     expression node;
-    node.first = rvalue_cast(postfix);
+    node.operand = rvalue_cast(operand);
     node.operations = rvalue_cast(operations);
     return node;
 }
 
-template <typename T>
-static primary_expression primary(T&& node)
+static relationship_statement create_relationship(relationship_expression operand, vector<relationship_operation> operations = {})
 {
-    return primary_expression(std::forward<T>(node));
+    relationship_statement node;
+    node.operand = rvalue_cast(operand);
+    node.operations = rvalue_cast(operations);
+    return node;
 }
 
-static shared_ptr<syntax_tree> create_syntax_tree(std::string path, boost::optional<vector<parameter>> parameters = boost::none, vector<expression> statements = {})
+static statement create_statement(expression expression)
+{
+    return statement{ create_relationship(relationship_expression{ rvalue_cast(expression) }) };
+}
+
+static statement create_statement(basic_expression expression)
+{
+    return statement{ create_relationship(relationship_expression{ create_expression(rvalue_cast(expression)) }) };
+}
+
+template <typename T>
+static basic_expression basic(T&& node)
+{
+    return basic_expression(std::forward<T>(node));
+}
+
+static shared_ptr<syntax_tree> create_syntax_tree(std::string path, boost::optional<vector<parameter>> parameters = boost::none, vector<statement> statements = {})
 {
     auto tree = syntax_tree::create(rvalue_cast(path), create_dummy_module());
     tree->parameters = rvalue_cast(parameters);
@@ -735,11 +747,11 @@ SCENARIO("interpolated string", "[ast]")
         string_part(create_variable("world")),
         string_part(create_literal_string_text("\"\n1 + 1 = ")),
         string_part(create_expression(
-            create_postfix(primary(create_number(1))),
+            create_postfix(basic(create_number(1))),
                 {
                     create_binary(
                         binary_operator::plus,
-                        create_postfix(primary(create_number(1)))
+                        create_postfix(basic(create_number(1)))
                     )
                 }
             )
@@ -922,13 +934,13 @@ SCENARIO("type", "[ast]")
     }
 }
 
-SCENARIO("primary expression", "[ast]")
+SCENARIO("basic expression", "[ast]")
 {
-    primary_expression node;
+    basic_expression node;
     THEN("it should have the expected number of types") {
-        REQUIRE(boost::mpl::size<primary_expression::types>::value == 36);
+        REQUIRE(boost::mpl::size<basic_expression::types>::value == 23);
     }
-    WHEN("using a primary expression") {
+    WHEN("using a basic expression") {
         GIVEN("an undef") {
             auto subnode = create_undef();
             node = subnode;
@@ -1120,7 +1132,7 @@ SCENARIO("primary expression", "[ast]")
             }
         }
         GIVEN("a nested unproductive expression") {
-            auto subnode = create_nested(create_expression(primary(create_variable("foo"))));
+            auto subnode = create_nested(create_expression(basic(create_variable("foo"))));
             node = subnode;
             THEN("the same context should be returned") {
                 REQUIRE(node.context() == subnode);
@@ -1139,7 +1151,7 @@ SCENARIO("primary expression", "[ast]")
             }
         }
         GIVEN("a nested productive expression") {
-            auto subnode = create_nested(create_expression(primary(create_function_call("notice"))));
+            auto subnode = create_nested(create_expression(basic(create_function_call("notice"))));
             node = subnode;
             THEN("it should be productive") {
                 REQUIRE(node.is_productive());
@@ -1149,7 +1161,7 @@ SCENARIO("primary expression", "[ast]")
             }
         }
         GIVEN("a nested expression that is default") {
-            auto subnode = create_nested(create_expression(primary(create_default())));
+            auto subnode = create_nested(create_expression(basic(create_default())));
             node = subnode;
             THEN("it should be default") {
                 REQUIRE(node.is_default());
@@ -1159,7 +1171,7 @@ SCENARIO("primary expression", "[ast]")
             }
         }
         GIVEN("a nested unproductive unary expression") {
-            auto subnode = create_unary(unary_operator::logical_not, create_postfix(primary(create_variable("foo"))));
+            auto subnode = create_unary(unary_operator::logical_not, create_postfix(basic(create_variable("foo"))));
             node = subnode;
             THEN("it should not be productive") {
                 REQUIRE_FALSE(node.is_productive());
@@ -1169,7 +1181,7 @@ SCENARIO("primary expression", "[ast]")
             }
         }
         GIVEN("a nested productive unary expression") {
-            auto subnode = create_unary(unary_operator::negate, create_postfix(primary(create_function_call("notice"))));
+            auto subnode = create_unary(unary_operator::negate, create_postfix(basic(create_function_call("notice"))));
             node = subnode;
             THEN("it should be productive") {
                 REQUIRE(node.is_productive());
@@ -1180,9 +1192,9 @@ SCENARIO("primary expression", "[ast]")
         }
         GIVEN("an array") {
             auto subnode = create_array({
-                create_expression(primary(create_number(1))),
-                create_expression(primary(create_number(2))),
-                create_expression(primary(create_number(3)))
+                create_expression(basic(create_number(1))),
+                create_expression(basic(create_number(2))),
+                create_expression(basic(create_number(3)))
             });
             node = subnode;
             THEN("the same context should be returned") {
@@ -1203,9 +1215,9 @@ SCENARIO("primary expression", "[ast]")
         }
         GIVEN("a hash") {
             auto subnode = create_hash({
-                make_pair(create_expression(primary(create_string("foo"))), create_expression(primary(create_number(1)))),
-                make_pair(create_expression(primary(create_string("bar"))), create_expression(primary(create_number(2)))),
-                make_pair(create_expression(primary(create_string("baz"))), create_expression(primary(create_number(3))))
+                make_pair(create_expression(basic(create_string("foo"))), create_expression(basic(create_number(1)))),
+                make_pair(create_expression(basic(create_string("bar"))), create_expression(basic(create_number(2)))),
+                make_pair(create_expression(basic(create_string("baz"))), create_expression(basic(create_number(3))))
             });
             node = subnode;
             THEN("the same context should be returned") {
@@ -1226,11 +1238,11 @@ SCENARIO("primary expression", "[ast]")
         }
         GIVEN("a case expression") {
             auto subnode = create_case(
-                create_expression(primary(create_variable("foo"))),
+                create_expression(basic(create_variable("foo"))),
                 {
                     create_proposition(
                     {
-                        create_expression(primary(create_default()))
+                        create_expression(basic(create_default()))
                     },
                     {
                     })
@@ -1254,10 +1266,10 @@ SCENARIO("primary expression", "[ast]")
         }
         GIVEN("an if expression") {
             auto subnode = create_if(
-                create_expression(primary(create_variable("foo"))),
+                create_expression(basic(create_variable("foo"))),
                 {},
                 {
-                    create_elsif(create_expression(primary(create_variable("bar"))))
+                    create_elsif(create_expression(basic(create_variable("bar"))))
                 },
                 create_else()
             );
@@ -1280,7 +1292,7 @@ SCENARIO("primary expression", "[ast]")
         }
         GIVEN("an unless expression") {
             auto subnode = create_unless(
-                create_expression(primary(create_variable("foo"))),
+                create_expression(basic(create_variable("foo"))),
                 {},
                 create_else()
             );
@@ -1322,18 +1334,18 @@ SCENARIO("primary expression", "[ast]")
         }
         GIVEN("a new expression") {
             auto subnode = create_new_expression(
-                create_postfix(primary(create_type("Integer")),
+                create_postfix(basic(create_type("Integer")),
                     {
-                        subexpression(create_access(
+                        postfix_operation(create_access(
                             {
-                                create_expression(primary(create_number(0))),
-                                create_expression(primary(create_number(20)))
+                                create_expression(basic(create_number(0))),
+                                create_expression(basic(create_number(20)))
                             }
                         ))
                     }
                 ),
                 {
-                    create_expression(primary(create_string("10")))
+                    create_expression(basic(create_string("10")))
                 }
             );
             node = subnode;
@@ -1353,229 +1365,8 @@ SCENARIO("primary expression", "[ast]")
                 REQUIRE(lexical_cast<std::string>(node) == "Integer[0, 20]('10')");
             }
         }
-        GIVEN("a resource expression") {
-            auto subnode = create_resource(
-                resource_status::virtualized,
-                create_postfix(primary(create_name("foo"))),
-                {
-                    create_resource_body(
-                        create_expression(primary(create_name("bar"))),
-                        {
-                            create_attribute(
-                                "baz",
-                                attribute_operator::assignment,
-                                create_expression(primary(create_string("jam")))
-                            )
-                        }
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "@foo { bar: baz => 'jam' }");
-            }
-        }
-        GIVEN("a resource override expression") {
-            auto subnode = create_resource_override(
-                create_postfix(primary(create_variable("foo"))),
-                {
-                    create_attribute(
-                        "baz",
-                        attribute_operator::assignment,
-                        create_expression(primary(create_string("jam")))
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "$foo { baz => 'jam' }");
-            }
-        }
-        GIVEN("a resource defaults expression") {
-            auto subnode = create_resource_defaults(
-                "Foo::Bar",
-                {
-                    create_attribute(
-                        "baz",
-                        attribute_operator::assignment,
-                        create_expression(primary(create_string("jam")))
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "Foo::Bar { baz => 'jam' }");
-            }
-        }
-        GIVEN("a class expression") {
-            auto subnode = create_class(
-                "foo",
-                {
-                    create_parameter(
-                        "bar",
-                        boost::none,
-                        true,
-                        create_expression(primary(create_array()))
-                    )
-                },
-                create_name("baz")
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "class foo(*$bar = []) inherits baz { }");
-            }
-        }
-        GIVEN("a defined type expression") {
-            auto subnode = create_defined_type(
-                "foo",
-                {
-                    create_parameter(
-                        "bar",
-                        boost::none,
-                        true,
-                        create_expression(primary(create_array()))
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "define foo(*$bar = []) { }");
-            }
-        }
-        GIVEN("a node expression") {
-            hostname_parts hostname = {
-                create_name("foo"),
-                create_name("bar"),
-                create_name("baz")
-            };
-            auto subnode = create_node({ ast::hostname{ hostname } });
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "node foo.bar.baz { }");
-            }
-        }
-        GIVEN("a collector expression") {
-            auto subnode = create_collector("File");
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode.context());
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "File<||>");
-            }
-        }
-        GIVEN("a function expression") {
-            auto subnode = create_function(
-                "foo",
-                {
-                    create_parameter(
-                        "bar",
-                        boost::none,
-                        true,
-                        create_expression(primary(create_array()))
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "function foo(*$bar = []) { }");
-            }
-        }
         GIVEN("a non-splat unary expression") {
-            auto subnode = create_unary(unary_operator::logical_not, create_postfix(primary(create_variable("foo"))));
+            auto subnode = create_unary(unary_operator::logical_not, create_postfix(basic(create_variable("foo"))));
             node = subnode;
             THEN("the same context should be returned") {
                 REQUIRE(node.context() == subnode.context());
@@ -1594,7 +1385,7 @@ SCENARIO("primary expression", "[ast]")
             }
         }
         GIVEN("a splat unary expression") {
-            auto subnode = create_unary(unary_operator::splat, create_postfix(primary(create_variable("foo"))));
+            auto subnode = create_unary(unary_operator::splat, create_postfix(basic(create_variable("foo"))));
             node = subnode;
             THEN("it should be a splat expression") {
                 REQUIRE(node.is_splat());
@@ -1605,7 +1396,7 @@ SCENARIO("primary expression", "[ast]")
         }
         GIVEN("an EPP render expression") {
             auto subnode = create_render_expression(
-                create_expression(primary(create_variable("foo")))
+                create_expression(basic(create_variable("foo")))
             );
             node = subnode;
             THEN("the same context should be returned") {
@@ -1627,7 +1418,7 @@ SCENARIO("primary expression", "[ast]")
         GIVEN("an EPP block expression") {
             auto subnode = create_render_block(
                 {
-                    create_expression(primary(create_variable("foo")))
+                    create_expression(basic(create_variable("foo")))
                 }
             );
             node = subnode;
@@ -1666,178 +1457,20 @@ SCENARIO("primary expression", "[ast]")
                 REQUIRE(lexical_cast<std::string>(node) == "render('hello')");
             }
         }
-        GIVEN("a produces expression") {
-            auto subnode = create_produces(
-                "Foo::Bar",
-                "Sql",
-                {
-                    create_attribute(
-                        "baz",
-                        attribute_operator::assignment,
-                        create_expression(primary(create_variable("jam")))
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode.context());
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "Foo::Bar produces Sql { baz => $jam }");
-            }
-        }
-        GIVEN("a consumes expression") {
-            auto subnode = create_consumes(
-                "Foo::Bar",
-                "Sql",
-                {
-                    create_attribute(
-                        "baz",
-                        attribute_operator::assignment,
-                        create_expression(primary(create_variable("jam")))
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode.context());
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "Foo::Bar consumes Sql { baz => $jam }");
-            }
-        }
-        GIVEN("an application expression") {
-            auto subnode = create_application(
-                "foo",
-                {
-                    create_parameter(
-                        "bar",
-                        boost::none,
-                        false,
-                        create_expression(primary(create_number(80)))
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "application foo($bar = 80) { }");
-            }
-        }
-        GIVEN("a site expression") {
-            auto subnode = create_site(
-                {
-                    create_expression(primary(
-                        create_resource(
-                            resource_status::realized,
-                            create_postfix(primary(create_name("foo"))),
-                            {
-                                create_resource_body(
-                                    create_expression(primary(create_name("something"))),
-                                    {
-                                        create_attribute(
-                                            "bar",
-                                            attribute_operator::assignment,
-                                            create_expression(primary(create_number(8080)))
-                                        )
-                                    }
-                                )
-                            }
-                        ))
-                    )
-                }
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode);
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "site { foo { something: bar => 8080 } }");
-            }
-        }
-        GIVEN("a type alias expression") {
-            auto subnode = create_alias(
-                create_type("Foo"),
-                create_postfix(primary(create_type("String")),
-                    {
-                        subexpression(create_access(
-                            {
-                                create_expression(primary(create_number(10))),
-                                create_expression(primary(create_number(20)))
-                            }
-                        ))
-                    }
-                )
-            );
-            node = subnode;
-            THEN("the same context should be returned") {
-                REQUIRE(node.context() == subnode.context());
-            }
-            THEN("it should not be default") {
-                REQUIRE_FALSE(node.is_default());
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-            THEN("it should not be a splat expression") {
-                REQUIRE_FALSE(node.is_splat());
-            }
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "type Foo = String[10, 20]");
-            }
-        }
     }
 }
 
-SCENARIO("postfix subexpression", "[ast]")
+SCENARIO("postfix operation", "[ast]")
 {
-    postfix_subexpression node;
+    postfix_operation node;
     THEN("it should have the expected number of types") {
-        REQUIRE(boost::mpl::size<postfix_subexpression::types>::value == 3);
+        REQUIRE(boost::mpl::size<postfix_operation::types>::value == 3);
     }
-    WHEN("using a postfix subexpression") {
+    WHEN("using a postfix operation") {
         GIVEN("a selector expression") {
             auto subnode = create_selector(
                 {
-                    make_pair(create_expression(primary(create_default())), create_expression(primary(create_number(1))))
+                    make_pair(create_expression(basic(create_default())), create_expression(basic(create_number(1))))
                 }
             );
             node = subnode;
@@ -1851,8 +1484,8 @@ SCENARIO("postfix subexpression", "[ast]")
         GIVEN("an access expression") {
             auto subnode = create_access(
                 {
-                    create_expression(primary(create_number(1))),
-                    create_expression(primary(create_number(2)))
+                    create_expression(basic(create_number(1))),
+                    create_expression(basic(create_number(2)))
                 }
             );
             node = subnode;
@@ -1867,8 +1500,8 @@ SCENARIO("postfix subexpression", "[ast]")
             auto subnode = create_method_call(
                 "foobar",
                 {
-                    create_expression(primary(create_number(1))),
-                    create_expression(primary(create_number(2)))
+                    create_expression(basic(create_number(1))),
+                    create_expression(basic(create_number(2)))
                 }
             );
             node = subnode;
@@ -1885,8 +1518,8 @@ SCENARIO("postfix subexpression", "[ast]")
 SCENARIO("postfix expression", "[ast]")
 {
     postfix_expression node;
-    WHEN("the primary expression is productive") {
-        node = create_postfix(primary(create_function_call("foo")));
+    WHEN("the basic expression is productive") {
+        node = create_postfix(basic(create_function_call("foo")));
         THEN("the postfix expression is productive") {
             REQUIRE(node.is_productive());
         }
@@ -1894,9 +1527,9 @@ SCENARIO("postfix expression", "[ast]")
             REQUIRE(lexical_cast<std::string>(node) == "foo()");
         }
     }
-    WHEN("the primary expression is not productive") {
-        node = create_postfix(primary(create_variable("foo")));
-        AND_WHEN("there is no method call subexpression") {
+    WHEN("the basic expression is not productive") {
+        node = create_postfix(basic(create_variable("foo")));
+        AND_WHEN("there is no method call") {
             THEN("the postfix expression is not productive") {
                 REQUIRE_FALSE(node.is_productive());
             }
@@ -1904,9 +1537,9 @@ SCENARIO("postfix expression", "[ast]")
                 REQUIRE(lexical_cast<std::string>(node) == "$foo");
             }
         }
-        AND_WHEN("there is a method call subexpression") {
-            node.subexpressions.emplace_back(
-                subexpression(create_method_call("bar"))
+        AND_WHEN("there is a method call") {
+            node.operations.emplace_back(
+                postfix_operation(create_method_call("bar"))
             );
             THEN("the postfix expression is productive") {
                 REQUIRE(node.is_productive());
@@ -1914,16 +1547,16 @@ SCENARIO("postfix expression", "[ast]")
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "$foo.bar()");
             }
-            THEN("the context should be from the primary expression to the end of the subexpression") {
+            THEN("the context should be from the basic expression to the end of the operation") {
                 auto context = node.context();
-                REQUIRE(context.begin == node.primary.context().begin);
-                REQUIRE(context.end == node.subexpressions.back().context().end);
-                REQUIRE(context.tree == node.primary.context().tree);
+                REQUIRE(context.begin == node.operand.context().begin);
+                REQUIRE(context.end == node.operations.back().context().end);
+                REQUIRE(context.tree == node.operand.context().tree);
             }
         }
     }
-    WHEN("the primary expression is not a splat") {
-        node = create_postfix(primary(create_variable("foo")));
+    WHEN("the basic expression is not a splat") {
+        node = create_postfix(basic(create_variable("foo")));
         THEN("the postfix expression is not a splat") {
             REQUIRE_FALSE(node.is_splat());
         }
@@ -1931,11 +1564,11 @@ SCENARIO("postfix expression", "[ast]")
             REQUIRE(lexical_cast<std::string>(node) == "$foo");
         }
     }
-    WHEN("the primary expression is a splat") {
+    WHEN("the basic expression is a splat") {
         node = create_postfix(
-            primary(create_unary(unary_operator::splat, create_postfix(primary(create_variable("foo"))))),
+            basic(create_unary(unary_operator::splat, create_postfix(basic(create_variable("foo"))))),
             {
-                subexpression(create_access({ create_expression(primary(create_number(1))) }))
+                postfix_operation(create_access({ create_expression(basic(create_number(1))) }))
             }
         );
         THEN("the postfix expression is a splat") {
@@ -1945,9 +1578,9 @@ SCENARIO("postfix expression", "[ast]")
             REQUIRE(lexical_cast<std::string>(node) == "*$foo[1]");
         }
     }
-    WHEN("the primary expression is default") {
-        node = create_postfix(primary(create_default()));
-        AND_WHEN("there are no subexpressions") {
+    WHEN("the basic expression is default") {
+        node = create_postfix(basic(create_default()));
+        AND_WHEN("there are no operations") {
             THEN("the postfix expression is default") {
                 REQUIRE(node.is_default());
             }
@@ -1955,9 +1588,9 @@ SCENARIO("postfix expression", "[ast]")
                 REQUIRE(lexical_cast<std::string>(node) == "default");
             }
         }
-        AND_WHEN("there are subexpressions") {
-            node.subexpressions.emplace_back(
-                subexpression(create_method_call("foo"))
+        AND_WHEN("there are operations") {
+            node.operations.emplace_back(
+                postfix_operation(create_method_call("foo"))
             );
             THEN("the postfix expression is not default") {
                 REQUIRE_FALSE(node.is_default());
@@ -1967,6 +1600,14 @@ SCENARIO("postfix expression", "[ast]")
             }
         }
     }
+}
+
+SCENARIO("output relationship operator", "[ast]")
+{
+    REQUIRE(lexical_cast<std::string>(relationship_operator::in_edge) == "->");
+    REQUIRE(lexical_cast<std::string>(relationship_operator::in_edge_subscribe) == "~>");
+    REQUIRE(lexical_cast<std::string>(relationship_operator::out_edge) == "<-");
+    REQUIRE(lexical_cast<std::string>(relationship_operator::out_edge_subscribe) == "<~");
 }
 
 SCENARIO("output binary operator", "[ast]")
@@ -1990,10 +1631,6 @@ SCENARIO("output binary operator", "[ast]")
     REQUIRE(lexical_cast<std::string>(binary_operator::logical_and) == "and");
     REQUIRE(lexical_cast<std::string>(binary_operator::logical_or) == "or");
     REQUIRE(lexical_cast<std::string>(binary_operator::assignment) == "=");
-    REQUIRE(lexical_cast<std::string>(binary_operator::in_edge) == "->");
-    REQUIRE(lexical_cast<std::string>(binary_operator::in_edge_subscribe) == "~>");
-    REQUIRE(lexical_cast<std::string>(binary_operator::out_edge) == "<-");
-    REQUIRE(lexical_cast<std::string>(binary_operator::out_edge_subscribe) == "<~");
     REQUIRE_THROWS(lexical_cast<std::string>(static_cast<binary_operator>(numeric_limits<size_t>::max())));
 }
 
@@ -2005,29 +1642,25 @@ SCENARIO("hash binary operator", "[ast]")
 
 SCENARIO("binary operator precedence", "[ast]")
 {
-    REQUIRE(precedence(binary_operator::in) == 11);
-    REQUIRE(precedence(binary_operator::match) == 10);
-    REQUIRE(precedence(binary_operator::not_match) == 10);
-    REQUIRE(precedence(binary_operator::multiply) == 9);
-    REQUIRE(precedence(binary_operator::divide) == 9);
-    REQUIRE(precedence(binary_operator::modulo) == 9);
-    REQUIRE(precedence(binary_operator::plus) == 8);
-    REQUIRE(precedence(binary_operator::minus) == 8);
-    REQUIRE(precedence(binary_operator::left_shift) == 7);
-    REQUIRE(precedence(binary_operator::right_shift) == 7);
-    REQUIRE(precedence(binary_operator::equals) == 6);
-    REQUIRE(precedence(binary_operator::not_equals) == 6);
-    REQUIRE(precedence(binary_operator::greater_than) == 5);
-    REQUIRE(precedence(binary_operator::greater_equals) == 5);
-    REQUIRE(precedence(binary_operator::less_than) == 5);
-    REQUIRE(precedence(binary_operator::less_equals) == 5);
-    REQUIRE(precedence(binary_operator::logical_and) == 4);
-    REQUIRE(precedence(binary_operator::logical_or) == 3);
-    REQUIRE(precedence(binary_operator::assignment) == 2);
-    REQUIRE(precedence(binary_operator::in_edge) == 1);
-    REQUIRE(precedence(binary_operator::in_edge_subscribe) == 1);
-    REQUIRE(precedence(binary_operator::out_edge) == 1);
-    REQUIRE(precedence(binary_operator::out_edge_subscribe) == 1);
+    REQUIRE(precedence(binary_operator::in) == 10);
+    REQUIRE(precedence(binary_operator::match) == 9);
+    REQUIRE(precedence(binary_operator::not_match) == 9);
+    REQUIRE(precedence(binary_operator::multiply) == 8);
+    REQUIRE(precedence(binary_operator::divide) == 8);
+    REQUIRE(precedence(binary_operator::modulo) == 8);
+    REQUIRE(precedence(binary_operator::plus) == 7);
+    REQUIRE(precedence(binary_operator::minus) == 7);
+    REQUIRE(precedence(binary_operator::left_shift) == 6);
+    REQUIRE(precedence(binary_operator::right_shift) == 6);
+    REQUIRE(precedence(binary_operator::equals) == 5);
+    REQUIRE(precedence(binary_operator::not_equals) == 5);
+    REQUIRE(precedence(binary_operator::greater_than) == 4);
+    REQUIRE(precedence(binary_operator::greater_equals) == 4);
+    REQUIRE(precedence(binary_operator::less_than) == 4);
+    REQUIRE(precedence(binary_operator::less_equals) == 4);
+    REQUIRE(precedence(binary_operator::logical_and) == 3);
+    REQUIRE(precedence(binary_operator::logical_or) == 2);
+    REQUIRE(precedence(binary_operator::assignment) == 1);
     REQUIRE_THROWS(precedence(static_cast<binary_operator>(numeric_limits<size_t>::max())));
 }
 
@@ -2052,10 +1685,6 @@ SCENARIO("binary operator right associativity", "[ast]")
     REQUIRE_FALSE(is_right_associative(binary_operator::logical_and));
     REQUIRE_FALSE(is_right_associative(binary_operator::logical_or));
     REQUIRE(is_right_associative(binary_operator::assignment));
-    REQUIRE_FALSE(is_right_associative(binary_operator::in_edge));
-    REQUIRE_FALSE(is_right_associative(binary_operator::in_edge_subscribe));
-    REQUIRE_FALSE(is_right_associative(binary_operator::out_edge));
-    REQUIRE_FALSE(is_right_associative(binary_operator::out_edge_subscribe));
     REQUIRE_FALSE(is_right_associative(static_cast<binary_operator>(numeric_limits<size_t>::max())));
 }
 
@@ -2080,10 +1709,6 @@ SCENARIO("binary operator productivity", "[ast]")
     REQUIRE_FALSE(is_productive(binary_operator::logical_and));
     REQUIRE_FALSE(is_productive(binary_operator::logical_or));
     REQUIRE(is_productive(binary_operator::assignment));
-    REQUIRE(is_productive(binary_operator::in_edge));
-    REQUIRE(is_productive(binary_operator::in_edge_subscribe));
-    REQUIRE(is_productive(binary_operator::out_edge));
-    REQUIRE(is_productive(binary_operator::out_edge_subscribe));
     REQUIRE_FALSE(is_productive(static_cast<binary_operator>(numeric_limits<size_t>::max())));
 }
 
@@ -2093,7 +1718,7 @@ SCENARIO("expression", "[ast]")
     WHEN("there are no binary operations") {
         AND_WHEN("the postfix expression is productive") {
             node = create_expression(
-                primary(create_function_call("foo"))
+                basic(create_function_call("foo"))
             );
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "foo()");
@@ -2107,7 +1732,7 @@ SCENARIO("expression", "[ast]")
         }
         AND_WHEN("the postfix expression is not productive") {
             node = create_expression(
-                primary(create_number(1234))
+                basic(create_number(1234))
             );
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "1234");
@@ -2121,7 +1746,7 @@ SCENARIO("expression", "[ast]")
         }
         AND_WHEN("the postfix expression is a splat") {
             node = create_expression(
-                primary(create_unary(unary_operator::splat, create_postfix(primary(create_array()))))
+                basic(create_unary(unary_operator::splat, create_postfix(basic(create_array()))))
             );
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "*[]");
@@ -2138,11 +1763,11 @@ SCENARIO("expression", "[ast]")
         THEN("is never default")
         AND_WHEN("the binary operator is assignment") {
             node = create_expression(
-                create_postfix(primary(create_variable("foo"))),
+                create_postfix(basic(create_variable("foo"))),
                 {
                     create_binary(
                         binary_operator::assignment,
-                        create_postfix(primary(create_number(1)))
+                        create_postfix(basic(create_number(1)))
                     )
                 }
             );
@@ -2153,81 +1778,13 @@ SCENARIO("expression", "[ast]")
                 REQUIRE(node.is_productive());
             }
         }
-        AND_WHEN("the binary operator is in_edge") {
-            node = create_expression(
-                create_postfix(primary(create_variable("foo"))),
-                {
-                    create_binary(
-                        binary_operator::in_edge,
-                        create_postfix(primary(create_variable("bar")))
-                    )
-                }
-            );
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "$foo -> $bar");
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-        }
-        AND_WHEN("the binary operator is in_edge_subscribe") {
-            node = create_expression(
-                create_postfix(primary(create_variable("foo"))),
-                {
-                    create_binary(
-                        binary_operator::in_edge_subscribe,
-                        create_postfix(primary(create_variable("bar")))
-                    )
-                }
-            );
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "$foo ~> $bar");
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-        }
-        AND_WHEN("the binary operator is out_edge") {
-            node = create_expression(
-                create_postfix(primary(create_variable("foo"))),
-                {
-                    create_binary(
-                        binary_operator::out_edge,
-                        create_postfix(primary(create_variable("bar")))
-                    )
-                }
-            );
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "$foo <- $bar");
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-        }
-        AND_WHEN("the binary operator is out_edge") {
-            node = create_expression(
-                create_postfix(primary(create_variable("foo"))),
-                {
-                    create_binary(
-                        binary_operator::out_edge_subscribe,
-                        create_postfix(primary(create_variable("bar")))
-                    )
-                }
-            );
-            THEN("it should output the expected format") {
-                REQUIRE(lexical_cast<std::string>(node) == "$foo <~ $bar");
-            }
-            THEN("it should be productive") {
-                REQUIRE(node.is_productive());
-            }
-        }
         AND_WHEN("the postfix expression is not productive") {
             node = create_expression(
-                create_postfix(primary(create_number(1))),
+                create_postfix(basic(create_number(1))),
                 {
                     create_binary(
                         binary_operator::plus,
-                        create_postfix(primary(create_number(1)))
+                        create_postfix(basic(create_number(1)))
                     )
                 }
             );
@@ -2243,7 +1800,7 @@ SCENARIO("expression", "[ast]")
         }
         AND_WHEN("the postfix expression is a splat") {
             node = create_expression(
-                primary(create_unary(unary_operator::splat, create_postfix(primary(create_array()))))
+                basic(create_unary(unary_operator::splat, create_postfix(basic(create_array()))))
             );
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "*[]");
@@ -2262,11 +1819,11 @@ SCENARIO("nested expression", "[ast]")
 {
     auto node = create_nested(
         create_expression(
-            create_postfix(primary(create_number(1))),
+            create_postfix(basic(create_number(1))),
             {
                 create_binary(
                     binary_operator::greater_equals,
-                    create_postfix(primary(create_number(0)))
+                    create_postfix(basic(create_number(0)))
                 )
             }
         )
@@ -2303,16 +1860,16 @@ SCENARIO("array", "[ast]")
     auto node = create_array(
         {
             create_expression(
-                create_postfix(primary(create_number(1))),
+                create_postfix(basic(create_number(1))),
                 {
                     create_binary(
                         binary_operator::plus,
-                        create_postfix(primary(create_number(1)))
+                        create_postfix(basic(create_number(1)))
                     )
                 }
             ),
-            create_expression(primary(create_string("foo"))),
-            create_expression(primary(create_regex("^.*bar$")))
+            create_expression(basic(create_string("foo"))),
+            create_expression(basic(create_regex("^.*bar$")))
         }
     );
 
@@ -2347,24 +1904,24 @@ SCENARIO("hash", "[ast]")
     auto node = create_hash(
         {
             make_pair(
-                create_expression(primary(create_string("foo"))),
+                create_expression(basic(create_string("foo"))),
                 create_expression(
-                    create_postfix(primary(create_number(1))),
+                    create_postfix(basic(create_number(1))),
                     {
                         create_binary(
                             binary_operator::plus,
-                            create_postfix(primary(create_number(1)))
+                            create_postfix(basic(create_number(1)))
                         )
                     }
                 )
             ),
             make_pair(
-                create_expression(primary(create_number(1234))),
-                create_expression(primary(create_string("foo")))
+                create_expression(basic(create_number(1234))),
+                create_expression(basic(create_string("foo")))
             ),
             make_pair(
-                create_expression(primary(create_string("bar"))),
-                create_expression(primary(create_regex("^.*bar$")))
+                create_expression(basic(create_string("bar"))),
+                create_expression(basic(create_regex("^.*bar$")))
             )
         }
     );
@@ -2400,24 +1957,24 @@ SCENARIO("selector expression", "[ast]")
     auto node = create_selector(
         {
             make_pair(
-                create_expression(primary(create_string("foo"))),
+                create_expression(basic(create_string("foo"))),
                 create_expression(
-                    create_postfix(primary(create_number(1))),
+                    create_postfix(basic(create_number(1))),
                     {
                         create_binary(
                             binary_operator::plus,
-                            create_postfix(primary(create_number(1)))
+                            create_postfix(basic(create_number(1)))
                         )
                     }
                 )
             ),
             make_pair(
-                create_expression(primary(create_number(1234))),
-                create_expression(primary(create_string("foo")))
+                create_expression(basic(create_number(1234))),
+                create_expression(basic(create_string("foo")))
             ),
             make_pair(
-                create_expression(primary(create_string("bar"))),
-                create_expression(primary(create_regex("^.*bar$")))
+                create_expression(basic(create_string("bar"))),
+                create_expression(basic(create_regex("^.*bar$")))
             )
         }
     );
@@ -2451,34 +2008,34 @@ SCENARIO("selector expression", "[ast]")
 SCENARIO("case expression", "[ast]")
 {
     auto node = create_case(
-        create_expression(primary(create_variable("foo"))),
+        create_expression(basic(create_variable("foo"))),
         {
             create_proposition(
                 {
-                    create_expression(primary(create_string("foo"))),
-                    create_expression(primary(create_string("bar"))),
-                    create_expression(primary(create_string("baz")))
+                    create_expression(basic(create_string("foo"))),
+                    create_expression(basic(create_string("bar"))),
+                    create_expression(basic(create_string("baz")))
                 },
                 {
-                    create_expression(primary(create_function_call("foo")))
+                    create_statement(basic(create_function_call("foo")))
                 }
             ),
             create_proposition(
                 {
-                    create_expression(primary(create_boolean(true))),
-                    create_expression(primary(create_boolean(false))),
-                    create_expression(primary(create_undef()))
+                    create_expression(basic(create_boolean(true))),
+                    create_expression(basic(create_boolean(false))),
+                    create_expression(basic(create_undef()))
                 },
                 {
-                    create_expression(primary(create_function_call("bar")))
+                    create_statement(basic(create_function_call("bar")))
                 }
             ),
             create_proposition(
                 {
-                    create_expression(primary(create_default()))
+                    create_expression(basic(create_default()))
                 },
                 {
-                    create_expression(primary(create_function_call("baz")))
+                    create_statement(basic(create_function_call("baz")))
                 }
             )
         }
@@ -2514,34 +2071,34 @@ SCENARIO("if expression", "[ast]")
 {
     auto node = create_if(
         create_expression(
-            create_postfix(primary(create_string("foo"))),
+            create_postfix(basic(create_string("foo"))),
             {
                 create_binary(
                     binary_operator::in,
-                    create_postfix(primary(create_string("foobar")))
+                    create_postfix(basic(create_string("foobar")))
                 )
             }
         ),
         {
-            create_expression(primary(create_function_call("foo"))),
-            create_expression(primary(create_function_call("bar")))
+            create_statement(basic(create_function_call("foo"))),
+            create_statement(basic(create_function_call("bar")))
         },
         {
             create_elsif(
-                create_expression(primary(create_variable("jam"))),
+                create_expression(basic(create_variable("jam"))),
                 {
-                    create_expression(primary(create_string("baz")))
+                    create_statement(basic(create_string("baz")))
                 }
             ),
             create_elsif(
-                create_expression(primary(create_variable("snapple"))),
+                create_expression(basic(create_variable("snapple"))),
                 {
                 }
             )
         },
         create_else(
             {
-                create_expression(primary(create_function_call("snausage")))
+                create_statement(basic(create_function_call("snausage")))
             }
         )
     );
@@ -2599,16 +2156,16 @@ SCENARIO("unless expression", "[ast]")
 {
     auto node = create_unless(
         create_expression(
-            create_postfix(primary(create_variable("foo"))),
+            create_postfix(basic(create_variable("foo"))),
             {
                 create_binary(
                     binary_operator::logical_and,
-                    create_postfix(primary(create_variable("bar")))
+                    create_postfix(basic(create_variable("bar")))
                 )
             }
         ),
         {
-            create_expression(primary(create_function_call("foo"))),
+            create_statement(basic(create_function_call("foo"))),
         },
         create_else(
             {
@@ -2659,9 +2216,9 @@ SCENARIO("access expression", "[ast]")
 {
     auto node = create_access(
         {
-            create_expression(primary(create_type("Foo"))),
-            create_expression(primary(create_number(1))),
-            create_expression(primary(create_string("bar")))
+            create_expression(basic(create_type("Foo"))),
+            create_expression(basic(create_number(1))),
+            create_expression(basic(create_string("bar")))
         }
     );
 
@@ -2712,7 +2269,7 @@ SCENARIO("parameter", "[ast]")
             REQUIRE(context.tree == node.variable.tree);
         }
         AND_WHEN("a default value is specified") {
-            node.default_value = create_expression(primary(create_number(1)));
+            node.default_value = create_expression(basic(create_number(1)));
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "*$foo = 1");
             }
@@ -2726,13 +2283,13 @@ SCENARIO("parameter", "[ast]")
     }
     WHEN("a type is specified") {
         node.type = create_postfix(
-            primary(create_type("Integer")),
+            basic(create_type("Integer")),
             {
-                subexpression(
+                postfix_operation(
                     create_access(
                         {
-                            create_expression(primary(create_number(0))),
-                            create_expression(primary(create_number(10))),
+                            create_expression(basic(create_number(0))),
+                            create_expression(basic(create_number(10))),
                         }
                     )
                 )
@@ -2748,7 +2305,7 @@ SCENARIO("parameter", "[ast]")
             REQUIRE(context.tree == node.variable.tree);
         }
         AND_WHEN("a default value is specified") {
-            node.default_value = create_expression(primary(create_number(1)));
+            node.default_value = create_expression(basic(create_number(1)));
             THEN("it should output the expected format") {
                 REQUIRE(lexical_cast<std::string>(node) == "Integer[0, 10] $foo = 1");
             }
@@ -2761,7 +2318,7 @@ SCENARIO("parameter", "[ast]")
         }
     }
     WHEN("a default value is specified") {
-        node.default_value = create_expression(primary(create_number(1)));
+        node.default_value = create_expression(basic(create_number(1)));
         THEN("it should output the expected format") {
             REQUIRE(lexical_cast<std::string>(node) == "$foo = 1");
         }
@@ -2774,20 +2331,20 @@ SCENARIO("parameter", "[ast]")
     }
     WHEN("a type, captures, and default value are specified") {
         node.type = create_postfix(
-            primary(create_type("Integer")),
+            basic(create_type("Integer")),
             {
-                subexpression(
+                postfix_operation(
                     create_access(
                         {
-                            create_expression(primary(create_number(0))),
-                            create_expression(primary(create_number(10))),
+                            create_expression(basic(create_number(0))),
+                            create_expression(basic(create_number(10))),
                         }
                     )
                 )
             }
         );
         node.captures = create_position();
-        node.default_value = create_expression(primary(create_number(1)));
+        node.default_value = create_expression(basic(create_number(1)));
         THEN("it should output the expected format") {
             REQUIRE(lexical_cast<std::string>(node) == "Integer[0, 10] *$foo = 1");
         }
@@ -2808,29 +2365,29 @@ SCENARIO("lambda expression", "[ast]")
             create_parameter(
                 "foo",
                 create_postfix(
-                    primary(create_type("Integer")),
+                    basic(create_type("Integer")),
                     {
-                        subexpression(
+                        postfix_operation(
                             create_access(
                                 {
-                                    create_expression(primary(create_number(0))),
-                                    create_expression(primary(create_number(10))),
+                                    create_expression(basic(create_number(0))),
+                                    create_expression(basic(create_number(10))),
                                 }
                             )
                         )
                     }
                 ),
                 false,
-                create_expression(primary(create_number(5)))
+                create_expression(basic(create_number(5)))
             ),
             create_parameter(
                 "bar",
-                create_postfix(primary(create_type("Array"))),
+                create_postfix(basic(create_type("Array"))),
                 true
             )
         },
         {
-            create_expression(primary(create_function_call("something"))),
+            create_statement(basic(create_function_call("something"))),
         }
     );
 
@@ -2865,9 +2422,9 @@ SCENARIO("method call expression", "[ast]")
     auto node = create_method_call(
         "foo",
         {
-            create_expression(primary(create_number(1))),
-            create_expression(primary(create_string("bar"))),
-            create_expression(primary(create_array()))
+            create_expression(basic(create_number(1))),
+            create_expression(basic(create_string("bar"))),
+            create_expression(basic(create_array()))
         },
         create_lambda(
             {
@@ -2944,9 +2501,9 @@ SCENARIO("function call expression", "[ast]")
     auto node = create_function_call(
         "foo",
         {
-            create_expression(primary(create_number(1))),
-            create_expression(primary(create_string("bar"))),
-            create_expression(primary(create_array()))
+            create_expression(basic(create_number(1))),
+            create_expression(basic(create_string("bar"))),
+            create_expression(basic(create_array()))
         },
         create_lambda(
             {
@@ -3021,18 +2578,16 @@ SCENARIO("function call expression", "[ast]")
 SCENARIO("new expression", "[ast]")
 {
     auto node = create_new_expression(
-        create_postfix(primary(create_type("Integer")),
-                       {
-                           subexpression(create_access(
-                               {
-                                   create_expression(primary(create_number(0))),
-                                   create_expression(primary(create_number(20)))
-                               }
-                           ))
-                       }
-        ),
+        create_postfix(basic(create_type("Integer")),
         {
-            create_expression(primary(create_number(10)))
+            postfix_operation(create_access(
+            {
+                create_expression(basic(create_number(0))),
+                create_expression(basic(create_number(20)))
+            }))
+        }),
+        {
+            create_expression(basic(create_number(10)))
         }
     );
 
@@ -3075,7 +2630,7 @@ SCENARIO("attribute operation") {
     auto node = create_attribute(
         "foo",
         attribute_operator::assignment,
-        create_expression(primary(create_number(1234)))
+        create_expression(basic(create_number(1234)))
     );
 
     WHEN("using attribute operation") {
@@ -3108,12 +2663,12 @@ SCENARIO("attribute operation") {
 
 SCENARIO("resource body") {
     auto node = create_resource_body(
-        create_expression(primary(create_name("foo"))),
+        create_expression(basic(create_name("foo"))),
         {
             create_attribute(
                 "bar",
                 attribute_operator::assignment,
-                create_expression(primary(create_number(1234)))
+                create_expression(basic(create_number(1234)))
             )
         }
     );
@@ -3158,30 +2713,30 @@ SCENARIO("resource expression", "[ast]")
 {
     auto node = create_resource(
         resource_status::realized,
-        create_postfix(primary(create_name("foo"))),
+        create_postfix(basic(create_name("foo"))),
         {
             create_resource_body(
-                create_expression(primary(create_name("bar"))),
+                create_expression(basic(create_name("bar"))),
                 {
                     create_attribute(
                         "foo",
                         attribute_operator::assignment,
-                        create_expression(primary(create_name("bar")))
+                        create_expression(basic(create_name("bar")))
                     ),
                     create_attribute(
                         "baz",
                         attribute_operator::append,
-                        create_expression(primary(create_string("cake")))
+                        create_expression(basic(create_string("cake")))
                     )
                 }
             ),
             create_resource_body(
-                create_expression(primary(create_name("baz"))),
+                create_expression(basic(create_name("baz"))),
                 {
                     create_attribute(
                         "jam",
                         attribute_operator::assignment,
-                        create_expression(primary(create_number(9876)))
+                        create_expression(basic(create_number(9876)))
                     )
                 }
             )
@@ -3232,10 +2787,10 @@ SCENARIO("resource override expression", "[ast]")
 {
     auto node = create_resource_override(
         create_postfix(
-            primary(create_type("Foo")),
+            basic(create_type("Foo")),
             {
-                subexpression(create_access({
-                    create_expression(primary(create_name("bar")))
+                postfix_operation(create_access({
+                    create_expression(basic(create_name("bar")))
                 }))
             }
         ),
@@ -3243,12 +2798,12 @@ SCENARIO("resource override expression", "[ast]")
             create_attribute(
                 "foo",
                 attribute_operator::assignment,
-                create_expression(primary(create_name("bar")))
+                create_expression(basic(create_name("bar")))
             ),
             create_attribute(
                 "baz",
                 attribute_operator::append,
-                create_expression(primary(create_string("jam")))
+                create_expression(basic(create_string("jam")))
             )
         }
     );
@@ -3287,12 +2842,12 @@ SCENARIO("resource defaults expression", "[ast]")
             create_attribute(
                 "foo",
                 attribute_operator::assignment,
-                create_expression(primary(create_name("bar")))
+                create_expression(basic(create_name("bar")))
             ),
             create_attribute(
                 "baz",
                 attribute_operator::append,
-                create_expression(primary(create_string("jam")))
+                create_expression(basic(create_string("jam")))
             )
         }
     );
@@ -3323,7 +2878,7 @@ SCENARIO("resource defaults expression", "[ast]")
     }
 }
 
-SCENARIO("class expression", "[ast]")
+SCENARIO("class statement", "[ast]")
 {
     auto node = create_class(
         "foo::bar",
@@ -3331,30 +2886,30 @@ SCENARIO("class expression", "[ast]")
             create_parameter(
                 "foo",
                 create_postfix(
-                    primary(create_type("Integer")),
+                    basic(create_type("Integer")),
                     {
-                        subexpression(
+                        postfix_operation(
                             create_access(
                                 {
-                                    create_expression(primary(create_number(1000))),
-                                    create_expression(primary(create_number(2000))),
+                                    create_expression(basic(create_number(1000))),
+                                    create_expression(basic(create_number(2000))),
                                 }
                             )
                         )
                     }
                 ),
                 false,
-                create_expression(primary(create_number(1234)))
+                create_expression(basic(create_number(1234)))
             ),
             create_parameter("bar")
         },
         create_name("foo::baz"),
         {
-            create_expression(primary(create_function_call("foo")))
+            create_statement(basic(create_function_call("foo")))
         }
     );
 
-    WHEN("using class expression") {
+    WHEN("using class statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2 == node);
@@ -3428,7 +2983,7 @@ SCENARIO("class expression", "[ast]")
     }
 }
 
-SCENARIO("defined type expression", "[ast]")
+SCENARIO("defined type statement", "[ast]")
 {
     auto node = create_defined_type(
         "foo::bar",
@@ -3436,29 +2991,29 @@ SCENARIO("defined type expression", "[ast]")
             create_parameter(
                 "foo",
                 create_postfix(
-                    primary(create_type("Integer")),
+                    basic(create_type("Integer")),
                     {
-                        subexpression(
+                        postfix_operation(
                             create_access(
                                 {
-                                    create_expression(primary(create_number(1000))),
-                                    create_expression(primary(create_number(2000))),
+                                    create_expression(basic(create_number(1000))),
+                                    create_expression(basic(create_number(2000))),
                                 }
                             )
                         )
                     }
                 ),
                 false,
-                create_expression(primary(create_number(1234)))
+                create_expression(basic(create_number(1234)))
             ),
             create_parameter("bar")
         },
         {
-            create_expression(primary(create_function_call("foo")))
+            create_statement(basic(create_function_call("foo")))
         }
     );
 
-    WHEN("using defined type expression") {
+    WHEN("using defined type statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2 == node);
@@ -3619,7 +3174,7 @@ SCENARIO("hostname", "[ast]")
     }
 }
 
-SCENARIO("node expression", "[ast]")
+SCENARIO("node statement", "[ast]")
 {
     auto node = create_node(
         {
@@ -3628,11 +3183,11 @@ SCENARIO("node expression", "[ast]")
             hostname(create_regex(".*"))
         },
         {
-            create_expression(primary(create_function_call("foo")))
+            create_statement(basic(create_function_call("foo")))
         }
     );
 
-    WHEN("using node expression") {
+    WHEN("using node statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2 == node);
@@ -3673,18 +3228,18 @@ SCENARIO("output query operator", "[ast]")
     REQUIRE_THROWS(lexical_cast<std::string>(static_cast<query_operator>(numeric_limits<size_t>::max())));
 }
 
-SCENARIO("primary query expression", "[ast]")
+SCENARIO("basic query expression", "[ast]")
 {
-    primary_query_expression node;
+    basic_query_expression node;
     THEN("it should have the expected number of types") {
-        REQUIRE(boost::mpl::size<primary_query_expression::types>::value == 2);
+        REQUIRE(boost::mpl::size<basic_query_expression::types>::value == 2);
     }
-    WHEN("using primary query expression") {
+    WHEN("using basic query expression") {
         GIVEN("an attribute query") {
             auto subnode = create_attribute_query(
                 "foo",
                 query_operator::equals,
-                primary(create_number(1234))
+                basic(create_number(1234))
             );
             node = subnode;
             THEN("the same context should be returned") {
@@ -3701,21 +3256,21 @@ SCENARIO("primary query expression", "[ast]")
         }
         GIVEN("a nested query expression") {
             auto subnode = create_nested_query(create_query(
-                primary_query(
+                basic_query(
                     create_attribute_query(
                         "foo",
                         query_operator::equals,
-                        primary(create_string("bar"))
+                        basic(create_string("bar"))
                     )
                 ),
                 {
                     create_binary_query(
                         binary_query_operator::logical_and,
-                        primary_query(
+                        basic_query(
                             create_attribute_query(
                                 "baz",
                                 query_operator::not_equals,
-                                primary(create_bare_word("jam"))
+                                basic(create_bare_word("jam"))
                             )
                         )
                     )
@@ -3752,11 +3307,11 @@ SCENARIO("query expression", "[ast]")
         REQUIRE(node3.context() == node.context());
     }
     WHEN("there are no binary operations") {
-        node = create_query(primary_query(
+        node = create_query(basic_query(
             create_attribute_query(
                 "foo",
                 query_operator::not_equals,
-                primary(create_name("bar"))
+                basic(create_name("bar"))
             )
         ));
         THEN("it should output the expected format") {
@@ -3764,37 +3319,37 @@ SCENARIO("query expression", "[ast]")
                 REQUIRE(lexical_cast<std::string>(node) == "foo != bar");
             }
         }
-        THEN("the context should be the same as the primary") {
-            REQUIRE(node.context() == node.primary.context());
+        THEN("the context should be the same as the basic") {
+            REQUIRE(node.context() == node.operand.context());
         }
     }
     WHEN("there are binary operations") {
         node = create_query(
-            primary_query(
+            basic_query(
                 create_attribute_query(
                     "foo",
                     query_operator::not_equals,
-                    primary(create_name("bar"))
+                    basic(create_name("bar"))
                 )
             ),
             {
                 create_binary_query(
                     binary_query_operator::logical_and,
-                    primary_query(
+                    basic_query(
                         create_attribute_query(
                             "baz",
                             query_operator::equals,
-                            primary(create_number(1234))
+                            basic(create_number(1234))
                         )
                     )
                 ),
                 create_binary_query(
                     binary_query_operator::logical_or,
-                    primary_query(
+                    basic_query(
                         create_attribute_query(
                             "cake",
                             query_operator::equals,
-                            primary(create_string("jam"))
+                            basic(create_string("jam"))
                         )
                     )
                 )
@@ -3807,9 +3362,9 @@ SCENARIO("query expression", "[ast]")
         }
         THEN("the context should end with the last binary operation") {
             auto context = node.context();
-            REQUIRE(context.begin == node.primary.context().begin);
+            REQUIRE(context.begin == node.operand.context().begin);
             REQUIRE(context.end == node.operations.back().context().end);
-            REQUIRE(context.tree == node.primary.context().tree);
+            REQUIRE(context.tree == node.operand.context().tree);
         }
     }
 }
@@ -3818,21 +3373,21 @@ SCENARIO("nested query expression", "[ast]")
 {
     auto node = create_nested_query(
         create_query(
-            primary_query(
+            basic_query(
                 create_attribute_query(
                     "foo",
                     query_operator::equals,
-                    primary(create_string("bar"))
+                    basic(create_string("bar"))
                 )
             ),
             {
                 create_binary_query(
                     binary_query_operator::logical_or,
-                    primary_query(
+                    basic_query(
                         create_attribute_query(
                             "baz",
                             query_operator::not_equals,
-                            primary(create_bare_word("cakes"))
+                            basic(create_bare_word("cakes"))
                         )
                     )
                 )
@@ -3871,21 +3426,21 @@ SCENARIO("collector expression", "[ast]")
         "Foo",
         false,
         create_query(
-            primary_query(
+            basic_query(
                 create_attribute_query(
                     "foo",
                     query_operator::equals,
-                    primary(create_number(1234))
+                    basic(create_number(1234))
                 )
             ),
             {
                 create_binary_query(
                     binary_query_operator::logical_or,
-                    primary_query(
+                    basic_query(
                         create_attribute_query(
                             "baz",
                             query_operator::equals,
-                            primary(create_number(5678))
+                            basic(create_number(5678))
                         )
                     )
                 )
@@ -3942,7 +3497,7 @@ SCENARIO("collector expression", "[ast]")
     }
 }
 
-SCENARIO("function expression", "[ast]")
+SCENARIO("function statement", "[ast]")
 {
     auto node = create_function(
         "foo::bar",
@@ -3950,29 +3505,29 @@ SCENARIO("function expression", "[ast]")
             create_parameter(
                 "foo",
                 create_postfix(
-                    primary(create_type("Integer")),
+                    basic(create_type("Integer")),
                     {
-                        subexpression(
+                        postfix_operation(
                             create_access(
                                 {
-                                    create_expression(primary(create_number(1000))),
-                                    create_expression(primary(create_number(2000))),
+                                    create_expression(basic(create_number(1000))),
+                                    create_expression(basic(create_number(2000))),
                                 }
                             )
                         )
                     }
                 ),
                 false,
-                create_expression(primary(create_number(1234)))
+                create_expression(basic(create_number(1234)))
             ),
             create_parameter("bar")
         },
         {
-            create_expression(primary(create_function_call("foo")))
+            create_statement(basic(create_function_call("foo")))
         }
     );
 
-    WHEN("using function expression") {
+    WHEN("using function statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2 == node);
@@ -4035,7 +3590,7 @@ SCENARIO("hash unary operator", "[ast]")
 
 SCENARIO("unary expression", "[ast]")
 {
-    auto node = create_unary(unary_operator::logical_not, create_postfix(primary(create_variable("foo"))));
+    auto node = create_unary(unary_operator::logical_not, create_postfix(basic(create_variable("foo"))));
     WHEN("using unary expression") {
         THEN("it should be copy constructible") {
             auto node2 = node;
@@ -4046,9 +3601,6 @@ SCENARIO("unary expression", "[ast]")
             auto node3 = rvalue_cast(node2);
             REQUIRE(node3.context() == node.context());
         }
-        THEN("it should not be a splat expression") {
-            REQUIRE_FALSE(node.is_splat());
-        }
         THEN("the context should go from the operator to the end of the operand") {
             auto context = node.context();
             REQUIRE(context.begin == node.operator_position);
@@ -4057,12 +3609,6 @@ SCENARIO("unary expression", "[ast]")
         }
         THEN("it should output the expected format") {
             REQUIRE(lexical_cast<std::string>(node) == "!$foo");
-        }
-        WHEN("the operator is splat") {
-            node.operator_ = unary_operator::splat;
-            THEN("it should be a splat expression") {
-                REQUIRE(node.is_splat());
-            }
         }
         GIVEN("another non-equal object") {
             decltype(node) other;
@@ -4077,9 +3623,9 @@ SCENARIO("EPP render expression", "[ast]")
 {
     auto node = create_render_expression(
         create_expression(
-            create_postfix(primary(create_number(1))),
+            create_postfix(basic(create_number(1))),
             {
-                create_binary(binary_operator::plus, create_postfix(primary(create_number(1))))
+                create_binary(binary_operator::plus, create_postfix(basic(create_number(1))))
             }
         )
     );
@@ -4114,15 +3660,15 @@ SCENARIO("EPP render block", "[ast]")
     auto node = create_render_block(
         {
             create_expression(
-                create_postfix(primary(create_number(1))),
+                create_postfix(basic(create_number(1))),
                 {
-                    create_binary(binary_operator::plus, create_postfix(primary(create_number(1))))
+                    create_binary(binary_operator::plus, create_postfix(basic(create_number(1))))
                 }
             ),
             create_expression(
-                create_postfix(primary(create_number(1))),
+                create_postfix(basic(create_number(1))),
                 {
-                    create_binary(binary_operator::minus, create_postfix(primary(create_number(1))))
+                    create_binary(binary_operator::minus, create_postfix(basic(create_number(1))))
                 }
             )
         }
@@ -4182,7 +3728,7 @@ SCENARIO("EPP render string", "[ast]")
     }
 }
 
-SCENARIO("produces expression", "[ast]")
+SCENARIO("produces statement", "[ast]")
 {
     auto node = create_produces(
         "Foo",
@@ -4191,17 +3737,17 @@ SCENARIO("produces expression", "[ast]")
             create_attribute(
                 "foo",
                 attribute_operator::assignment,
-                create_expression(primary(create_variable("foo")))
+                create_expression(basic(create_variable("foo")))
             ),
             create_attribute(
                 "bar",
                 attribute_operator::assignment,
-                create_expression(primary(create_variable("bar")))
+                create_expression(basic(create_variable("bar")))
             )
         }
     );
 
-    WHEN("using produces expression") {
+    WHEN("using produces statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2.context() == node.context());
@@ -4235,7 +3781,7 @@ SCENARIO("produces expression", "[ast]")
     }
 }
 
-SCENARIO("consumes expression", "[ast]")
+SCENARIO("consumes statement", "[ast]")
 {
     auto node = create_consumes(
         "Foo",
@@ -4244,17 +3790,17 @@ SCENARIO("consumes expression", "[ast]")
             create_attribute(
                 "foo",
                 attribute_operator::assignment,
-                create_expression(primary(create_variable("foo")))
+                create_expression(basic(create_variable("foo")))
             ),
             create_attribute(
                 "bar",
                 attribute_operator::assignment,
-                create_expression(primary(create_variable("bar")))
+                create_expression(basic(create_variable("bar")))
             )
         }
     );
 
-    WHEN("using consumes expression") {
+    WHEN("using consumes statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2.context() == node.context());
@@ -4288,7 +3834,7 @@ SCENARIO("consumes expression", "[ast]")
     }
 }
 
-SCENARIO("application expression", "[ast]")
+SCENARIO("application statement", "[ast]")
 {
     auto node = create_application(
         "foo",
@@ -4296,29 +3842,29 @@ SCENARIO("application expression", "[ast]")
             create_parameter(
                 "bar",
                 create_postfix(
-                    primary(create_type("Integer")),
+                    basic(create_type("Integer")),
                     {
-                        subexpression(
+                        postfix_operation(
                             create_access(
                                 {
-                                    create_expression(primary(create_number(1000))),
-                                    create_expression(primary(create_number(2000))),
+                                    create_expression(basic(create_number(1000))),
+                                    create_expression(basic(create_number(2000))),
                                 }
                             )
                         )
                     }
                 ),
                 false,
-                create_expression(primary(create_number(1234)))
+                create_expression(basic(create_number(1234)))
             ),
             create_parameter("baz")
         },
         {
-            create_expression(primary(create_function_call("cake")))
+            create_statement(basic(create_function_call("cake")))
         }
     );
 
-    WHEN("using application expression") {
+    WHEN("using application statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2 == node);
@@ -4366,41 +3912,41 @@ SCENARIO("application expression", "[ast]")
     }
 }
 
-SCENARIO("site expression", "[ast]")
+SCENARIO("site statement", "[ast]")
 {
     auto node = create_site(
         {
-            create_expression(primary(
+            statement(create_relationship(relationship_expression{
                 create_resource(
                     resource_status::realized,
-                    create_postfix(primary(create_name("app"))),
+                    create_postfix(basic(create_name("app"))),
                     {
                         create_resource_body(
-                            create_expression(primary(create_name("lamp"))),
+                            create_expression(basic(create_name("lamp"))),
                             {
                                 create_attribute(
                                     "nodes",
                                     attribute_operator::assignment,
-                                    create_expression(primary(
+                                    create_expression(basic(
                                         create_hash(
                                         {
                                             make_pair(
                                                 create_expression(
                                                     create_postfix(
-                                                        primary(create_type("Node")),
+                                                        basic(create_type("Node")),
                                                         {
-                                                            subexpression(create_access({ create_expression(primary(create_name("foo"))) }))
+                                                            postfix_operation(create_access({ create_expression(basic(create_name("foo"))) }))
                                                         }
                                                     )
                                                 ),
-                                                create_expression(primary(
+                                                create_expression(basic(
                                                     create_array(
                                                     {
                                                         create_expression(
                                                             create_postfix(
-                                                            primary(create_type("Lamp::Db")),
+                                                            basic(create_type("Lamp::Db")),
                                                             {
-                                                                subexpression(create_access({ create_expression(primary(create_name("foo"))) }))
+                                                                postfix_operation(create_access({ create_expression(basic(create_name("foo"))) }))
                                                             }
                                                         ))
                                                     }
@@ -4412,12 +3958,12 @@ SCENARIO("site expression", "[ast]")
                             }
                         )
                     }
-                ))
+                )})
             )
         }
     );
 
-    WHEN("using site expression") {
+    WHEN("using site statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2 == node);
@@ -4451,23 +3997,23 @@ SCENARIO("site expression", "[ast]")
     }
 }
 
-SCENARIO("type alias expression", "[ast]")
+SCENARIO("type alias statement", "[ast]")
 {
     auto node = create_alias(
         create_type("Foo"),
-        create_postfix(primary(create_type("String")),
+        create_postfix(basic(create_type("String")),
             {
-                subexpression(create_access(
+                postfix_operation(create_access(
                     {
-                        create_expression(primary(create_number(10))),
-                        create_expression(primary(create_number(20)))
+                        create_expression(basic(create_number(10))),
+                        create_expression(basic(create_number(20)))
                     }
                 ))
             }
         )
     );
 
-    WHEN("using type alias expression") {
+    WHEN("using type alias statement") {
         THEN("it should be copy constructible") {
             auto node2 = node;
             REQUIRE(node2.context() == node.context());
@@ -4495,17 +4041,17 @@ SCENARIO("syntax tree", "[ast]")
         "foo",
         boost::none,
         {
-            create_expression(
-                create_postfix(primary(create_variable("foo"))),
+            create_statement(
+                create_expression(create_postfix(basic(create_variable("foo"))),
                 {
-                    create_binary(binary_operator::assignment, create_postfix(primary(create_number(1))))
-                }
+                    create_binary(binary_operator::assignment, create_postfix(basic(create_number(1))))
+                })
             ),
-            create_expression(
-                create_postfix(primary(create_variable("foo"))),
+            create_statement(
+                create_expression(create_postfix(basic(create_variable("foo"))),
                 {
-                    create_binary(binary_operator::minus, create_postfix(primary(create_number(1))))
-                }
+                    create_binary(binary_operator::minus, create_postfix(basic(create_number(1))))
+                })
             )
         }
     );
@@ -4524,7 +4070,7 @@ SCENARIO("syntax tree", "[ast]")
     }
     WHEN("parameters are specified") {
         tree->parameters = vector<parameter>({
-            create_parameter("bar", create_postfix(primary(create_type("Integer"))))
+            create_parameter("bar", create_postfix(basic(create_type("Integer"))))
         });
         THEN("it should output the expected format") {
             REQUIRE(lexical_cast<std::string>(*tree) == "|Integer $bar| $foo = 1; $foo - 1");

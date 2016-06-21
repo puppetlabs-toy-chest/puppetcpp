@@ -1,6 +1,6 @@
 path: class.pp
 statements:
-  - kind: class
+  - kind: class statement
     begin:
       offset: 0
       line: 1
@@ -16,7 +16,7 @@ statements:
         offset: 9
         line: 1
       value: foo
-  - kind: class
+  - kind: class statement
     begin:
       offset: 15
       line: 4
@@ -32,7 +32,7 @@ statements:
         offset: 34
         line: 4
       value: bar::baz::jam
-  - kind: class
+  - kind: class statement
     begin:
       offset: 41
       line: 8
@@ -48,7 +48,7 @@ statements:
         offset: 50
         line: 8
       value: baz
-  - kind: class
+  - kind: class statement
     begin:
       offset: 57
       line: 10
@@ -75,7 +75,7 @@ statements:
             line: 10
           name: foo
     body:
-      - kind: function call
+      - kind: function call expression
         function:
           kind: name
           begin:
@@ -112,7 +112,7 @@ statements:
                   line: 11
                 name: x
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -134,7 +134,7 @@ statements:
         end:
           offset: 89
           line: 11
-  - kind: class
+  - kind: class statement
     begin:
       offset: 124
       line: 16
@@ -169,7 +169,7 @@ statements:
             offset: 144
             line: 16
           name: bar
-  - kind: class
+  - kind: class statement
     begin:
       offset: 152
       line: 20
@@ -205,8 +205,8 @@ statements:
             line: 20
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 174
@@ -215,8 +215,8 @@ statements:
               offset: 180
               line: 20
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 180
                 line: 20
@@ -272,7 +272,7 @@ statements:
             offset: 203
             line: 20
           name: rest
-  - kind: class
+  - kind: class statement
     begin:
       offset: 211
       line: 24
@@ -308,8 +308,8 @@ statements:
             line: 24
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 234
@@ -318,8 +318,8 @@ statements:
               offset: 240
               line: 24
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 240
                 line: 24
@@ -384,7 +384,7 @@ statements:
         offset: 287
         line: 24
       value: bar::baz::jam
-  - kind: class
+  - kind: class statement
     begin:
       offset: 294
       line: 28
@@ -420,8 +420,8 @@ statements:
             line: 28
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 317
@@ -430,8 +430,8 @@ statements:
               offset: 323
               line: 28
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 323
                 line: 28
@@ -497,7 +497,7 @@ statements:
         line: 28
       value: bar::baz::jam
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -516,8 +516,8 @@ statements:
               offset: 386
               line: 29
             value: hi
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 391
@@ -555,8 +555,8 @@ statements:
                 line: 30
               base: decimal
               value: 1
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 408

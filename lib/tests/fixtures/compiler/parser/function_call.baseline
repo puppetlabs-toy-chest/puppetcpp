@@ -1,6 +1,6 @@
 path: function_call.pp
 statements:
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -13,7 +13,7 @@ statements:
     end:
       offset: 5
       line: 1
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -54,7 +54,7 @@ statements:
     end:
       offset: 19
       line: 3
-  - kind: function call
+  - kind: function call statement
     function:
       kind: name
       begin:
@@ -89,7 +89,7 @@ statements:
           offset: 41
           line: 5
         value: baz
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -127,8 +127,8 @@ statements:
               line: 7
             name: x
         - type:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 55
@@ -137,8 +137,8 @@ statements:
                 offset: 62
                 line: 7
               name: Integer
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 62
                   line: 7
@@ -196,7 +196,7 @@ statements:
               line: 7
             name: z
       body:
-        - kind: function call
+        - kind: function call statement
           function:
             kind: name
             begin:

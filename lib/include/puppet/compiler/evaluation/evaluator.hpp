@@ -38,12 +38,19 @@ namespace puppet { namespace compiler { namespace evaluation {
         void evaluate(ast::syntax_tree const& tree, runtime::values::hash* arguments = nullptr);
 
         /**
+         * Evaluates the given statement and returns the resulting runtime value.
+         * @param statement The statement to evaluate.
+         * @param productive True if the statement is required to be productive (i.e. has side effect) or false if not.
+         * @return Returns the runtime value that is the result of evaluating the statement.
+         */
+        runtime::values::value evaluate(ast::statement const& statement, bool productive = false);
+
+        /**
          * Evaluates the given expression and returns the resulting runtime value.
          * @param expression The expression to evaluate.
-         * @param productive True if the expression is required to be productive (i.e. has side effect) or false if not.
          * @return Returns the runtime value that is the result of evaluating the expression.
          */
-        runtime::values::value evaluate(ast::expression const& expression, bool productive = false);
+        runtime::values::value evaluate(ast::expression const& expression);
 
         /**
          * Evaluates the given postfix expression and returns the resulting runtime value.
@@ -53,11 +60,11 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value evaluate(ast::postfix_expression const& expression);
 
         /**
-         * Evaluates the given primary expression and returns the resulting runtime value.
+         * Evaluates the given basic expression and returns the resulting runtime value.
          * @param expression The expression to evaluate.
          * @return Returns the runtime value that is the result of evaluating the expression.
          */
-        runtime::values::value evaluate(ast::primary_expression const& expression);
+        runtime::values::value evaluate(ast::basic_expression const& expression);
 
         /**
          * Determines if a value is a "match" for an expected value.
@@ -72,6 +79,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
      private:
         template<class> friend class ::boost::detail::variant::invoke_visitor;
+        runtime::values::value operator()(ast::basic_expression const& expression);
         runtime::values::value operator()(ast::undef const&);
         runtime::values::value operator()(ast::defaulted const&);
         runtime::values::value operator()(ast::boolean const& expression);
@@ -87,36 +95,42 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::interpolated_string const& expression);
         runtime::values::value operator()(ast::array const& expression);
         runtime::values::value operator()(ast::hash const& expression);
-        runtime::values::value operator()(ast::nested_expression const& expression);
         runtime::values::value operator()(ast::case_expression const& expression);
         runtime::values::value operator()(ast::if_expression const& expression);
         runtime::values::value operator()(ast::unless_expression const& expression);
         runtime::values::value operator()(ast::function_call_expression const& expression);
         runtime::values::value operator()(ast::new_expression const& expression);
-        runtime::values::value operator()(ast::resource_expression const& expression);
-        runtime::values::value operator()(ast::resource_override_expression const& expression);
-        runtime::values::value operator()(ast::resource_defaults_expression const& expression);
-        runtime::values::value operator()(ast::class_expression const& expression);
-        runtime::values::value operator()(ast::defined_type_expression const& expression);
-        runtime::values::value operator()(ast::node_expression const& expression);
-        runtime::values::value operator()(ast::collector_expression const& expression);
-        runtime::values::value operator()(ast::function_expression const& expression);
-        runtime::values::value operator()(ast::unary_expression const& expression);
         runtime::values::value operator()(ast::epp_render_expression const& expression);
         runtime::values::value operator()(ast::epp_render_block const& expression);
         runtime::values::value operator()(ast::epp_render_string const& expression);
-        runtime::values::value operator()(ast::produces_expression const& expression);
-        runtime::values::value operator()(ast::consumes_expression const& expression);
-        runtime::values::value operator()(ast::application_expression const& expression);
-        runtime::values::value operator()(ast::site_expression const& expression);
-        runtime::values::value operator()(ast::type_alias_expression const& expression);
+        runtime::values::value operator()(ast::unary_expression const& expression);
+        runtime::values::value operator()(ast::nested_expression const& expression);
+        runtime::values::value operator()(ast::expression const& expression);
+        runtime::values::value operator()(ast::postfix_expression const& expression);
+        runtime::values::value operator()(ast::statement const& statement);
+        runtime::values::value operator()(ast::class_statement const& statement);
+        runtime::values::value operator()(ast::defined_type_statement const& statement);
+        runtime::values::value operator()(ast::node_statement const& statement);
+        runtime::values::value operator()(ast::function_statement const& statement);
+        runtime::values::value operator()(ast::produces_statement const& statement);
+        runtime::values::value operator()(ast::consumes_statement const& statement);
+        runtime::values::value operator()(ast::application_statement const& statement);
+        runtime::values::value operator()(ast::site_statement const& statement);
+        runtime::values::value operator()(ast::type_alias_statement const& statement);
+        runtime::values::value operator()(ast::function_call_statement const& statement);
+        runtime::values::value operator()(ast::relationship_statement const& statement);
+        runtime::values::value operator()(ast::relationship_expression const& expression);
+        runtime::values::value operator()(ast::resource_declaration_expression const& expression);
+        runtime::values::value operator()(ast::resource_override_expression const& expression);
+        runtime::values::value operator()(ast::resource_defaults_expression const& expression);
+        runtime::values::value operator()(ast::collector_expression const& expression);
 
-        runtime::values::value evaluate_body(std::vector<ast::expression> const& body);
-        ast::resource_body const* find_default_body(ast::resource_expression const& expression);
+        runtime::values::value evaluate_body(std::vector<ast::statement> const& body);
+        ast::resource_body const* find_default_body(ast::resource_declaration_expression const& expression);
         attributes evaluate_attributes(bool is_class, std::vector<ast::attribute_operation> const& operations);
         void splat_attribute(compiler::attributes& attributes, std::unordered_set<std::string>& names, ast::attribute_operation const& operations);
         void validate_attribute(std::string const& name, runtime::values::value& value, ast::context const& context);
-        std::vector<resource*> create_resources(bool is_class, std::string const& type_name, ast::resource_expression const& expression, attributes const& defaults);
+        std::vector<resource*> create_resources(bool is_class, std::string const& type_name, ast::resource_declaration_expression const& expression, attributes const& defaults);
 
         std::pair<runtime::values::value, ast::context> climb_expression(
             ast::postfix_expression const& expression,
@@ -137,9 +151,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Constructs a function evaluator for a Puppet function.
          * @param context The current evaluation context.
-         * @param expression The Puppet function expression.
+         * @param statement The Puppet function statement.
          */
-        function_evaluator(evaluation::context& context, ast::function_expression const& expression);
+        function_evaluator(evaluation::context& context, ast::function_statement const& statement);
 
         /**
          * Constructs a function evaluator for a named function without a definition.
@@ -148,7 +162,7 @@ namespace puppet { namespace compiler { namespace evaluation {
          * @param parameters The function's parameters.
          * @param body The function's body.
          */
-        function_evaluator(evaluation::context& context, char const* name, std::vector<ast::parameter> const& parameters, std::vector<ast::expression> const& body);
+        function_evaluator(evaluation::context& context, char const* name, std::vector<ast::parameter> const& parameters, std::vector<ast::statement> const& body);
 
         /**
          * Evaluates the function.
@@ -175,9 +189,9 @@ namespace puppet { namespace compiler { namespace evaluation {
      private:
         evaluation::context& _context;
         char const* _name;
-        ast::function_expression const* _expression;
+        ast::function_statement const* _statement;
         std::vector<ast::parameter> const& _parameters;
-        std::vector<ast::expression> const& _body;
+        std::vector<ast::statement> const& _body;
     };
 
     /**
@@ -192,7 +206,7 @@ namespace puppet { namespace compiler { namespace evaluation {
          * @param parameters The resource definition's parameters.
          * @param body The resource definition's body.
          */
-        resource_evaluator(evaluation::context& context, std::vector<ast::parameter> const& parameters, std::vector<ast::expression> const& body);
+        resource_evaluator(evaluation::context& context, std::vector<ast::parameter> const& parameters, std::vector<ast::statement> const& body);
 
      protected:
         /**
@@ -215,7 +229,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Stores the body.
          */
-        std::vector<ast::expression> const& _body;
+        std::vector<ast::statement> const& _body;
     };
 
     /**
@@ -226,9 +240,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Constructs a class evaluator.
          * @param context The current evaluation context.
-         * @param expression The class expression to evaluate.
+         * @param statement The class statement to evaluate.
          */
-        class_evaluator(evaluation::context& context, ast::class_expression const& expression);
+        class_evaluator(evaluation::context& context, ast::class_statement const& statement);
 
         /**
          * Evaluates for the given resource.
@@ -238,7 +252,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
      private:
         std::shared_ptr<scope> evaluate_parent() const;
-        ast::class_expression const& _expression;
+        ast::class_statement const& _statement;
     };
 
     /**
@@ -249,9 +263,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Constructs a defined type evaluator.
          * @param context The current evaluation context.
-         * @param expression The defined type expression to evaluate.
+         * @param statement The defined type statement to evaluate.
          */
-        defined_type_evaluator(evaluation::context& context, ast::defined_type_expression const& expression);
+        defined_type_evaluator(evaluation::context& context, ast::defined_type_statement const& statement);
 
         /**
          * Evaluates for the given resource.
@@ -260,7 +274,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         void evaluate(compiler::resource& resource) const;
 
      private:
-        ast::defined_type_expression const& _expression;
+        ast::defined_type_statement const& _statement;
     };
 
     /**
@@ -271,9 +285,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Constructs a node evaluator.
          * @param context The current evaluation context.
-         * @param expression The defined type expression to evaluate.
+         * @param statement The defined type statement to evaluate.
          */
-        node_evaluator(evaluation::context& context, ast::node_expression const& expression);
+        node_evaluator(evaluation::context& context, ast::node_statement const& statement);
 
         /**
          * Evaluates for the given resource.
@@ -284,7 +298,7 @@ namespace puppet { namespace compiler { namespace evaluation {
      private:
         static std::vector<ast::parameter> _none;
 
-        ast::node_expression const& _expression;
+        ast::node_statement const& _statement;
     };
 
 }}}  // namespace puppet::compiler::evaluation

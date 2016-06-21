@@ -1,7 +1,7 @@
 path: simple.epp
 statements:
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 3
@@ -32,7 +32,7 @@ statements:
       offset: 28
       line: 2
     string: "Hello, "
-  - kind: EPP render
+  - kind: EPP render expression
     begin:
       offset: 28
       line: 2

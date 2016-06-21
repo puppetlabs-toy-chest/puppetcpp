@@ -18,8 +18,21 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         }
 
         _arguments.reserve(expression.arguments.size());
-
         evaluate_arguments(expression.arguments);
+    }
+
+    call_context::call_context(evaluation::context& context, ast::function_call_statement const& statement) :
+        _context(context),
+        _name(statement.function),
+        _block(statement.lambda)
+    {
+        // Capture the closure scope if there is a block
+        if (_block) {
+            _closure_scope = context.current_scope();
+        }
+
+        _arguments.reserve(statement.arguments.size());
+        evaluate_arguments(statement.arguments);
     }
 
     call_context::call_context(evaluation::context& context, ast::method_call_expression const& expression, values::value& instance, ast::context const& instance_context, bool splat) :
@@ -27,6 +40,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         _name(expression.method),
         _block(expression.lambda)
     {
+        // Capture the closure scope if there is a block
+        if (_block) {
+            _closure_scope = context.current_scope();
+        }
+
         _arguments.reserve(expression.arguments.size() + 1);
 
         // Check if the instance itself is being splatted
@@ -48,6 +66,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         _name(name),
         _block(expression.lambda)
     {
+        // Capture the closure scope if there is a block
+        if (_block) {
+            _closure_scope = context.current_scope();
+        }
+
         _arguments.reserve(expression.arguments.size() + 1);
 
         // Push back the type as the first argument

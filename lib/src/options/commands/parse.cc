@@ -90,7 +90,7 @@ namespace puppet { namespace options { namespace commands {
             compiler::lexer::line_info info;
             ifstream input{ manifest };
             if (input) {
-                info = lexer::get_line_info(input, ex.begin().offset(), ex.begin().offset(), ex.end().offset() - ex.begin().offset());
+                info = lexer::get_line_info(input, ex.begin().offset(), ex.end().offset() - ex.begin().offset());
             }
             LOG(error, ex.begin().line(), info.column, info.length, info.text, manifest, ex.what());
             // TODO: write out an XPP with the diagnostics

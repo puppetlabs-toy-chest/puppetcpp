@@ -93,7 +93,7 @@ statements:
           offset: 46
           line: 6
         value: baz
-  - kind: unary
+  - kind: unary expression
     operator_position:
       offset: 50
       line: 8

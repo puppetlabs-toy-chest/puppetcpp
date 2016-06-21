@@ -29,9 +29,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         /**
          * Constructs a function descriptor.
          * @param name The name of the function.
-         * @param expression The function expression if the function was defined in Puppet source code.
+         * @param statement The function statement if the function was defined in Puppet source code.
          */
-        explicit descriptor(std::string name, ast::function_expression const* expression = nullptr);
+        explicit descriptor(std::string name, ast::function_statement const* statement = nullptr);
 
         /**
          * Gets the function's name.
@@ -40,10 +40,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         std::string const& name() const;
 
         /**
-         * Gets the associated function expression if the function was defined in Puppet source code.
-         * @return Returns the function expression or nullptr if the function is a built-in function.
+         * Gets the associated function statement if the function was defined in Puppet source code.
+         * @return Returns the function statement or nullptr if the function is a built-in function.
          */
-        ast::function_expression const* expression() const;
+        ast::function_statement const* statement() const;
 
         /**
          * Determines if the function has dispatch descriptors.
@@ -79,7 +79,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         std::string _name;
         std::vector<dispatch_descriptor> _dispatch_descriptors;
         std::shared_ptr<ast::syntax_tree> _tree;
-        ast::function_expression const* _expression;
+        ast::function_statement const* _statement;
     };
 
 }}}}  // puppet::compiler::evaluation::functions

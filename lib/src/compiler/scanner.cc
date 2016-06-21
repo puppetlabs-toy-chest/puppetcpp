@@ -17,16 +17,16 @@ namespace puppet { namespace compiler {
     // null scopes on the stack represent scopes where definitions may not occur
     struct scope_helper
     {
-        explicit scope_helper(vector<ast::class_expression const*>& scopes) :
+        explicit scope_helper(vector<ast::class_statement const*>& scopes) :
             _scopes(scopes)
         {
             scopes.emplace_back(nullptr);
         }
 
-        scope_helper(vector<ast::class_expression const*>& scopes, ast::class_expression const& expression) :
+        scope_helper(vector<ast::class_statement const*>& scopes, ast::class_statement const& statement) :
             _scopes(scopes)
         {
-            scopes.emplace_back(&expression);
+            scopes.emplace_back(&statement);
         }
 
         ~scope_helper()
@@ -35,7 +35,7 @@ namespace puppet { namespace compiler {
         }
 
      private:
-        vector<ast::class_expression const*>& _scopes;
+        vector<ast::class_statement const*>& _scopes;
     };
 
     scanner::scanner(compiler::registry& registry, evaluation::dispatcher& dispatcher) :
@@ -62,14 +62,19 @@ namespace puppet { namespace compiler {
         }
     }
 
-    bool scanner::scan(ast::expression const& expression)
+    bool scanner::scan(ast::statement const& statement)
     {
         // Reset for the scan
         _scopes.clear();
         _found_definition = false;
 
-        operator()(expression);
+        operator()(statement);
         return _found_definition;
+    }
+
+    void scanner::operator()(ast::basic_expression const& expression)
+    {
+        boost::apply_visitor(*this, expression);
     }
 
     void scanner::operator()(ast::undef const&)
@@ -112,15 +117,15 @@ namespace puppet { namespace compiler {
     {
     }
 
-    void scanner::operator()(ast::literal_string_text const& expression)
-    {
-    }
-
     void scanner::operator()(ast::interpolated_string const& expression)
     {
         for (auto const& part : expression.parts) {
             boost::apply_visitor(*this, part);
         }
+    }
+
+    void scanner::operator()(ast::literal_string_text const& expression)
+    {
     }
 
     void scanner::operator()(ast::array const& expression)
@@ -140,27 +145,6 @@ namespace puppet { namespace compiler {
             operator()(pair.first);
             operator()(pair.second);
         }
-    }
-
-    void scanner::operator()(ast::expression const& expression)
-    {
-        if (expression.operations.empty()) {
-            operator()(expression.first);
-            return;
-        }
-
-        // Binary expressions cannot contain definitions
-        scope_helper scope{ _scopes };
-
-        operator()(expression.first);
-        for (auto const& operation : expression.operations) {
-            operator()(operation.operand);
-        }
-    }
-
-    void scanner::operator()(ast::nested_expression const& expression)
-    {
-        operator()(expression.expression);
     }
 
     void scanner::operator()(ast::case_expression const& expression)
@@ -230,6 +214,30 @@ namespace puppet { namespace compiler {
         }
     }
 
+    void scanner::operator()(ast::lambda_expression const& expression)
+    {
+        for (auto const& parameter : expression.parameters) {
+            validate_parameter_name(parameter);
+
+            operator()(parameter);
+        }
+
+        // Scan the body
+        for (auto const& statement : expression.body) {
+            operator()(statement);
+        }
+    }
+
+    void scanner::operator()(ast::parameter const& expression)
+    {
+        if (expression.type) {
+            operator()(*expression.type);
+        }
+        if (expression.default_value) {
+            operator()(*expression.default_value);
+        }
+    }
+
     void scanner::operator()(ast::new_expression const& expression)
     {
         scope_helper scope{ _scopes };
@@ -241,243 +249,20 @@ namespace puppet { namespace compiler {
         }
     }
 
-    void scanner::operator()(ast::resource_expression const& expression)
-    {
-        scope_helper scope{ _scopes };
-
-        for (auto const& body : expression.bodies) {
-            operator()(body.title);
-            for (auto const& operation : body.operations) {
-                operator()(operation.value);
-            }
-        }
-    }
-
-    void scanner::operator()(ast::resource_override_expression const& expression)
-    {
-        scope_helper scope{ _scopes };
-
-        operator()(expression.reference);
-
-        for (auto const& operation : expression.operations) {
-            operator()(operation.value);
-        }
-    }
-
-    void scanner::operator()(ast::resource_defaults_expression const& expression)
-    {
-        scope_helper scope{ _scopes };
-
-        for (auto const& operation : expression.operations) {
-            operator()(operation.value);
-        }
-    }
-
-    void scanner::operator()(ast::class_expression const& expression)
-    {
-        // Validate the class name
-        string name = validate_name(true, expression.name);
-
-        // Check if the class already exists
-        if (auto existing = _registry.find_class(name)) {
-            throw parse_exception(
-                (boost::format("class '%1%' was previously defined at %2%:%3%.") %
-                 existing->name() %
-                 existing->expression().tree->path() %
-                 existing->expression().begin.line()
-                ).str(),
-                expression.name.begin,
-                expression.name.end
-            );
-        }
-
-        // Validate the class parameters
-        validate_parameters("class", expression.parameters);
-
-        // Scan the parameters
-        if (!expression.parameters.empty()) {
-            scope_helper scope{ _scopes };
-
-            for (auto const& parameter : expression.parameters) {
-                operator()(parameter);
-            }
-        }
-
-        // Scan the body
-        if (!expression.body.empty()) {
-            // Set the class scope
-            scope_helper scope(_scopes, expression);
-
-            for (auto const& statement : expression.body) {
-                operator()(statement);
-            }
-        }
-
-        // Register the class
-        _registry.register_class(klass{ rvalue_cast(name), expression });
-        _found_definition = true;
-    }
-
-    void scanner::operator()(ast::defined_type_expression const& expression)
-    {
-        auto name = validate_name(false, expression.name);
-
-        // Validate the defined type parameters
-        validate_parameters("defined type", expression.parameters);
-
-        // Check if the defined type already exists
-        if (auto existing = _registry.find_defined_type(name)) {
-            throw parse_exception(
-                (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
-                 existing->name() %
-                 existing->expression().tree->path() %
-                 existing->expression().begin.line()
-                ).str(),
-                expression.name.begin,
-                expression.name.end
-            );
-        }
-
-        scope_helper scope{ _scopes };
-
-        // Scan the parameters
-        for (auto const& parameter : expression.parameters) {
-            operator()(parameter);
-        }
-
-        // Scan the body
-        for (auto const& statement : expression.body) {
-            operator()(statement);
-        }
-
-        // Register the defined type
-        _registry.register_defined_type(defined_type{ rvalue_cast(name), expression });
-        _found_definition = true;
-    }
-
-    void scanner::operator()(ast::node_expression const& expression)
-    {
-        if (!can_define()) {
-            throw parse_exception("node definitions can only be defined at top-level or inside a class.", expression.begin, expression.end);
-        }
-
-        // Check for valid host names
-        for (auto& hostname : expression.hostnames) {
-            if (!hostname.is_valid()) {
-                auto context = hostname.context();
-                throw parse_exception(
-                    (boost::format("hostname '%1%' is not valid: only letters, digits, '_', '-', and '.' are allowed.") %
-                     hostname.to_string()
-                    ).str(),
-                    context.begin,
-                    context.end
-                );
-            }
-        }
-
-        // Check for existing conflicting node definition
-        if (auto existing = _registry.find_node(expression)) {
-            throw parse_exception(
-                (boost::format("a conflicting node definition was previously defined at %1%:%2%.") %
-                    existing->expression().tree->path() %
-                    existing->expression().begin.line()
-                ).str(),
-                expression.begin,
-                expression.end
-            );
-        }
-
-        scope_helper scope{ _scopes };
-
-        // Scan the body
-        for (auto const& statement : expression.body) {
-            operator()(statement);
-        }
-
-        // Register the node
-        _registry.register_node(node_definition{ expression });
-        _found_definition = true;
-    }
-
-    void scanner::operator()(ast::collector_expression const& expression)
-    {
-        scope_helper scope{ _scopes };
-
-        // Scan the query
-        if (expression.query) {
-            operator()(*expression.query);
-        }
-    }
-
-    void scanner::operator()(ast::query_expression const& expression)
-    {
-        scope_helper scope{ _scopes };
-
-        operator()(expression.primary);
-
-        for (auto const& operation : expression.operations) {
-            operator()(operation.operand);
-        }
-    }
-
-    void scanner::operator()(ast::nested_query_expression const& expression)
+    void scanner::operator()(ast::epp_render_expression const& expression)
     {
         operator()(expression.expression);
     }
 
-    void scanner::operator()(ast::primary_query_expression const& expression)
+    void scanner::operator()(ast::epp_render_block const& expression)
     {
-        boost::apply_visitor(*this, expression);
-    }
-
-    void scanner::operator()(ast::attribute_query const& expression)
-    {
-        operator()(expression.value);
-    }
-
-    void scanner::operator()(ast::function_expression const& expression)
-    {
-        if (!_scopes.empty()) {
-            throw parse_exception("function definitions can only be defined at top-level.", expression.begin, expression.end);
-        }
-
-        // First check for existing functions in the dispatcher
-        if (auto descriptor = _dispatcher.find(expression.name.value)) {
-            if (auto existing = descriptor->expression()) {
-                throw parse_exception(
-                    (boost::format("cannot define function '%1%' because it conflicts with a previous definition at %2%:%3%.") %
-                     expression.name %
-                     existing->tree->path() %
-                     existing->begin.line()
-                    ).str(),
-                    expression.name.begin,
-                    expression.name.end
-                );
-            }
-            throw parse_exception(
-                (boost::format("cannot define function '%1%' because it conflicts with a built-in function of the same name.") %
-                 expression.name
-                ).str(),
-                expression.name.begin,
-                expression.name.end
-            );
-        }
-
-        scope_helper scope{ _scopes };
-
-        // Scan the parameters
-        for (auto const& parameter : expression.parameters) {
-            operator()(parameter);
-        }
-
-        // Scan the body
-        for (auto const& statement : expression.body) {
+        for (auto const& statement : expression.block) {
             operator()(statement);
         }
+    }
 
-        // Add the function
-        _dispatcher.add(evaluation::functions::descriptor{ expression.name.value, &expression });
-        _found_definition = true;
+    void scanner::operator()(ast::epp_render_string const& expression)
+    {
     }
 
     void scanner::operator()(ast::unary_expression const& expression)
@@ -485,13 +270,28 @@ namespace puppet { namespace compiler {
         operator()(expression.operand);
     }
 
+    void scanner::operator()(ast::nested_expression const& expression)
+    {
+        operator()(expression.expression);
+    }
+
+    void scanner::operator()(ast::expression const& expression)
+    {
+        scope_helper scope{ _scopes };
+
+        operator()(expression.operand);
+        for (auto const& operation : expression.operations) {
+            operator()(operation.operand);
+        }
+    }
+
     void scanner::operator()(ast::postfix_expression const& expression)
     {
-        operator()(expression.primary);
+        operator()(expression.operand);
 
-        for (auto const& subexpression : expression.subexpressions)
+        for (auto const& operation : expression.operations)
         {
-            boost::apply_visitor(*this, subexpression);
+            boost::apply_visitor(*this, operation);
         }
     }
 
@@ -520,134 +320,359 @@ namespace puppet { namespace compiler {
         }
     }
 
-    void scanner::operator()(ast::lambda_expression const& expression)
+    void scanner::operator()(ast::statement const& statement)
     {
-        for (auto const& parameter : expression.parameters) {
-            validate_parameter_name(parameter);
+        boost::apply_visitor(*this, statement);
+    }
 
+    void scanner::operator()(ast::class_statement const& statement)
+    {
+        // Validate the class name
+        string name = validate_name(true, statement.name);
+
+        // Check if the class already exists
+        if (auto existing = _registry.find_class(name)) {
+            throw parse_exception(
+                (boost::format("class '%1%' was previously defined at %2%:%3%.") %
+                 existing->name() %
+                 existing->statement().tree->path() %
+                 existing->statement().begin.line()
+                ).str(),
+                statement.name.begin,
+                statement.name.end
+            );
+        }
+
+        // Validate the class parameters
+        validate_parameters("class", statement.parameters);
+
+        // Scan the parameters
+        if (!statement.parameters.empty()) {
+            scope_helper scope{ _scopes };
+
+            for (auto const& parameter : statement.parameters) {
+                operator()(parameter);
+            }
+        }
+
+        // Scan the body
+        if (!statement.body.empty()) {
+            // Set the class scope
+            scope_helper scope(_scopes, statement);
+
+            for (auto const& statement : statement.body) {
+                operator()(statement);
+            }
+        }
+
+        // Register the class
+        _registry.register_class(klass{ rvalue_cast(name), statement });
+        _found_definition = true;
+    }
+
+    void scanner::operator()(ast::defined_type_statement const& statement)
+    {
+        auto name = validate_name(false, statement.name);
+
+        // Validate the defined type parameters
+        validate_parameters("defined type", statement.parameters);
+
+        // Check if the defined type already exists
+        if (auto existing = _registry.find_defined_type(name)) {
+            throw parse_exception(
+                (boost::format("defined type '%1%' was previously defined at %2%:%3%.") %
+                 existing->name() %
+                 existing->statement().tree->path() %
+                 existing->statement().begin.line()
+                ).str(),
+                statement.name.begin,
+                statement.name.end
+            );
+        }
+
+        scope_helper scope{ _scopes };
+
+        // Scan the parameters
+        for (auto const& parameter : statement.parameters) {
             operator()(parameter);
         }
 
         // Scan the body
-        for (auto const& statement : expression.body) {
+        for (auto const& statement : statement.body) {
             operator()(statement);
         }
+
+        // Register the defined type
+        _registry.register_defined_type(defined_type{ rvalue_cast(name), statement });
+        _found_definition = true;
     }
 
-    void scanner::operator()(ast::parameter const& expression)
+    void scanner::operator()(ast::node_statement const& statement)
     {
-        if (expression.type) {
-            operator()(*expression.type);
-        }
-        if (expression.default_value) {
-            operator()(*expression.default_value);
-        }
-    }
-
-    void scanner::operator()(ast::primary_expression const& expression)
-    {
-        boost::apply_visitor(*this, expression);
-    }
-
-    void scanner::operator()(ast::epp_render_expression const& expression)
-    {
-        operator()(expression.expression);
-    }
-
-    void scanner::operator()(ast::epp_render_block const& expression)
-    {
-        for (auto const& statement : expression.block) {
-            operator()(statement);
-        }
-    }
-
-    void scanner::operator()(ast::epp_render_string const& expression)
-    {
-    }
-
-    void scanner::operator()(ast::produces_expression const& expression)
-    {
-        // TODO: register the mapping
-
-        scope_helper scope{ _scopes };
-
-        for (auto const& operation : expression.operations) {
-            operator()(operation.value);
-        }
-    }
-
-    void scanner::operator()(ast::consumes_expression const& expression)
-    {
-        // TODO: register the mapping
-
-        scope_helper scope{ _scopes };
-
-        for (auto const& operation : expression.operations) {
-            operator()(operation.value);
-        }
-    }
-
-    void scanner::operator()(ast::application_expression const& expression)
-    {
-        // TODO: register the application
-
-        validate_parameters("application", expression.parameters);
-
-        // Scan the body
-        for (auto const& statement : expression.body) {
-            operator()(statement);
-        }
-    }
-
-    void scanner::operator()(ast::site_expression const& expression)
-    {
-        // TODO: register the site
-
-        for (auto const& statement : expression.body) {
-            operator()(statement);
-        }
-    }
-
-    void scanner::operator()(ast::type_alias_expression const& expression)
-    {
-        if (!_scopes.empty()) {
-            auto context = expression.context();
-            throw parse_exception("type aliases can only be defined at top-level.", context.begin, context.end);
+        if (!can_define()) {
+            throw parse_exception("node definitions can only be defined at top-level or inside a class.", statement.begin, statement.end);
         }
 
-        if (values::type::find(expression.alias.name)) {
+        // Check for valid host names
+        for (auto& hostname : statement.hostnames) {
+            if (!hostname.is_valid()) {
+                auto context = hostname.context();
+                throw parse_exception(
+                    (boost::format("hostname '%1%' is not valid: only letters, digits, '_', '-', and '.' are allowed.") %
+                     hostname.to_string()
+                    ).str(),
+                    context.begin,
+                    context.end
+                );
+            }
+        }
+
+        // Check for existing conflicting node definition
+        if (auto existing = _registry.find_node(statement)) {
             throw parse_exception(
-                (boost::format("type alias '%1%' conflicts with a built-in type of the same name.") %
-                 expression.alias
+                (boost::format("a conflicting node definition was previously defined at %1%:%2%.") %
+                    existing->statement().tree->path() %
+                    existing->statement().begin.line()
                 ).str(),
-                expression.alias.begin,
-                expression.alias.end
+                statement.begin,
+                statement.end
             );
         }
 
-        auto alias = _registry.find_type_alias(expression.alias.name);
+        scope_helper scope{ _scopes };
+
+        // Scan the body
+        for (auto const& statement : statement.body) {
+            operator()(statement);
+        }
+
+        // Register the node
+        _registry.register_node(node_definition{ statement });
+        _found_definition = true;
+    }
+
+    void scanner::operator()(ast::function_statement const& statement)
+    {
+        if (!_scopes.empty()) {
+            throw parse_exception("function definitions can only be defined at top-level.", statement.begin, statement.end);
+        }
+
+        // First check for existing functions in the dispatcher
+        if (auto descriptor = _dispatcher.find(statement.name.value)) {
+            if (auto existing = descriptor->statement()) {
+                throw parse_exception(
+                    (boost::format("cannot define function '%1%' because it conflicts with a previous definition at %2%:%3%.") %
+                     statement.name %
+                     existing->tree->path() %
+                     existing->begin.line()
+                    ).str(),
+                    statement.name.begin,
+                    statement.name.end
+                );
+            }
+            throw parse_exception(
+                (boost::format("cannot define function '%1%' because it conflicts with a built-in function of the same name.") %
+                 statement.name
+                ).str(),
+                statement.name.begin,
+                statement.name.end
+            );
+        }
+
+        scope_helper scope{ _scopes };
+
+        // Scan the parameters
+        for (auto const& parameter : statement.parameters) {
+            operator()(parameter);
+        }
+
+        // Scan the body
+        for (auto const& statement : statement.body) {
+            operator()(statement);
+        }
+
+        // Add the function
+        _dispatcher.add(evaluation::functions::descriptor{ statement.name.value, &statement });
+        _found_definition = true;
+    }
+
+    void scanner::operator()(ast::produces_statement const& statement)
+    {
+        // TODO: register the mapping
+
+        scope_helper scope{ _scopes };
+
+        for (auto const& operation : statement.operations) {
+            operator()(operation.value);
+        }
+    }
+
+    void scanner::operator()(ast::consumes_statement const& statement)
+    {
+        // TODO: register the mapping
+
+        scope_helper scope{ _scopes };
+
+        for (auto const& operation : statement.operations) {
+            operator()(operation.value);
+        }
+    }
+
+    void scanner::operator()(ast::application_statement const& statement)
+    {
+        // TODO: register the application
+
+        validate_parameters("application", statement.parameters);
+
+        // Scan the body
+        for (auto const& statement : statement.body) {
+            operator()(statement);
+        }
+    }
+
+    void scanner::operator()(ast::site_statement const& statement)
+    {
+        // TODO: register the site
+
+        for (auto const& statement : statement.body) {
+            operator()(statement);
+        }
+    }
+
+    void scanner::operator()(ast::type_alias_statement const& statement)
+    {
+        if (!_scopes.empty()) {
+            auto context = statement.context();
+            throw parse_exception("type aliases can only be defined at top-level.", context.begin, context.end);
+        }
+
+        if (values::type::find(statement.alias.name)) {
+            throw parse_exception(
+                (boost::format("type alias '%1%' conflicts with a built-in type of the same name.") %
+                 statement.alias
+                ).str(),
+                statement.alias.begin,
+                statement.alias.end
+            );
+        }
+
+        auto alias = _registry.find_type_alias(statement.alias.name);
         if (alias) {
-            auto context = alias->expression().context();
+            auto context = alias->statement().context();
             throw parse_exception(
                 (boost::format("type alias '%1%' was previously defined at %2%:%3%.") %
-                 expression.alias %
+                 statement.alias %
                  context.tree->path() %
                  context.begin.line()
                 ).str(),
-                expression.alias.begin,
-                expression.alias.end
+                statement.alias.begin,
+                statement.alias.end
             );
         }
 
         // Validate the RHS expression
-        type_validator::validate(expression.type);
+        type_validator::validate(statement.type);
 
         scope_helper scope{ _scopes };
 
-        operator()(expression.alias);
-        operator()(expression.type);
+        operator()(statement.alias);
+        operator()(statement.type);
 
-        _registry.register_type_alias(type_alias{ expression });
+        _registry.register_type_alias(type_alias{ statement });
+    }
+
+    void scanner::operator()(ast::function_call_statement const& statement)
+    {
+        scope_helper scope{ _scopes };
+
+        for (auto const& argument : statement.arguments) {
+            operator()(argument);
+        }
+        if (statement.lambda) {
+            operator()(*statement.lambda);
+        }
+    }
+
+    void scanner::operator()(ast::relationship_statement const& statement)
+    {
+        operator()(statement.operand);
+
+        for (auto const& operation : statement.operations) {
+            operator()(operation.operand);
+        }
+    }
+
+    void scanner::operator()(ast::relationship_expression const& expression)
+    {
+        boost::apply_visitor(*this, expression);
+    }
+
+    void scanner::operator()(ast::resource_declaration_expression const& expression)
+    {
+        scope_helper scope{ _scopes };
+
+        for (auto const& body : expression.bodies) {
+            operator()(body.title);
+            for (auto const& operation : body.operations) {
+                operator()(operation.value);
+            }
+        }
+    }
+
+    void scanner::operator()(ast::resource_override_expression const& expression)
+    {
+        scope_helper scope{ _scopes };
+
+        boost::apply_visitor(*this, expression.reference);
+
+        for (auto const& operation : expression.operations) {
+            operator()(operation.value);
+        }
+    }
+
+    void scanner::operator()(ast::resource_defaults_expression const& expression)
+    {
+        scope_helper scope{ _scopes };
+
+        for (auto const& operation : expression.operations) {
+            operator()(operation.value);
+        }
+    }
+
+    void scanner::operator()(ast::collector_expression const& expression)
+    {
+        scope_helper scope{ _scopes };
+
+        // Scan the query
+        if (expression.query) {
+            operator()(*expression.query);
+        }
+    }
+
+    void scanner::operator()(ast::query_expression const& expression)
+    {
+        scope_helper scope{ _scopes };
+
+        operator()(expression.operand);
+
+        for (auto const& operation : expression.operations) {
+            operator()(operation.operand);
+        }
+    }
+
+    void scanner::operator()(ast::nested_query_expression const& expression)
+    {
+        operator()(expression.expression);
+    }
+
+    void scanner::operator()(ast::basic_query_expression const& expression)
+    {
+        boost::apply_visitor(*this, expression);
+    }
+
+    void scanner::operator()(ast::attribute_query const& expression)
+    {
+        operator()(expression.value);
     }
 
     bool scanner::can_define() const
@@ -703,8 +728,8 @@ namespace puppet { namespace compiler {
                 throw parse_exception(
                     (boost::format("'%1%' was previously defined as a defined type at %2%:%3%.") %
                      qualified_name %
-                     type->expression().tree->path() %
-                     type->expression().begin.line()
+                     type->statement().tree->path() %
+                     type->statement().begin.line()
                     ).str(),
                     name.begin,
                     name.end
@@ -716,8 +741,8 @@ namespace puppet { namespace compiler {
                 throw parse_exception(
                     (boost::format("'%1%' was previously defined as a class at %2%:%3%.") %
                      qualified_name %
-                     klass->expression().tree->path() %
-                     klass->expression().begin.line()
+                     klass->statement().tree->path() %
+                     klass->statement().begin.line()
                     ).str(),
                     name.begin,
                     name.end

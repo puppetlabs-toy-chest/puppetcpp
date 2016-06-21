@@ -222,13 +222,13 @@ namespace puppet { namespace compiler {
                 types::resource("node", result.second),
                 catalog.find(types::resource("class", "main")),
                 context.top_scope(),
-                result.first->expression());
+                result.first->statement());
             if (!resource) {
                 throw evaluation_exception("failed to add node resource.", context.backtrace());
             }
 
             LOG(debug, "evaluating node definition for node '%1%'.", context.node().name());
-            evaluation::node_evaluator evaluator{ context, result.first->expression() };
+            evaluation::node_evaluator evaluator{ context, result.first->statement() };
             evaluator.evaluate(*resource);
         }
     }

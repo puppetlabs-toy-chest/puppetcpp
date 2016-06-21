@@ -10,10 +10,10 @@ using namespace puppet::compiler::evaluation;
 
 namespace puppet { namespace compiler {
 
-    klass::klass(string name, ast::class_expression const& expression) :
+    klass::klass(string name, ast::class_statement const& statement) :
         _name(rvalue_cast(name)),
-        _tree(expression.tree->shared_from_this()),
-        _expression(expression)
+        _tree(statement.tree->shared_from_this()),
+        _statement(statement)
     {
     }
 
@@ -22,15 +22,15 @@ namespace puppet { namespace compiler {
         return _name;
     }
 
-    ast::class_expression const& klass::expression() const
+    ast::class_statement const& klass::statement() const
     {
-        return _expression;
+        return _statement;
     }
 
-    defined_type::defined_type(string name, ast::defined_type_expression const& expression) :
+    defined_type::defined_type(string name, ast::defined_type_statement const& statement) :
         _name(rvalue_cast(name)),
-        _tree(expression.tree->shared_from_this()),
-        _expression(expression)
+        _tree(statement.tree->shared_from_this()),
+        _statement(statement)
     {
     }
 
@@ -39,31 +39,31 @@ namespace puppet { namespace compiler {
         return _name;
     }
 
-    ast::defined_type_expression const& defined_type::expression() const
+    ast::defined_type_statement const& defined_type::statement() const
     {
-        return _expression;
+        return _statement;
     }
 
-    node_definition::node_definition(ast::node_expression const& expression) :
-        _tree(expression.tree->shared_from_this()),
-        _expression(expression)
-    {
-    }
-
-    ast::node_expression const& node_definition::expression() const
-    {
-        return _expression;
-    }
-
-    type_alias::type_alias(ast::type_alias_expression const& expression) :
-        _tree(expression.alias.tree->shared_from_this()),
-        _expression(expression)
+    node_definition::node_definition(ast::node_statement const& statement) :
+        _tree(statement.tree->shared_from_this()),
+        _statement(statement)
     {
     }
 
-    ast::type_alias_expression const& type_alias::expression() const
+    ast::node_statement const& node_definition::statement() const
     {
-        return _expression;
+        return _statement;
+    }
+
+    type_alias::type_alias(ast::type_alias_statement const& statement) :
+        _tree(statement.alias.tree->shared_from_this()),
+        _statement(statement)
+    {
+    }
+
+    ast::type_alias_statement const& type_alias::statement() const
+    {
+        return _statement;
     }
 
     klass const* registry::find_class(string const& name) const
@@ -135,9 +135,9 @@ namespace puppet { namespace compiler {
         return make_pair(definition, rvalue_cast(node_name));
     }
 
-    node_definition const* registry::find_node(ast::node_expression const& expression) const
+    node_definition const* registry::find_node(ast::node_statement const& statement) const
     {
-        for (auto const& hostname : expression.hostnames) {
+        for (auto const& hostname : statement.hostnames) {
             // Check for default node
             if (hostname.is_default()) {
                 if (_default_node_index) {
@@ -169,13 +169,13 @@ namespace puppet { namespace compiler {
     node_definition const* registry::register_node(node_definition node)
     {
         // Check for a node that would conflict with the given one
-        if (auto existing = find_node(node.expression())) {
+        if (auto existing = find_node(node.statement())) {
             return existing;
         }
 
         // Create all the regexes now before modifying any data
         vector<values::regex> regexes;
-        for (auto const& hostname : node.expression().hostnames) {
+        for (auto const& hostname : node.statement().hostnames) {
             // Check for regular expressions
             if (!hostname.is_regex()) {
                 continue;
@@ -196,7 +196,7 @@ namespace puppet { namespace compiler {
         // Add the node
         _nodes.emplace_back(rvalue_cast(node));
         size_t node_index = _nodes.size() - 1;
-        for (auto const& hostname : _nodes.back().expression().hostnames) {
+        for (auto const& hostname : _nodes.back().statement().hostnames) {
             // Skip regexes
             if (hostname.is_regex()) {
                 continue;
@@ -227,7 +227,7 @@ namespace puppet { namespace compiler {
 
     void registry::register_type_alias(type_alias alias)
     {
-        _aliases.emplace(alias.expression().alias.name, rvalue_cast(alias));
+        _aliases.emplace(alias.statement().alias.name, rvalue_cast(alias));
     }
 
     type_alias* registry::find_type_alias(string const& name)

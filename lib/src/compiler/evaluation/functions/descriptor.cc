@@ -9,12 +9,12 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    descriptor::descriptor(string name, ast::function_expression const* expression) :
+    descriptor::descriptor(string name, ast::function_statement const* statement) :
         _name(rvalue_cast(name)),
-        _expression(expression)
+        _statement(statement)
     {
-        if (_expression && _expression->tree) {
-            _tree = _expression->tree->shared_from_this();
+        if (_statement && _statement->tree) {
+            _tree = _statement->tree->shared_from_this();
         }
     }
 
@@ -23,14 +23,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         return _name;
     }
 
-    ast::function_expression const* descriptor::expression() const
+    ast::function_statement const* descriptor::statement() const
     {
-        return _expression;
+        return _statement;
     }
 
     bool descriptor::dispatchable() const
     {
-        return _expression || !_dispatch_descriptors.empty();
+        return _statement || !_dispatch_descriptors.empty();
     }
 
     void descriptor::add(string const& signature, callback_type callback)
@@ -51,16 +51,16 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         auto& evaluation_context = context.context();
 
         // Handle functions written in Puppet
-        if (_expression) {
+        if (_statement) {
             // Ensure the caller is allowed to call this function if it is private
-            if (_expression->is_private && _expression->tree && context.name().tree &&
-                _expression->tree->module() != context.name().tree->module()) {
-                if (!_expression->tree->module()) {
+            if (_statement->is_private && _statement->tree && context.name().tree &&
+                _statement->tree->module() != context.name().tree->module()) {
+                if (!_statement->tree->module()) {
                     throw evaluation_exception(
                         (boost::format("function '%1%' (declared at %2%:%3%) is private to the environment.") %
                          context.name() %
-                         _expression->tree->path() %
-                         _expression->begin.line()
+                         _statement->tree->path() %
+                         _statement->begin.line()
                         ).str(),
                         context.name(),
                         evaluation_context.backtrace()
@@ -69,9 +69,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 throw evaluation_exception(
                     (boost::format("function '%1%' (declared at %2%:%3%) is private to module '%4%'.") %
                      context.name() %
-                     _expression->tree->path() %
-                     _expression->begin.line() %
-                     _expression->tree->module()->name()
+                     _statement->tree->path() %
+                     _statement->begin.line() %
+                     _statement->tree->module()->name()
                     ).str(),
                     context.name(),
                     evaluation_context.backtrace()
@@ -79,7 +79,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             }
 
             try {
-                function_evaluator evaluator{ evaluation_context, *_expression };
+                function_evaluator evaluator{ evaluation_context, *_statement };
                 return evaluator.evaluate(context.arguments(), nullptr, context.name(), false);
             } catch (argument_exception const& ex) {
                 throw evaluation_exception(ex.what(), context.argument_context(ex.index()), evaluation_context.backtrace());

@@ -1,6 +1,6 @@
 path: node.pp
 statements:
-  - kind: node
+  - kind: node statement
     begin:
       offset: 0
       line: 1
@@ -10,7 +10,7 @@ statements:
     hostnames:
       - regex: false
         value: foo
-  - kind: node
+  - kind: node statement
     begin:
       offset: 17
       line: 5
@@ -20,7 +20,7 @@ statements:
     hostnames:
       - regex: false
         value: foo
-  - kind: node
+  - kind: node statement
     begin:
       offset: 32
       line: 9
@@ -30,7 +30,7 @@ statements:
     hostnames:
       - regex: false
         value: foo.bar.com
-  - kind: node
+  - kind: node statement
     begin:
       offset: 55
       line: 13
@@ -44,7 +44,7 @@ statements:
         value: bar
       - regex: false
         value: foo.bar.com
-  - kind: node
+  - kind: node statement
     begin:
       offset: 90
       line: 17
@@ -54,7 +54,7 @@ statements:
     hostnames:
       - regex: true
         value: ^foo(.*)bar$
-  - kind: node
+  - kind: node statement
     begin:
       offset: 116
       line: 21
@@ -64,7 +64,7 @@ statements:
     hostnames:
       - default: true
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -83,7 +83,7 @@ statements:
               offset: 144
               line: 22
             value: hi
-  - kind: node
+  - kind: node statement
     begin:
       offset: 148
       line: 25
@@ -99,7 +99,7 @@ statements:
       - regex: false
         value: foo.bar.com
     body:
-      - kind: function call
+      - kind: function call expression
         function:
           kind: name
           begin:
@@ -112,8 +112,8 @@ statements:
         end:
           offset: 197
           line: 26
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 202

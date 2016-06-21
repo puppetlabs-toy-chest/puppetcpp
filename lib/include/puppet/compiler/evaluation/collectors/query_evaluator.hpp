@@ -37,9 +37,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
         bool evaluate(compiler::resource const& resource) const;
 
      private:
-        bool evaluate(ast::primary_query_expression const& expression, compiler::resource const& resource) const;
+        bool evaluate(ast::basic_query_expression const& expression, compiler::resource const& resource) const;
         bool climb_expression(
-            ast::primary_query_expression const& expression,
+            ast::basic_query_expression const& expression,
             std::uint8_t min_precedence,
             std::vector<ast::binary_query_operation>::const_iterator& begin,
             std::vector<ast::binary_query_operation>::const_iterator const& end,

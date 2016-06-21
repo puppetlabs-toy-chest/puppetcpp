@@ -1,6 +1,6 @@
 path: orchestration.pp
 statements:
-  - kind: produces
+  - kind: produces statement
     resource:
       kind: type
       begin:
@@ -22,7 +22,7 @@ statements:
     end:
       offset: 20
       line: 2
-  - kind: produces
+  - kind: produces statement
     resource:
       kind: type
       begin:
@@ -78,7 +78,7 @@ statements:
           line: 6
         operator: =>
         value:
-          kind: function call
+          kind: function call expression
           function:
             kind: name
             begin:
@@ -94,7 +94,7 @@ statements:
     end:
       offset: 86
       line: 7
-  - kind: consumes
+  - kind: consumes statement
     resource:
       kind: type
       begin:
@@ -116,7 +116,7 @@ statements:
     end:
       offset: 108
       line: 10
-  - kind: consumes
+  - kind: consumes statement
     resource:
       kind: type
       begin:
@@ -172,7 +172,7 @@ statements:
           line: 14
         operator: =>
         value:
-          kind: function call
+          kind: function call expression
           function:
             kind: name
             begin:
@@ -188,7 +188,7 @@ statements:
     end:
       offset: 174
       line: 15
-  - kind: application
+  - kind: application statement
     begin:
       offset: 176
       line: 17
@@ -204,7 +204,7 @@ statements:
         offset: 192
         line: 17
       value: lamp
-  - kind: application
+  - kind: application statement
     begin:
       offset: 198
       line: 20
@@ -220,7 +220,7 @@ statements:
         offset: 214
         line: 20
       value: lamp
-  - kind: application
+  - kind: application statement
     begin:
       offset: 222
       line: 23
@@ -246,7 +246,7 @@ statements:
             offset: 241
             line: 23
           name: x
-  - kind: application
+  - kind: application statement
     begin:
       offset: 248
       line: 26
@@ -281,7 +281,7 @@ statements:
             offset: 271
             line: 26
           name: y
-  - kind: application
+  - kind: application statement
     begin:
       offset: 278
       line: 29
@@ -316,7 +316,7 @@ statements:
             offset: 305
             line: 29
           name: x
-  - kind: application
+  - kind: application statement
     begin:
       offset: 312
       line: 32
@@ -352,8 +352,8 @@ statements:
             line: 32
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 341
@@ -362,8 +362,8 @@ statements:
               offset: 347
               line: 32
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 347
                 line: 32
@@ -420,7 +420,7 @@ statements:
             line: 32
           name: rest
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -439,8 +439,8 @@ statements:
               offset: 387
               line: 33
             value: hi
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 392
@@ -478,8 +478,8 @@ statements:
                 line: 34
               base: decimal
               value: 1
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 409
@@ -516,7 +516,7 @@ statements:
                 line: 35
               base: decimal
               value: 1
-  - kind: produces
+  - kind: produces statement
     resource:
       kind: type
       begin:
@@ -594,7 +594,7 @@ statements:
           line: 41
         operator: =>
         value:
-          kind: function call
+          kind: function call expression
           function:
             kind: name
             begin:
@@ -671,7 +671,7 @@ statements:
     end:
       offset: 680
       line: 45
-  - kind: application
+  - kind: application statement
     begin:
       offset: 682
       line: 47
@@ -725,7 +725,7 @@ statements:
             line: 50
           value: /var/www/html
     body:
-      - kind: resource
+      - kind: resource declaration expression
         begin:
           offset: 766
           line: 53
@@ -789,8 +789,8 @@ statements:
                   line: 55
                 operator: =>
                 value:
-                  kind: postfix
-                  primary:
+                  kind: postfix expression
+                  operand:
                     kind: type
                     begin:
                       offset: 825
@@ -799,8 +799,8 @@ statements:
                       offset: 829
                       line: 55
                     name: Http
-                  subexpressions:
-                    - kind: access
+                  operations:
+                    - kind: access expression
                       begin:
                         offset: 829
                         line: 55
@@ -832,7 +832,7 @@ statements:
                                 offset: 842
                                 line: 55
                               name: name
-      - kind: resource
+      - kind: resource declaration expression
         begin:
           offset: 854
           line: 58
@@ -896,8 +896,8 @@ statements:
                   line: 60
                 operator: =>
                 value:
-                  kind: postfix
-                  primary:
+                  kind: postfix expression
+                  operand:
                     kind: type
                     begin:
                       offset: 913
@@ -906,8 +906,8 @@ statements:
                       offset: 916
                       line: 60
                     name: Sql
-                  subexpressions:
-                    - kind: access
+                  operations:
+                    - kind: access expression
                       begin:
                         offset: 916
                         line: 60
@@ -939,7 +939,7 @@ statements:
                                 offset: 929
                                 line: 60
                               name: name
-      - kind: resource
+      - kind: resource declaration expression
         begin:
           offset: 941
           line: 63
@@ -1025,8 +1025,8 @@ statements:
                   line: 66
                 operator: =>
                 value:
-                  kind: postfix
-                  primary:
+                  kind: postfix expression
+                  operand:
                     kind: type
                     begin:
                       offset: 1040
@@ -1035,8 +1035,8 @@ statements:
                       offset: 1043
                       line: 66
                     name: Sql
-                  subexpressions:
-                    - kind: access
+                  operations:
+                    - kind: access expression
                       begin:
                         offset: 1043
                         line: 66
@@ -1068,14 +1068,14 @@ statements:
                                 offset: 1056
                                 line: 66
                               name: name
-  - kind: site
+  - kind: site statement
     begin:
       offset: 1069
       line: 71
     end:
       offset: 1077
       line: 72
-  - kind: site
+  - kind: site statement
     begin:
       offset: 1079
       line: 74
@@ -1083,7 +1083,7 @@ statements:
       offset: 1297
       line: 83
     body:
-      - kind: resource
+      - kind: resource declaration expression
         begin:
           offset: 1088
           line: 75
@@ -1178,8 +1178,8 @@ statements:
                     line: 81
                   elements:
                     - first:
-                        kind: postfix
-                        primary:
+                        kind: postfix expression
+                        operand:
                           kind: type
                           begin:
                             offset: 1191
@@ -1188,8 +1188,8 @@ statements:
                             offset: 1195
                             line: 79
                           name: Node
-                        subexpressions:
-                          - kind: access
+                        operations:
+                          - kind: access expression
                             begin:
                               offset: 1195
                               line: 79
@@ -1214,8 +1214,8 @@ statements:
                           offset: 1233
                           line: 79
                         elements:
-                          - kind: postfix
-                            primary:
+                          - kind: postfix expression
+                            operand:
                               kind: type
                               begin:
                                 offset: 1215
@@ -1224,8 +1224,8 @@ statements:
                                 offset: 1223
                                 line: 79
                               name: Lamp::Db
-                            subexpressions:
-                              - kind: access
+                            operations:
+                              - kind: access expression
                                 begin:
                                   offset: 1223
                                   line: 79
@@ -1242,8 +1242,8 @@ statements:
                                       line: 79
                                     value: example
                     - first:
-                        kind: postfix
-                        primary:
+                        kind: postfix expression
+                        operand:
                           kind: type
                           begin:
                             offset: 1241
@@ -1252,8 +1252,8 @@ statements:
                             offset: 1245
                             line: 80
                           name: Node
-                        subexpressions:
-                          - kind: access
+                        operations:
+                          - kind: access expression
                             begin:
                               offset: 1245
                               line: 80
@@ -1278,8 +1278,8 @@ statements:
                           offset: 1285
                           line: 80
                         elements:
-                          - kind: postfix
-                            primary:
+                          - kind: postfix expression
+                            operand:
                               kind: type
                               begin:
                                 offset: 1266
@@ -1288,8 +1288,8 @@ statements:
                                 offset: 1275
                                 line: 80
                               name: Lamp::Web
-                            subexpressions:
-                              - kind: access
+                            operations:
+                              - kind: access expression
                                 begin:
                                   offset: 1275
                                   line: 80

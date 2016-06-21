@@ -24,6 +24,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         call_context(evaluation::context& context, ast::function_call_expression const& expression);
 
         /**
+         * Constructs a function call context from a function call statement.
+         * @param context The current evaluation context.
+         * @param statement The function call statement.
+         */
+        call_context(evaluation::context& context, ast::function_call_statement const& statement);
+
+        /**
          * Constructs a function call context from a method call expression.
          * @param context The current evaluation context.
          * @param expression The method call expression.

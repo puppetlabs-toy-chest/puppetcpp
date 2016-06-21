@@ -1,6 +1,6 @@
 path: type_alias.pp
 statements:
-  - kind: type alias
+  - kind: type alias statement
     alias:
       kind: type
       begin:
@@ -19,7 +19,7 @@ statements:
         offset: 17
         line: 1
       name: String
-  - kind: type alias
+  - kind: type alias statement
     alias:
       kind: type
       begin:
@@ -30,8 +30,8 @@ statements:
         line: 2
       name: Bar
     type:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 29
@@ -40,8 +40,8 @@ statements:
           offset: 35
           line: 2
         name: String
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 35
             line: 2
@@ -67,7 +67,7 @@ statements:
                 line: 2
               base: decimal
               value: 100
-  - kind: type alias
+  - kind: type alias statement
     alias:
       kind: type
       begin:
@@ -78,8 +78,8 @@ statements:
         line: 3
       name: Baz
     type:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 55
@@ -88,8 +88,8 @@ statements:
           offset: 59
           line: 3
         name: Type
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 59
             line: 3

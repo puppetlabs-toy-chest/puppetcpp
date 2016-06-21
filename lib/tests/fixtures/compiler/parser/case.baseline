@@ -1,6 +1,6 @@
 path: case.pp
 statements:
-  - kind: case
+  - kind: case expression
     begin:
       offset: 0
       line: 1
@@ -27,7 +27,7 @@ statements:
               line: 2
             value: Solaris
         body:
-          - kind: function call
+          - kind: function call statement
             function:
               kind: name
               begin:
@@ -67,7 +67,7 @@ statements:
               line: 3
             value: CentOS
         body:
-          - kind: function call
+          - kind: function call statement
             function:
               kind: name
               begin:
@@ -99,7 +99,7 @@ statements:
               line: 4
             value: ^(Debian|Ubuntu)$
         body:
-          - kind: function call
+          - kind: function call statement
             function:
               kind: name
               begin:
@@ -130,7 +130,7 @@ statements:
               offset: 253
               line: 5
         body:
-          - kind: function call
+          - kind: function call statement
             function:
               kind: name
               begin:
@@ -152,7 +152,7 @@ statements:
         end:
           offset: 291
           line: 5
-  - kind: case
+  - kind: case expression
     begin:
       offset: 321
       line: 8

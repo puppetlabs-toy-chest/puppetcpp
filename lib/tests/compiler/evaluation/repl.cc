@@ -87,7 +87,7 @@ SCENARIO("using the repl evaluator", "[evaluation]")
                             THEN("it should evaluate to the expected value") {
                                 REQUIRE(result);
                                 REQUIRE(result->source == "class foo\n($param)\n{\nnotice $param\n}");
-                                REQUIRE(boost::lexical_cast<string>(result->value) == "Class[foo]");
+                                REQUIRE(boost::lexical_cast<string>(result->value) == "");
                                 REQUIRE(repl.prompt() == "test:002:1> ");
                                 REQUIRE(repl.count() == 2);
                                 REQUIRE(repl.line() == 1);
@@ -107,7 +107,7 @@ SCENARIO("using the repl evaluator", "[evaluation]")
             REQUIRE(repl.count() == 2);
             REQUIRE(repl.line() == 1);
             REQUIRE(exception);
-            REQUIRE(exception->what() == string{"expected '{' but found name."});
+            REQUIRE(exception->what() == string{"syntax error: expected '{' but found name."});
             REQUIRE(exception->path() == "<repl>");
             REQUIRE(exception->line() == 1);
             REQUIRE(exception->column() == 11);

@@ -1,6 +1,6 @@
 path: defined_type.pp
 statements:
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 0
       line: 1
@@ -16,7 +16,7 @@ statements:
         offset: 10
         line: 1
       value: foo
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 16
       line: 4
@@ -32,7 +32,7 @@ statements:
         offset: 36
         line: 4
       value: bar::baz::jam
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 43
       line: 8
@@ -48,7 +48,7 @@ statements:
         offset: 53
         line: 8
       value: baz
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 60
       line: 10
@@ -75,7 +75,7 @@ statements:
             line: 10
           name: foo
     body:
-      - kind: function call
+      - kind: function call expression
         function:
           kind: name
           begin:
@@ -112,7 +112,7 @@ statements:
                   line: 11
                 name: x
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -134,7 +134,7 @@ statements:
         end:
           offset: 93
           line: 11
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 128
       line: 16
@@ -169,7 +169,7 @@ statements:
             offset: 149
             line: 16
           name: bar
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 157
       line: 20
@@ -205,8 +205,8 @@ statements:
             line: 20
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 180
@@ -215,8 +215,8 @@ statements:
               offset: 186
               line: 20
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 186
                 line: 20
@@ -272,7 +272,7 @@ statements:
             offset: 209
             line: 20
           name: rest
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 217
       line: 24
@@ -308,8 +308,8 @@ statements:
             line: 24
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 241
@@ -318,8 +318,8 @@ statements:
               offset: 247
               line: 24
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 247
                 line: 24
@@ -376,7 +376,7 @@ statements:
             line: 24
           name: rest
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -395,8 +395,8 @@ statements:
               offset: 287
               line: 25
             value: hi
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 292
@@ -434,8 +434,8 @@ statements:
                 line: 26
               base: decimal
               value: 1
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 309

@@ -88,20 +88,6 @@ namespace puppet { namespace compiler { namespace validation {
             }
         }
 
-        void operator()(ast::expression const& expression)
-        {
-            operator()(expression.first);
-
-            for (auto const& operation : expression.operations) {
-                operator()(operation.operand);
-            }
-        }
-
-        void operator()(ast::nested_expression const& expression)
-        {
-            operator()(expression.expression);
-        }
-
         void operator()(ast::case_expression const& expression)
         {
             throw parse_exception("case expressions cannot be used in type specifications.", expression.begin, expression.end);
@@ -131,45 +117,19 @@ namespace puppet { namespace compiler { namespace validation {
             throw parse_exception("new expressions cannot be used in type specifications.", context.begin, context.end);
         }
 
-        void operator()(ast::resource_expression const& expression)
+        void operator()(ast::epp_render_expression const& expression)
         {
-            throw parse_exception("resource expressions cannot be used in type specifications.", expression.begin, expression.end);
+            throw parse_exception("EPP expressions cannot be used in type specifications.", expression.begin, expression.end);
         }
 
-        void operator()(ast::resource_override_expression const& expression)
+        void operator()(ast::epp_render_block const& expression)
         {
-            throw parse_exception("resource override expressions cannot be used in type specifications.", expression.begin, expression.end);
+            throw parse_exception("EPP expressions cannot be used in type specifications.", expression.begin, expression.end);
         }
 
-        void operator()(ast::resource_defaults_expression const& expression)
+        void operator()(ast::epp_render_string const& expression)
         {
-            throw parse_exception("resource defaults expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::class_expression const& expression)
-        {
-            throw parse_exception("class expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::defined_type_expression const& expression)
-        {
-            throw parse_exception("defined type expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::node_expression const& expression)
-        {
-            throw parse_exception("node expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::collector_expression const& expression)
-        {
-            auto context = expression.context();
-            throw parse_exception("collector expressions cannot be used in type specifications.", context.begin, context.end);
-        }
-
-        void operator()(ast::function_expression const& expression)
-        {
-            throw parse_exception("function expressions cannot be used in type specifications.", expression.begin, expression.end);
+            throw parse_exception("EPP expressions cannot be used in type specifications.", expression.begin, expression.end);
         }
 
         void operator()(ast::unary_expression const& expression)
@@ -177,13 +137,32 @@ namespace puppet { namespace compiler { namespace validation {
             operator()(expression.operand);
         }
 
+        void operator()(ast::nested_expression const& expression)
+        {
+            operator()(expression.expression);
+        }
+
+        void operator()(ast::basic_expression const& expression)
+        {
+            boost::apply_visitor(*this, expression);
+        }
+
+        void operator()(ast::expression const& expression)
+        {
+            operator()(expression.operand);
+
+            for (auto const& operation : expression.operations) {
+                operator()(operation.operand);
+            }
+        }
+
         void operator()(ast::postfix_expression const& expression)
         {
-            operator()(expression.primary);
+            operator()(expression.operand);
 
-            for (auto const& subexpression : expression.subexpressions)
+            for (auto const& operation : expression.operations)
             {
-                boost::apply_visitor(*this, subexpression);
+                boost::apply_visitor(*this, operation);
             }
         }
 
@@ -203,54 +182,6 @@ namespace puppet { namespace compiler { namespace validation {
         {
             auto context = expression.context();
             throw parse_exception("method call expressions cannot be used in type specifications.", context.begin, context.end);
-        }
-
-        void operator()(ast::primary_expression const& expression)
-        {
-            boost::apply_visitor(*this, expression);
-        }
-
-        void operator()(ast::epp_render_expression const& expression)
-        {
-            throw parse_exception("EPP expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::epp_render_block const& expression)
-        {
-            throw parse_exception("EPP expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::epp_render_string const& expression)
-        {
-            throw parse_exception("EPP expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::produces_expression const& expression)
-        {
-            auto context = expression.context();
-            throw parse_exception("produces expressions cannot be used in type specifications.", context.begin, context.end);
-        }
-
-        void operator()(ast::consumes_expression const& expression)
-        {
-            auto context = expression.context();
-            throw parse_exception("consumes expressions cannot be used in type specifications.", context.begin, context.end);
-        }
-
-        void operator()(ast::application_expression const& expression)
-        {
-            throw parse_exception("application expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::site_expression const& expression)
-        {
-            throw parse_exception("site expressions cannot be used in type specifications.", expression.begin, expression.end);
-        }
-
-        void operator()(ast::type_alias_expression const& expression)
-        {
-            auto context = expression.context();
-            throw parse_exception("type alias expressions cannot be used in type specifications.", context.begin, context.end);
         }
     };
 

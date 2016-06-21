@@ -55,10 +55,10 @@ Expression evaluator status:
 * [x] exported resource expressions
 * [x] resource defaults expressions (see note below)
 * [x] resource override expressions
-* [x] class definition expressions
-* [x] defined type expressions
-* [x] node definition expressions
-* [x] resource collection expressions
+* [x] class definition statements
+* [x] defined type statements
+* [x] node definition statements
+* [x] resource collection statements
 * [ ] exported resource collection expressions (NYI: importing resources)
 * [x] loading classes from modules
 * [x] loading defined types from modules

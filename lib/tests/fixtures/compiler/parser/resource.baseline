@@ -1,6 +1,6 @@
 path: resource.pp
 statements:
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 0
       line: 1
@@ -73,7 +73,7 @@ statements:
                 offset: 41
                 line: 3
               name: baz
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 45
       line: 6
@@ -189,7 +189,7 @@ statements:
                 line: 14
               base: decimal
               value: 2
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 149
       line: 17
@@ -198,8 +198,8 @@ statements:
       line: 23
     status: realized
     type:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 149
@@ -208,8 +208,8 @@ statements:
           offset: 157
           line: 17
         name: Resource
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 157
             line: 17
@@ -320,7 +320,7 @@ statements:
                 offset: 241
                 line: 22
               value: lol
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 245
       line: 25
@@ -347,7 +347,7 @@ statements:
             offset: 259
             line: 25
           value: foo
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 264
       line: 27
@@ -374,7 +374,7 @@ statements:
             offset: 280
             line: 27
           value: foo
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 285
       line: 29

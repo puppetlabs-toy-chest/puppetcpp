@@ -99,7 +99,7 @@ statements:
       offset: 179
       line: 9
     string: "\n"
-  - kind: if
+  - kind: if expression
     begin:
       offset: 211
       line: 10
@@ -132,7 +132,7 @@ statements:
           offset: 275
           line: 13
         string: "keys "
-      - kind: EPP render
+      - kind: EPP render expression
         begin:
           offset: 275
           line: 13
@@ -156,7 +156,7 @@ statements:
           offset: 293
           line: 14
         string: "\n"
-      - kind: unless
+      - kind: unless expression
         begin:
           offset: 296
           line: 14
@@ -164,8 +164,8 @@ statements:
           offset: 388
           line: 16
         conditional:
-          kind: binary
-          first:
+          kind: binary expression
+          operand:
             kind: variable
             begin:
               offset: 303
@@ -180,8 +180,8 @@ statements:
                 line: 14
               operator: =~
               operand:
-                kind: postfix
-                primary:
+                kind: postfix expression
+                operand:
                   kind: type
                   begin:
                     offset: 320
@@ -190,8 +190,8 @@ statements:
                     offset: 325
                     line: 14
                   name: Array
-                subexpressions:
-                  - kind: access
+                operations:
+                  - kind: access expression
                     begin:
                       offset: 325
                       line: 14
@@ -234,7 +234,7 @@ statements:
               offset: 353
               line: 15
             string: "trustedkey "
-          - kind: EPP render
+          - kind: EPP render expression
             begin:
               offset: 353
               line: 15
@@ -242,8 +242,8 @@ statements:
               offset: 383
               line: 15
             expression:
-              kind: postfix
-              primary:
+              kind: postfix expression
+              operand:
                 kind: variable
                 begin:
                   offset: 357
@@ -252,8 +252,8 @@ statements:
                   offset: 370
                   line: 15
                 name: keys_trusted
-              subexpressions:
-                - kind: method call
+              operations:
+                - kind: method call expression
                   begin:
                     offset: 370
                     line: 15
@@ -286,7 +286,7 @@ statements:
               offset: 384
               line: 16
             string: "\n"
-      - kind: if
+      - kind: if expression
         begin:
           offset: 396
           line: 17
@@ -294,8 +294,8 @@ statements:
           offset: 474
           line: 19
         conditional:
-          kind: binary
-          first:
+          kind: binary expression
+          operand:
             kind: variable
             begin:
               offset: 399
@@ -310,8 +310,8 @@ statements:
                 line: 17
               operator: =~
               operand:
-                kind: postfix
-                primary:
+                kind: postfix expression
+                operand:
                   kind: type
                   begin:
                     offset: 419
@@ -320,8 +320,8 @@ statements:
                     offset: 425
                     line: 17
                   name: String
-                subexpressions:
-                  - kind: access
+                operations:
+                  - kind: access expression
                     begin:
                       offset: 425
                       line: 17
@@ -347,7 +347,7 @@ statements:
               offset: 446
               line: 18
             string: "requestkey "
-          - kind: EPP render
+          - kind: EPP render expression
             begin:
               offset: 446
               line: 18
@@ -371,7 +371,7 @@ statements:
               offset: 470
               line: 19
             string: "\n"
-      - kind: if
+      - kind: if expression
         begin:
           offset: 482
           line: 20
@@ -379,8 +379,8 @@ statements:
           offset: 560
           line: 22
         conditional:
-          kind: binary
-          first:
+          kind: binary expression
+          operand:
             kind: variable
             begin:
               offset: 485
@@ -395,8 +395,8 @@ statements:
                 line: 20
               operator: =~
               operand:
-                kind: postfix
-                primary:
+                kind: postfix expression
+                operand:
                   kind: type
                   begin:
                     offset: 505
@@ -405,8 +405,8 @@ statements:
                     offset: 511
                     line: 20
                   name: String
-                subexpressions:
-                  - kind: access
+                operations:
+                  - kind: access expression
                     begin:
                       offset: 511
                       line: 20
@@ -432,7 +432,7 @@ statements:
               offset: 532
               line: 21
             string: "controlkey "
-          - kind: EPP render
+          - kind: EPP render expression
             begin:
               offset: 532
               line: 21

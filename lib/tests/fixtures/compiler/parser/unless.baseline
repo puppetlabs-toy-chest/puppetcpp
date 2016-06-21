@@ -1,6 +1,6 @@
 path: unless.pp
 statements:
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 0
       line: 1
@@ -8,8 +8,8 @@ statements:
       offset: 48
       line: 3
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: variable
         begin:
           offset: 7
@@ -34,8 +34,8 @@ statements:
             base: decimal
             value: 1024
     body:
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 30
@@ -64,8 +64,8 @@ statements:
         offset: 49
         line: 3
       body:
-        - kind: binary
-          first:
+        - kind: binary expression
+          operand:
             kind: variable
             begin:
               offset: 58
@@ -92,7 +92,7 @@ statements:
       end:
         offset: 77
         line: 5
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 79
       line: 7

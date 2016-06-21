@@ -24,10 +24,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
 
         // Climb the remainder of the expression
         auto begin = _expression->operations.begin();
-        return climb_expression(_expression->primary, 0, begin, _expression->operations.end(), resource);
+        return climb_expression(_expression->operand, 0, begin, _expression->operations.end(), resource);
     }
 
-    bool query_evaluator::evaluate(ast::primary_query_expression const& expression, compiler::resource const& resource) const
+    bool query_evaluator::evaluate(ast::basic_query_expression const& expression, compiler::resource const& resource) const
     {
         // Handle nested expressions
         if (auto nested = boost::get<x3::forward_ast<ast::nested_query_expression>>(&expression)) {
@@ -77,7 +77,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace collect
     }
 
     bool query_evaluator::climb_expression(
-        ast::primary_query_expression const& expression,
+        ast::basic_query_expression const& expression,
         std::uint8_t min_precedence,
         std::vector<ast::binary_query_operation>::const_iterator& begin,
         std::vector<ast::binary_query_operation>::const_iterator const& end,

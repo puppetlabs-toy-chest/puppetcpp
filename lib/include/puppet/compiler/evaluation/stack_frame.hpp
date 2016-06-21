@@ -19,15 +19,15 @@ namespace puppet { namespace compiler { namespace evaluation {
     struct stack_frame
     {
         /**
-         * Represents the different types of Puppet expressions that can be on the call stack.
+         * Represents the different types of Puppet statements/expressions that can be on the call stack.
          */
         using expression_type = boost::variant<
-            ast::function_expression const*,
-            ast::class_expression const*,
-            ast::defined_type_expression const*,
-            ast::node_expression const*,
+            ast::function_statement const*,
+            ast::class_statement const*,
+            ast::defined_type_statement const*,
+            ast::node_statement const*,
             ast::collector_expression const*,
-            ast::type_alias_expression const*
+            ast::type_alias_statement const*
         >;
 
         /**

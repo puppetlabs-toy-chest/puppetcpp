@@ -1,6 +1,6 @@
 path: if.pp
 statements:
-  - kind: if
+  - kind: if expression
     begin:
       offset: 0
       line: 1
@@ -17,7 +17,7 @@ statements:
         line: 1
       name: is_virtual
     body:
-      - kind: function call
+      - kind: function call expression
         function:
           kind: name
           begin:
@@ -44,8 +44,8 @@ statements:
           offset: 170
           line: 5
         conditional:
-          kind: binary
-          first:
+          kind: binary expression
+          operand:
             kind: variable
             begin:
               offset: 176
@@ -69,7 +69,7 @@ statements:
                   line: 5
                 value: Darwin
         body:
-          - kind: function call
+          - kind: function call expression
             function:
               kind: name
               begin:
@@ -99,7 +99,7 @@ statements:
         offset: 278
         line: 8
       body:
-        - kind: function call
+        - kind: function call statement
           function:
             kind: name
             begin:
@@ -121,7 +121,7 @@ statements:
       end:
         offset: 336
         line: 11
-  - kind: if
+  - kind: if expression
     begin:
       offset: 338
       line: 13
@@ -157,8 +157,8 @@ statements:
           offset: 368
           line: 17
         conditional:
-          kind: binary
-          first:
+          kind: binary expression
+          operand:
             kind: boolean
             begin:
               offset: 374
@@ -184,7 +184,7 @@ statements:
         end:
           offset: 393
           line: 19
-  - kind: if
+  - kind: if expression
     begin:
       offset: 395
       line: 21
