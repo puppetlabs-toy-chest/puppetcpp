@@ -1,0 +1,3 @@
+Error: class_default_value_assignment.pp:1:21: assignment expressions are not allowed in parameter default values.
+  class bad($param = [$wrong = 1]) {
+                      ^~~~~~~~~~

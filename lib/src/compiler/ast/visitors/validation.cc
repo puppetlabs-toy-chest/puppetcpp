@@ -217,6 +217,12 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         ast::postfix_expression const* left = &expression.operand;
         for (auto const& operation : expression.operations) {
             if (operation.operator_ == binary_operator::assignment) {
+                // If we're checking for illegal parameter references, then the assignment operation is illegal inside a default value
+                if (_parameter_begin) {
+                    auto context = operation.context();
+                    context.begin = left->context().begin;
+                    throw parse_exception("assignment expressions are not allowed in parameter default values.", context.begin, context.end);
+                }
                 validate_assignment_operand(*left);
             }
 
