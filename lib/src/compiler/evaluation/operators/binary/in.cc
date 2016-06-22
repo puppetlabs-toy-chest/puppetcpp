@@ -1,6 +1,6 @@
 #include <puppet/compiler/evaluation/operators/binary/in.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
-#include <boost/algorithm/string.hpp>
+#include <puppet/unicode/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
@@ -21,7 +21,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
         // The order of these overloads is important (most specific to least specific)
         descriptor.add("String", "String", [](call_context& context) {
-            return boost::algorithm::icontains(context.right().require<string>(), context.left().require<string>());
+            auto& left = context.left().require<string>();
+            auto& right = context.right().require<string>();
+            return static_cast<bool>(unicode::string{ right }.find(left, true));
         });
         descriptor.add("Regexp", "String", [](call_context& context) {
             return is_in(context, context.left().require<values::regex>(), context.right().require<string>());

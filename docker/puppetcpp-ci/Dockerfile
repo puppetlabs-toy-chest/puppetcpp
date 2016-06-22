@@ -1,6 +1,6 @@
 FROM gliderlabs/alpine:edge
 MAINTAINER Peter Huene <peterhuene@gmail.com>
-RUN apk add --no-cache make cmake gcc g++ boost-dev boost-program_options curl-dev libedit-dev git py-pip && \
+RUN apk add --no-cache make cmake gcc g++ boost-dev boost-program_options curl-dev libedit-dev git py-pip icu-dev && \
     pip install --user codecov && \
     git clone https://github.com/k-takata/Onigmo.git /tmp/onigmo && \
     cd /tmp/onigmo && \

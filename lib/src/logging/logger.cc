@@ -125,6 +125,7 @@ namespace puppet { namespace logging {
             reset(level);
 
             // Ignore leading whitespace in the line
+            // Note: this is only counting ASCII whitespace
             size_t offset = 0;
             size_t leading_spaces = 0;
             for (; offset < text.size(); ++offset, ++leading_spaces) {
@@ -149,9 +150,7 @@ namespace puppet { namespace logging {
             colorize(logging::level::info);
             stream << "^";
             if (length > 1) {
-                // If the length exceeds the current line, truncate to only what's visible on this line
-                length = ((column - 1) + length > text.size()) ? (column > text.size() ? 0 : text.size() - column) : length - 1 /* caret counts as one */;
-                fill_n(ostream_iterator<char>(stream), length, '~');
+                fill_n(ostream_iterator<char>(stream), length - 1 /* caret counts as one */, '~');
             }
             stream << "\n";
         }

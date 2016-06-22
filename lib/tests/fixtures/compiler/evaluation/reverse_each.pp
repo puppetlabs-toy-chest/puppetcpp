@@ -10,6 +10,22 @@ notice [1, 2, 3].reverse_each |$index, $value| {
     notice "index = $index, value = $value"
 }
 
+notice "hello".reverse_each |$value| {
+    notice $value
+}
+
+notice "hello".reverse_each |$index, $value| {
+    notice "index = $index, value = $value"
+}
+
+notice 'ஸ்றீனிவாஸ'.reverse_each |$value| {
+    notice $value
+}
+
+notice 'ஸ்றீனிவாஸ'.reverse_each |$index, $value| {
+    notice "index = $index, value = $value"
+}
+
 {}.reverse_each |$value| {
     fail incorrect
 }

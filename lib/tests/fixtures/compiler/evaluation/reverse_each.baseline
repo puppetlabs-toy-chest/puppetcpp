@@ -6,6 +6,30 @@ Notice: Scope(Class[main]): index = 0, value = 3
 Notice: Scope(Class[main]): index = 1, value = 2
 Notice: Scope(Class[main]): index = 2, value = 1
 Notice: Scope(Class[main]): [3, 2, 1]
+Notice: Scope(Class[main]): o
+Notice: Scope(Class[main]): l
+Notice: Scope(Class[main]): l
+Notice: Scope(Class[main]): e
+Notice: Scope(Class[main]): h
+Notice: Scope(Class[main]): [o, l, l, e, h]
+Notice: Scope(Class[main]): index = 0, value = o
+Notice: Scope(Class[main]): index = 1, value = l
+Notice: Scope(Class[main]): index = 2, value = l
+Notice: Scope(Class[main]): index = 3, value = e
+Notice: Scope(Class[main]): index = 4, value = h
+Notice: Scope(Class[main]): [o, l, l, e, h]
+Notice: Scope(Class[main]): ஸ
+Notice: Scope(Class[main]): வா
+Notice: Scope(Class[main]): னி
+Notice: Scope(Class[main]): றீ
+Notice: Scope(Class[main]): ஸ்
+Notice: Scope(Class[main]): [ஸ, வா, னி, றீ, ஸ்]
+Notice: Scope(Class[main]): index = 0, value = ஸ
+Notice: Scope(Class[main]): index = 1, value = வா
+Notice: Scope(Class[main]): index = 2, value = னி
+Notice: Scope(Class[main]): index = 3, value = றீ
+Notice: Scope(Class[main]): index = 4, value = ஸ்
+Notice: Scope(Class[main]): [ஸ, வா, னி, றீ, ஸ்]
 Notice: Scope(Class[main]): value = [baz, cake]
 Notice: Scope(Class[main]): value = [bar, baz]
 Notice: Scope(Class[main]): value = [foo, bar]

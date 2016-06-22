@@ -67,3 +67,95 @@ unless "\$array[1] == ${$array[1]}!" == '$array[1] == 2!' {
 unless "filtered: ${array.filter|$x| { x == 2 }}!" != "filtered: [2]!" {
     fail incorrect
 }
+
+if 'ฉันกินกระจกได้'[1, 4] != 'นกินก' {
+    fail incorrect
+}
+
+unless 'ฉันกินกระจกได้'[-1] == 'ด้' {
+    fail incorrect
+}
+
+unless 'foObArBaz' == 'foobarbaz' {
+    fail incorrect
+}
+
+if 'foObArBaz' != 'FOOBARBAZ' {
+    fail incorrect
+}
+
+unless 'çöğiü' == 'ÇÖĞIÜ' {
+    fail incorrect
+}
+
+unless 'ฉันกินกระจกได' != 'ராமானுஜன்' {
+    fail incorrect
+}
+
+unless 'それは私を傷つけません' == 'それは私を傷つけません' {
+    fail incorrect
+}
+
+unless "NO\u0303" == "nõ" {
+    fail incorrect
+}
+
+unless a < z {
+    fail incorrect
+}
+
+if a < a or z < a {
+    fail incorrect
+}
+
+unless a <= z and a <= a {
+    fail incorrect
+}
+
+if z <= a {
+    fail incorrect
+}
+
+unless z > a {
+    fail incorrect
+}
+
+if z > z or a > z {
+    fail incorrect
+}
+
+unless z >= a and z >= z {
+    fail incorrect
+}
+
+if a >= z {
+    fail incorrect
+}
+
+unless foo in 'FoOBar' {
+    fail incorrect
+}
+
+if baz in 'FOOBAR' {
+    fail incorrect
+}
+
+unless 'ÇÖĞIÜ' in '私をçöğiüけま' {
+    fail incorrect
+}
+
+if 'ฉัน' in '私をçöğiüけま' {
+    fail incorrect
+}
+
+unless "NO\u0303" in "nõ" {
+    fail incorrect
+}
+
+if 'O' in "NO\u0303" {
+    fail incorrect
+}
+
+if "\u0303" in "NO\u0303" {
+    fail incorrect
+}

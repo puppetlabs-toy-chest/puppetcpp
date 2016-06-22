@@ -1,12 +1,11 @@
 #include <puppet/runtime/values/value.hpp>
 #include <puppet/compiler/evaluation/collectors/collector.hpp>
 #include <puppet/utility/indirect_collection.hpp>
+#include <puppet/unicode/string.hpp>
 #include <puppet/cast.hpp>
-#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <rapidjson/document.h>
-#include <utf8.h>
 #include <algorithm>
 
 using namespace std;
@@ -105,9 +104,10 @@ namespace puppet { namespace runtime { namespace values {
 
         result_type operator()(string const& value)
         {
+            unicode::string string{ value };
             return types::string{
-                static_cast<int64_t>(value.size()),
-                static_cast<int64_t>(value.size())
+                static_cast<int64_t>(string.graphemes()),
+                static_cast<int64_t>(string.graphemes())
             };
         }
 
@@ -503,7 +503,13 @@ namespace puppet { namespace runtime { namespace values {
 
     bool equality_visitor::operator()(std::string const& left, std::string const& right) const
     {
-        return boost::algorithm::iequals(left, right);
+        // Build the unicode string depending on which is shorter (faster "invariant" check)
+        // Note: this is not a case insensitive check
+        // String equality is case sensitive; Puppet's binary '==' operator is case insensitive
+        if (left.size() < right.size()) {
+            return unicode::string{ left } == right;
+        }
+        return unicode::string{ right } == left;
     }
 
     bool operator==(value const& left, value const& right)
@@ -514,6 +520,16 @@ namespace puppet { namespace runtime { namespace values {
     bool operator!=(value const& left, value const& right)
     {
         return !boost::apply_visitor(equality_visitor(), left, right);
+    }
+
+    size_t hash_value(values::value const& value)
+    {
+        // If a string, hash using unicode::string to handle Unicode normalization
+        if (auto ptr = value.as<std::string>()) {
+            unicode::string string{ *ptr };
+            return hash_value(string);
+        }
+        return hash_value(static_cast<value_base const&>(value));
     }
 
     void value::each_resource(function<void(runtime::types::resource const&)> const& callback, function<void(string const&)> const& error) const
@@ -702,36 +718,6 @@ namespace puppet { namespace runtime { namespace values {
     json_value value::to_json(json_allocator& allocator) const
     {
         return boost::apply_visitor(json_visitor(allocator), *this);
-    }
-
-    void each_code_point(string const& str, function<bool(string)> const& callback, bool reverse)
-    {
-        // Go through each Unicode code point in the string
-
-        if (reverse) {
-            if (str.empty()) {
-                return;
-            }
-            // Because utf8::prior walks backward, we can't use rbegin/rend.
-            auto current = &str.back() + 1;
-            while (current >= &str.front()) {
-                auto end = current;
-                utf8::prior(current, &str.front());
-                if (!callback(string{ current, end })) {
-                    break;
-                }
-            }
-            return;
-        }
-
-        auto current = str.begin();
-        while (current != str.end()) {
-            auto begin = current;
-            utf8::next(current, str.end());
-            if (!callback(string{ begin, current })) {
-                break;
-            }
-        }
     }
 
 }}}  // namespace puppet::runtime::values

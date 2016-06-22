@@ -55,10 +55,8 @@ namespace puppet { namespace facts {
                 store(kvp.first.as<string>(), kvp.second);
             }
         } catch (Exception& ex) {
-            string text;
-            size_t column;
-            tie(text, column) = get_text_and_column(stream, ex.mark.pos);
-            throw yaml_parse_exception((boost::format("failed parsing facts: %1%.") % ex.msg).str(), path, ex.mark.line + 1, column, rvalue_cast(text));
+            auto info = get_line_info(stream, ex.mark.pos, 1);
+            throw yaml_parse_exception((boost::format("failed parsing facts: %1%.") % ex.msg).str(), path, ex.mark.line + 1, info.column, rvalue_cast(info.text));
         }
     }
 

@@ -1,0 +1,66 @@
+Notice: Scope(Class[main]): ஸ்றீனிவாஸ
+Notice: Scope(Class[main]): ஸ்
+Notice: Scope(Class[main]): றீ
+Notice: Scope(Class[main]): னி
+Notice: Scope(Class[main]): வா
+Notice: Scope(Class[main]): ஸ
+Notice: Scope(Class[main]): ஸ
+Notice: Scope(Class[main]): வா
+Notice: Scope(Class[main]): னி
+Notice: Scope(Class[main]): றீ
+Notice: Scope(Class[main]): ஸ்
+Notice: Scope(Class[main]): ஸ்றீனிவாஸ
+Notice: Scope(Class[main]): றீனிவாஸ
+Notice: Scope(Class[main]): னிவாஸ
+Notice: Scope(Class[main]): வாஸ
+Notice: Scope(Class[main]): ஸ
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "production",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

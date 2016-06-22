@@ -1,7 +1,7 @@
 #include <puppet/compiler/evaluation/functions/split.hpp>
 #include <puppet/compiler/evaluation/functions/call_context.hpp>
 #include <puppet/compiler/exceptions.hpp>
-#include <boost/algorithm/string.hpp>
+#include <puppet/unicode/string.hpp>
 #include <boost/format.hpp>
 
 using namespace std;
@@ -12,10 +12,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
     static values::value split_characters(string const& str)
     {
         values::array result;
-        values::each_code_point(str, [&](string codepoint) {
-            result.emplace_back(rvalue_cast(codepoint));
-            return true;
-        });
+        unicode::string string{ str };
+        for (auto& grapheme : string) {
+            result.emplace_back(std::string{ grapheme.begin(), grapheme.end() });
+        }
         return result;
     }
 
@@ -29,13 +29,15 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             if (second.empty()) {
                 return split_characters(first);
             }
+
             values::array result;
-            boost::split_iterator<string::const_iterator> end;
-            for (auto it = boost::make_split_iterator(first, boost::first_finder(second, boost::is_equal())); it != end; ++it) {
+            unicode::string string{ first };
+            auto end = string.split_end();
+            for (auto it = string.split_begin(second); it != end; ++it) {
                 if (!*it) {
                     continue;
                 }
-                result.emplace_back(boost::copy_range<string>(*it));
+                result.emplace_back(std::string{ it->begin(), it->end() });
             }
             return result;
         });

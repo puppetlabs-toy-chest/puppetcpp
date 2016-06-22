@@ -1,4 +1,5 @@
 #include <puppet/compiler/lexer/lexer.hpp>
+#include <puppet/unicode/string.hpp>
 #include <puppet/cast.hpp>
 
 using namespace std;
@@ -58,27 +59,27 @@ namespace puppet { namespace compiler { namespace lexer {
         size_t _position;
     };
 
-    tuple<string, size_t> get_text_and_column(ifstream& fs, size_t position, size_t tab_width)
+    line_info get_line_info(ifstream& input, size_t position, size_t length, size_t tab_width)
     {
         const size_t READ_SIZE = 4096;
         char buf[READ_SIZE];
 
-        scoped_file_position guard(fs);
+        scoped_file_position guard(input);
 
         // Read backwards in chunks looking for the closest newline before the given position
         size_t start;
-        for (start = (position > (READ_SIZE + 1) ? position - READ_SIZE - 1 : 0); fs; start -= (start < READ_SIZE ? start : READ_SIZE)) {
-            if (!fs.seekg(start)) {
-                return make_tuple("", 1);
+        for (start = (position > (READ_SIZE + 1) ? position - READ_SIZE - 1 : 0); input; start -= (start < READ_SIZE ? start : READ_SIZE)) {
+            if (!input.seekg(start)) {
+                return line_info{};
             }
 
             // Read data into the buffer
-            if (!fs.read(buf, position < READ_SIZE ? position : READ_SIZE)) {
-                return make_tuple("", 1);
+            if (!input.read(buf, position < READ_SIZE ? position : READ_SIZE)) {
+                return line_info{};
             }
 
             // Find the last newline in the buffer
-            auto it = find(reverse_iterator<char*>(buf + fs.gcount()), reverse_iterator<char*>(buf), '\n');
+            auto it = find(reverse_iterator<char*>(buf + input.gcount()), reverse_iterator<char*>(buf), '\n');
             if (it != reverse_iterator<char*>(buf)) {
                 start += distance(buf, it.base());
                 break;
@@ -89,14 +90,11 @@ namespace puppet { namespace compiler { namespace lexer {
             }
         }
 
-        // Calculate the column
-        size_t column = (position - start) + 1;
-
         // Find the end of the current line
         size_t end = position;
-        fs.seekg(end);
+        input.seekg(end);
         auto eof =  istreambuf_iterator<char>();
-        for (auto it = istreambuf_iterator<char>(fs.rdbuf()); it != eof; ++it) {
+        for (auto it = istreambuf_iterator<char>(input.rdbuf()); it != eof; ++it) {
             if (*it == '\n') {
                 break;
             }
@@ -105,27 +103,47 @@ namespace puppet { namespace compiler { namespace lexer {
 
         // Read the line's text
         size_t size = end - start;
-        fs.seekg(start);
+        input.seekg(start);
         vector<char> buffer(size);
-        if (!fs.read(buffer.data(), buffer.size())) {
-            return make_tuple("", 1);
+        if (!input.read(buffer.data(), buffer.size())) {
+            return line_info{};
         }
 
-        // Convert tabs to spaces
-        string text = string(buffer.data(), buffer.size());
-        if (tab_width > 1) {
-            column += count(text.begin(), text.begin() + column, '\t') * (tab_width - 1);
-        }
+        line_info info;
 
-        return make_tuple(rvalue_cast(text), column);
+        // Use a unicode string to count graphemes
+        info.text.assign(buffer.data(), buffer.size());
+        unicode::string unicode_text{ info.text };
+
+        // The column is 1-based, so start at 1
+        info.column = 1;
+
+        auto highlight_start = info.text.data() + position - start;
+        auto highlight_end = highlight_start + length;
+        for (auto& grapheme : unicode_text) {
+            // If the grapheme comes before the highlight, increment the column count
+            if (grapheme.begin() < highlight_start) {
+                info.column += grapheme.size() == 1 && *grapheme.begin() == '\t' ? tab_width : 1;
+                continue;
+            }
+            // If the grapheme is part of the highlight, increment the length
+            if (grapheme.begin() >= highlight_start && grapheme.end() <= highlight_end) {
+                ++info.length;
+                continue;
+            }
+            break;
+        }
+        return info;
     }
 
-    tuple<string, size_t> get_text_and_column(string const& input, size_t position, size_t tab_width)
+    line_info get_line_info(std::string const& input, size_t position, size_t length, size_t tab_width)
     {
+        // Truncate to the end if needed
         if (position > input.size()) {
             position = input.size() - 1;
         }
 
+        // Find the starting newline by walking backwards from the given position
         auto start = input.rfind('\n', position == 0 ? 0 : position - 1);
         if (start == string::npos) {
             start = 0;
@@ -133,16 +151,34 @@ namespace puppet { namespace compiler { namespace lexer {
             ++start;
         }
 
+        // Find the ending newline by walking forward from the start
         auto end = input.find('\n', start);
-        string text = input.substr(start, end == string::npos ? end : end - start);
 
-        // Convert tabs to spaces
-        size_t column = (position - start) + 1;
-        if (tab_width > 1) {
-            column += count(text.begin(), text.begin() + column, '\t') * (tab_width - 1);
+        line_info info;
+
+        // Use a unicode string to count graphemes
+        info.text = input.substr(start, end == string::npos ? end : end - start);
+        unicode::string unicode_text{ info.text };
+
+        // The column is 1-based, so start at 1
+        info.column = 1;
+
+        auto highlight_start = info.text.data() + position - start;
+        auto highlight_end = highlight_start + length;
+        for (auto& grapheme : unicode_text) {
+            // If the grapheme comes before the highlight, increment the column count
+            if (grapheme.begin() < highlight_start) {
+                info.column += grapheme.size() == 1 && *grapheme.begin() == '\t' ? tab_width : 1;
+                continue;
+            }
+            // If the grapheme is part of the highlight, increment the length
+            if (grapheme.begin() >= highlight_start && grapheme.end() <= highlight_end) {
+                ++info.length;
+                continue;
+            }
+            break;
         }
-
-        return make_tuple(rvalue_cast(text), column);
+        return info;
     }
 
     position get_last_position(ifstream& input)

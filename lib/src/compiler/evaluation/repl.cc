@@ -158,11 +158,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 return;
             }
 
-            size_t column = 0;
-            std::string text;
-            tie(text, column) = get_text_and_column(_buffer, position.offset());
-
-            context.node().logger().log(level, position.line(), column, length, text, REPL_PATH, message);
+            auto info = lexer::get_line_info(_buffer, position.offset(), length);
+            context.node().logger().log(level, position.line(), info.column, info.length, info.text, REPL_PATH, message);
         };
     }
 

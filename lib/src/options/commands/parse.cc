@@ -87,13 +87,12 @@ namespace puppet { namespace options { namespace commands {
             tree->write(compiler::ast::format::yaml, stream);
             stream << '\n';
         } catch (parse_exception const& ex) {
-            size_t column = 0;
-            string text;
+            compiler::lexer::line_info info;
             ifstream input{ manifest };
             if (input) {
-                tie(text, column) = lexer::get_text_and_column(input, ex.begin().offset());
+                info = lexer::get_line_info(input, ex.begin().offset(), ex.begin().offset(), ex.end().offset() - ex.begin().offset());
             }
-            LOG(error, ex.begin().line(), column, ex.end().offset() - ex.begin().offset(), text, manifest, ex.what());
+            LOG(error, ex.begin().line(), info.column, info.length, info.text, manifest, ex.what());
             // TODO: write out an XPP with the diagnostics
         }
     }

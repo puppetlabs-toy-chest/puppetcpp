@@ -8,7 +8,7 @@ include_directories(
     ${Onigmo_INCLUDE_DIRS}
     ${Facter_INCLUDE_DIRS}
     ${RAPIDJSON_INCLUDE_DIRS}
-    ${UTF8CPP_INCLUDE_DIRS}
+    ${ICU_INCLUDE_DIRS}
 )
 
 # Set common sources
@@ -154,6 +154,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/values/value.cc
     src/runtime/values/variable.cc
     src/runtime/values/wrapper.cc
+    src/unicode/string.cc
     src/utility/filesystem/helpers.cc
     src/utility/regex.cc
 )
@@ -176,9 +177,10 @@ add_executable(
     src/compiler/lexer/lexer.cc
     src/compiler/lexer/position.cc
     src/compiler/lexer/tokens.cc
+    src/unicode/string.cc
     src/utility/regex.cc
 )
-target_link_libraries(generate_static_lexer ${Boost_LIBRARIES} ${Onigmo_LIBRARIES})
+target_link_libraries(generate_static_lexer ${Boost_LIBRARIES} ${Onigmo_LIBRARIES} ${ICU_LIBRARIES})
 
 # Add the command to generate the static lexer
 add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer/static_lexer.hpp)
@@ -194,6 +196,7 @@ target_link_libraries(puppet
     ${Onigmo_LIBRARIES}
     ${Facter_LIBRARY}
     ${YAMLCPP_LIBRARIES}
+    ${ICU_LIBRARIES}
 )
 
 if (Editline_FOUND)

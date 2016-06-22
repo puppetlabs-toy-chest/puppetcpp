@@ -107,15 +107,21 @@ namespace puppet { namespace compiler {
         _path(path),
         _line(ex.begin().line()),
         _column(0),
-        _length(ex.end().offset() - ex.begin().offset())
+        _length(0)
     {
         if (source.empty()) {
             ifstream input{path};
             if (input) {
-                tie(_text, _column) = lexer::get_text_and_column(input, ex.begin().offset());
+                auto info = lexer::get_line_info(input, ex.begin().offset(), ex.end().offset() - ex.begin().offset());
+                _text = rvalue_cast(info.text);
+                _column = info.column;
+                _length = info.length;
             }
         } else {
-            tie(_text, _column) = lexer::get_text_and_column(source, ex.begin().offset());
+            auto info = lexer::get_line_info(source, ex.begin().offset(), ex.end().offset() - ex.begin().offset());
+            _text = rvalue_cast(info.text);
+            _column = info.column;
+            _length = info.length;
         }
     }
 
@@ -130,14 +136,19 @@ namespace puppet { namespace compiler {
         if (context.tree) {
             _path = context.tree->path();
             _line = context.begin.line();
-            _length = context.end.offset() - context.begin.offset();
             if (context.tree->source().empty()) {
                 ifstream input{ _path };
                 if (input) {
-                    tie(_text, _column) = lexer::get_text_and_column(input, context.begin.offset());
+                    auto info = lexer::get_line_info(input, context.begin.offset(), context.end.offset() - context.begin.offset());
+                    _text = rvalue_cast(info.text);
+                    _column = info.column;
+                    _length = info.length;
                 }
             } else {
-                tie(_text, _column) = lexer::get_text_and_column(context.tree->source(), context.begin.offset());
+                auto info = lexer::get_line_info(context.tree->source(), context.begin.offset(), context.end.offset() - context.begin.offset());
+                _text = rvalue_cast(info.text);
+                _column = info.column;
+                _length = info.length;
             }
         }
     }

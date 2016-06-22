@@ -524,22 +524,16 @@ namespace puppet { namespace compiler { namespace evaluation {
             return;
         }
 
-        auto& path = context->tree->path();
-        size_t offset = context->begin.offset();
-        size_t line = context->begin.line();
-        size_t column = 0;
-        size_t length = context->end.offset() - context->begin.offset();
-        string text;
-
+        lexer::line_info info;
         if (context->tree->source().empty()) {
-            ifstream input{ path };
+            ifstream input{ context->tree->path() };
             if (input) {
-                tie(text, column) = lexer::get_text_and_column(input, offset);
+                info = lexer::get_line_info(input, context->begin.offset(), context->end.offset() - context->begin.offset());
             }
         } else {
-            tie(text, column) = lexer::get_text_and_column(context->tree->source(), offset);
+            info = lexer::get_line_info(context->tree->source(), context->begin.offset(), context->end.offset() - context->begin.offset());
         }
-        logger.log(level, line, column, length, text, path, message);
+        logger.log(level, context->begin.line(), info.column, info.length, info.text, context->tree->path(), message);
     }
 
     resource* context::declare_class(string name, ast::context const& context)

@@ -1,6 +1,6 @@
 FROM gliderlabs/alpine:edge
 MAINTAINER Peter Huene <peterhuene@gmail.com>
-RUN apk add --no-cache make cmake gcc g++ boost-dev curl-dev libedit-dev git && \
+RUN apk add --no-cache make cmake gcc g++ boost-dev curl-dev libedit-dev git icu-dev && \
     git clone https://github.com/k-takata/Onigmo.git /tmp/onigmo && \
     cd /tmp/onigmo && \
     ./configure --enable-shared --enable-multithread && \
@@ -37,6 +37,6 @@ RUN apk add --no-cache make cmake gcc g++ boost-dev curl-dev libedit-dev git && 
     cd && \
     rm -rf /tmp/puppetcpp && \
     mkdir -p /etc/puppetlabs/code/environments/production && \
-    apk --no-cache del make cmake gcc g++ boost-dev curl-dev libedit-dev git && \
-    apk --no-cache add libstdc++ boost boost-program_options libcurl libedit
+    apk --no-cache del make cmake gcc g++ boost-dev curl-dev libedit-dev git icu-dev && \
+    apk --no-cache add libstdc++ boost boost-program_options libcurl libedit icu-libs
 ENTRYPOINT ["/usr/bin/puppetcpp"]

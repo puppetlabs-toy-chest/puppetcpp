@@ -14,7 +14,7 @@ void require_token(Iterator& token, Iterator const& end, token_id expected_id, s
     CAPTURE(expected_id);
     CAPTURE(expected_value);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == expected_id);
 
@@ -34,7 +34,7 @@ void require_string_token(
 {
     CAPTURE(expected_value);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::string);
 
@@ -55,7 +55,7 @@ void require_string_text_token(
 {
     CAPTURE(expected_text);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::string_text);
 
@@ -74,7 +74,7 @@ void require_interpolated_string_token(
     string const& expected_format = {},
     size_t expected_margin = 0)
 {
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::string_start);
     {
@@ -83,9 +83,9 @@ void require_interpolated_string_token(
         REQUIRE(value->format == expected_format);
     }
     ++token;
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     callback(token);
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::string_end);
     {
@@ -118,7 +118,7 @@ void require_number_token(Iterator& token, Iterator const& end, int64_t expected
 {
     CAPTURE(expected_string);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::number);
 
@@ -140,7 +140,7 @@ void require_number_token(Iterator& token, Iterator const& end, double expected_
 {
     CAPTURE(expected_string);
 
-    REQUIRE(token != end);
+    REQUIRE((token != end));
     token_id id = static_cast<token_id>(token->id());
     REQUIRE(id == token_id::number);
 
@@ -220,7 +220,7 @@ SCENARIO("getting ranges of tokens", "[lexer]")
         auto end = lexer.end();
 
         for (auto const& range : ranges) {
-            REQUIRE(token != end);
+            REQUIRE((token != end));
             position begin, end;
             tie(begin, end) = boost::apply_visitor(token_range_visitor(), token->value());
             REQUIRE(begin == range.first);
@@ -229,17 +229,17 @@ SCENARIO("getting ranges of tokens", "[lexer]")
         }
         REQUIRE(token == end);
 
-        string text;
-        size_t column;
         THEN("the text and column for a position should match what's expected") {
-            tie(text, column) = get_text_and_column(input, ranges[4].first.offset());
-            REQUIRE(column == 2);
-            REQUIRE(text == " 'this back\\\\slash is escaped'");
+            auto info = get_line_info(input, ranges[4].first.offset(), 1);
+            REQUIRE(info.column == 2);
+            REQUIRE(info.length == 1);
+            REQUIRE(info.text == " 'this back\\\\slash is escaped'");
         }
         THEN("the text and column for the last position should match the last line") {
-            tie(text, column) = get_text_and_column(input, get_last_position(input).offset());
-            REQUIRE(column == 2);
-            REQUIRE(text == "'");
+            auto info = get_line_info(input, get_last_position(input).offset(), 1);
+            REQUIRE(info.column == 2);
+            REQUIRE(info.length == 0);
+            REQUIRE(info.text == "'");
         }
     }
     WHEN("lexing a string") {
@@ -260,7 +260,7 @@ SCENARIO("getting ranges of tokens", "[lexer]")
             auto end = lexer.end();
 
             for (auto const& range : ranges) {
-                REQUIRE(token != end);
+                REQUIRE((token != end));
                 position begin, end;
                 tie(begin, end) = boost::apply_visitor(token_range_visitor(), token->value());
                 REQUIRE(begin == range.first);
@@ -272,14 +272,16 @@ SCENARIO("getting ranges of tokens", "[lexer]")
             string text;
             size_t column;
             THEN("the text and column for a position should match what's expected") {
-                tie(text, column) = get_text_and_column(input, ranges[4].first.offset());
-                REQUIRE(column == 2);
-                REQUIRE(text == " 'this back\\\\slash is escaped'");
+                auto line = get_line_info(input, ranges[4].first.offset(), 1);
+                REQUIRE(line.column == 2);
+                REQUIRE(line.length == 1);
+                REQUIRE(line.text == " 'this back\\\\slash is escaped'");
             }
             THEN("the text and column for the last position should match the last line") {
-                tie(text, column) = get_text_and_column(input, get_last_position(input).offset());
-                REQUIRE(column == 2);
-                REQUIRE(text == "'");
+                auto line = get_line_info(input, get_last_position(input).offset(), 1);
+                REQUIRE(line.column == 2);
+                REQUIRE(line.length == 0);
+                REQUIRE(line.text == "'");
             }
         }
         AND_WHEN("using an iterator range as input") {
@@ -293,7 +295,7 @@ SCENARIO("getting ranges of tokens", "[lexer]")
             auto end = lexer.end();
 
             for (auto const& range : ranges) {
-                REQUIRE(token != end);
+                REQUIRE((token != end));
                 position begin, end;
                 tie(begin, end) = boost::apply_visitor(token_range_visitor(), token->value());
                 REQUIRE(begin == range.first);

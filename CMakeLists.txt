@@ -40,18 +40,22 @@ find_package(Facter REQUIRED)
 find_package(YAMLCPP REQUIRED)
 find_package(Editline)
 
+include(FeatureSummary)
+set_package_properties(ICU PROPERTIES DESCRIPTION "The International Components for Unicode (ICU) library used for Unicode support." URL "http://site.icu-project.org/")
+set_package_properties(ICU PROPERTIES TYPE REQUIRED PURPOSE "Used to provide Unicode support in the Puppet language..")
+find_package(ICU REQUIRED COMPONENTS uc i18n)
+
 # Display a summary of the features
 include(FeatureSummary)
 feature_summary(WHAT ALL)
 
 set(CATCH_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/catch/include")
 set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/rapidjson/include")
-set(UTF8CPP_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/utf8cpp/include")
 set(DTL_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/vendor/dtl")
 
 # Need to bump up the limit for MPL lists a little bit (default is 20)
 # This is because we stick a lot of different types in boost::variant for runtime types
-add_definitions(-DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS -DBOOST_MPL_LIMIT_LIST_SIZE=40)
+add_definitions(-DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS -DBOOST_MPL_LIMIT_LIST_SIZE=40 -DONIG_ESCAPE_UCHAR_COLLISION)
 
 add_subdirectory(exe)
 add_subdirectory(lib)

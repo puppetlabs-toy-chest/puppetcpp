@@ -1,6 +1,6 @@
 #include <puppet/compiler/evaluation/operators/binary/greater.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
-#include <boost/algorithm/string.hpp>
+#include <puppet/unicode/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
@@ -27,7 +27,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
         descriptor.add("String", "String", [](call_context& context) {
             auto& left = context.left().require<string>();
             auto& right = context.right().require<string>();
-            return !boost::ilexicographical_compare(left, right) && !boost::iequals(left, right);
+            if (left.size() < right.size()) {
+                return unicode::string{ left }.compare(right, true) > 0;
+            }
+            return unicode::string{ right }.compare(left, true) < 0;
         });
         descriptor.add("Type", "Type", [](call_context& context) {
             auto& left = context.left().require<values::type>();

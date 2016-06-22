@@ -1,6 +1,6 @@
 #include <puppet/compiler/evaluation/operators/binary/less.hpp>
 #include <puppet/compiler/evaluation/operators/binary/call_context.hpp>
-#include <boost/algorithm/string.hpp>
+#include <puppet/unicode/string.hpp>
 
 using namespace std;
 using namespace puppet::runtime;
@@ -24,7 +24,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return context.left().require<double>() < context.right().require<double>();
         });
         descriptor.add("String", "String", [](call_context& context) {
-            return boost::ilexicographical_compare(context.left().require<string>(), context.right().require<string>());
+            auto& left = context.left().require<string>();
+            auto& right = context.right().require<string>();
+            if (left.size() < right.size()) {
+                return unicode::string{ left }.compare(right, true) < 0;
+            }
+            return unicode::string{ right }.compare(left, true) > 0;
         });
         descriptor.add("Type", "Type", [](call_context& context) {
             auto& left = context.left().require<values::type>();

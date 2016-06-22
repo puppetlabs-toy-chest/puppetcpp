@@ -40,10 +40,8 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             return os.str();
         } catch (parse_exception const& ex) {
             // Log the underlying problem and then throw an error pointing at the argument
-            size_t column;
-            string text;
-            tie(text, column) = lexer::get_text_and_column(input, ex.begin().offset());
-            evaluation_context.node().logger().log(logging::level::error, ex.begin().line(), column, ex.end().offset() - ex.begin().offset(), text, path, ex.what());
+            auto info = lexer::get_line_info(input, ex.begin().offset(), ex.end().offset() - ex.begin().offset());
+            evaluation_context.node().logger().log(logging::level::error, ex.begin().line(), info.column, info.length, info.text, path, ex.what());
             throw evaluation_exception("parsing of EPP template failed.", context.name(), evaluation_context.backtrace());
         } catch (argument_exception const& ex) {
             throw evaluation_exception(

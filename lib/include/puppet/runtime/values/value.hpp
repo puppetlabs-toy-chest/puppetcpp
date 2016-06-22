@@ -359,6 +359,13 @@ namespace puppet { namespace runtime { namespace values {
     bool operator!=(value const& left, value const& right);
 
     /**
+     * Hashes a runtime value.
+     * @param value The 'type' type to hash.
+     * @return Returns the hash value for the values.
+     */
+    size_t hash_value(values::value const& value);
+
+    /**
      * Equality visitor for values that handles variable comparison.
      */
     struct equality_visitor : boost::static_visitor<bool>
@@ -433,13 +440,5 @@ namespace puppet { namespace runtime { namespace values {
     {
         return boost::apply_visitor(std::bind(equality_visitor(), std::placeholders::_1, std::ref(right)), left);
     }
-
-    /**
-     * Iterates each Unicode code point in a string.
-     * @param str The string to iterate.
-     * @param callback The callback to call for each Unicode code point, passed as a UTF-8 string.
-     * @param reverse True to reverse the iteration or false if not.
-     */
-    void each_code_point(std::string const& str, std::function<bool(std::string)> const& callback, bool reverse = false);
 
 }}}  // namespace puppet::runtime::values

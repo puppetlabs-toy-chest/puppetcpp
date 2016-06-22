@@ -1,0 +1,17 @@
+$string = 'ஸ்றீனிவாஸ'
+notice $string
+notice $string[0]
+notice $string[1]
+notice $string[2]
+notice $string[3]
+notice $string[4]
+notice $string[-1]
+notice $string[-2]
+notice $string[-3]
+notice $string[-4]
+notice $string[-5]
+notice $string[0, -1]
+notice $string[1, -1]
+notice $string[2, -1]
+notice $string[3, -1]
+notice $string[4, -1]

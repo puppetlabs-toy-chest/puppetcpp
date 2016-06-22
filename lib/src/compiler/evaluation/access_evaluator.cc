@@ -1,9 +1,9 @@
 #include <puppet/compiler/evaluation/access_evaluator.hpp>
 #include <puppet/compiler/evaluation/evaluator.hpp>
 #include <puppet/compiler/exceptions.hpp>
+#include <puppet/unicode/string.hpp>
 #include <puppet/utility/indirect_collection.hpp>
 #include <puppet/cast.hpp>
-#include <utf8.h>
 
 using namespace std;
 using namespace puppet::compiler::ast;
@@ -54,6 +54,9 @@ namespace puppet { namespace compiler { namespace evaluation {
                 );
             }
 
+            // Substring using unicode::string
+            unicode::string string{ target };
+
             // Get the index
             auto ptr = _arguments[0]->as<int64_t>();
             if (!ptr) {
@@ -70,7 +73,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             // If the index is negative, it's from the end of the string
             int64_t index = *ptr;
             if (index < 0) {
-                index += static_cast<int64_t>(target.size());
+                index += static_cast<int64_t>(string.graphemes());
             }
 
             // Get the count
@@ -91,7 +94,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
                 // A negative count denotes an end index (inclusive)
                 if (count < 0) {
-                    count += (target.size() + 1 - index);
+                    count += (string.graphemes() + 1 - index);
                 }
             }
 
@@ -101,20 +104,10 @@ namespace puppet { namespace compiler { namespace evaluation {
                 index = 0;
             }
 
-            if (target.empty() || static_cast<size_t>(index) >= target.size() || count <= 0) {
+            if (target.empty() || static_cast<size_t>(index) >= string.graphemes() || count <= 0) {
                 return std::string();
             }
-
-            // Iterate as Unicode characters
-            auto begin = target.begin();
-            for (int64_t i = 0; i < index && begin != target.end(); ++i) {
-                utf8::next(begin, target.end());
-            }
-            auto end = begin;
-            for (int64_t i = 0; i < count && end != target.end(); ++i) {
-                utf8::next(end, target.end());
-            }
-            return std::string(begin, end);
+            return string.substr(index, count);
         }
 
         value operator()(values::array const& target)
