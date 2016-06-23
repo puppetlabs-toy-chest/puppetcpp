@@ -65,17 +65,6 @@ namespace puppet { namespace compiler { namespace evaluation {
          */
         runtime::values::value evaluate(ast::basic_expression const& expression);
 
-        /**
-         * Determines if a value is a "match" for an expected value.
-         * Uses the match operator for expected regex values or equality for other expected values.
-         * @param actual The actual value.
-         * @param actual_context The AST context of the actual value.
-         * @param expected The expected value.
-         * @param expected_context The AST context of the expected value.
-         * @return Returns true if the values match or false if not.
-         */
-        bool is_match(runtime::values::value& actual, ast::context const& actual_context, runtime::values::value& expected, ast::context const& expected_context);
-
      private:
         template<class> friend class ::boost::detail::variant::invoke_visitor;
         runtime::values::value operator()(ast::basic_expression const& expression);

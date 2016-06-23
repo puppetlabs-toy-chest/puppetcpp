@@ -8,6 +8,13 @@
 #include <string>
 #include <ostream>
 
+namespace puppet { namespace compiler { namespace evaluation {
+
+    // Forward declare the evaluation context.
+    struct context;
+
+}}}  // namespace puppet::compiler::evaluation
+
 namespace puppet { namespace runtime { namespace values {
 
     /**
@@ -26,6 +33,15 @@ namespace puppet { namespace runtime { namespace values {
          * @return Returns the pattern for the regex.
          */
         std::string const& pattern() const;
+
+        /**
+         * Matches the given string value against the regular expression.
+         * If the regular expression matches, match variables are set in the evaluation context.
+         * @param context The evaluation context.
+         * @param value The string value to match against.
+         * @return Returns true if the regular expression matched or false if not.
+         */
+        bool match(compiler::evaluation::context& context, std::string const& value) const;
 
     private:
         std::string _pattern;
