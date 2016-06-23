@@ -48,9 +48,9 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     resource_relationship::resource_relationship(
         compiler::relationship relationship,
-        values::value source,
+        shared_ptr<values::value> source,
         ast::context source_context,
-        values::value target,
+        shared_ptr<values::value> target,
         ast::context target_context) :
             _relationship(relationship),
             _source(rvalue_cast(source)),
@@ -63,6 +63,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         } else if (target_context.tree) {
             _tree = target_context.tree->shared_from_this();
         }
+        if (!_source || !_target) {
+            throw runtime_error("expected a source and target value.");
+        }
     }
 
     compiler::relationship resource_relationship::relationship() const
@@ -72,7 +75,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     values::value const& resource_relationship::source() const
     {
-        return _source;
+        return *_source;
     }
 
     ast::context const& resource_relationship::source_context() const
@@ -82,7 +85,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     values::value const& resource_relationship::target() const
     {
-        return _target;
+        return *_target;
     }
 
     ast::context const& resource_relationship::target_context() const
@@ -94,7 +97,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         // Build a list of targets
         vector<resource*> targets;
-        _target.each_resource([&](types::resource const& target_resource) {
+        _target->each_resource([&](types::resource const& target_resource) {
             // Locate the target in the catalog
             auto target = catalog.find(target_resource);
             if (!target || target->virtualized()) {
@@ -112,7 +115,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         });
 
         // Now add a relationship from each source
-        _source.each_resource([&](types::resource const& source_resource) {
+        _source->each_resource([&](types::resource const& source_resource) {
             // Locate the source in the catalog
             auto source = catalog.find(source_resource);
             if (!source || source->virtualized()) {
@@ -603,7 +606,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         catalog.relate(relationship::contains, *stage, *resource);
 
         // Evaluate the class
-        evaluation::class_evaluator evaluator{ *this, klass->expression() };
+        evaluation::class_evaluator evaluator{ *this, klass->statement() };
         evaluator.evaluate(*resource);
         return resource;
     }
@@ -689,19 +692,19 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
 
         // Push a frame indicating an alias resolution
-        scoped_stack_frame frame{ *this, stack_frame{ &alias->expression(), current_scope() }};
+        scoped_stack_frame frame{ *this, stack_frame{ &alias->statement(), current_scope() }};
 
         // Initially map to an Any type
         auto resolved = make_shared<values::type>();
         _resolved_type_aliases[name] = resolved;
 
-        auto type = values::type::create(alias->expression().type, this);
+        auto type = values::type::create(alias->statement().type, this);
         if (!type) {
             throw evaluation_exception(
                 (boost::format("expected type alias '%1%' to evaluate to a type.") %
                  name
                 ).str(),
-                alias->expression().alias,
+                alias->statement().alias,
                 backtrace()
             );
         }
@@ -714,7 +717,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 (boost::format("%1% does not resolve to a real type.") %
                  *resolved
                 ).str(),
-                alias->expression().type.context(),
+                alias->statement().type.context(),
                 backtrace()
             );
         }
@@ -871,7 +874,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
             // Evaluate the defined type
             current = &declared->resource();
-            defined_type_evaluator evaluator{ *this, declared->definition().expression() };
+            defined_type_evaluator evaluator{ *this, declared->definition().statement() };
             evaluator.evaluate(declared->resource());
             return true;
         }), virtualized.end());
@@ -889,7 +892,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 continue;
             }
             current = &declared.resource();
-            defined_type_evaluator evaluator{ *this, declared.definition().expression() };
+            defined_type_evaluator evaluator{ *this, declared.definition().statement() };
             evaluator.evaluate(declared.resource());
         }
     }

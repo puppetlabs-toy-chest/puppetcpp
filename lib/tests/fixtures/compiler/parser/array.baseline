@@ -1,117 +1,181 @@
 path: array.pp
 statements:
-  - kind: array
-    begin:
-      offset: 0
-      line: 1
-    end:
-      offset: 2
-      line: 1
-  - kind: array
-    begin:
-      offset: 3
-      line: 2
-    end:
-      offset: 18
-      line: 2
-    elements:
-      - kind: number
-        begin:
-          offset: 4
-          line: 2
-        end:
-          offset: 5
-          line: 2
-        base: decimal
-        value: 1
-      - kind: number
-        begin:
-          offset: 7
-          line: 2
-        end:
-          offset: 8
-          line: 2
-        base: decimal
-        value: 2
-      - kind: number
-        begin:
-          offset: 10
-          line: 2
-        end:
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 2
+        line: 1
+      name: a
+    operations:
+      - operator_position:
+          offset: 3
+          line: 1
+        operator: =
+        operand:
+          kind: array
+          begin:
+            offset: 5
+            line: 1
+          end:
+            offset: 7
+            line: 1
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 8
+        line: 2
+      end:
+        offset: 10
+        line: 2
+      name: b
+    operations:
+      - operator_position:
           offset: 11
           line: 2
-        base: decimal
-        value: 3
-      - kind: number
-        begin:
-          offset: 13
-          line: 2
-        end:
-          offset: 14
-          line: 2
-        base: decimal
-        value: 4
-      - kind: number
-        begin:
-          offset: 16
-          line: 2
-        end:
-          offset: 17
-          line: 2
-        base: decimal
-        value: 5
-  - kind: array
-    begin:
-      offset: 19
-      line: 3
-    end:
-      offset: 48
-      line: 7
-    elements:
-      - kind: number
-        begin:
-          offset: 25
-          line: 4
-        end:
-          offset: 26
-          line: 4
-        base: decimal
-        value: 1
-      - kind: name
-        begin:
-          offset: 32
-          line: 5
-        end:
-          offset: 35
-          line: 5
-        value: foo
-      - kind: regex
-        begin:
-          offset: 41
-          line: 6
-        end:
-          offset: 46
-          line: 6
-        value: baz
-  - kind: unary
-    operator_position:
-      offset: 50
-      line: 8
-    operator: "*"
+        operator: =
+        operand:
+          kind: array
+          begin:
+            offset: 13
+            line: 2
+          end:
+            offset: 28
+            line: 2
+          elements:
+            - kind: number
+              begin:
+                offset: 14
+                line: 2
+              end:
+                offset: 15
+                line: 2
+              base: decimal
+              value: 1
+            - kind: number
+              begin:
+                offset: 17
+                line: 2
+              end:
+                offset: 18
+                line: 2
+              base: decimal
+              value: 2
+            - kind: number
+              begin:
+                offset: 20
+                line: 2
+              end:
+                offset: 21
+                line: 2
+              base: decimal
+              value: 3
+            - kind: number
+              begin:
+                offset: 23
+                line: 2
+              end:
+                offset: 24
+                line: 2
+              base: decimal
+              value: 4
+            - kind: number
+              begin:
+                offset: 26
+                line: 2
+              end:
+                offset: 27
+                line: 2
+              base: decimal
+              value: 5
+  - kind: binary expression
     operand:
-      kind: array
+      kind: variable
       begin:
-        offset: 51
+        offset: 29
+        line: 3
+      end:
+        offset: 31
+        line: 3
+      name: c
+    operations:
+      - operator_position:
+          offset: 32
+          line: 3
+        operator: =
+        operand:
+          kind: array
+          begin:
+            offset: 34
+            line: 3
+          end:
+            offset: 63
+            line: 7
+          elements:
+            - kind: number
+              begin:
+                offset: 40
+                line: 4
+              end:
+                offset: 41
+                line: 4
+              base: decimal
+              value: 1
+            - kind: name
+              begin:
+                offset: 47
+                line: 5
+              end:
+                offset: 50
+                line: 5
+              value: foo
+            - kind: regex
+              begin:
+                offset: 56
+                line: 6
+              end:
+                offset: 61
+                line: 6
+              value: baz
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 65
         line: 8
       end:
-        offset: 56
+        offset: 67
         line: 8
-      elements:
-        - kind: name
-          begin:
-            offset: 52
+      name: d
+    operations:
+      - operator_position:
+          offset: 68
+          line: 8
+        operator: =
+        operand:
+          kind: unary expression
+          operator_position:
+            offset: 70
             line: 8
-          end:
-            offset: 55
-            line: 8
-          value: foo
+          operator: "*"
+          operand:
+            kind: array
+            begin:
+              offset: 71
+              line: 8
+            end:
+              offset: 76
+              line: 8
+            elements:
+              - kind: name
+                begin:
+                  offset: 72
+                  line: 8
+                end:
+                  offset: 75
+                  line: 8
+                value: foo

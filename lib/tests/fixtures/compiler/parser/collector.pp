@@ -24,3 +24,5 @@ File <<| foo == bar |>> {
     attr => baz,
     jam +> cake
 }
+
+File<||> -> Service<||>

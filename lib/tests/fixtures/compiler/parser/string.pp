@@ -1,9 +1,9 @@
-"hello world"
+notice "hello world"
 
-"foo\tbar\n"
+notice "foo\tbar\n"
 
-'foo bar'
+notice 'foo bar'
 
-@(HEREDOC)
+notice @(HEREDOC)
   another string
   |- HEREDOC

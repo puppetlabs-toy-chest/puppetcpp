@@ -1,0 +1,3 @@
+Error: match_variable_assignment.pp:1:1: cannot assign to $1: the name is reserved as a match variable.
+  $1 = bar
+  ^~

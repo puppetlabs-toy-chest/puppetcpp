@@ -114,6 +114,7 @@ SCENARIO("parsing files", "[parser]")
             test_logger logger{ buffer };
             try {
                 auto tree = parse_file(logger, path.string(), nullptr, is_epp);
+                tree->validate();
                 tree->write(format::yaml, buffer);
                 buffer << '\n';
             } catch (puppet::compiler::parse_exception const& ex) {
@@ -142,6 +143,7 @@ SCENARIO("parsing files", "[parser]")
 
             try {
                 auto tree = parse_file(logger, path.string(), dummy_module, is_epp);
+                tree->validate();
                 REQUIRE(tree);
                 REQUIRE(tree->module() == dummy_module);
                 REQUIRE(tree->path() == path.string());
@@ -175,6 +177,7 @@ SCENARIO("parsing files", "[parser]")
 
             try {
                 auto tree = parse_string(logger, source, path.string(), dummy_module, is_epp);
+                tree->validate();
                 REQUIRE(tree);
                 REQUIRE(tree->module() == dummy_module);
                 REQUIRE(tree->path() == path.string());

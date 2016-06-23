@@ -1,6 +1,6 @@
 path: new.pp
 statements:
-  - kind: new
+  - kind: new expression
     type:
       kind: type
       begin:
@@ -22,7 +22,7 @@ statements:
     end:
       offset: 13
       line: 1
-  - kind: new
+  - kind: new expression
     type:
       kind: type
       begin:
@@ -45,7 +45,7 @@ statements:
     end:
       offset: 26
       line: 2
-  - kind: new
+  - kind: new expression
     type:
       kind: type
       begin:
@@ -68,10 +68,10 @@ statements:
     end:
       offset: 39
       line: 3
-  - kind: new
+  - kind: new expression
     type:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 59
@@ -80,8 +80,8 @@ statements:
           offset: 66
           line: 4
         name: Integer
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 66
             line: 4
@@ -111,10 +111,10 @@ statements:
     end:
       offset: 74
       line: 4
-  - kind: new
+  - kind: new expression
     type:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 75
@@ -123,8 +123,8 @@ statements:
           offset: 82
           line: 5
         name: Integer
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 82
             line: 5
@@ -162,10 +162,10 @@ statements:
     end:
       offset: 95
       line: 5
-  - kind: new
+  - kind: new expression
     type:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 96
@@ -174,8 +174,8 @@ statements:
           offset: 103
           line: 6
         name: Integer
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 103
             line: 6
@@ -222,10 +222,10 @@ statements:
     end:
       offset: 121
       line: 6
-  - kind: new
+  - kind: new expression
     type:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 122
@@ -234,8 +234,8 @@ statements:
           offset: 129
           line: 7
         name: Integer
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 129
             line: 7

@@ -30,6 +30,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             auto tree = parser::parse_string(logger, input, path, nullptr, true);
             LOG(debug, "parsed inline EPP AST:\n-----\n%1%\n-----", *tree);
 
+            // Validate as EPP
+            tree->validate(true);
+
             // Create a local output stream
             ostringstream os;
             scoped_output_stream epp_stream{ evaluation_context, os };

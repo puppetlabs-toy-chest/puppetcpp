@@ -1,0 +1,3 @@
+application bad(*$params)
+{
+}

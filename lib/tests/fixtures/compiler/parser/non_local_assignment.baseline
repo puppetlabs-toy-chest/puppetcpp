@@ -1,0 +1,3 @@
+Error: non_local_assignment.pp:1:1: cannot assign to $foo::bar: assignment can only be performed on variables local to the current scope.
+  $foo::bar = baz
+  ^~~~~~~~~

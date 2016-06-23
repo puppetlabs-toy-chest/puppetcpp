@@ -1,15 +1,15 @@
 path: unless.pp
 statements:
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 0
       line: 1
     end:
-      offset: 48
-      line: 3
+      offset: 68
+      line: 4
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: variable
         begin:
           offset: 7
@@ -34,8 +34,8 @@ statements:
             base: decimal
             value: 1024
     body:
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 30
@@ -59,52 +59,87 @@ statements:
                 line: 2
               base: decimal
               value: 500
+      - kind: function call statement
+        function:
+          kind: name
+          begin:
+            offset: 49
+            line: 3
+          end:
+            offset: 55
+            line: 3
+          value: notice
+        arguments:
+          - kind: variable
+            begin:
+              offset: 56
+              line: 3
+            end:
+              offset: 66
+              line: 3
+            name: maxclient
     else:
       begin:
-        offset: 49
-        line: 3
+        offset: 69
+        line: 4
       body:
-        - kind: binary
-          first:
+        - kind: binary expression
+          operand:
             kind: variable
             begin:
-              offset: 58
-              line: 4
+              offset: 78
+              line: 5
             end:
-              offset: 68
-              line: 4
+              offset: 88
+              line: 5
             name: maxclient
           operations:
             - operator_position:
-                offset: 69
-                line: 4
+                offset: 89
+                line: 5
               operator: =
               operand:
                 kind: number
                 begin:
-                  offset: 71
-                  line: 4
+                  offset: 91
+                  line: 5
                 end:
-                  offset: 75
-                  line: 4
+                  offset: 95
+                  line: 5
                 base: decimal
                 value: 1000
       end:
-        offset: 77
-        line: 5
-  - kind: unless
-    begin:
-      offset: 79
-      line: 7
-    end:
-      offset: 94
-      line: 7
-    conditional:
-      kind: boolean
+        offset: 97
+        line: 6
+  - kind: binary expression
+    operand:
+      kind: variable
       begin:
-        offset: 86
-        line: 7
+        offset: 99
+        line: 8
       end:
-        offset: 91
-        line: 7
-      value: false
+        offset: 101
+        line: 8
+      name: a
+    operations:
+      - operator_position:
+          offset: 102
+          line: 8
+        operator: =
+        operand:
+          kind: unless expression
+          begin:
+            offset: 104
+            line: 8
+          end:
+            offset: 119
+            line: 8
+          conditional:
+            kind: boolean
+            begin:
+              offset: 111
+              line: 8
+            end:
+              offset: 116
+              line: 8
+            value: false

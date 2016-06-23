@@ -26,18 +26,18 @@ namespace puppet { namespace compiler { namespace evaluation {
     string stack_frame::name() const
     {
         ostringstream buffer;
-        if (auto expression = as<ast::function_expression>()) {
-            buffer << expression->name;
-        } else if (auto expression = as<ast::class_expression>()) {
-            buffer << "<class " << expression->name << ">";
-        } else if (auto expression = as<ast::defined_type_expression>()) {
-            buffer << "<define " << expression->name << ">";
-        } else if (as<ast::node_expression>()) {
+        if (auto statement = as<ast::function_statement>()) {
+            buffer << statement->name;
+        } else if (auto statement = as<ast::class_statement>()) {
+            buffer << "<class " << statement->name << ">";
+        } else if (auto statement = as<ast::defined_type_statement>()) {
+            buffer << "<define " << statement->name << ">";
+        } else if (as<ast::node_statement>()) {
             buffer << "<node>";
         } else if (as<ast::collector_expression>()) {
             buffer << "<collector>";
-        } else if (auto expression = as<ast::type_alias_expression>()) {
-            buffer << "<type alias " << expression->alias << ">";
+        } else if (auto statement = as<ast::type_alias_statement>()) {
+            buffer << "<type alias " << statement->alias << ">";
         } else if (_name) {
             buffer << _name;
         }
@@ -71,24 +71,24 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         struct context_visitor : boost::static_visitor<ast::context>
         {
-            ast::context operator()(ast::function_expression const* expression) const
+            ast::context operator()(ast::function_statement const* statement) const
             {
-                return *expression;
+                return *statement;
             }
 
-            ast::context operator()(ast::class_expression const* expression) const
+            ast::context operator()(ast::class_statement const* statement) const
             {
-                return *expression;
+                return *statement;
             }
 
-            ast::context operator()(ast::defined_type_expression const* expression) const
+            ast::context operator()(ast::defined_type_statement const* statement) const
             {
-                return *expression;
+                return *statement;
             }
 
-            ast::context operator()(ast::node_expression const* expression) const
+            ast::context operator()(ast::node_statement const* statement) const
             {
-                return *expression;
+                return *statement;
             }
 
             ast::context operator()(ast::collector_expression const* expression) const
@@ -96,9 +96,9 @@ namespace puppet { namespace compiler { namespace evaluation {
                 return expression->context();
             }
 
-            ast::context operator()(ast::type_alias_expression const* expression) const
+            ast::context operator()(ast::type_alias_statement const* statement) const
             {
-                return expression->context();
+                return statement->context();
             }
         };
         return boost::apply_visitor(context_visitor{}, expression);

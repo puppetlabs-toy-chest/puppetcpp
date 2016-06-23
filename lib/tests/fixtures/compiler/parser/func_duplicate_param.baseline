@@ -1,0 +1,3 @@
+Error: func_duplicate_param.pp:1:18: parameter $x already exists in the parameter list.
+  function foo($x, $x)
+                   ^~

@@ -1,0 +1,3 @@
+Error: bad_class_name.pp:1:7: 'main' is not a valid name for a class.
+  class main
+        ^~~~

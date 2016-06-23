@@ -1,5 +1,0 @@
-Error: bad_assignment.pp:1:1: node 'test': cannot assign to Integer[1, 1]: assignment can only be performed on variables and arrays of variables.
-  1 = foo
-  ^
-  backtrace:
-    in '<class main>' at bad_assignment.pp:1

@@ -1,6 +1,6 @@
 path: defaults.pp
 statements:
-  - kind: resource defaults
+  - kind: resource defaults expression
     begin:
       offset: 0
       line: 1
@@ -16,7 +16,7 @@ statements:
         offset: 4
         line: 1
       name: File
-  - kind: resource defaults
+  - kind: resource defaults expression
     begin:
       offset: 10
       line: 4
@@ -77,7 +77,7 @@ statements:
             offset: 48
             line: 6
           value: cake
-  - kind: resource defaults
+  - kind: resource defaults expression
     begin:
       offset: 52
       line: 9

@@ -1,0 +1,5 @@
+Error: binary_op_context.pp:1:16: node 'test': binary operator '+' expects Numeric or String but was given Boolean.
+  notice(1 + 2 + 3 in bar)
+                 ^~~~~~~~
+  backtrace:
+    in '<class main>' at binary_op_context.pp:1

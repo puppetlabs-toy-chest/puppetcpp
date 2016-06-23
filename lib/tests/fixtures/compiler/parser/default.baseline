@@ -1,9 +1,20 @@
 path: default.pp
 statements:
-  - kind: default
-    begin:
-      offset: 0
-      line: 1
-    end:
-      offset: 7
-      line: 1
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 6
+        line: 1
+      value: notice
+    arguments:
+      - kind: default
+        begin:
+          offset: 7
+          line: 1
+        end:
+          offset: 14
+          line: 1

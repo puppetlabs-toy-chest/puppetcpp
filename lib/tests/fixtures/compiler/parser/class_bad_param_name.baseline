@@ -1,0 +1,3 @@
+Error: class_bad_param_name.pp:1:11: parameter $0 has an unacceptable name: the name must conform to /[a-z_]\w*/.
+  class foo($0) {
+            ^~

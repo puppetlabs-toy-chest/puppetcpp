@@ -1,0 +1,3 @@
+Error: funct_bad_array_variable_ref.pp:6:20: parameter $y cannot be referenced before it is evaluated (evaluation is left-to-right).
+  function bad($x = [$y], $y = 0)
+                     ^~

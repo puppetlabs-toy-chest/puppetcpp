@@ -1,0 +1,5 @@
+Error: bad_capture_param_type.pp:5:10: node 'test': parameter $y has expected type Array[String] but was given Array[Integer[1, 3], 3, 3].
+  foo(bar, 1, 2 ,3)
+           ^
+  backtrace:
+    in '<class main>' at bad_capture_param_type.pp:5

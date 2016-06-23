@@ -222,13 +222,13 @@ namespace puppet { namespace compiler {
                 types::resource("node", result.second),
                 catalog.find(types::resource("class", "main")),
                 context.top_scope(),
-                result.first->expression());
+                result.first->statement());
             if (!resource) {
                 throw evaluation_exception("failed to add node resource.", context.backtrace());
             }
 
             LOG(debug, "evaluating node definition for node '%1%'.", context.node().name());
-            evaluation::node_evaluator evaluator{ context, result.first->expression() };
+            evaluation::node_evaluator evaluator{ context, result.first->statement() };
             evaluator.evaluate(*resource);
         }
     }
@@ -416,6 +416,9 @@ namespace puppet { namespace compiler {
             auto tree = parser::parse_file(logger, path, module);
             LOG(debug, "parsed AST for '%1%':\n-----\n%2%\n-----", path, *tree);
             _parsed.emplace(path, tree);
+
+            // Validate the AST
+            tree->validate();
 
             // Scan the tree for definitions
             compiler::scanner scanner{ _registry, _dispatcher };

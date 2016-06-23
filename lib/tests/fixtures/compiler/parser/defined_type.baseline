@@ -1,6 +1,6 @@
 path: defined_type.pp
 statements:
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 0
       line: 1
@@ -16,7 +16,7 @@ statements:
         offset: 10
         line: 1
       value: foo
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 16
       line: 4
@@ -32,7 +32,7 @@ statements:
         offset: 36
         line: 4
       value: bar::baz::jam
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 43
       line: 8
@@ -48,7 +48,7 @@ statements:
         offset: 53
         line: 8
       value: baz
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 60
       line: 10
@@ -75,7 +75,7 @@ statements:
             line: 10
           name: foo
     body:
-      - kind: function call
+      - kind: function call expression
         function:
           kind: name
           begin:
@@ -112,7 +112,7 @@ statements:
                   line: 11
                 name: x
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -134,7 +134,7 @@ statements:
         end:
           offset: 93
           line: 11
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 128
       line: 16
@@ -169,12 +169,12 @@ statements:
             offset: 149
             line: 16
           name: bar
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 157
       line: 20
     end:
-      offset: 215
+      offset: 207
       line: 22
     name:
       kind: name
@@ -205,8 +205,8 @@ statements:
             line: 20
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 180
@@ -215,8 +215,8 @@ statements:
               offset: 186
               line: 20
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 186
                 line: 20
@@ -260,215 +260,191 @@ statements:
             offset: 201
             line: 20
           value: X
-      - captures:
-          offset: 203
-          line: 20
-        variable:
-          kind: variable
-          begin:
-            offset: 204
-            line: 20
-          end:
-            offset: 209
-            line: 20
-          name: rest
-  - kind: defined type
+  - kind: defined type statement
     begin:
-      offset: 217
+      offset: 209
       line: 24
     end:
-      offset: 328
+      offset: 312
       line: 28
     name:
       kind: name
       begin:
-        offset: 224
+        offset: 216
         line: 24
       end:
-        offset: 228
+        offset: 220
         line: 24
       value: ntp3
     parameters:
       - type:
           kind: type
           begin:
-            offset: 229
+            offset: 221
             line: 24
           end:
-            offset: 236
+            offset: 228
             line: 24
           name: Integer
         variable:
           kind: variable
           begin:
-            offset: 237
+            offset: 229
             line: 24
           end:
-            offset: 239
+            offset: 231
             line: 24
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
-              offset: 241
+              offset: 233
               line: 24
             end:
-              offset: 247
+              offset: 239
               line: 24
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
-                offset: 247
+                offset: 239
                 line: 24
               end:
-                offset: 253
+                offset: 245
                 line: 24
               arguments:
                 - kind: number
                   begin:
-                    offset: 248
+                    offset: 240
                     line: 24
                   end:
-                    offset: 249
+                    offset: 241
                     line: 24
                   base: decimal
                   value: 0
                 - kind: number
                   begin:
-                    offset: 251
+                    offset: 243
                     line: 24
                   end:
-                    offset: 252
+                    offset: 244
                     line: 24
                   base: decimal
                   value: 1
         variable:
           kind: variable
           begin:
-            offset: 254
+            offset: 246
             line: 24
           end:
-            offset: 256
+            offset: 248
             line: 24
           name: y
         default_value:
           kind: string
           begin:
-            offset: 259
+            offset: 251
             line: 24
           end:
-            offset: 262
+            offset: 254
             line: 24
           value: X
-      - captures:
-          offset: 264
-          line: 24
-        variable:
-          kind: variable
-          begin:
-            offset: 265
-            line: 24
-          end:
-            offset: 270
-            line: 24
-          name: rest
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
-            offset: 278
+            offset: 262
             line: 25
           end:
-            offset: 284
+            offset: 268
             line: 25
           value: notice
         arguments:
           - kind: name
             begin:
-              offset: 285
+              offset: 269
               line: 25
             end:
-              offset: 287
+              offset: 271
               line: 25
             value: hi
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
-            offset: 292
+            offset: 276
             line: 26
           end:
-            offset: 296
+            offset: 280
             line: 26
           name: two
         operations:
           - operator_position:
-              offset: 297
+              offset: 281
               line: 26
             operator: =
             operand:
               kind: number
               begin:
-                offset: 299
+                offset: 283
                 line: 26
               end:
-                offset: 300
+                offset: 284
                 line: 26
               base: decimal
               value: 1
           - operator_position:
-              offset: 301
+              offset: 285
               line: 26
             operator: +
             operand:
               kind: number
               begin:
-                offset: 303
+                offset: 287
                 line: 26
               end:
-                offset: 304
+                offset: 288
                 line: 26
               base: decimal
               value: 1
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
-            offset: 309
+            offset: 293
             line: 27
           end:
-            offset: 315
+            offset: 299
             line: 27
           name: three
         operations:
           - operator_position:
-              offset: 316
+              offset: 300
               line: 27
             operator: =
             operand:
               kind: variable
               begin:
-                offset: 318
+                offset: 302
                 line: 27
               end:
-                offset: 322
+                offset: 306
                 line: 27
               name: two
           - operator_position:
-              offset: 323
+              offset: 307
               line: 27
             operator: +
             operand:
               kind: number
               begin:
-                offset: 325
+                offset: 309
                 line: 27
               end:
-                offset: 326
+                offset: 310
                 line: 27
               base: decimal
               value: 1

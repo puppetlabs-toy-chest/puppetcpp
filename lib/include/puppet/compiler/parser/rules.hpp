@@ -25,103 +25,133 @@ namespace puppet { namespace compiler { namespace parser {
 
     /// @cond NOT_DOCUMENTED
 
-    // Rule declarations
-    DECLARE_RULE(undef,                         "undef",                         ast::undef)
-    DECLARE_RULE(defaulted,                     "default",                       ast::defaulted)
-    DECLARE_RULE(boolean,                       "boolean",                       ast::boolean)
-    DECLARE_RULE(literal_true,                  "true",                          ast::boolean)
-    DECLARE_RULE(literal_false,                 "false",                         ast::boolean)
-    DECLARE_RULE(number,                        "number",                        ast::number)
-    DECLARE_RULE(string,                        "string",                        ast::string)
-    DECLARE_RULE(literal_string_text,           "string text",                   ast::literal_string_text)
-    DECLARE_RULE(interpolated_string,           "string",                        ast::interpolated_string)
-    DECLARE_RULE(interpolated_string_part,      "string part",                   ast::interpolated_string_part)
-    DECLARE_RULE(regex,                         "regex",                         ast::regex)
-    DECLARE_RULE(variable,                      "variable",                      ast::variable)
-    DECLARE_RULE(name,                          "name",                          ast::name)
-    DECLARE_RULE(bare_word,                     "bare word",                     ast::bare_word)
-    DECLARE_RULE(type,                          "type",                          ast::type)
-    DECLARE_RULE(array,                         "array",                         ast::array)
-    DECLARE_RULE(hash,                          "hash",                          ast::hash)
-    DECLARE_RULE(pairs,                         "pairs",                         std::vector<ast::pair>)
-    DECLARE_RULE(pair,                          "pair",                          ast::pair)
-    DECLARE_RULE(case_expression,               "case expression",               ast::case_expression)
-    DECLARE_RULE(proposition,                   "proposition",                   ast::proposition)
-    DECLARE_RULE(if_expression,                 "if expression",                 ast::if_expression)
-    DECLARE_RULE(elsif,                         "elsif",                         ast::elsif)
-    DECLARE_RULE(else_,                         "else",                          ast::else_)
-    DECLARE_RULE(unless_expression,             "unless expression",             ast::unless_expression)
-    DECLARE_RULE(function_call_expression,      "function call expression",      ast::function_call_expression)
-    DECLARE_RULE(function_name,                 "function name",                 ast::name)
-    DECLARE_RULE(parameters,                    "parameters",                    std::vector<ast::parameter>)
-    DECLARE_RULE(parameter,                     "parameter",                     ast::parameter)
-    DECLARE_RULE(new_expression,                "new expression",                ast::new_expression)
-    DECLARE_RULE(type_expression,               "type expression",               ast::postfix_expression)
-    DECLARE_RULE(lambda_expression,             "lambda expression",             ast::lambda_expression)
-    DECLARE_RULE(statement_call_expression,     "statement call expression",     ast::function_call_expression)
-    DECLARE_RULE(statement_call_name,           "name",                          ast::name)
-    DECLARE_RULE(resource_expression,           "resource expression",           ast::resource_expression)
-    DECLARE_RULE(virtualized_resource,          "virtualized resource",          ast::resource_expression)
-    DECLARE_RULE(exported_resource,             "exported resource",             ast::resource_expression)
-    DECLARE_RULE(resource_type,                 "resource type",                 ast::postfix_expression)
-    DECLARE_RULE(class_name,                    "name",                          ast::name)
-    DECLARE_RULE(resource_bodies,               "resource bodies",               std::vector<ast::resource_body>)
-    DECLARE_RULE(resource_body,                 "resource body",                 ast::resource_body)
-    DECLARE_RULE(attributes,                    "attributes",                    std::vector<ast::attribute_operation>)
-    DECLARE_RULE(attribute,                     "attribute",                     ast::attribute_operation)
-    DECLARE_RULE(attribute_operator,            "attribute operator",            ast::attribute_operator)
-    DECLARE_RULE(attribute_name,                "attribute name",                ast::name)
-    DECLARE_RULE(keyword_name,                  "name",                          ast::name)
-    DECLARE_RULE(resource_override_expression,  "resource override expression",  ast::resource_override_expression)
-    DECLARE_RULE(resource_reference_expression, "resource reference expression", ast::postfix_expression)
-    DECLARE_RULE(attribute_override,            "attribute",                     ast::attribute_operation)
-    DECLARE_RULE(resource_defaults_expression,  "resource defaults expression",  ast::resource_defaults_expression)
-    DECLARE_RULE(class_expression,              "class expression",              ast::class_expression)
-    DECLARE_RULE(defined_type_expression,       "defined type expression",       ast::defined_type_expression)
-    DECLARE_RULE(node_expression,               "node expression",               ast::node_expression)
-    DECLARE_RULE(hostnames,                     "hostnames",                     std::vector<ast::hostname>)
-    DECLARE_RULE(hostname,                      "hostname",                      ast::hostname)
-    DECLARE_RULE(collector_expression,          "resource collector",            ast::collector_expression)
-    DECLARE_RULE(exported_collector_expression, "exported resource collector",   ast::collector_expression)
-    DECLARE_RULE(query_expression,              "query expression",              ast::query_expression)
-    DECLARE_RULE(primary_query_expression,      "primary query expression",      ast::primary_query_expression)
-    DECLARE_RULE(nested_query_expression,       "nested query expression",       ast::nested_query_expression)
-    DECLARE_RULE(attribute_query,               "attribute query",               ast::attribute_query)
-    DECLARE_RULE(query_operator,                "query operator",                ast::query_operator)
-    DECLARE_RULE(attribute_query_value,         "attribute value",               ast::primary_expression)
-    DECLARE_RULE(binary_query_operation,        "binary query expression",       ast::binary_query_operation)
-    DECLARE_RULE(binary_query_operator,         "binary query operator",         ast::binary_query_operator)
-    DECLARE_RULE(function_expression,           "function expression",           ast::function_expression)
-    DECLARE_RULE(unary_expression,              "unary expression",              ast::unary_expression)
-    DECLARE_RULE(unary_operator,                "unary operator",                ast::unary_operator)
-    DECLARE_RULE(postfix_expression,            "postfix expression",            ast::postfix_expression)
-    DECLARE_RULE(postfix_subexpression,         "postfix subexpression",         ast::postfix_subexpression)
-    DECLARE_RULE(selector_expression,           "selector expression",           ast::selector_expression)
-    DECLARE_RULE(access_expression,             "access expression",             ast::access_expression)
-    DECLARE_RULE(method_call_expression,        "method call expression",        ast::method_call_expression)
-    DECLARE_RULE(statements,                    "statements",                    std::vector<ast::expression>)
-    DECLARE_RULE(statement,                     "statement",                     ast::expression)
-    DECLARE_RULE(postfix_statement,             "postfix statement",             ast::postfix_expression)
-    DECLARE_RULE(primary_statement,             "primary statement",             ast::primary_expression)
-    DECLARE_RULE(binary_statement,              "binary statement",              ast::binary_operation)
-    DECLARE_RULE(binary_operator,               "binary operator",               ast::binary_operator)
-    DECLARE_RULE(expressions,                   "expressions",                   std::vector<ast::expression>)
-    DECLARE_RULE(expression,                    "expression",                    ast::expression)
-    DECLARE_RULE(binary_expression,             "binary expression",             ast::binary_operation)
-    DECLARE_RULE(primary_expression,            "primary expression",            ast::primary_expression)
-    DECLARE_RULE(nested_expression,             "nested expression",             ast::nested_expression)
-    DECLARE_RULE(syntax_tree,                   "syntax tree",                   ast::syntax_tree)
-    DECLARE_RULE(epp_render_expression,         "render expression",             ast::epp_render_expression)
-    DECLARE_RULE(epp_render_block,              "render expression",             ast::epp_render_block)
-    DECLARE_RULE(epp_render_string,             "render string",                 ast::epp_render_string)
-    DECLARE_RULE(epp_syntax_tree,               "syntax tree",                   ast::syntax_tree)
-    DECLARE_RULE(produces_expression,           "produces expression",           ast::produces_expression)
-    DECLARE_RULE(consumes_expression,           "consumes expression",           ast::consumes_expression)
-    DECLARE_RULE(application_expression,        "application expression",        ast::application_expression)
-    DECLARE_RULE(site_expression,               "site expression",               ast::site_expression)
-    DECLARE_RULE(type_alias_expression,         "type alias expression",         ast::type_alias_expression)
+    // Basic expression rules
+    DECLARE_RULE(basic_expression,                "expression",                      ast::basic_expression)
+    DECLARE_RULE(undef,                           "undef",                           ast::undef)
+    DECLARE_RULE(defaulted,                       "default",                         ast::defaulted)
+    DECLARE_RULE(boolean,                         "boolean",                         ast::boolean)
+    DECLARE_RULE(number,                          "number",                          ast::number)
+    DECLARE_RULE(string,                          "string",                          ast::string)
+    DECLARE_RULE(regex,                           "regex",                           ast::regex)
+    DECLARE_RULE(variable,                        "variable",                        ast::variable)
+    DECLARE_RULE(name,                            "name",                            ast::name)
+    DECLARE_RULE(bare_word,                       "bare word",                       ast::bare_word)
+    DECLARE_RULE(type,                            "type",                            ast::type)
+    DECLARE_RULE(interpolated_string,             "string",                          ast::interpolated_string)
+    DECLARE_RULE(interpolated_string_part,        "string part",                     ast::interpolated_string_part)
+    DECLARE_RULE(literal_string_text,             "string text",                     ast::literal_string_text)
+    DECLARE_RULE(array,                           "array",                           ast::array)
+    DECLARE_RULE(hash,                            "hash",                            ast::hash)
+    DECLARE_RULE(pairs,                           "pairs",                           std::vector<ast::pair>)
+    DECLARE_RULE(pair,                            "pair",                            ast::pair)
+    DECLARE_RULE(case_expression,                 "case expression",                 ast::case_expression)
+    DECLARE_RULE(proposition,                     "proposition",                     ast::proposition)
+    DECLARE_RULE(if_expression,                   "if expression",                   ast::if_expression)
+    DECLARE_RULE(elsif,                           "elsif",                           ast::elsif)
+    DECLARE_RULE(else_,                           "else",                            ast::else_)
+    DECLARE_RULE(unless_expression,               "unless expression",               ast::unless_expression)
+    DECLARE_RULE(function_call_expression,        "function call expression",        ast::function_call_expression)
+    DECLARE_RULE(function_name,                   "function name",                   ast::name)
+    DECLARE_RULE(lambda_expression,               "lambda expression",               ast::lambda_expression)
+    DECLARE_RULE(parameters,                      "parameters",                      std::vector<ast::parameter>)
+    DECLARE_RULE(parameter,                       "parameter",                       ast::parameter)
+    DECLARE_RULE(type_expression,                 "type expression",                 ast::postfix_expression)
+    DECLARE_RULE(new_expression,                  "new expression",                  ast::new_expression)
+    DECLARE_RULE(epp_render_expression,           "render expression",               ast::epp_render_expression)
+    DECLARE_RULE(epp_render_block,                "render block",                    ast::epp_render_block)
+    DECLARE_RULE(epp_render_string,               "render string",                   ast::epp_render_string)
+    DECLARE_RULE(unary_expression,                "unary expression",                ast::unary_expression)
+    DECLARE_RULE(unary_operator,                  "unary operator",                  ast::unary_operator)
+    DECLARE_RULE(nested_expression,               "nested expression",               ast::nested_expression)
 
-    // Literal rules
+    // Postfix expression rules
+    DECLARE_RULE(postfix_expression,              "expression",                      ast::postfix_expression)
+    DECLARE_RULE(postfix_operation,               "postfix operation",               ast::postfix_operation)
+    DECLARE_RULE(selector_expression,             "selector expression",             ast::selector_expression)
+    DECLARE_RULE(access_expression,               "access expression",               ast::access_expression)
+    DECLARE_RULE(method_call_expression,          "method call expression",          ast::method_call_expression)
+
+    // Expression rules
+    DECLARE_RULE(expressions,                     "expressions",                     std::vector<ast::expression>)
+    DECLARE_RULE(expression,                      "expression",                      ast::expression)
+    DECLARE_RULE(binary_operation,                "binary operation",                ast::binary_operation)
+    DECLARE_RULE(binary_operator,                 "binary operator",                 ast::binary_operator)
+
+    // Statement rules
+    DECLARE_RULE(statements,                      "statements",                      std::vector<ast::statement>)
+    DECLARE_RULE(statement,                       "statement",                       ast::statement)
+    DECLARE_RULE(class_statement,                 "class statement",                 ast::class_statement)
+    DECLARE_RULE(defined_type_statement,          "defined type statement",          ast::defined_type_statement)
+    DECLARE_RULE(node_statement,                  "node statement",                  ast::node_statement)
+    DECLARE_RULE(hostnames,                       "hostnames",                       std::vector<ast::hostname>)
+    DECLARE_RULE(hostname,                        "hostname",                        ast::hostname)
+    DECLARE_RULE(function_statement,              "function statement",              ast::function_statement)
+    DECLARE_RULE(produces_statement,              "produces statement",              ast::produces_statement)
+    DECLARE_RULE(consumes_statement,              "consumes statement",              ast::consumes_statement)
+    DECLARE_RULE(application_statement,           "application statement",           ast::application_statement)
+    DECLARE_RULE(site_statement,                  "site statement",                  ast::site_statement)
+    DECLARE_RULE(type_alias_statement,            "type alias statement",            ast::type_alias_statement)
+    DECLARE_RULE(function_call_statement,         "function call statement",         ast::function_call_statement)
+    DECLARE_RULE(statement_call_name,             "name",                            ast::name)
+    DECLARE_RULE(relationship_statement,          "relationship statement",          ast::relationship_statement)
+    DECLARE_RULE(relationship_expression,         "relationship expression",         ast::relationship_expression)
+    DECLARE_RULE(relationship_operation,          "relationship operation",          ast::relationship_operation)
+    DECLARE_RULE(relationship_operator,           "relationship operator",           ast::relationship_operator)
+    DECLARE_RULE(resource_declaration_expression, "resource declaration expression", ast::resource_declaration_expression)
+    DECLARE_RULE(resource_type,                   "resource type",                   ast::postfix_expression)
+    DECLARE_RULE(class_name,                      "name",                            ast::name)
+    DECLARE_RULE(resource_bodies,                 "resource bodies",                 std::vector<ast::resource_body>)
+    DECLARE_RULE(resource_body,                   "resource body",                   ast::resource_body)
+    DECLARE_RULE(attributes,                      "attributes",                      std::vector<ast::attribute_operation>)
+    DECLARE_RULE(attribute,                       "attribute",                       ast::attribute_operation)
+    DECLARE_RULE(attribute_name,                  "attribute name",                  ast::name)
+    DECLARE_RULE(keyword_name,                    "name",                            ast::name)
+    DECLARE_RULE(resource_override_expression,    "resource override expression",    ast::resource_override_expression)
+    DECLARE_RULE(resource_override_reference,     "resource override reference",     ast::resource_override_reference)
+    DECLARE_RULE(resource_reference,              "resource reference",              ast::postfix_expression)
+    DECLARE_RULE(attribute_override,              "attribute",                       ast::attribute_operation)
+    DECLARE_RULE(resource_defaults_expression,    "resource defaults expression",    ast::resource_defaults_expression)
+    DECLARE_RULE(collector_expression,            "resource collector",              ast::collector_expression)
+    DECLARE_RULE(query_expression,                "query expression",                ast::query_expression)
+    DECLARE_RULE(basic_query_expression,          "query expression",                ast::basic_query_expression)
+    DECLARE_RULE(nested_query_expression,         "nested query expression",         ast::nested_query_expression)
+    DECLARE_RULE(attribute_query,                 "attribute query",                 ast::attribute_query)
+    DECLARE_RULE(query_operator,                  "query operator",                  ast::query_operator)
+    DECLARE_RULE(attribute_query_value,           "attribute value",                 ast::basic_expression)
+    DECLARE_RULE(binary_query_operation,          "binary query expression",         ast::binary_query_operation)
+    DECLARE_RULE(binary_query_operator,           "binary query operator",           ast::binary_query_operator)
+
+    // Syntax tree rules
+    DECLARE_RULE(syntax_tree,                     "syntax tree",                     ast::syntax_tree)
+    DECLARE_RULE(epp_syntax_tree,                 "syntax tree",                     ast::syntax_tree)
+
+    // Basic expressions
+    DEFINE_RULE(
+        basic_expression,
+        undef                         |
+        defaulted                     |
+        boolean                       |
+        number                        |
+        string                        |
+        regex                         |
+        variable                      |
+        function_call_expression      |  // Note: parsing of function call must come before name as it starts with a name
+        new_expression                |  // Note: parsing of new expression must come before type as it starts with a type
+        name                          |
+        bare_word                     |
+        type                          |
+        interpolated_string           |
+        array                         |
+        hash                          |
+        case_expression               |
+        if_expression                 |
+        unless_expression             |
+        epp_render_block              |  // Note: parsing of EPP render block must come before EPP render expression
+        epp_render_expression         |
+        epp_render_string             |
+        unary_expression              |
+        nested_expression
+    )
     DEFINE_RULE(
         undef,
         begin(lexer::token_id::keyword_undef, false) > end() > tree
@@ -132,15 +162,8 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         boolean,
-        literal_true | literal_false
-    )
-    DEFINE_RULE(
-        literal_true,
-        begin(lexer::token_id::keyword_true, false) > boost::spirit::x3::attr(true) > end() > tree
-    )
-    DEFINE_RULE(
-        literal_false,
-        begin(lexer::token_id::keyword_false, false) > boost::spirit::x3::attr(false) > end() > tree
+        (begin(lexer::token_id::keyword_true, false) > boost::spirit::x3::attr(true) > end() > tree) |
+        (begin(lexer::token_id::keyword_false, false) > boost::spirit::x3::attr(false) > end() > tree)
     )
     DEFINE_RULE(
         number,
@@ -149,22 +172,6 @@ namespace puppet { namespace compiler { namespace parser {
     DEFINE_RULE(
         string,
         string_token
-    )
-    DEFINE_RULE(
-        literal_string_text,
-        string_text
-    )
-    DEFINE_RULE(
-        interpolated_string,
-        begin(lexer::token_id::string_start, false) > string_format > *interpolated_string_part > string_margin > end(lexer::token_id::string_end) > tree
-    )
-    DEFINE_RULE(
-        interpolated_string_part,
-        literal_string_text | variable | (raw(lexer::token_id::interpolation_start) > expression > raw(lexer::token_id::interpolation_end))
-    )
-    DEFINE_RULE(
-        regex,
-        begin(lexer::token_id::regex, false) > regex_value > end() > tree
     )
     DEFINE_RULE(
         variable,
@@ -183,6 +190,22 @@ namespace puppet { namespace compiler { namespace parser {
         begin(lexer::token_id::type, false) > value > end() > tree
     )
     DEFINE_RULE(
+        interpolated_string,
+        begin(lexer::token_id::string_start, false) > string_format > *interpolated_string_part > string_margin > end(lexer::token_id::string_end) > tree
+    )
+    DEFINE_RULE(
+        interpolated_string_part,
+        literal_string_text | variable | (raw(lexer::token_id::interpolation_start) > expression > raw(lexer::token_id::interpolation_end))
+    )
+    DEFINE_RULE(
+        literal_string_text,
+        string_text
+    )
+    DEFINE_RULE(
+        regex,
+        begin(lexer::token_id::regex, false) > regex_value > end() > tree
+    )
+    DEFINE_RULE(
         array,
         (begin('[') | begin(lexer::token_id::array_start)) > (raw(']', false) | expressions) > end(']') > tree
     )
@@ -198,8 +221,6 @@ namespace puppet { namespace compiler { namespace parser {
         pair,
         expression > raw(lexer::token_id::fat_arrow) > expression
     )
-
-    // Control-flow expressions
     DEFINE_RULE(
         case_expression,
         begin(lexer::token_id::keyword_case) > expression > raw('{') > +proposition > end('}') > tree
@@ -238,6 +259,10 @@ namespace puppet { namespace compiler { namespace parser {
         )
     )
     DEFINE_RULE(
+        lambda_expression,
+        begin('|') > (raw('|', false) | parameters) > raw('|') > raw('{') > (raw('}', false) | statements) > end('}') > tree
+    )
+    DEFINE_RULE(
         parameters,
         (parameter % raw(',')) > -raw(',')
     )
@@ -246,44 +271,149 @@ namespace puppet { namespace compiler { namespace parser {
         -type_expression >> -begin('*') >> (variable > -(raw('=') > expression))
     )
     DEFINE_RULE(
-        new_expression,
-        type_expression >> (raw('(') > (raw(')', false) | expressions) > end(')') > -lambda_expression)
-    )
-    DEFINE_RULE(
         type_expression,
         type > *access_expression
     )
     DEFINE_RULE(
-        lambda_expression,
-        begin('|') > (raw('|', false) | parameters) > raw('|') > raw('{') > (raw('}', false) | statements) > end('}') > tree
+        new_expression,
+        type_expression >> (raw('(') > (raw(')', false) | expressions) > end(')') > -lambda_expression)
     )
     DEFINE_RULE(
-        statement_call_expression,
-        statement_call_name >> !raw('(') >> (expressions > boost::spirit::x3::attr(boost::none) > -lambda_expression)
+        epp_render_expression,
+        begin(lexer::token_id::epp_render_expression) > expression > (end(lexer::token_id::epp_end) | end(lexer::token_id::epp_end_trim)) > tree
     )
     DEFINE_RULE(
-        statement_call_name,
-        begin(lexer::token_id::statement_call, false) > value > end() > tree
+        epp_render_block,
+        begin(lexer::token_id::epp_render_expression) >> (raw('{') > expressions > raw('}') > (end(lexer::token_id::epp_end) | end(lexer::token_id::epp_end_trim)) > tree)
+    )
+    DEFINE_RULE(
+        epp_render_string,
+        begin(lexer::token_id::epp_render_string, false) > value > end() > tree
+    )
+    DEFINE_RULE(
+        unary_expression,
+        begin(false) >> (unary_operator > postfix_expression)
+    )
+    DEFINE_RULE(
+        unary_operator,
+        (raw('-') > boost::spirit::x3::attr(ast::unary_operator::negate))     |
+        (raw('*') > boost::spirit::x3::attr(ast::unary_operator::splat))      |
+        (raw('!') > boost::spirit::x3::attr(ast::unary_operator::logical_not))
+    )
+    DEFINE_RULE(
+        nested_expression,
+        begin('(') > expression > end(')') > tree
     )
 
-    // Catalog expressions
+    // Postfix expressions
     DEFINE_RULE(
-        resource_expression,
-        virtualized_resource |
-        exported_resource |
+        postfix_expression,
+        basic_expression > *postfix_operation
+    )
+    DEFINE_RULE(
+        postfix_operation,
+        selector_expression | access_expression | method_call_expression
+    )
+    DEFINE_RULE(
+        selector_expression,
+        begin('?') > raw('{') > pairs > end('}') > tree
+    )
+    DEFINE_RULE(
+        access_expression,
+        begin('[') > expressions > end(']') > tree
+    )
+    DEFINE_RULE(
+        method_call_expression,
+        begin('.') > name > -(raw('(') > (raw(')', false) | expressions) > end(')')) > -lambda_expression
+    )
+
+    // General expressions
+    DEFINE_RULE(
+        expressions,
+        (expression % raw(',')) > -raw(',')
+    )
+    DEFINE_RULE(
+        expression,
+        postfix_expression > *binary_operation
+    )
+    DEFINE_RULE(
+        binary_operation,
+        begin(false) >> (binary_operator > postfix_expression)
+    )
+    DEFINE_RULE(
+        binary_operator,
+        (raw(lexer::token_id::keyword_in)     > boost::spirit::x3::attr(ast::binary_operator::in))                 |
+        (raw(lexer::token_id::match)          > boost::spirit::x3::attr(ast::binary_operator::match))              |
+        (raw(lexer::token_id::not_match)      > boost::spirit::x3::attr(ast::binary_operator::not_match))          |
+        (raw('*')                             > boost::spirit::x3::attr(ast::binary_operator::multiply))           |
+        (raw('/')                             > boost::spirit::x3::attr(ast::binary_operator::divide))             |
+        (raw('%')                             > boost::spirit::x3::attr(ast::binary_operator::modulo))             |
+        (raw('+')                             > boost::spirit::x3::attr(ast::binary_operator::plus))               |
+        (raw('-')                             > boost::spirit::x3::attr(ast::binary_operator::minus))              |
+        (raw(lexer::token_id::left_shift)     > boost::spirit::x3::attr(ast::binary_operator::left_shift))         |
+        (raw(lexer::token_id::right_shift)    > boost::spirit::x3::attr(ast::binary_operator::right_shift))        |
+        (raw(lexer::token_id::equals)         > boost::spirit::x3::attr(ast::binary_operator::equals))             |
+        (raw(lexer::token_id::not_equals)     > boost::spirit::x3::attr(ast::binary_operator::not_equals))         |
+        (raw('>')                             > boost::spirit::x3::attr(ast::binary_operator::greater_than))       |
+        (raw(lexer::token_id::greater_equals) > boost::spirit::x3::attr(ast::binary_operator::greater_equals))     |
+        (raw('<')                             > boost::spirit::x3::attr(ast::binary_operator::less_than))          |
+        (raw(lexer::token_id::less_equals)    > boost::spirit::x3::attr(ast::binary_operator::less_equals))        |
+        (raw(lexer::token_id::keyword_and)    > boost::spirit::x3::attr(ast::binary_operator::logical_and))        |
+        (raw(lexer::token_id::keyword_or)     > boost::spirit::x3::attr(ast::binary_operator::logical_or))         |
+        (raw('=')                             > boost::spirit::x3::attr(ast::binary_operator::assignment))
+    )
+
+    // Statements
+    DEFINE_RULE(
+        statements,
+        (statement % -raw(';')) > -raw(';')
+    )
+    DEFINE_RULE(
+        statement,
+        class_statement         |
+        defined_type_statement  |
+        node_statement          |
+        function_statement      |
+        produces_statement      |
+        consumes_statement      |
+        application_statement   |
+        site_statement          |
+        type_alias_statement    |
+        function_call_statement |
+        relationship_statement    // Note: must come last so that produces/consume statements have precedence
+    )
+    DEFINE_RULE(
+        relationship_statement,
+        relationship_expression > *relationship_operation
+    )
+    DEFINE_RULE(
+        relationship_expression,
+        resource_declaration_expression |
+        resource_override_expression    |
+        resource_defaults_expression    |
+        collector_expression            |
+        expression
+    )
+    DEFINE_RULE(
+        relationship_operation,
+        begin(false) >> (relationship_operator > relationship_expression)
+    )
+    DEFINE_RULE(
+        relationship_operator,
+        (raw(lexer::token_id::in_edge)      > boost::spirit::x3::attr(ast::relationship_operator::in_edge))            |
+        (raw(lexer::token_id::in_edge_sub)  > boost::spirit::x3::attr(ast::relationship_operator::in_edge_subscribe))  |
+        (raw(lexer::token_id::out_edge)     > boost::spirit::x3::attr(ast::relationship_operator::out_edge))           |
+        (raw(lexer::token_id::out_edge_sub) > boost::spirit::x3::attr(ast::relationship_operator::out_edge_subscribe))
+    )
+    DEFINE_RULE(
+        resource_declaration_expression,
+        (begin(lexer::token_id::atat) > boost::spirit::x3::attr(ast::resource_status::exported) > resource_type > raw('{') > resource_bodies > end('}') > tree) |
+        (begin('@') > boost::spirit::x3::attr(ast::resource_status::virtualized) > resource_type > raw('{') > resource_bodies > end('}') > tree)                |
         (begin(false) >> boost::spirit::x3::attr(ast::resource_status::realized) >> resource_type >> raw('{') >> (resource_bodies > end('}') > tree))
     )
     DEFINE_RULE(
-        virtualized_resource,
-        begin('@') > boost::spirit::x3::attr(ast::resource_status::virtualized) > resource_type > raw('{') > resource_bodies > end('}') > tree
-    )
-    DEFINE_RULE(
-        exported_resource,
-        begin(lexer::token_id::atat) > boost::spirit::x3::attr(ast::resource_status::exported) > resource_type > raw('{') > resource_bodies > end('}') > tree
-    )
-    DEFINE_RULE(
         resource_type,
-        ((name | class_name) > boost::spirit::x3::attr(std::vector<ast::postfix_subexpression>())) |
+        ((name | class_name) > boost::spirit::x3::attr(std::vector<ast::postfix_operation>())) |
         (type >> +access_expression)
     )
     DEFINE_RULE(
@@ -305,11 +435,6 @@ namespace puppet { namespace compiler { namespace parser {
     DEFINE_RULE(
         attribute,
         attribute_name > begin(false) > raw(lexer::token_id::fat_arrow) > boost::spirit::x3::attr(ast::attribute_operator::assignment) > expression
-    )
-    DEFINE_RULE(
-        attribute_operator,
-        (raw(lexer::token_id::fat_arrow)  > boost::spirit::x3::attr(ast::attribute_operator::assignment)) |
-        (raw(lexer::token_id::plus_arrow) > boost::spirit::x3::attr(ast::attribute_operator::append))
     )
     DEFINE_RULE(
         attribute_name,
@@ -350,14 +475,17 @@ namespace puppet { namespace compiler { namespace parser {
     static_assert((static_cast<size_t>(lexer::token_id::last_keyword) - static_cast<size_t>(lexer::token_id::first_keyword)) == (24 + 1), "a keyword is missing from the keyword_name rule.");
     DEFINE_RULE(
         resource_override_expression,
-        begin(false) >> resource_reference_expression >> (raw('{') > (raw('}', false) | ((attribute_override % raw(',') > -raw(',')))) > end('}') > tree)
+        begin(false) >> resource_override_reference >> (raw('{') > (raw('}', false) | ((attribute_override % raw(',') > -raw(',')))) > end('}') > tree)
     )
     DEFINE_RULE(
-        resource_reference_expression,
+        resource_override_reference,
+        resource_reference |
+        collector_expression
+    )
+    DEFINE_RULE(
+        resource_reference,
         (type >> +access_expression) |
-        (variable > *access_expression) |
-        (collector_expression > boost::spirit::x3::attr(std::vector<ast::postfix_subexpression>())) |
-        (exported_collector_expression > boost::spirit::x3::attr(std::vector<ast::postfix_subexpression>()))
+        (variable > *access_expression)
     )
     DEFINE_RULE(
         attribute_override,
@@ -371,49 +499,16 @@ namespace puppet { namespace compiler { namespace parser {
         begin(false) >> type >> (raw('{') > (raw('}', false) | attributes) > end('}') > tree)
     )
     DEFINE_RULE(
-        class_expression,
-        begin(lexer::token_id::keyword_class) >
-        name >
-        -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
-        -(raw(lexer::token_id::keyword_inherits) > name) >
-        raw('{') > (raw('}', false) | statements) > end('}') > tree
-    )
-    DEFINE_RULE(
-        defined_type_expression,
-        begin(lexer::token_id::keyword_define) >
-        name >
-        -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
-        raw('{') > (raw('}', false) | statements) > end('}') > tree
-    )
-    DEFINE_RULE(
-        node_expression,
-        begin(lexer::token_id::keyword_node) > hostnames > raw('{') > (raw('}', false) | statements) > end('}') > tree
-    )
-    DEFINE_RULE(
-        hostnames,
-        (hostname % ',') > -raw(',')
-    )
-    DEFINE_RULE(
-        hostname,
-        string              |
-        defaulted           |
-        regex               |
-        ((name | bare_word | number) % raw('.'))
-    )
-    DEFINE_RULE(
         collector_expression,
-        type >> (raw(lexer::token_id::left_collect) > boost::spirit::x3::attr(false) > -query_expression > end(lexer::token_id::right_collect))
-    )
-    DEFINE_RULE(
-        exported_collector_expression,
-        type >> (raw(lexer::token_id::left_double_collect) > boost::spirit::x3::attr(true) > -query_expression > end(lexer::token_id::right_double_collect))
+        (type >> (raw(lexer::token_id::left_double_collect) > boost::spirit::x3::attr(true) > -query_expression > end(lexer::token_id::right_double_collect))) |
+        (type >> (raw(lexer::token_id::left_collect) > boost::spirit::x3::attr(false) > -query_expression > end(lexer::token_id::right_collect)))
     )
     DEFINE_RULE(
         query_expression,
-        primary_query_expression > *binary_query_operation
+        basic_query_expression > *binary_query_operation
     )
     DEFINE_RULE(
-        primary_query_expression,
+        basic_query_expression,
         nested_query_expression | attribute_query
     )
     DEFINE_RULE(
@@ -447,241 +542,113 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         binary_query_operation,
-        begin(false) >> (binary_query_operator > primary_query_expression)
+        begin(false) >> (binary_query_operator > basic_query_expression)
     )
     DEFINE_RULE(
         binary_query_operator,
         (raw(lexer::token_id::keyword_and) > boost::spirit::x3::attr(ast::binary_query_operator::logical_and)) |
         (raw(lexer::token_id::keyword_or)  > boost::spirit::x3::attr(ast::binary_query_operator::logical_or))
     )
-
-    // Functions
     DEFINE_RULE(
-        function_expression,
+        class_statement,
+        (begin(lexer::token_id::keyword_class) >> !raw('{')) >
+        name >
+        -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
+        -(raw(lexer::token_id::keyword_inherits) > name) >
+        raw('{') > (raw('}', false) | statements) > end('}') > tree
+    )
+    DEFINE_RULE(
+        defined_type_statement,
+        begin(lexer::token_id::keyword_define) >
+        name >
+        -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
+        raw('{') > (raw('}', false) | statements) > end('}') > tree
+    )
+    DEFINE_RULE(
+        node_statement,
+        begin(lexer::token_id::keyword_node) > hostnames > raw('{') > (raw('}', false) | statements) > end('}') > tree
+    )
+    DEFINE_RULE(
+        hostnames,
+        (hostname % ',') > -raw(',')
+    )
+    DEFINE_RULE(
+        hostname,
+        string              |
+        defaulted           |
+        regex               |
+        ((name | bare_word | number) % raw('.'))
+    )
+    DEFINE_RULE(
+        function_statement,
         boost::spirit::x3::matches[raw(lexer::token_id::keyword_private, false)] >>
         (((begin(lexer::token_id::keyword_private) >> raw(lexer::token_id::keyword_function)) | begin(lexer::token_id::keyword_function)) >
         name >
         -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
         raw('{') > (raw('}', false) | statements) > end('}') > tree)
     )
-
-    // Unary expressions
     DEFINE_RULE(
-        unary_expression,
-        begin(false) >> (unary_operator > postfix_expression)
-    )
-    DEFINE_RULE(
-        unary_operator,
-        (raw('-') > boost::spirit::x3::attr(ast::unary_operator::negate))     |
-        (raw('*') > boost::spirit::x3::attr(ast::unary_operator::splat))      |
-        (raw('!') > boost::spirit::x3::attr(ast::unary_operator::logical_not))
-    )
-
-    // Postfix expressions
-    DEFINE_RULE(
-        postfix_expression,
-        primary_expression > *postfix_subexpression
-    )
-    DEFINE_RULE(
-        postfix_subexpression,
-        selector_expression | access_expression | method_call_expression
-    )
-    DEFINE_RULE(
-        selector_expression,
-        begin('?') > raw('{') > pairs > end('}') > tree
-    )
-    DEFINE_RULE(
-        access_expression,
-        begin('[') > expressions > end(']') > tree
-    )
-    DEFINE_RULE(
-        method_call_expression,
-        begin('.') > name > -(raw('(') > (raw(')', false) | expressions) > end(')')) > -lambda_expression
-    )
-
-    // Statement rules
-    DEFINE_RULE(
-        statements,
-        (statement % -raw(';')) > -raw(';')
-    )
-    DEFINE_RULE(
-        statement,
-        postfix_statement > *binary_statement
-    )
-    DEFINE_RULE(
-        postfix_statement,
-        primary_statement > *postfix_subexpression
-    )
-    DEFINE_RULE(
-        primary_statement,
-        type_alias_expression        |
-        resource_expression          |
-        resource_override_expression |
-        resource_defaults_expression |
-        class_expression             |
-        defined_type_expression      |
-        node_expression              |
-        function_expression          |
-        produces_expression          |
-        consumes_expression          |
-        application_expression       |
-        site_expression              |
-        statement_call_expression    |
-        primary_expression
-    )
-    DEFINE_RULE(
-        binary_statement,
-        begin(false) >> (binary_operator > postfix_statement)
-    )
-    DEFINE_RULE(
-        binary_operator,
-        (raw(lexer::token_id::keyword_in)     > boost::spirit::x3::attr(ast::binary_operator::in))                 |
-        (raw(lexer::token_id::match)          > boost::spirit::x3::attr(ast::binary_operator::match))              |
-        (raw(lexer::token_id::not_match)      > boost::spirit::x3::attr(ast::binary_operator::not_match))          |
-        (raw('*')                             > boost::spirit::x3::attr(ast::binary_operator::multiply))           |
-        (raw('/')                             > boost::spirit::x3::attr(ast::binary_operator::divide))             |
-        (raw('%')                             > boost::spirit::x3::attr(ast::binary_operator::modulo))             |
-        (raw('+')                             > boost::spirit::x3::attr(ast::binary_operator::plus))               |
-        (raw('-')                             > boost::spirit::x3::attr(ast::binary_operator::minus))              |
-        (raw(lexer::token_id::left_shift)     > boost::spirit::x3::attr(ast::binary_operator::left_shift))         |
-        (raw(lexer::token_id::right_shift)    > boost::spirit::x3::attr(ast::binary_operator::right_shift))        |
-        (raw(lexer::token_id::equals)         > boost::spirit::x3::attr(ast::binary_operator::equals))             |
-        (raw(lexer::token_id::not_equals)     > boost::spirit::x3::attr(ast::binary_operator::not_equals))         |
-        (raw('>')                             > boost::spirit::x3::attr(ast::binary_operator::greater_than))       |
-        (raw(lexer::token_id::greater_equals) > boost::spirit::x3::attr(ast::binary_operator::greater_equals))     |
-        (raw('<')                             > boost::spirit::x3::attr(ast::binary_operator::less_than))          |
-        (raw(lexer::token_id::less_equals)    > boost::spirit::x3::attr(ast::binary_operator::less_equals))        |
-        (raw(lexer::token_id::keyword_and)    > boost::spirit::x3::attr(ast::binary_operator::logical_and))        |
-        (raw(lexer::token_id::keyword_or)     > boost::spirit::x3::attr(ast::binary_operator::logical_or))         |
-        (raw('=')                             > boost::spirit::x3::attr(ast::binary_operator::assignment))         |
-        (raw(lexer::token_id::in_edge)        > boost::spirit::x3::attr(ast::binary_operator::in_edge))            |
-        (raw(lexer::token_id::in_edge_sub)    > boost::spirit::x3::attr(ast::binary_operator::in_edge_subscribe))  |
-        (raw(lexer::token_id::out_edge)       > boost::spirit::x3::attr(ast::binary_operator::out_edge))           |
-        (raw(lexer::token_id::out_edge_sub)   > boost::spirit::x3::attr(ast::binary_operator::out_edge_subscribe))
-    )
-
-    // Expression rules
-    DEFINE_RULE(
-        expressions,
-        (expression % raw(',')) > -raw(',')
-    )
-    DEFINE_RULE(
-        expression,
-        postfix_expression > *binary_expression
-    )
-    DEFINE_RULE(
-        binary_expression,
-        begin(false) >> (binary_operator > postfix_expression)
-    )
-    // Note: literal expressions must come last because some complex expressions depend on them
-    // Note: parsing of EPP render block must come before EPP render expression
-    DEFINE_RULE(
-        primary_expression,
-        nested_expression             |
-        epp_render_block              |
-        epp_render_expression         |
-        epp_render_string             |
-        unary_expression              |
-        case_expression               |
-        if_expression                 |
-        unless_expression             |
-        function_call_expression      |
-        new_expression                |
-        collector_expression          |
-        exported_collector_expression |
-        undef                         |
-        defaulted                     |
-        boolean                       |
-        number                        |
-        string                        |
-        interpolated_string           |
-        regex                         |
-        variable                      |
-        name                          |
-        bare_word                     |
-        type                          |
-        array                         |
-        hash;
-    )
-    DEFINE_RULE(
-        nested_expression,
-        begin('(') > expression > end(')') > tree
-    )
-    DEFINE_RULE(
-        syntax_tree,
-        boost::spirit::x3::attr(boost::none) > statements
-    )
-
-    // EPP rules
-    DEFINE_RULE(
-        epp_render_expression,
-        begin(lexer::token_id::epp_render_expression) > expression > (end(lexer::token_id::epp_end) | end(lexer::token_id::epp_end_trim)) > tree
-    )
-    DEFINE_RULE(
-        epp_render_block,
-        begin(lexer::token_id::epp_render_expression) >> (raw('{') > statements > raw('}') > (end(lexer::token_id::epp_end) | end(lexer::token_id::epp_end_trim)) > tree)
-    )
-    DEFINE_RULE(
-        epp_render_string,
-        begin(lexer::token_id::epp_render_string, false) > value > end() > tree
-    )
-    DEFINE_RULE(
-        epp_syntax_tree,
-        -(raw('|') > (raw('|', false) | parameters) > raw('|')) > statements
-    )
-
-    // Application orchestration
-    DEFINE_RULE(
-        produces_expression,
+        produces_statement,
         type >> (raw(lexer::token_id::keyword_produces) > type > raw('{') > (raw('}', false) | attributes) > end('}'))
     )
     DEFINE_RULE(
-        consumes_expression,
+        consumes_statement,
         type >> (raw(lexer::token_id::keyword_consumes) > type > raw('{') > (raw('}', false) | attributes) > end('}'))
     )
     DEFINE_RULE(
-        application_expression,
+        application_statement,
         begin(lexer::token_id::keyword_application) >
         name >
         -(raw('(') > (raw(')', false) | parameters) > raw(')')) >
         raw('{') > (raw('}', false) | statements) > end('}') > tree
     )
     DEFINE_RULE(
-        site_expression,
+        site_statement,
         begin(lexer::token_id::keyword_site) > raw('{') > (raw('}', false) | statements) > end('}') > tree
     )
-
-    // Type alias
     DEFINE_RULE(
-        type_alias_expression,
+        type_alias_statement,
         (begin(lexer::token_id::keyword_type) >> type) > raw('=') > type_expression
+    )
+    DEFINE_RULE(
+        function_call_statement,
+        statement_call_name >> !raw('(') >> (expressions > -lambda_expression)
+    )
+    DEFINE_RULE(
+        statement_call_name,
+        begin(lexer::token_id::statement_call, false) > value > end() > tree
+    )
+
+    // Sytax tree rules
+    DEFINE_RULE(
+        syntax_tree,
+        boost::spirit::x3::attr(boost::none) > statements
+    )
+    DEFINE_RULE(
+        epp_syntax_tree,
+        -(raw('|') > (raw('|', false) | parameters) > raw('|')) > statements
     )
 
     // These macros associate the above rules with their definitions
-    // Too many rules to associate in a single macro
     BOOST_SPIRIT_DEFINE(
+        basic_expression,
         undef,
         defaulted,
         boolean,
-        literal_true,
-        literal_false,
         number,
         string,
-        literal_string_text,
-        interpolated_string,
-        interpolated_string_part,
         regex,
         variable,
         name,
         bare_word,
         type,
+        interpolated_string,
+        interpolated_string_part,
+        literal_string_text,
         array,
         hash,
         pairs,
-        pair
-    );
-
-    BOOST_SPIRIT_DEFINE(
+        pair,
         case_expression,
         proposition,
         if_expression,
@@ -690,41 +657,71 @@ namespace puppet { namespace compiler { namespace parser {
         unless_expression,
         function_call_expression,
         function_name,
+        lambda_expression,
         parameters,
         parameter,
-        new_expression,
         type_expression,
-        lambda_expression,
-        statement_call_expression,
-        statement_call_name
+        new_expression,
+        epp_render_expression,
+        epp_render_block,
+        epp_render_string,
+        unary_expression,
+        unary_operator,
+        nested_expression
     );
 
     BOOST_SPIRIT_DEFINE(
-        resource_expression,
-        virtualized_resource,
-        exported_resource,
+        postfix_expression,
+        postfix_operation,
+        selector_expression,
+        access_expression,
+        method_call_expression
+    );
+
+    BOOST_SPIRIT_DEFINE(
+        expressions,
+        expression,
+        binary_operation,
+        binary_operator
+    );
+
+    BOOST_SPIRIT_DEFINE(
+        statements,
+        statement,
+        class_statement,
+        defined_type_statement,
+        node_statement,
+        hostnames,
+        hostname,
+        function_statement,
+        produces_statement,
+        consumes_statement,
+        application_statement,
+        site_statement,
+        type_alias_statement,
+        function_call_statement,
+        statement_call_name,
+        relationship_statement,
+        relationship_expression,
+        relationship_operation,
+        relationship_operator,
+        resource_declaration_expression,
         resource_type,
         class_name,
         resource_bodies,
         resource_body,
         attributes,
         attribute,
-        attribute_operator,
         attribute_name,
         keyword_name,
         resource_override_expression,
-        resource_reference_expression,
+        resource_override_reference,
+        resource_reference,
         attribute_override,
         resource_defaults_expression,
-        class_expression,
-        defined_type_expression,
-        node_expression,
-        hostnames,
-        hostname,
         collector_expression,
-        exported_collector_expression,
         query_expression,
-        primary_query_expression,
+        basic_query_expression,
         nested_query_expression,
         attribute_query,
         query_operator,
@@ -734,41 +731,8 @@ namespace puppet { namespace compiler { namespace parser {
     );
 
     BOOST_SPIRIT_DEFINE(
-        function_expression,
-        unary_expression,
-        unary_operator,
-        postfix_expression,
-        postfix_subexpression,
-        selector_expression,
-        access_expression,
-        method_call_expression,
-        statements,
-        statement,
-        postfix_statement,
-        primary_statement,
-        binary_statement,
-        binary_operator,
-        expressions,
-        expression,
-        binary_expression,
-        primary_expression,
-        nested_expression,
-        type_alias_expression,
-        syntax_tree
-    );
-
-    BOOST_SPIRIT_DEFINE(
-        epp_render_expression,
-        epp_render_block,
-        epp_render_string,
+        syntax_tree,
         epp_syntax_tree
-    );
-
-    BOOST_SPIRIT_DEFINE(
-        produces_expression,
-        consumes_expression,
-        application_expression,
-        site_expression
     );
 
     /// @endcond

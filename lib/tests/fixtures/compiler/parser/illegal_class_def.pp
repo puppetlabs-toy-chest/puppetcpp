@@ -1,0 +1,6 @@
+define foo
+{
+    class bar
+    {
+    }
+}

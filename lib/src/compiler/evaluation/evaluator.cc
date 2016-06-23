@@ -36,33 +36,27 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
 
         // Evaluate the statements
-        for (auto& statement : tree.statements) {
-            evaluate(statement, true /* all top-level statements must be productive */);
-        }
+        evaluate_body(tree.statements);
     }
 
-    value evaluator::evaluate(expression const& expression, bool productive)
+    value evaluator::evaluate(ast::statement const& statement)
     {
-        _context.current_context(expression.context());
+        return boost::apply_visitor(*this, statement);
+    }
 
-        if (productive && !expression.is_productive()) {
-            throw evaluation_exception("unproductive expressions may only appear last in a block.", expression.context(), _context.backtrace());
-        }
-
-        // Climb the expression
-        auto begin = expression.operations.begin();
-        return climb_expression(expression.first, 0, begin, expression.operations.end());
+    value evaluator::evaluate(ast::expression const& expression)
+    {
+        return operator()(expression);
     }
 
     value evaluator::evaluate(postfix_expression const& expression)
     {
-        postfix_evaluator evaluator{ _context };
-        return evaluator.evaluate(expression);
+        return operator()(expression);
     }
 
-    value evaluator::evaluate(primary_expression const& expression)
+    value evaluator::evaluate(basic_expression const& expression)
     {
-        return boost::apply_visitor(*this, expression);
+        return operator()(expression);
     }
 
     bool evaluator::is_match(value& actual, ast::context const& actual_context, value& expected, ast::context const& expected_context)
@@ -75,7 +69,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 // Dispatch a match operator
                 binary::call_context context{
                     _context,
-                    ast::binary_operator::match,
+                    binary_operator::match,
                     ast::context{
                         actual_context.begin,
                         lexer::position{ actual_context.begin.offset() + 1, actual_context.begin.line() },
@@ -95,6 +89,11 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Otherwise, use equals
         return actual == expected;
+    }
+
+    value evaluator::operator()(basic_expression const& expression)
+    {
+        return boost::apply_visitor(*this, expression);
     }
 
     value evaluator::evaluator::operator()(ast::undef const&)
@@ -261,11 +260,6 @@ namespace puppet { namespace compiler { namespace evaluation {
         return hash;
     }
 
-    value evaluator::operator()(ast::nested_expression const& expression)
-    {
-        return evaluate(expression.expression);
-    }
-
     value evaluator::operator()(case_expression const& expression)
     {
         // Case expressions create a new match scope
@@ -372,7 +366,187 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _context.dispatcher().dispatch(context);
     }
 
-    value evaluator::operator()(resource_expression const& expression)
+    value evaluator::operator()(epp_render_expression const& expression)
+    {
+        if (!_context.write(evaluate(expression.expression))) {
+            throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
+        }
+        return values::undef();
+    }
+
+    value evaluator::operator()(epp_render_block const& expression)
+    {
+        for (auto const& e : expression.block) {
+            if (!_context.write(evaluate(e))) {
+                throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
+            }
+        }
+        return values::undef();
+    }
+
+    value evaluator::operator()(epp_render_string const& expression)
+    {
+        if (!_context.write(expression.string)) {
+            throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
+        }
+        return values::undef();
+    }
+
+    value evaluator::operator()(unary_expression const& expression)
+    {
+        auto operand = evaluate(expression.operand);
+        auto operand_context = expression.operand.context();
+
+        unary::call_context context{
+            _context,
+            expression.operator_,
+            ast::context{
+                expression.operator_position,
+                lexer::position{ expression.operator_position.offset() + 1, expression.operator_position.line() },
+                operand_context.tree
+            },
+            operand,
+            operand_context
+        };
+        return _context.dispatcher().dispatch(context);
+    }
+
+    value evaluator::operator()(nested_expression const& expression)
+    {
+        return evaluate(expression.expression);
+    }
+
+    value evaluator::operator()(ast::expression const& expression)
+    {
+        _context.current_context(expression.context());
+
+        // Climb the expression
+        auto begin = expression.operations.begin();
+        auto result = climb_expression(expression.operand, 0, begin, expression.operations.end());
+        return rvalue_cast(result.first);
+    }
+
+    value evaluator::operator()(postfix_expression const& expression)
+    {
+        postfix_evaluator evaluator{ _context };
+        return evaluator.evaluate(expression);
+    }
+
+    value evaluator::operator()(ast::statement const& statement)
+    {
+        return boost::apply_visitor(*this, statement);
+    }
+
+    value evaluator::operator()(class_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(defined_type_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(node_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(function_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(produces_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(consumes_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(application_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(site_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(type_alias_statement const& statement)
+    {
+        return values::undef{};
+    }
+
+    value evaluator::operator()(function_call_statement const& statement)
+    {
+        // Find the function before executing the call to ensure it is imported
+        _context.find_function(statement.function.value);
+
+        functions::call_context context{ _context, statement };
+        return _context.dispatcher().dispatch(context);
+    }
+
+    value evaluator::operator()(relationship_statement const& statement)
+    {
+        value result = operator()(statement.operand);
+        if (statement.operations.empty()) {
+            // No relationship operations requested; just return the first operand's value
+            return result;
+        }
+
+        // Register the relationships
+        auto left = make_shared<value>(rvalue_cast(result));
+        auto left_context = statement.operand.context();
+        for (auto const& operation : statement.operations) {
+            compiler::relationship relationship;
+            switch (operation.operator_) {
+                case relationship_operator::in_edge:
+                    relationship = compiler::relationship::before;
+                    break;
+
+                case relationship_operator::in_edge_subscribe:
+                    relationship = compiler::relationship::notify;
+                    break;
+
+                case relationship_operator::out_edge:
+                    relationship = compiler::relationship::require;
+                    break;
+
+                case relationship_operator::out_edge_subscribe:
+                    relationship = compiler::relationship::subscribe;
+                    break;
+
+                default:
+                    throw runtime_error("unsupported relationship operator.");
+            }
+
+            auto right = make_shared<value>(operator()(operation.operand));
+            auto right_context = operation.operand.context();
+            _context.add(resource_relationship{
+                relationship,
+                rvalue_cast(left),
+                left_context,
+                right,
+                right_context
+            });
+
+            left = rvalue_cast(right);
+            left_context = right_context;
+        }
+        return values::undef{};
+    }
+
+    value evaluator::operator()(relationship_expression const& expression)
+    {
+        return boost::apply_visitor(*this, expression);
+    }
+
+    value evaluator::operator()(resource_declaration_expression const& expression)
     {
         // Evaluate the type name
         std::string type_name;
@@ -405,9 +579,9 @@ namespace puppet { namespace compiler { namespace evaluation {
             );
         }
 
-        if (is_class && expression.status == ast::resource_status::virtualized) {
+        if (is_class && expression.status == resource_status::virtualized) {
             throw evaluation_exception("classes cannot be virtual resources.", expression.type.context(), _context.backtrace());
-        } else if (is_class && expression.status == ast::resource_status::exported) {
+        } else if (is_class && expression.status == resource_status::exported) {
             throw evaluation_exception("classes cannot be exported resources.", expression.type.context(), _context.backtrace());
         }
 
@@ -465,7 +639,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         };
 
         // Evaluate the resource reference
-        auto reference = evaluate(expression.reference);
+        auto reference = boost::apply_visitor(*this, expression.reference);
 
         // Evaluate the attributes
         compiler::attributes attributes = evaluate_attributes(false, expression.operations);
@@ -529,7 +703,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(resource_defaults_expression const& expression)
     {
         // Evaluate the type
-        auto value = evaluate(ast::primary_expression{expression.type});
+        auto value = operator()(expression.type);
         auto type = value.as<values::type>();
         if (!type) {
             throw evaluation_exception(
@@ -558,7 +732,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Evaluate the attributes
         auto attributes = evaluate_attributes(false, expression.operations);
         for (auto& attribute : attributes) {
-            if (attribute.first == ast::attribute_operator::append) {
+            if (attribute.first == attribute_operator::append) {
                 throw evaluation_exception(
                     (boost::format("expected %1% type but found %2%.") %
                      types::resource::name() %
@@ -574,25 +748,6 @@ namespace puppet { namespace compiler { namespace evaluation {
         return value;
     }
 
-    value evaluator::operator()(class_expression const& expression)
-    {
-        // Class expressions are handled by the scanner; just return a reference to the class
-        return types::klass(_context.current_scope()->qualify(expression.name.value));
-    }
-
-    value evaluator::operator()(defined_type_expression const& expression)
-    {
-        // Defined type expressions are handled by the scanner; just return a reference to the resource
-        return types::resource(_context.current_scope()->qualify(expression.name.value));
-    }
-
-    value evaluator::operator()(node_expression const& expression)
-    {
-        // Node definition expressions are handled by the scanner; just return undef
-        // TODO: should this perhaps return [Resource[Node, hostname], Resource[Node, hostname], ...] for consistency?
-        return values::undef();
-    }
-
     value evaluator::operator()(collector_expression const& expression)
     {
         // Create and add a collector to the catalog
@@ -601,101 +756,21 @@ namespace puppet { namespace compiler { namespace evaluation {
         return types::runtime(types::runtime::object_type(rvalue_cast(collector)));
     }
 
-    value evaluator::operator()(function_expression const& expression)
+    value evaluator::evaluate_body(vector<statement> const& body)
     {
-        // Function expressions are handled by the scanner
-        // TODO: it sure would be nice if functions and lambdas are represented in the type system so we can return
-        // references to them here, allowing for functional programming
-        return values::undef();
-    }
-
-    value evaluator::operator()(unary_expression const& expression)
-    {
-        auto operand = evaluate(expression.operand);
-        auto operand_context = expression.operand.context();
-
-        unary::call_context context{
-            _context,
-            expression.operator_,
-            ast::context{
-                expression.operator_position,
-                lexer::position{ expression.operator_position.offset() + 1, expression.operator_position.line() },
-                operand_context.tree
-            },
-            operand,
-            operand_context
-        };
-        return _context.dispatcher().dispatch(context);
-    }
-
-    value evaluator::operator()(epp_render_expression const& expression)
-    {
-        if (!_context.write(evaluate(expression.expression))) {
-            throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
+        if (body.empty()) {
+            return values::undef{};
         }
-        return values::undef();
-    }
 
-    value evaluator::operator()(epp_render_block const& expression)
-    {
-        if (!_context.write(evaluate_body(expression.block))) {
-            throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
+        for (size_t i = 0; i < body.size() - 1; ++i) {
+            evaluate(body[i]);
         }
-        return values::undef();
+        return evaluate(body.back());
     }
 
-    value evaluator::operator()(epp_render_string const& expression)
+    resource_body const* evaluator::find_default_body(resource_declaration_expression const& expression)
     {
-        if (!_context.write(expression.string)) {
-            throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
-        }
-        return values::undef();
-    }
-
-    value evaluator::operator()(produces_expression const& expression)
-    {
-        // TODO: implement
-        throw evaluation_exception("produces expressions are not yet implemented.", expression.context(), _context.backtrace());
-    }
-
-    value evaluator::operator()(consumes_expression const& expression)
-    {
-        // TODO: implement
-        throw evaluation_exception("consumes expressions are not yet implemented.", expression.context(), _context.backtrace());
-    }
-
-    value evaluator::operator()(application_expression const& expression)
-    {
-        // TODO: implement
-        throw evaluation_exception("application expressions are not yet implemented.", expression, _context.backtrace());
-    }
-
-    value evaluator::operator()(site_expression const& expression)
-    {
-        // TODO: implement
-        throw evaluation_exception("site expressions are not yet implemented.", expression, _context.backtrace());
-    }
-
-    value evaluator::operator()(type_alias_expression const& expression)
-    {
-        // No return value
-        return values::undef();
-    }
-
-    value evaluator::evaluate_body(vector<ast::expression> const& body)
-    {
-        value result;
-        for (size_t i = 0; i < body.size(); ++i) {
-            auto& expression = body[i];
-            // The last expression in the block is allowed to be unproductive (i.e. the return value)
-            result = evaluate(expression, i < (body.size() - 1));
-        }
-        return result;
-    }
-
-    ast::resource_body const* evaluator::find_default_body(ast::resource_expression const& expression)
-    {
-        ast::resource_body const* default_body = nullptr;
+        resource_body const* default_body = nullptr;
         for (auto const& body : expression.bodies) {
             if (!body.title.is_default()) {
                 continue;
@@ -708,7 +783,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return default_body;
     }
 
-    attributes evaluator::evaluate_attributes(bool is_class, vector<ast::attribute_operation> const& operations)
+    attributes evaluator::evaluate_attributes(bool is_class, vector<attribute_operation> const& operations)
     {
         compiler::attributes attributes;
 
@@ -757,7 +832,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return attributes;
     }
 
-    void evaluator::splat_attribute(compiler::attributes& attributes, unordered_set<std::string>& names, ast::attribute_operation const& operation)
+    void evaluator::splat_attribute(compiler::attributes& attributes, unordered_set<std::string>& names, attribute_operation const& operation)
     {
         auto context = operation.value.context();
 
@@ -880,7 +955,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
     }
 
-    vector<resource*> evaluator::create_resources(bool is_class, std::string const& type_name, ast::resource_expression const& expression, attributes const& defaults)
+    vector<resource*> evaluator::create_resources(bool is_class, std::string const& type_name, resource_declaration_expression const& expression, attributes const& defaults)
     {
         auto& catalog = _context.catalog();
         auto& scope = _context.current_scope();
@@ -904,8 +979,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Stages never have a container
         resource const* container = is_class || type_name == "stage" ? nullptr : scope->resource();
 
-        bool is_exported = expression.status == ast::resource_status::exported;
-        bool is_virtual = is_exported || expression.status == ast::resource_status::virtualized;
+        bool is_exported = expression.status == resource_status::exported;
+        bool is_virtual = is_exported || expression.status == resource_status::virtualized;
 
         vector<resource*> resources;
         for (auto const& body : expression.bodies) {
@@ -988,14 +1063,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         return resources;
     }
 
-    values::value evaluator::climb_expression(
-        ast::postfix_expression const& expression,
+    std::pair<value, ast::context> evaluator::climb_expression(
+        postfix_expression const& expression,
         unsigned int min_precedence,
         vector<binary_operation>::const_iterator& begin,
         vector<binary_operation>::const_iterator const& end)
     {
         // Evaluate the left-hand side
-        auto left = evaluate(expression);
+        auto lhs = make_pair(evaluate(expression), expression.context());
 
         // Climb the binary operations based on operator precedence
         unsigned int current = 0;
@@ -1005,43 +1080,36 @@ namespace puppet { namespace compiler { namespace evaluation {
             ++begin;
 
             // If the operator is a logical and/or operator, attempt short circuiting
-            if ((operation.operator_ == binary_operator::logical_and && !left.is_truthy()) ||
-                (operation.operator_ == binary_operator::logical_or && left.is_truthy())) {
-                left = operation.operator_ == binary_operator::logical_or;
+            if ((operation.operator_ == binary_operator::logical_and && !lhs.first.is_truthy()) ||
+                (operation.operator_ == binary_operator::logical_or && lhs.first.is_truthy())) {
+                lhs.first = operation.operator_ == binary_operator::logical_or;
+                lhs.second.end = operation.context().end;
                 begin = end;
-                return left;
+                break;
             }
 
-            // Recurse and climb the expression
+            // Recurse and climb the right-hand side
             unsigned int next = current + (is_right_associative(operation.operator_) ? 0 : 1);
-            auto right = climb_expression(operation.operand, next, begin, end);
+            auto rhs = climb_expression(operation.operand, next, begin, end);
 
-            // Evaluate the binary expression
-            evaluate(left, expression.context(), right, operation);
+            // Dispatch the operator "call"
+            binary::call_context context{
+                _context,
+                operation.operator_,
+                ast::context{
+                    operation.operator_position,
+                    lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
+                    rhs.second.tree
+                },
+                lhs.first,
+                lhs.second,
+                rhs.first,
+                rhs.second
+            };
+            lhs.first = _context.dispatcher().dispatch(context);
+            lhs.second.end = rhs.second.end;
         }
-        return left;
-    }
-
-    void evaluator::evaluate(
-        value& left,
-        ast::context const& left_context,
-        value& right,
-        ast::binary_operation const& operation)
-    {
-        binary::call_context context{
-            _context,
-            operation.operator_,
-            ast::context{
-                operation.operator_position,
-                lexer::position{ operation.operator_position.offset() + 1, operation.operator_position.line() },
-                left_context.tree
-            },
-            left,
-            left_context,
-            right,
-            operation.operand.context()
-        };
-        left = _context.dispatcher().dispatch(context);
+        return lhs;
     }
 
     void evaluator::align_text(std::string const& text, size_t margin, size_t& current_margin, function<void(char const*, size_t)> const& callback)
@@ -1113,34 +1181,32 @@ namespace puppet { namespace compiler { namespace evaluation {
         return evaluator.evaluate(expression);
     }
 
-    static values::value evaluate_body(evaluation::context& context, vector<ast::expression> const& body)
+    static values::value evaluate_body(evaluation::context& context, vector<statement> const& body)
     {
-        evaluation::evaluator evaluator { context };
-
-        // Evaluate the body
-        values::value result;
-        for (size_t i = 0; i < body.size(); ++i) {
-            auto& expression = body[i];
-
-            // The last expression in the block is allowed to be unproductive (i.e. the return value)
-            result = evaluator.evaluate(expression, i < (body.size() - 1));
+        if (body.empty()) {
+            return values::undef{};
         }
-        return result;
+
+        evaluation::evaluator evaluator{ context };
+        for (size_t i = 0; i < body.size() - 1; ++i) {
+            evaluator.evaluate(body[i]);
+        }
+        return evaluator.evaluate(body.back());
     }
 
-    function_evaluator::function_evaluator(evaluation::context& context, ast::function_expression const& expression) :
+    function_evaluator::function_evaluator(evaluation::context& context, function_statement const& statement) :
         _context(context),
         _name(nullptr),
-        _expression(&expression),
-        _parameters(expression.parameters),
-        _body(expression.body)
+        _statement(&statement),
+        _parameters(statement.parameters),
+        _body(statement.body)
     {
     }
 
-    function_evaluator::function_evaluator(evaluation::context& context, char const* name, vector<ast::parameter> const& parameters, vector<ast::expression> const& body) :
+    function_evaluator::function_evaluator(evaluation::context& context, char const* name, vector<parameter> const& parameters, vector<statement> const& body) :
         _context(context),
         _name(name),
-        _expression(nullptr),
+        _statement(nullptr),
         _parameters(parameters),
         _body(body)
     {
@@ -1153,7 +1219,7 @@ namespace puppet { namespace compiler { namespace evaluation {
             if (arguments.size() > _parameters.size()) {
                 throw evaluation_exception(
                     (boost::format("function '%1%' has %2% parameter%3% but %4% argument%5% were given.") %
-                     (_name ? _name : _expression->name.value.c_str()) %
+                     (_name ? _name : _statement->name.value.c_str()) %
                      _parameters.size() %
                      (_parameters.size() != 1 ? "s" : "") %
                      arguments.size() %
@@ -1169,34 +1235,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto scope = make_shared<evaluation::scope>(parent ? parent : _context.top_scope());
         scoped_stack_frame frame = _name ?
             scoped_stack_frame{ _context, stack_frame{ _name, scope } } :
-            scoped_stack_frame{ _context, stack_frame{ _expression, scope } };
+            scoped_stack_frame{ _context, stack_frame{ _statement, scope } };
 
-        bool has_optional_parameters = false;
         for (size_t i = 0; i < _parameters.size(); ++i) {
             auto const& parameter = _parameters[i];
             auto const& name = parameter.variable.name;
 
-            // Check for "captures rest"
             values::value value;
             if (parameter.captures) {
-                if (i != (_parameters.size() - 1)) {
-                    throw evaluation_exception(
-                        (boost::format("parameter $%1% \"captures rest\" but is not the last parameter.") %
-                         name
-                        ).str(),
-                        parameter.context(),
-                        _context.backtrace()
-                    );
-                }
-                if (parameter.type) {
-                    throw evaluation_exception(
-                        (boost::format("parameter $%1% \"captures rest\" and cannot have a type specifier.") %
-                         name
-                        ).str(),
-                        parameter.type->context(),
-                        _context.backtrace()
-                    );
-                }
                 values::array captured;
                 if (i < arguments.size()) {
                     captured.reserve(arguments.size() - i);
@@ -1205,20 +1251,12 @@ namespace puppet { namespace compiler { namespace evaluation {
                     captured.emplace_back(evaluate_default_value(_context, *parameter.default_value));
                 }
                 value = rvalue_cast(captured);
+
+                // Verify the value matches the parameter type
+                validate_parameter_type(_context, parameter, value, [&](std::string message) {
+                    throw argument_exception(rvalue_cast(message), i);
+                });
             } else {
-                // Check for a required parameter after an optional parameter
-                if (has_optional_parameters && !parameter.default_value) {
-                    throw evaluation_exception(
-                        (boost::format("parameter $%1% is required but appears after optional parameters.") %
-                         name
-                        ).str(),
-                        parameter.context(),
-                        _context.backtrace()
-                    );
-                }
-
-                has_optional_parameters = static_cast<bool>(parameter.default_value);
-
                 // Check if the argument was given
                 if (i < arguments.size()) {
                     value = rvalue_cast(arguments[i]);
@@ -1268,7 +1306,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto scope = make_shared<evaluation::scope>(parent ? parent : _context.top_scope());
         scoped_stack_frame frame = _name ?
            scoped_stack_frame{ _context, stack_frame{ _name, scope } } :
-           scoped_stack_frame{ _context, stack_frame{ _expression, scope } };
+           scoped_stack_frame{ _context, stack_frame{ _statement, scope } };
 
         // Set any default parameters that do not have arguments
         for (auto const& parameter : _parameters) {
@@ -1333,10 +1371,10 @@ namespace puppet { namespace compiler { namespace evaluation {
                 );
             }
 
-            // Check for illegal "captures rest"
+            // Check for illegal capture parameter
             if (parameter->captures) {
                 throw evaluation_exception(
-                    (boost::format("parameter $%1% cannot \"captures rest\".") %
+                    (boost::format("parameter $%1% cannot be a capture parameter.") %
                      *name
                     ).str(),
                     parameter->variable,
@@ -1362,7 +1400,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         return evaluate_body(_context, _body);
     }
 
-    resource_evaluator::resource_evaluator(evaluation::context& context, vector<ast::parameter> const& parameters, vector<ast::expression> const& body) :
+    resource_evaluator::resource_evaluator(evaluation::context& context, vector<parameter> const& parameters, vector<statement> const& body) :
         _context(context),
         _parameters(parameters),
         _body(body)
@@ -1475,9 +1513,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
     }
 
-    class_evaluator::class_evaluator(evaluation::context& context, ast::class_expression const& expression) :
-        resource_evaluator(context, expression.parameters, expression.body),
-        _expression(expression)
+    class_evaluator::class_evaluator(evaluation::context& context, class_statement const& statement) :
+        resource_evaluator(context, statement.parameters, statement.body),
+        _statement(statement)
     {
     }
 
@@ -1487,13 +1525,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         auto scope = _context.find_scope(resource.type().title());
         if (!scope) {
             // Create a temporary stack frame to show the child calling into the parent if parent evaluation fails
-            scoped_stack_frame frame{ _context, stack_frame{ &_expression, nullptr } };
+            scoped_stack_frame frame{ _context, stack_frame{ &_statement, nullptr } };
             scope = make_shared<evaluation::scope>(evaluate_parent(), &resource);
             _context.add_scope(scope);
             created = true;
         }
 
-        scoped_stack_frame frame{ _context, stack_frame{ &_expression, scope } };
+        scoped_stack_frame frame{ _context, stack_frame{ &_statement, scope } };
 
         if (created) {
             prepare_scope(*scope, resource);
@@ -1504,7 +1542,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     shared_ptr<scope> class_evaluator::evaluate_parent() const
     {
         // If no parent, return the node or top scope
-        auto& parent = _expression.parent;
+        auto& parent = _statement.parent;
         if (!parent) {
             return _context.node_or_top();
         }
@@ -1523,9 +1561,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         return scope;
     }
 
-    defined_type_evaluator::defined_type_evaluator(evaluation::context& context, ast::defined_type_expression const& expression) :
-        resource_evaluator(context, expression.parameters, expression.body),
-        _expression(expression)
+    defined_type_evaluator::defined_type_evaluator(evaluation::context& context, defined_type_statement const& statement) :
+        resource_evaluator(context, statement.parameters, statement.body),
+        _statement(statement)
     {
     }
 
@@ -1533,15 +1571,15 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         // Create a scope for evaluating the defined type
         auto scope = make_shared<evaluation::scope>(_context.node_or_top(), &resource);
-        scoped_stack_frame frame{ _context, stack_frame{ &_expression, scope } };
+        scoped_stack_frame frame{ _context, stack_frame{ &_statement, scope } };
 
         prepare_scope(*scope, resource);
         evaluate_body(_context, _body);
     }
 
-    node_evaluator::node_evaluator(evaluation::context& context, ast::node_expression const& expression) :
-        resource_evaluator(context, _none, expression.body),
-        _expression(expression)
+    node_evaluator::node_evaluator(evaluation::context& context, node_statement const& statement) :
+        resource_evaluator(context, _none, statement.body),
+        _statement(statement)
     {
     }
 
@@ -1551,10 +1589,10 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Nodes don't have parameters, so nothing to prepare in scope
         node_scope scope{ _context, resource };
 
-        scoped_stack_frame frame{ _context, stack_frame{ &_expression, _context.node_scope() } };
+        scoped_stack_frame frame{ _context, stack_frame{ &_statement, _context.node_scope() } };
         evaluate_body(_context, _body);
     }
 
-    vector<ast::parameter> node_evaluator::_none;
+    vector<parameter> node_evaluator::_none;
 
 }}}  // namespace puppet::compiler::evaluation

@@ -1,0 +1,3 @@
+Error: defined_type_capture_param.pp:1:13: parameter $params cannot be a capture parameter.
+  define bad(*$params)
+              ^~~~~~~

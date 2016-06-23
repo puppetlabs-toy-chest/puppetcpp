@@ -1,0 +1,3 @@
+Error: illegal_assignment.pp:1:8: illegal assignment expression: assignment can only be performed on variables and arrays of variables.
+  $foo + 1 = bar
+         ^

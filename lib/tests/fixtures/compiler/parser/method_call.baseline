@@ -1,7 +1,7 @@
 path: method_call.pp
 statements:
-  - kind: postfix
-    primary:
+  - kind: postfix expression
+    operand:
       kind: undef
       begin:
         offset: 0
@@ -9,8 +9,8 @@ statements:
       end:
         offset: 5
         line: 1
-    subexpressions:
-      - kind: method call
+    operations:
+      - kind: method call expression
         begin:
           offset: 5
           line: 1
@@ -23,8 +23,8 @@ statements:
             offset: 9
             line: 1
           value: foo
-  - kind: postfix
-    primary:
+  - kind: postfix expression
+    operand:
       kind: number
       begin:
         offset: 11
@@ -34,8 +34,8 @@ statements:
         line: 3
       base: decimal
       value: 1
-    subexpressions:
-      - kind: method call
+    operations:
+      - kind: method call expression
         begin:
           offset: 12
           line: 3
@@ -70,8 +70,8 @@ statements:
         end:
           offset: 22
           line: 3
-  - kind: postfix
-    primary:
+  - kind: postfix expression
+    operand:
       kind: name
       begin:
         offset: 24
@@ -80,8 +80,8 @@ statements:
         offset: 27
         line: 5
       value: foo
-    subexpressions:
-      - kind: method call
+    operations:
+      - kind: method call expression
         begin:
           offset: 27
           line: 5
@@ -97,8 +97,8 @@ statements:
         end:
           offset: 36
           line: 5
-  - kind: postfix
-    primary:
+  - kind: postfix expression
+    operand:
       kind: array
       begin:
         offset: 38
@@ -106,8 +106,8 @@ statements:
       end:
         offset: 40
         line: 7
-    subexpressions:
-      - kind: method call
+    operations:
+      - kind: method call expression
         begin:
           offset: 40
           line: 7
@@ -138,8 +138,8 @@ statements:
                   line: 7
                 name: x
             - type:
-                kind: postfix
-                primary:
+                kind: postfix expression
+                operand:
                   kind: type
                   begin:
                     offset: 50
@@ -148,8 +148,8 @@ statements:
                     offset: 57
                     line: 7
                   name: Integer
-                subexpressions:
-                  - kind: access
+                operations:
+                  - kind: access expression
                     begin:
                       offset: 57
                       line: 7
@@ -207,7 +207,7 @@ statements:
                   line: 7
                 name: z
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:

@@ -1,6 +1,6 @@
 path: collector.pp
 statements:
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -14,7 +14,7 @@ statements:
     end:
       offset: 9
       line: 1
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -52,7 +52,7 @@ statements:
     end:
       offset: 37
       line: 3
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -64,8 +64,8 @@ statements:
       name: Bar
     exported: false
     query:
-      kind: binary query
-      primary:
+      kind: query expression
+      operand:
         kind: attribute query
         attribute:
           kind: name
@@ -95,10 +95,10 @@ statements:
             line: 5
           operator: and
           operand:
-            kind: nested query
+            kind: nested query expression
             expression:
-              kind: binary query
-              primary:
+              kind: query expression
+              operand:
                 kind: attribute query
                 attribute:
                   kind: name
@@ -199,7 +199,7 @@ statements:
     end:
       offset: 117
       line: 5
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -237,7 +237,7 @@ statements:
     end:
       offset: 140
       line: 7
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -251,7 +251,7 @@ statements:
     end:
       offset: 154
       line: 10
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -289,7 +289,7 @@ statements:
     end:
       offset: 184
       line: 12
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -301,8 +301,8 @@ statements:
       name: Bar
     exported: true
     query:
-      kind: binary query
-      primary:
+      kind: query expression
+      operand:
         kind: attribute query
         attribute:
           kind: name
@@ -332,10 +332,10 @@ statements:
             line: 14
           operator: and
           operand:
-            kind: nested query
+            kind: nested query expression
             expression:
-              kind: binary query
-              primary:
+              kind: query expression
+              operand:
                 kind: attribute query
                 attribute:
                   kind: name
@@ -436,7 +436,7 @@ statements:
     end:
       offset: 266
       line: 14
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -448,8 +448,8 @@ statements:
       name: Yay
     exported: true
     query:
-      kind: binary query
-      primary:
+      kind: query expression
+      operand:
         kind: attribute query
         attribute:
           kind: name
@@ -504,7 +504,7 @@ statements:
     end:
       offset: 310
       line: 16
-  - kind: resource override
+  - kind: resource override expression
     begin:
       offset: 312
       line: 18
@@ -512,7 +512,7 @@ statements:
       offset: 370
       line: 21
     reference:
-      kind: collector
+      kind: collector expression
       type:
         kind: type
         begin:
@@ -595,7 +595,7 @@ statements:
             offset: 368
             line: 20
           value: cake
-  - kind: resource override
+  - kind: resource override expression
     begin:
       offset: 372
       line: 23
@@ -603,7 +603,7 @@ statements:
       offset: 432
       line: 26
     reference:
-      kind: collector
+      kind: collector expression
       type:
         kind: type
         begin:
@@ -686,3 +686,39 @@ statements:
             offset: 430
             line: 25
           value: cake
+  - kind: relationship statement
+    operand:
+      kind: collector expression
+      type:
+        kind: type
+        begin:
+          offset: 434
+          line: 28
+        end:
+          offset: 438
+          line: 28
+        name: File
+      exported: false
+      end:
+        offset: 442
+        line: 28
+    operations:
+      - operator_position:
+          offset: 443
+          line: 28
+        operator: ->
+        operand:
+          kind: collector expression
+          type:
+            kind: type
+            begin:
+              offset: 446
+              line: 28
+            end:
+              offset: 453
+              line: 28
+            name: Service
+          exported: false
+          end:
+            offset: 457
+            line: 28

@@ -1,0 +1,3 @@
+Error: invalid_hostname.pp:1:6: hostname 'not_valid!' is not valid: only letters, digits, '_', '-', and '.' are allowed.
+  node 'not_valid!' {
+       ^~~~~~~~~~~~

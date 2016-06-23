@@ -1,125 +1,168 @@
 path: hash.pp
 statements:
-  - kind: hash
-    begin:
-      offset: 0
-      line: 1
-    end:
-      offset: 2
-      line: 1
-  - kind: hash
-    begin:
-      offset: 3
-      line: 2
-    end:
-      offset: 29
-      line: 2
-    elements:
-      - first:
-          kind: name
-          begin:
-            offset: 5
-            line: 2
-          end:
-            offset: 8
-            line: 2
-          value: foo
-        second:
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 6
+        line: 1
+      value: notice
+    arguments:
+      - kind: hash
+        begin:
+          offset: 7
+          line: 1
+        end:
+          offset: 9
+          line: 1
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 10
+        line: 2
+      end:
+        offset: 12
+        line: 2
+      name: a
+    operations:
+      - operator_position:
+          offset: 13
+          line: 2
+        operator: =
+        operand:
           kind: hash
           begin:
-            offset: 12
+            offset: 15
             line: 2
           end:
-            offset: 14
-            line: 2
-      - first:
-          kind: name
-          begin:
-            offset: 16
-            line: 2
-          end:
-            offset: 19
-            line: 2
-          value: bar
-        second:
-          kind: array
-          begin:
-            offset: 23
-            line: 2
-          end:
-            offset: 27
+            offset: 41
             line: 2
           elements:
-            - kind: hash
-              begin:
-                offset: 24
-                line: 2
-              end:
-                offset: 26
-                line: 2
-  - kind: hash
-    begin:
-      offset: 30
-      line: 3
-    end:
-      offset: 74
-      line: 7
-    elements:
-      - first:
-          kind: number
+            - first:
+                kind: name
+                begin:
+                  offset: 17
+                  line: 2
+                end:
+                  offset: 20
+                  line: 2
+                value: foo
+              second:
+                kind: hash
+                begin:
+                  offset: 24
+                  line: 2
+                end:
+                  offset: 26
+                  line: 2
+            - first:
+                kind: name
+                begin:
+                  offset: 28
+                  line: 2
+                end:
+                  offset: 31
+                  line: 2
+                value: bar
+              second:
+                kind: array
+                begin:
+                  offset: 35
+                  line: 2
+                end:
+                  offset: 39
+                  line: 2
+                elements:
+                  - kind: hash
+                    begin:
+                      offset: 36
+                      line: 2
+                    end:
+                      offset: 38
+                      line: 2
+  - kind: binary expression
+    operand:
+      kind: variable
+      begin:
+        offset: 42
+        line: 3
+      end:
+        offset: 44
+        line: 3
+      name: b
+    operations:
+      - operator_position:
+          offset: 45
+          line: 3
+        operator: =
+        operand:
+          kind: hash
           begin:
-            offset: 36
-            line: 4
+            offset: 47
+            line: 3
           end:
-            offset: 37
-            line: 4
-          base: decimal
-          value: 1
-        second:
-          kind: number
-          begin:
-            offset: 41
-            line: 4
-          end:
-            offset: 42
-            line: 4
-          base: decimal
-          value: 1
-      - first:
-          kind: number
-          begin:
-            offset: 48
-            line: 5
-          end:
-            offset: 49
-            line: 5
-          base: decimal
-          value: 2
-        second:
-          kind: name
-          begin:
-            offset: 53
-            line: 5
-          end:
-            offset: 56
-            line: 5
-          value: foo
-      - first:
-          kind: number
-          begin:
-            offset: 62
-            line: 6
-          end:
-            offset: 63
-            line: 6
-          base: decimal
-          value: 3
-        second:
-          kind: regex
-          begin:
-            offset: 67
-            line: 6
-          end:
-            offset: 72
-            line: 6
-          value: baz
+            offset: 91
+            line: 7
+          elements:
+            - first:
+                kind: number
+                begin:
+                  offset: 53
+                  line: 4
+                end:
+                  offset: 54
+                  line: 4
+                base: decimal
+                value: 1
+              second:
+                kind: number
+                begin:
+                  offset: 58
+                  line: 4
+                end:
+                  offset: 59
+                  line: 4
+                base: decimal
+                value: 1
+            - first:
+                kind: number
+                begin:
+                  offset: 65
+                  line: 5
+                end:
+                  offset: 66
+                  line: 5
+                base: decimal
+                value: 2
+              second:
+                kind: name
+                begin:
+                  offset: 70
+                  line: 5
+                end:
+                  offset: 73
+                  line: 5
+                value: foo
+            - first:
+                kind: number
+                begin:
+                  offset: 79
+                  line: 6
+                end:
+                  offset: 80
+                  line: 6
+                base: decimal
+                value: 3
+              second:
+                kind: regex
+                begin:
+                  offset: 84
+                  line: 6
+                end:
+                  offset: 89
+                  line: 6
+                value: baz

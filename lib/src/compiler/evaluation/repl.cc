@@ -89,26 +89,29 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             auto tree = ast::syntax_tree::create(REPL_PATH);
             tree->statements.emplace_back();
-            auto& expression = tree->statements.front();
+            auto& statement = tree->statements.front();
 
             bool success = x3::parse(
                 token_begin,
                 token_end,
                 x3::with<compiler::parser::tree_context_tag>(tree.get())[compiler::parser::statement],
-                expression
+                statement
             );
             if (success && (token_begin == token_end || token_begin->id() == boost::lexer::npos)) {
                 // Copy the source into the tree
                 tree->source(_buffer);
 
+                // Validate the statement
+                statement.validate();
+
                 // If the expression contains a definition, we need to keep the tree around
-                if (_scanner.scan(expression)) {
+                if (_scanner.scan(*tree)) {
                     _trees.emplace_back(tree);
                 }
 
                 repl::result result;
                 result.source = _buffer;
-                result.value = _evaluator.evaluate(expression);
+                result.value = _evaluator.evaluate(statement);
                 return result;
             }
 

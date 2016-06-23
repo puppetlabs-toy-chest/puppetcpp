@@ -929,6 +929,16 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         value operator()(types::runtime const& target)
         {
+            if (target.object()) {
+                throw evaluation_exception(
+                    (boost::format("access expression is not supported for %1%.") %
+                     target.type_name()
+                    ).str(),
+                    _expression,
+                    _context.backtrace()
+                );
+            }
+
             // Ensure there are at most 2 arguments to runtime
             if (_arguments.size() > 2) {
                 throw evaluation_exception(

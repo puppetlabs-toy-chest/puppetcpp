@@ -1,3 +1,3 @@
-//
-/^(.*)foo\d+(.*)$/
-/foo/
+notice //
+notice /^(.*)foo\d+(.*)$/
+notice /foo/

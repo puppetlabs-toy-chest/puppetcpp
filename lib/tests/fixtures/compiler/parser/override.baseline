@@ -1,6 +1,6 @@
 path: override.pp
 statements:
-  - kind: resource override
+  - kind: resource override expression
     begin:
       offset: 0
       line: 1
@@ -8,8 +8,8 @@ statements:
       offset: 13
       line: 2
     reference:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 0
@@ -18,8 +18,8 @@ statements:
           offset: 4
           line: 1
         name: File
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 4
             line: 1
@@ -35,7 +35,7 @@ statements:
                 offset: 8
                 line: 1
               value: foo
-  - kind: resource override
+  - kind: resource override expression
     begin:
       offset: 15
       line: 4
@@ -43,8 +43,8 @@ statements:
       offset: 60
       line: 7
     reference:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 15
@@ -53,8 +53,8 @@ statements:
           offset: 19
           line: 4
         name: File
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 19
             line: 4
@@ -115,7 +115,7 @@ statements:
             offset: 58
             line: 6
           value: cake
-  - kind: resource override
+  - kind: resource override expression
     begin:
       offset: 62
       line: 9
@@ -123,8 +123,8 @@ statements:
       offset: 95
       line: 11
     reference:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 62
@@ -133,8 +133,8 @@ statements:
           offset: 66
           line: 9
         name: File
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 66
             line: 9
@@ -181,7 +181,7 @@ statements:
             offset: 93
             line: 10
           value: yep
-  - kind: resource override
+  - kind: resource override expression
     begin:
       offset: 97
       line: 13
@@ -219,7 +219,7 @@ statements:
           end:
             offset: 120
             line: 14
-  - kind: resource override
+  - kind: resource override expression
     begin:
       offset: 124
       line: 17
@@ -227,8 +227,8 @@ statements:
       offset: 185
       line: 21
     reference:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: variable
         begin:
           offset: 124
@@ -237,8 +237,8 @@ statements:
           offset: 128
           line: 17
         name: foo
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 128
             line: 17

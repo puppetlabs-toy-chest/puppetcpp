@@ -1,0 +1,3 @@
+Error: class_metaparam.pp:1:11: parameter $require is reserved for resource metaparameter 'require'.
+  class foo($require) {
+            ^~~~~~~~

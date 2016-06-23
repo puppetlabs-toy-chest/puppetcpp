@@ -17,12 +17,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         postfix_visitor(evaluation::context& context, postfix_expression const& expression) :
             _evaluator(context)
         {
-            _value = _evaluator.evaluate(expression.primary);
-            _value_context = expression.primary.context();
+            _value = _evaluator.evaluate(expression.operand);
+            _value_context = expression.operand.context();
             _splat = expression.is_splat();
 
-            for (auto const& subexpression : expression.subexpressions) {
-                boost::apply_visitor(*this, subexpression);
+            for (auto const& operation : expression.operations) {
+                boost::apply_visitor(*this, operation);
                 _splat = false;
             }
         }

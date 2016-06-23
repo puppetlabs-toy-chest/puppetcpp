@@ -33,9 +33,9 @@ namespace puppet { namespace compiler {
         /**
          * Constructs a class.
          * @param name The fully-qualified name of the class.
-         * @param expression The class expression.
+         * @param statement The class statement.
          */
-        klass(std::string name, ast::class_expression const& expression);
+        klass(std::string name, ast::class_statement const& statement);
 
         /**
          * Gets the fully-qualified name of the class.
@@ -44,15 +44,15 @@ namespace puppet { namespace compiler {
         std::string const& name() const;
 
         /**
-         * Gets the expression that defines the class
-         * @return Returns the expression that defines the class.
+         * Gets the statement that defines the class.
+         * @return Returns the statement that defines the class.
          */
-        ast::class_expression const& expression() const;
+        ast::class_statement const& statement() const;
 
      private:
         std::string _name;
         std::shared_ptr<ast::syntax_tree> _tree;
-        ast::class_expression const& _expression;
+        ast::class_statement const& _statement;
     };
 
     /**
@@ -63,9 +63,9 @@ namespace puppet { namespace compiler {
         /**
          * Constructs a defined type.
          * @param name The fully-qualified name of the defined type.
-         * @param expression The defined type expression.
+         * @param statement The defined type statement.
          */
-        defined_type(std::string name, ast::defined_type_expression const& expression);
+        defined_type(std::string name, ast::defined_type_statement const& statement);
 
         /**
          * Gets the fully-qualified name of the defined type.
@@ -74,15 +74,15 @@ namespace puppet { namespace compiler {
         std::string const& name() const;
 
         /**
-         * Gets the expression that defines the defined type
-         * @return Returns the expression that defines the defined type.
+         * Gets the statement that defines the defined type.
+         * @return Returns the statement that defines the defined type.
          */
-        ast::defined_type_expression const& expression() const;
+        ast::defined_type_statement const& statement() const;
 
      private:
         std::string _name;
         std::shared_ptr<ast::syntax_tree> _tree;
-        ast::defined_type_expression const& _expression;
+        ast::defined_type_statement const& _statement;
     };
 
     /**
@@ -92,19 +92,19 @@ namespace puppet { namespace compiler {
     {
         /**
          * Constructs a node definition.
-         * @param expression The node expression.
+         * @param statement The node statement.
          */
-        explicit node_definition(ast::node_expression const& expression);
+        explicit node_definition(ast::node_statement const& statement);
 
         /**
-         * Gets the expression that defines the node
-         * @return Returns the expression that defines the node.
+         * Gets the statement that defines the node.
+         * @return Returns the statement that defines the node.
          */
-        ast::node_expression const& expression() const;
+        ast::node_statement const& statement() const;
 
      private:
         std::shared_ptr<ast::syntax_tree> _tree;
-        ast::node_expression const& _expression;
+        ast::node_statement const& _statement;
     };
 
     /**
@@ -114,19 +114,19 @@ namespace puppet { namespace compiler {
     {
         /**
          * Constructs a type alias.
-         * @param expression The type alias expression.
+         * @param statement The type alias statement.
          */
-        explicit type_alias(ast::type_alias_expression const& expression);
+        explicit type_alias(ast::type_alias_statement const& statement);
 
         /**
-         * Gets the expression for the type alias.
-         * @return Returns the expression for the type alias.
+         * Gets the statement for the type alias.
+         * @return Returns the statement for the type alias.
          */
-        ast::type_alias_expression const& expression() const;
+        ast::type_alias_statement const& statement() const;
 
      private:
         std::shared_ptr<ast::syntax_tree> _tree;
-        ast::type_alias_expression const& _expression;
+        ast::type_alias_statement const& _statement;
     };
 
     /**
@@ -184,11 +184,11 @@ namespace puppet { namespace compiler {
         std::pair<node_definition const*, std::string> find_node(compiler::node const& node) const;
 
         /**
-         * Finds a matching node definition for the given node expression.
-         * @param expression The node expression to find a matching node definition for.
+         * Finds a matching node definition for the given node statement.
+         * @param statement The node statement to find a matching node definition for.
          * @return Returns a pointer to the node definition if found or nullptr if one does not exist.
          */
-        node_definition const* find_node(ast::node_expression const& expression) const;
+        node_definition const* find_node(ast::node_statement const& statement) const;
 
         /**
          * Registers a node definition.

@@ -1,0 +1,6 @@
+define foo
+{
+    node bar
+    {
+    }
+}

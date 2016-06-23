@@ -15,27 +15,6 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
     {
         auto& evaluation_context = context.context();
 
-        // Ensure the variable isn't a match variable
-        if (isdigit(variable.name()[0])) {
-            throw evaluation_exception(
-                (boost::format("cannot assign to $%1%: the name is reserved as a match variable.") %
-                 variable.name()
-                ).str(),
-                context.left_context(),
-                evaluation_context.backtrace()
-            );
-        }
-        // Ensure the variable is local to the current scope
-        if (variable.name().find(':') != string::npos) {
-            throw evaluation_exception(
-                (boost::format("cannot assign to $%1%: assignment can only be performed on variables local to the current scope.") %
-                 variable.name()
-                ).str(),
-                context.left_context(),
-                evaluation_context.backtrace()
-            );
-        }
-
         // If the right side is a variable, assign to the variable's value
         shared_ptr<runtime::values::value const> shared_value;
         if (auto other = boost::get<values::variable>(&value)) {

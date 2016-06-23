@@ -1,5 +1,5 @@
-*[1, 2, 3];
+notice *[1, 2, 3];
 
-!false;
+notice !false;
 
--5.2
+notice -5.2

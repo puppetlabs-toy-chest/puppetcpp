@@ -1,7 +1,7 @@
 path: sample.pp
 statements:
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 0
@@ -23,8 +23,8 @@ statements:
           end:
             offset: 14
             line: 1
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 15
@@ -74,8 +74,8 @@ statements:
                 line: 2
               base: decimal
               value: 1
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 32
@@ -97,8 +97,8 @@ statements:
           end:
             offset: 50
             line: 3
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 51
@@ -134,8 +134,8 @@ statements:
             offset: 75
             line: 4
           value: true
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 76
@@ -159,8 +159,8 @@ statements:
             line: 5
           base: decimal
           value: 123.456
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 94
@@ -183,8 +183,8 @@ statements:
             offset: 117
             line: 6
           value: ¯\_(ツ)_/¯
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 118
@@ -215,8 +215,8 @@ statements:
                 offset: 134
                 line: 7
               name: name
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 137
@@ -257,8 +257,8 @@ statements:
                   offset: 163
                   line: 9
                 value: baz
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 166
@@ -281,7 +281,7 @@ statements:
             offset: 178
             line: 11
           name: File
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 180
       line: 13
@@ -393,7 +393,7 @@ statements:
                 offset: 305
                 line: 21
               name: number
-  - kind: if
+  - kind: if expression
     begin:
       offset: 309
       line: 24
@@ -410,10 +410,10 @@ statements:
         line: 24
       name: boolean
     body:
-      - kind: binary
-        first:
-          kind: postfix
-          primary:
+      - kind: relationship statement
+        operand:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 327
@@ -422,8 +422,8 @@ statements:
               offset: 331
               line: 25
             name: File
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 331
                 line: 25
@@ -445,8 +445,8 @@ statements:
               line: 25
             operator: ->
             operand:
-              kind: postfix
-              primary:
+              kind: postfix expression
+              operand:
                 kind: type
                 begin:
                   offset: 343
@@ -455,8 +455,8 @@ statements:
                   offset: 347
                   line: 25
                 name: File
-              subexpressions:
-                - kind: access
+              operations:
+                - kind: access expression
                   begin:
                     offset: 347
                     line: 25
@@ -477,7 +477,7 @@ statements:
           offset: 357
           line: 26
         conditional:
-          kind: unary
+          kind: unary expression
           operator_position:
             offset: 363
             line: 26
@@ -492,7 +492,7 @@ statements:
               line: 26
             value: boolean
         body:
-          - kind: function call
+          - kind: function call statement
             function:
               kind: name
               begin:
@@ -519,7 +519,7 @@ statements:
         offset: 391
         line: 28
       body:
-        - kind: function call
+        - kind: function call statement
           function:
             kind: name
             begin:
@@ -541,7 +541,7 @@ statements:
       end:
         offset: 414
         line: 30
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 416
       line: 32
@@ -558,7 +558,7 @@ statements:
         line: 32
       name: boolean
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -577,7 +577,7 @@ statements:
               offset: 448
               line: 33
             value: wrong
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 452
       line: 36
@@ -636,7 +636,7 @@ statements:
             offset: 505
             line: 39
           value: bar
-  - kind: collector
+  - kind: collector expression
     type:
       kind: type
       begin:
@@ -648,8 +648,8 @@ statements:
       name: User
     exported: false
     query:
-      kind: binary query
-      primary:
+      kind: query expression
+      operand:
         kind: attribute query
         attribute:
           kind: name
@@ -705,7 +705,7 @@ statements:
     end:
       offset: 559
       line: 42
-  - kind: class
+  - kind: class statement
     begin:
       offset: 561
       line: 44
@@ -722,8 +722,8 @@ statements:
         line: 44
       value: foo
     body:
-      - kind: postfix
-        primary:
+      - kind: postfix expression
+        operand:
           kind: variable
           begin:
             offset: 577
@@ -732,8 +732,8 @@ statements:
             offset: 583
             line: 45
           name: title
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 583
               line: 45
@@ -746,7 +746,7 @@ statements:
                 offset: 590
                 line: 45
               value: notice
-  - kind: class
+  - kind: class statement
     begin:
       offset: 594
       line: 48
@@ -800,7 +800,7 @@ statements:
         line: 48
       value: foo
     body:
-      - kind: resource
+      - kind: resource declaration expression
         begin:
           offset: 665
           line: 49
@@ -809,8 +809,8 @@ statements:
           line: 50
         status: realized
         type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 665
@@ -819,8 +819,8 @@ statements:
               offset: 673
               line: 49
             name: Resource
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 673
                 line: 49
@@ -846,7 +846,7 @@ statements:
                 offset: 689
                 line: 49
               name: param
-  - kind: function call
+  - kind: function call statement
     function:
       kind: name
       begin:
@@ -865,7 +865,7 @@ statements:
           offset: 716
           line: 53
         value: bar::baz
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 718
       line: 55
@@ -883,8 +883,8 @@ statements:
       value: my_type
     parameters:
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 733
@@ -893,8 +893,8 @@ statements:
               offset: 739
               line: 55
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 739
                 line: 55
@@ -930,7 +930,7 @@ statements:
             line: 55
           name: param
     body:
-      - kind: resource
+      - kind: resource declaration expression
         begin:
           offset: 762
           line: 56
@@ -939,8 +939,8 @@ statements:
           line: 58
         status: realized
         type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 762
@@ -949,8 +949,8 @@ statements:
               offset: 770
               line: 56
             name: Resource
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 770
                 line: 56
@@ -999,7 +999,7 @@ statements:
                     offset: 820
                     line: 57
                   name: title
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 830
       line: 61
@@ -1049,7 +1049,7 @@ statements:
                 offset: 879
                 line: 62
               value: included_from_dt
-  - kind: if
+  - kind: if expression
     begin:
       offset: 884
       line: 66
@@ -1057,10 +1057,10 @@ statements:
       offset: 970
       line: 71
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: variable
           begin:
             offset: 887
@@ -1069,8 +1069,8 @@ statements:
             offset: 892
             line: 66
           name: type
-        subexpressions:
-          - kind: selector
+        operations:
+          - kind: selector expression
             begin:
               offset: 893
               line: 66
@@ -1128,7 +1128,7 @@ statements:
               line: 69
             value: correct
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1147,7 +1147,7 @@ statements:
               offset: 968
               line: 70
             value: wrong
-  - kind: case
+  - kind: case expression
     begin:
       offset: 972
       line: 73
@@ -1174,7 +1174,7 @@ statements:
               line: 74
             value: ¯\\_\(ツ\)_\/¯
         body:
-          - kind: function call
+          - kind: function call statement
             function:
               kind: name
               begin:
@@ -1205,8 +1205,8 @@ statements:
               offset: 1048
               line: 77
         body:
-          - kind: postfix
-            primary:
+          - kind: postfix expression
+            operand:
               kind: name
               begin:
                 offset: 1060
@@ -1215,8 +1215,8 @@ statements:
                 offset: 1065
                 line: 78
               value: wrong
-            subexpressions:
-              - kind: method call
+            operations:
+              - kind: method call expression
                 begin:
                   offset: 1065
                   line: 78
@@ -1232,7 +1232,7 @@ statements:
         end:
           offset: 1076
           line: 79
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -1254,7 +1254,7 @@ statements:
     end:
       offset: 1114
       line: 83
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1116
       line: 85
@@ -1262,9 +1262,9 @@ statements:
       offset: 1173
       line: 87
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -1275,8 +1275,8 @@ statements:
             line: 85
           value: assert_type
         arguments:
-          - kind: postfix
-            primary:
+          - kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 1131
@@ -1285,8 +1285,8 @@ statements:
                 offset: 1138
                 line: 85
               name: Integer
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 1138
                   line: 85
@@ -1331,7 +1331,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1350,7 +1350,7 @@ statements:
               offset: 1171
               line: 86
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1174
       line: 88
@@ -1358,9 +1358,9 @@ statements:
       offset: 1272
       line: 92
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -1371,8 +1371,8 @@ statements:
             line: 88
           value: assert_type
         arguments:
-          - kind: postfix
-            primary:
+          - kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 1189
@@ -1381,8 +1381,8 @@ statements:
                 offset: 1196
                 line: 88
               name: Integer
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 1196
                   line: 88
@@ -1462,7 +1462,7 @@ statements:
             base: decimal
             value: 10
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1481,7 +1481,7 @@ statements:
               offset: 1270
               line: 91
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1273
       line: 93
@@ -1489,9 +1489,9 @@ statements:
       offset: 1332
       line: 95
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -1538,7 +1538,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1557,7 +1557,7 @@ statements:
               offset: 1330
               line: 94
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1333
       line: 96
@@ -1565,9 +1565,9 @@ statements:
       offset: 1496
       line: 101
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -1621,7 +1621,7 @@ statements:
                   line: 96
                 name: actual
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -1698,7 +1698,7 @@ statements:
               line: 99
             value: correct
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1717,7 +1717,7 @@ statements:
               offset: 1494
               line: 100
             value: incorrect
-  - kind: class
+  - kind: class statement
     begin:
       offset: 1498
       line: 103
@@ -1733,7 +1733,7 @@ statements:
         offset: 1513
         line: 103
       value: contained
-  - kind: class
+  - kind: class statement
     begin:
       offset: 1518
       line: 105
@@ -1749,7 +1749,7 @@ statements:
         offset: 1532
         line: 105
       value: required
-  - kind: class
+  - kind: class statement
     begin:
       offset: 1537
       line: 107
@@ -1766,7 +1766,7 @@ statements:
         line: 107
       value: container
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1785,7 +1785,7 @@ statements:
               offset: 1576
               line: 108
             value: contained
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1804,7 +1804,7 @@ statements:
               offset: 1597
               line: 109
             value: required
-  - kind: function call
+  - kind: function call statement
     function:
       kind: name
       begin:
@@ -1823,7 +1823,7 @@ statements:
           offset: 1617
           line: 111
         value: container
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -1845,7 +1845,7 @@ statements:
     end:
       offset: 1627
       line: 113
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -1867,7 +1867,7 @@ statements:
     end:
       offset: 1638
       line: 115
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 1640
       line: 117
@@ -1875,7 +1875,7 @@ statements:
       offset: 1686
       line: 119
     conditional:
-      kind: function call
+      kind: function call expression
       function:
         kind: name
         begin:
@@ -1898,7 +1898,7 @@ statements:
         offset: 1663
         line: 117
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1917,7 +1917,7 @@ statements:
               offset: 1684
               line: 118
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1687
       line: 120
@@ -1925,7 +1925,7 @@ statements:
       offset: 1735
       line: 122
     conditional:
-      kind: function call
+      kind: function call expression
       function:
         kind: name
         begin:
@@ -1948,7 +1948,7 @@ statements:
         offset: 1712
         line: 120
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -1967,7 +1967,7 @@ statements:
               offset: 1733
               line: 121
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1737
       line: 124
@@ -1975,10 +1975,10 @@ statements:
       offset: 1816
       line: 128
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 1740
@@ -1987,8 +1987,8 @@ statements:
             offset: 1747
             line: 124
           name: Integer
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 1747
               line: 124
@@ -2014,7 +2014,7 @@ statements:
                   line: 124
                 base: decimal
                 value: 5
-          - kind: method call
+          - kind: method call expression
             begin:
               offset: 1753
               line: 124
@@ -2045,8 +2045,8 @@ statements:
                       line: 124
                     name: x
               body:
-                - kind: binary
-                  first:
+                - kind: binary expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 1772
@@ -2112,7 +2112,7 @@ statements:
                 base: decimal
                 value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -2131,7 +2131,7 @@ statements:
               offset: 1814
               line: 127
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1817
       line: 129
@@ -2139,10 +2139,10 @@ statements:
       offset: 1886
       line: 133
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: array
           begin:
             offset: 1820
@@ -2178,8 +2178,8 @@ statements:
                 line: 129
               base: decimal
               value: 3
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 1829
               line: 129
@@ -2210,8 +2210,8 @@ statements:
                       line: 129
                     name: x
               body:
-                - kind: binary
-                  first:
+                - kind: binary expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 1848
@@ -2259,7 +2259,7 @@ statements:
                 base: decimal
                 value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -2278,7 +2278,7 @@ statements:
               offset: 1884
               line: 132
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1887
       line: 134
@@ -2286,10 +2286,10 @@ statements:
       offset: 1965
       line: 138
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: array
           begin:
             offset: 1890
@@ -2325,8 +2325,8 @@ statements:
                 line: 134
               base: decimal
               value: 3
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 1899
               line: 134
@@ -2366,8 +2366,8 @@ statements:
                       line: 134
                     name: x
               body:
-                - kind: binary
-                  first:
+                - kind: binary expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 1922
@@ -2428,7 +2428,7 @@ statements:
                 base: decimal
                 value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -2447,7 +2447,7 @@ statements:
               offset: 1963
               line: 137
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 1966
       line: 139
@@ -2455,10 +2455,10 @@ statements:
       offset: 2063
       line: 143
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: hash
           begin:
             offset: 1969
@@ -2521,8 +2521,8 @@ statements:
                   offset: 1993
                   line: 139
                 value: f
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 1995
               line: 139
@@ -2553,10 +2553,10 @@ statements:
                       line: 139
                     name: x
               body:
-                - kind: binary
-                  first:
-                    kind: postfix
-                    primary:
+                - kind: binary expression
+                  operand:
+                    kind: postfix expression
+                    operand:
                       kind: variable
                       begin:
                         offset: 2014
@@ -2565,8 +2565,8 @@ statements:
                         offset: 2016
                         line: 140
                       name: x
-                    subexpressions:
-                      - kind: access
+                    operations:
+                      - kind: access expression
                         begin:
                           offset: 2016
                           line: 140
@@ -2630,7 +2630,7 @@ statements:
                     line: 141
                   value: d
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -2649,7 +2649,7 @@ statements:
               offset: 2061
               line: 142
             value: incorrect
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -2671,8 +2671,8 @@ statements:
     end:
       offset: 2073
       line: 145
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 2075
@@ -2696,7 +2696,7 @@ statements:
             line: 150
           value: "    <%| $param |-%>\n    <%= $param -%>"
           margin: 4
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2154
       line: 151
@@ -2704,9 +2704,9 @@ statements:
       offset: 2234
       line: 153
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -2769,7 +2769,7 @@ statements:
               line: 151
             value: correct
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -2788,7 +2788,7 @@ statements:
               offset: 2232
               line: 152
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2235
       line: 154
@@ -2796,9 +2796,9 @@ statements:
       offset: 2303
       line: 156
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -2859,7 +2859,7 @@ statements:
               line: 154
             value: default
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -2878,7 +2878,7 @@ statements:
               offset: 2301
               line: 155
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2305
       line: 158
@@ -2886,10 +2886,10 @@ statements:
       offset: 2411
       line: 162
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 2308
@@ -2898,8 +2898,8 @@ statements:
             offset: 2315
             line: 158
           name: Integer
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 2315
               line: 158
@@ -2925,7 +2925,7 @@ statements:
                   line: 158
                 base: decimal
                 value: 5
-          - kind: method call
+          - kind: method call expression
             begin:
               offset: 2321
               line: 158
@@ -2956,8 +2956,8 @@ statements:
                       line: 158
                     name: x
               body:
-                - kind: binary
-                  first:
+                - kind: binary expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 2337
@@ -3044,7 +3044,7 @@ statements:
                   line: 160
                 value: false
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -3063,7 +3063,7 @@ statements:
               offset: 2409
               line: 161
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2412
       line: 163
@@ -3071,10 +3071,10 @@ statements:
       offset: 2495
       line: 167
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: array
           begin:
             offset: 2415
@@ -3110,8 +3110,8 @@ statements:
                 line: 163
               base: decimal
               value: 3
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 2424
               line: 163
@@ -3142,8 +3142,8 @@ statements:
                       line: 163
                     name: x
               body:
-                - kind: binary
-                  first:
+                - kind: binary expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 2440
@@ -3206,7 +3206,7 @@ statements:
                   line: 165
                 value: false
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -3225,7 +3225,7 @@ statements:
               offset: 2493
               line: 166
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2496
       line: 168
@@ -3233,10 +3233,10 @@ statements:
       offset: 2588
       line: 172
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: array
           begin:
             offset: 2499
@@ -3272,8 +3272,8 @@ statements:
                 line: 168
               base: decimal
               value: 3
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 2508
               line: 168
@@ -3313,8 +3313,8 @@ statements:
                       line: 168
                     name: x
               body:
-                - kind: binary
-                  first:
+                - kind: binary expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 2528
@@ -3390,7 +3390,7 @@ statements:
                   line: 170
                 value: false
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -3409,7 +3409,7 @@ statements:
               offset: 2586
               line: 171
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2589
       line: 173
@@ -3417,10 +3417,10 @@ statements:
       offset: 2677
       line: 177
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: hash
           begin:
             offset: 2592
@@ -3483,8 +3483,8 @@ statements:
                   offset: 2616
                   line: 173
                 value: f
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 2618
               line: 173
@@ -3515,8 +3515,8 @@ statements:
                       line: 173
                     name: x
               body:
-                - kind: postfix
-                  primary:
+                - kind: postfix expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 2634
@@ -3525,8 +3525,8 @@ statements:
                       offset: 2636
                       line: 174
                     name: x
-                  subexpressions:
-                    - kind: access
+                  operations:
+                    - kind: access expression
                       begin:
                         offset: 2636
                         line: 174
@@ -3582,7 +3582,7 @@ statements:
                   line: 175
                 value: f
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -3601,7 +3601,7 @@ statements:
               offset: 2675
               line: 176
             value: incorrect
-  - kind: function call
+  - kind: function call statement
     function:
       kind: name
       begin:
@@ -3620,7 +3620,7 @@ statements:
           offset: 2688
           line: 179
         value: hi
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 2690
       line: 181
@@ -3647,7 +3647,7 @@ statements:
             offset: 2704
             line: 181
           value: virt
-  - kind: function call
+  - kind: function call statement
     function:
       kind: name
       begin:
@@ -3658,8 +3658,8 @@ statements:
         line: 184
       value: realize
     arguments:
-      - kind: postfix
-        primary:
+      - kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 2717
@@ -3668,8 +3668,8 @@ statements:
             offset: 2721
             line: 184
           name: File
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 2721
               line: 184
@@ -3685,7 +3685,7 @@ statements:
                   offset: 2726
                   line: 184
                 value: virt
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2729
       line: 186
@@ -3693,10 +3693,10 @@ statements:
       offset: 2831
       line: 190
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 2732
@@ -3705,8 +3705,8 @@ statements:
             offset: 2739
             line: 186
           name: Integer
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 2739
               line: 186
@@ -3732,7 +3732,7 @@ statements:
                   line: 186
                 base: decimal
                 value: 5
-          - kind: method call
+          - kind: method call expression
             begin:
               offset: 2745
               line: 186
@@ -3772,8 +3772,8 @@ statements:
                       line: 186
                     name: x
               body:
-                - kind: binary
-                  first:
+                - kind: binary expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 2771
@@ -3882,7 +3882,7 @@ statements:
             base: decimal
             value: 5
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -3901,7 +3901,7 @@ statements:
               offset: 2829
               line: 189
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2832
       line: 191
@@ -3909,10 +3909,10 @@ statements:
       offset: 2918
       line: 195
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: array
           begin:
             offset: 2835
@@ -3948,8 +3948,8 @@ statements:
                 line: 191
               base: decimal
               value: 3
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 2844
               line: 191
@@ -3989,8 +3989,8 @@ statements:
                       line: 191
                     name: x
               body:
-                - kind: binary
-                  first:
+                - kind: binary expression
+                  operand:
                     kind: variable
                     begin:
                       offset: 2870
@@ -4057,7 +4057,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4076,7 +4076,7 @@ statements:
               offset: 2916
               line: 194
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 2919
       line: 196
@@ -4084,10 +4084,10 @@ statements:
       offset: 3024
       line: 200
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: hash
           begin:
             offset: 2922
@@ -4150,8 +4150,8 @@ statements:
                   offset: 2946
                   line: 196
                 value: f
-        subexpressions:
-          - kind: method call
+        operations:
+          - kind: method call expression
             begin:
               offset: 2948
               line: 196
@@ -4219,8 +4219,8 @@ statements:
                         offset: 2984
                         line: 197
                       name: memo
-                    - kind: postfix
-                      primary:
+                    - kind: postfix expression
+                      operand:
                         kind: variable
                         begin:
                           offset: 2986
@@ -4229,8 +4229,8 @@ statements:
                           offset: 2987
                           line: 197
                         name: x
-                      subexpressions:
-                        - kind: access
+                      operations:
+                        - kind: access expression
                           begin:
                             offset: 2987
                             line: 197
@@ -4262,7 +4262,7 @@ statements:
               line: 198
             value: ace
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4281,7 +4281,7 @@ statements:
               offset: 3022
               line: 199
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3026
       line: 202
@@ -4289,9 +4289,9 @@ statements:
       offset: 3079
       line: 204
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -4360,7 +4360,7 @@ statements:
                   line: 202
                 value: c
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4379,7 +4379,7 @@ statements:
               offset: 3077
               line: 203
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3080
       line: 205
@@ -4387,9 +4387,9 @@ statements:
       offset: 3138
       line: 207
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -4458,7 +4458,7 @@ statements:
                   line: 205
                 value: c
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4477,7 +4477,7 @@ statements:
               offset: 3136
               line: 206
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3140
       line: 209
@@ -4485,9 +4485,9 @@ statements:
       offset: 3193
       line: 211
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -4556,7 +4556,7 @@ statements:
                   line: 209
                 value: c
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4575,7 +4575,7 @@ statements:
               offset: 3191
               line: 210
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3194
       line: 212
@@ -4583,9 +4583,9 @@ statements:
       offset: 3252
       line: 214
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -4654,7 +4654,7 @@ statements:
                   line: 212
                 value: c
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4673,7 +4673,7 @@ statements:
               offset: 3250
               line: 213
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3254
       line: 216
@@ -4681,9 +4681,9 @@ statements:
       offset: 3311
       line: 218
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -4752,7 +4752,7 @@ statements:
                   line: 216
                 value: c
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4771,7 +4771,7 @@ statements:
               offset: 3309
               line: 217
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3312
       line: 219
@@ -4779,9 +4779,9 @@ statements:
       offset: 3378
       line: 221
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -4800,8 +4800,8 @@ statements:
               offset: 3328
               line: 219
             value: a b c
-          - kind: postfix
-            primary:
+          - kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 3330
@@ -4810,8 +4810,8 @@ statements:
                 offset: 3336
                 line: 219
               name: Regexp
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 3336
                   line: 219
@@ -4869,7 +4869,7 @@ statements:
                   line: 219
                 value: c
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4888,7 +4888,7 @@ statements:
               offset: 3376
               line: 220
             value: incorrect
-  - kind: function call
+  - kind: function call statement
     function:
       kind: name
       begin:
@@ -4907,7 +4907,7 @@ statements:
           offset: 3393
           line: 223
         value: silly_tag
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 3395
       line: 225
@@ -4915,7 +4915,7 @@ statements:
       offset: 3442
       line: 227
     conditional:
-      kind: function call
+      kind: function call expression
       function:
         kind: name
         begin:
@@ -4938,7 +4938,7 @@ statements:
         offset: 3419
         line: 225
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -4957,7 +4957,7 @@ statements:
               offset: 3440
               line: 226
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3444
       line: 229
@@ -4965,7 +4965,7 @@ statements:
       offset: 3487
       line: 231
     conditional:
-      kind: function call
+      kind: function call expression
       function:
         kind: name
         begin:
@@ -4988,7 +4988,7 @@ statements:
         offset: 3464
         line: 229
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -5007,7 +5007,7 @@ statements:
               offset: 3485
               line: 230
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3489
       line: 233
@@ -5015,9 +5015,9 @@ statements:
       offset: 3548
       line: 235
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -5063,7 +5063,7 @@ statements:
             base: decimal
             value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -5082,7 +5082,7 @@ statements:
               offset: 3546
               line: 234
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3549
       line: 236
@@ -5090,9 +5090,9 @@ statements:
       offset: 3609
       line: 238
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -5138,7 +5138,7 @@ statements:
             base: decimal
             value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -5157,7 +5157,7 @@ statements:
               offset: 3607
               line: 237
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 3610
       line: 239
@@ -5165,9 +5165,9 @@ statements:
       offset: 3669
       line: 241
     conditional:
-      kind: binary
-      first:
-        kind: function call
+      kind: binary expression
+      operand:
+        kind: function call expression
         function:
           kind: name
           begin:
@@ -5213,7 +5213,7 @@ statements:
             base: decimal
             value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -5232,7 +5232,7 @@ statements:
               offset: 3667
               line: 240
             value: incorrect
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -5254,7 +5254,7 @@ statements:
     end:
       offset: 3682
       line: 243
-  - kind: function call
+  - kind: function call expression
     function:
       kind: name
       begin:
@@ -5372,7 +5372,7 @@ statements:
               line: 245
             name: d
       body:
-        - kind: unless
+        - kind: unless expression
           begin:
             offset: 3736
             line: 246
@@ -5380,8 +5380,8 @@ statements:
             offset: 3781
             line: 248
           conditional:
-            kind: binary
-            first:
+            kind: binary expression
+            operand:
               kind: variable
               begin:
                 offset: 3743
@@ -5406,7 +5406,7 @@ statements:
                   base: decimal
                   value: 1
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -5425,7 +5425,7 @@ statements:
                     offset: 3775
                     line: 247
                   value: incorrect
-        - kind: unless
+        - kind: unless expression
           begin:
             offset: 3786
             line: 249
@@ -5433,8 +5433,8 @@ statements:
             offset: 3833
             line: 251
           conditional:
-            kind: binary
-            first:
+            kind: binary expression
+            operand:
               kind: variable
               begin:
                 offset: 3793
@@ -5458,7 +5458,7 @@ statements:
                     line: 249
                   value: 2
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -5477,7 +5477,7 @@ statements:
                     offset: 3827
                     line: 250
                   value: incorrect
-        - kind: unless
+        - kind: unless expression
           begin:
             offset: 3838
             line: 252
@@ -5485,8 +5485,8 @@ statements:
             offset: 3885
             line: 254
           conditional:
-            kind: binary
-            first:
+            kind: binary expression
+            operand:
               kind: variable
               begin:
                 offset: 3845
@@ -5519,7 +5519,7 @@ statements:
                       base: decimal
                       value: 3
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -5538,7 +5538,7 @@ statements:
                     offset: 3879
                     line: 253
                   value: incorrect
-        - kind: unless
+        - kind: unless expression
           begin:
             offset: 3890
             line: 255
@@ -5546,8 +5546,8 @@ statements:
             offset: 3944
             line: 257
           conditional:
-            kind: binary
-            first:
+            kind: binary expression
+            operand:
               kind: variable
               begin:
                 offset: 3897
@@ -5591,7 +5591,7 @@ statements:
                         base: decimal
                         value: 5
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -5613,7 +5613,7 @@ statements:
     end:
       offset: 3712
       line: 245
-  - kind: class
+  - kind: class statement
     begin:
       offset: 3948
       line: 260
@@ -5673,7 +5673,7 @@ statements:
                 offset: 4002
                 line: 260
               text: bar
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 4010
       line: 263
@@ -5723,7 +5723,7 @@ statements:
                 offset: 4052
                 line: 264
               value: foo
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 4056
       line: 267
@@ -5731,8 +5731,8 @@ statements:
       offset: 4122
       line: 269
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: variable
         begin:
           offset: 4063
@@ -5756,7 +5756,7 @@ statements:
               line: 267
             value: foobar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -5775,7 +5775,7 @@ statements:
               offset: 4120
               line: 268
             value: incorrect
-  - kind: defined type
+  - kind: defined type statement
     begin:
       offset: 4124
       line: 271
@@ -5836,7 +5836,7 @@ statements:
                 line: 271
               text: bar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -5855,7 +5855,7 @@ statements:
               offset: 4199
               line: 272
             name: param2
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 4203
       line: 275
@@ -5905,7 +5905,7 @@ statements:
                 offset: 4240
                 line: 276
               value: foo
-  - kind: class
+  - kind: class statement
     begin:
       offset: 4244
       line: 279
@@ -5932,8 +5932,8 @@ statements:
             line: 279
           name: a
         default_value:
-          kind: binary
-          first:
+          kind: binary expression
+          operand:
             kind: name
             begin:
               offset: 4272
@@ -5974,7 +5974,7 @@ statements:
             offset: 4293
             line: 279
           name: 0
-  - kind: function call
+  - kind: function call statement
     function:
       kind: name
       begin:
@@ -5993,7 +5993,7 @@ statements:
           offset: 4324
           line: 282
         value: param_math_scope
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 4326
       line: 284
@@ -6001,8 +6001,8 @@ statements:
       offset: 4418
       line: 286
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: variable
         begin:
           offset: 4333
@@ -6051,7 +6051,7 @@ statements:
               offset: 4395
               line: 284
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6070,7 +6070,7 @@ statements:
               offset: 4416
               line: 285
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4437
       line: 289
@@ -6078,8 +6078,8 @@ statements:
       offset: 4473
       line: 291
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4440
@@ -6119,7 +6119,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6138,7 +6138,7 @@ statements:
               offset: 4471
               line: 290
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4474
       line: 292
@@ -6146,8 +6146,8 @@ statements:
       offset: 4510
       line: 294
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4477
@@ -6187,7 +6187,7 @@ statements:
             base: decimal
             value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6206,7 +6206,7 @@ statements:
               offset: 4508
               line: 293
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4511
       line: 295
@@ -6214,8 +6214,8 @@ statements:
       offset: 4551
       line: 297
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4514
@@ -6255,7 +6255,7 @@ statements:
             base: decimal
             value: 0.5
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6274,7 +6274,7 @@ statements:
               offset: 4549
               line: 296
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4552
       line: 298
@@ -6282,8 +6282,8 @@ statements:
       offset: 4594
       line: 300
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4555
@@ -6323,7 +6323,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6342,7 +6342,7 @@ statements:
               offset: 4592
               line: 299
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4595
       line: 301
@@ -6350,8 +6350,8 @@ statements:
       offset: 4637
       line: 303
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4598
@@ -6391,7 +6391,7 @@ statements:
             base: decimal
             value: 0.2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6410,7 +6410,7 @@ statements:
               offset: 4635
               line: 302
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4638
       line: 304
@@ -6418,8 +6418,8 @@ statements:
       offset: 4678
       line: 306
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4641
@@ -6459,7 +6459,7 @@ statements:
             base: decimal
             value: 0.2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6478,7 +6478,7 @@ statements:
               offset: 4676
               line: 305
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4680
       line: 308
@@ -6486,8 +6486,8 @@ statements:
       offset: 4711
       line: 310
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4683
@@ -6513,7 +6513,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6532,7 +6532,7 @@ statements:
               offset: 4709
               line: 309
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 4712
       line: 311
@@ -6540,8 +6540,8 @@ statements:
       offset: 4747
       line: 313
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4719
@@ -6567,7 +6567,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6586,7 +6586,7 @@ statements:
               offset: 4745
               line: 312
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4748
       line: 314
@@ -6594,8 +6594,8 @@ statements:
       offset: 4779
       line: 316
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4751
@@ -6621,7 +6621,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6640,7 +6640,7 @@ statements:
               offset: 4777
               line: 315
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4780
       line: 317
@@ -6648,8 +6648,8 @@ statements:
       offset: 4813
       line: 319
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4783
@@ -6675,7 +6675,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6694,7 +6694,7 @@ statements:
               offset: 4811
               line: 318
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 4814
       line: 320
@@ -6702,8 +6702,8 @@ statements:
       offset: 4851
       line: 322
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4821
@@ -6729,7 +6729,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6748,7 +6748,7 @@ statements:
               offset: 4849
               line: 321
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4852
       line: 323
@@ -6756,8 +6756,8 @@ statements:
       offset: 4885
       line: 325
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4855
@@ -6783,7 +6783,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6802,7 +6802,7 @@ statements:
               offset: 4883
               line: 324
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4886
       line: 326
@@ -6810,8 +6810,8 @@ statements:
       offset: 4921
       line: 328
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4889
@@ -6837,7 +6837,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6856,7 +6856,7 @@ statements:
               offset: 4919
               line: 327
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 4922
       line: 329
@@ -6864,8 +6864,8 @@ statements:
       offset: 4961
       line: 331
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4929
@@ -6891,7 +6891,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6910,7 +6910,7 @@ statements:
               offset: 4959
               line: 330
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4962
       line: 332
@@ -6918,8 +6918,8 @@ statements:
       offset: 4997
       line: 334
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 4965
@@ -6945,7 +6945,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -6964,7 +6964,7 @@ statements:
               offset: 4995
               line: 333
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 4998
       line: 335
@@ -6972,8 +6972,8 @@ statements:
       offset: 5033
       line: 337
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 5001
@@ -6997,7 +6997,7 @@ statements:
               line: 335
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7016,7 +7016,7 @@ statements:
               offset: 5031
               line: 336
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5034
       line: 338
@@ -7024,8 +7024,8 @@ statements:
       offset: 5073
       line: 340
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 5041
@@ -7049,7 +7049,7 @@ statements:
               line: 338
             value: bar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7068,7 +7068,7 @@ statements:
               offset: 5071
               line: 339
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5074
       line: 341
@@ -7076,8 +7076,8 @@ statements:
       offset: 5109
       line: 343
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 5077
@@ -7101,7 +7101,7 @@ statements:
               line: 341
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7120,7 +7120,7 @@ statements:
               offset: 5107
               line: 342
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5110
       line: 344
@@ -7128,8 +7128,8 @@ statements:
       offset: 5161
       line: 346
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: type
         begin:
           offset: 5117
@@ -7144,8 +7144,8 @@ statements:
             line: 344
           operator: ">"
           operand:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 5126
@@ -7154,8 +7154,8 @@ statements:
                 offset: 5132
                 line: 344
               name: String
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 5132
                   line: 344
@@ -7182,7 +7182,7 @@ statements:
                     base: decimal
                     value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7201,7 +7201,7 @@ statements:
               offset: 5159
               line: 345
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5162
       line: 347
@@ -7209,10 +7209,10 @@ statements:
       offset: 5209
       line: 349
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 5165
@@ -7221,8 +7221,8 @@ statements:
             offset: 5171
             line: 347
           name: String
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 5171
               line: 347
@@ -7263,7 +7263,7 @@ statements:
               line: 347
             name: String
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7282,7 +7282,7 @@ statements:
               offset: 5207
               line: 348
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5210
       line: 350
@@ -7290,10 +7290,10 @@ statements:
       offset: 5263
       line: 352
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 5213
@@ -7302,8 +7302,8 @@ statements:
             offset: 5219
             line: 350
           name: String
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 5219
               line: 350
@@ -7335,8 +7335,8 @@ statements:
             line: 350
           operator: ">"
           operand:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 5228
@@ -7345,8 +7345,8 @@ statements:
                 offset: 5234
                 line: 350
               name: String
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 5234
                   line: 350
@@ -7373,7 +7373,7 @@ statements:
                     base: decimal
                     value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7392,7 +7392,7 @@ statements:
               offset: 5261
               line: 351
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5265
       line: 354
@@ -7400,8 +7400,8 @@ statements:
       offset: 5297
       line: 356
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5268
@@ -7427,7 +7427,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7446,7 +7446,7 @@ statements:
               offset: 5295
               line: 355
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5298
       line: 357
@@ -7454,8 +7454,8 @@ statements:
       offset: 5334
       line: 359
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5305
@@ -7481,7 +7481,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7500,7 +7500,7 @@ statements:
               offset: 5332
               line: 358
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5335
       line: 360
@@ -7508,8 +7508,8 @@ statements:
       offset: 5371
       line: 362
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5342
@@ -7535,7 +7535,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7554,7 +7554,7 @@ statements:
               offset: 5369
               line: 361
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5372
       line: 363
@@ -7562,8 +7562,8 @@ statements:
       offset: 5406
       line: 365
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5375
@@ -7589,7 +7589,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7608,7 +7608,7 @@ statements:
               offset: 5404
               line: 364
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5407
       line: 366
@@ -7616,8 +7616,8 @@ statements:
       offset: 5445
       line: 368
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5414
@@ -7643,7 +7643,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7662,7 +7662,7 @@ statements:
               offset: 5443
               line: 367
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5446
       line: 369
@@ -7670,8 +7670,8 @@ statements:
       offset: 5484
       line: 371
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5453
@@ -7697,7 +7697,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7716,7 +7716,7 @@ statements:
               offset: 5482
               line: 370
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5485
       line: 372
@@ -7724,8 +7724,8 @@ statements:
       offset: 5521
       line: 374
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5488
@@ -7751,7 +7751,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7770,7 +7770,7 @@ statements:
               offset: 5519
               line: 373
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5522
       line: 375
@@ -7778,8 +7778,8 @@ statements:
       offset: 5562
       line: 377
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5529
@@ -7805,7 +7805,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7824,7 +7824,7 @@ statements:
               offset: 5560
               line: 376
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5563
       line: 378
@@ -7832,8 +7832,8 @@ statements:
       offset: 5603
       line: 380
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 5570
@@ -7859,7 +7859,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7878,7 +7878,7 @@ statements:
               offset: 5601
               line: 379
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5604
       line: 381
@@ -7886,8 +7886,8 @@ statements:
       offset: 5640
       line: 383
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 5607
@@ -7911,7 +7911,7 @@ statements:
               line: 381
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7930,7 +7930,7 @@ statements:
               offset: 5638
               line: 382
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5641
       line: 384
@@ -7938,8 +7938,8 @@ statements:
       offset: 5681
       line: 386
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 5648
@@ -7963,7 +7963,7 @@ statements:
               line: 384
             value: bar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -7982,7 +7982,7 @@ statements:
               offset: 5679
               line: 385
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5682
       line: 387
@@ -7990,8 +7990,8 @@ statements:
       offset: 5722
       line: 389
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 5689
@@ -8015,7 +8015,7 @@ statements:
               line: 387
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8034,7 +8034,7 @@ statements:
               offset: 5720
               line: 388
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5723
       line: 390
@@ -8042,8 +8042,8 @@ statements:
       offset: 5775
       line: 392
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: type
         begin:
           offset: 5730
@@ -8058,8 +8058,8 @@ statements:
             line: 390
           operator: ">="
           operand:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 5740
@@ -8068,8 +8068,8 @@ statements:
                 offset: 5746
                 line: 390
               name: String
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 5746
                   line: 390
@@ -8096,7 +8096,7 @@ statements:
                     base: decimal
                     value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8115,7 +8115,7 @@ statements:
               offset: 5773
               line: 391
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5776
       line: 393
@@ -8123,10 +8123,10 @@ statements:
       offset: 5824
       line: 395
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 5779
@@ -8135,8 +8135,8 @@ statements:
             offset: 5785
             line: 393
           name: String
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 5785
               line: 393
@@ -8177,7 +8177,7 @@ statements:
               line: 393
             name: String
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8196,7 +8196,7 @@ statements:
               offset: 5822
               line: 394
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5825
       line: 396
@@ -8204,10 +8204,10 @@ statements:
       offset: 5883
       line: 398
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 5832
@@ -8216,8 +8216,8 @@ statements:
             offset: 5838
             line: 396
           name: String
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 5838
               line: 396
@@ -8249,8 +8249,8 @@ statements:
             line: 396
           operator: ">="
           operand:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 5848
@@ -8259,8 +8259,8 @@ statements:
                 offset: 5854
                 line: 396
               name: String
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 5854
                   line: 396
@@ -8287,7 +8287,7 @@ statements:
                     base: decimal
                     value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8306,7 +8306,7 @@ statements:
               offset: 5881
               line: 397
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5885
       line: 400
@@ -8314,8 +8314,8 @@ statements:
       offset: 5928
       line: 402
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 5892
@@ -8339,7 +8339,7 @@ statements:
               line: 400
             value: foobar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8358,7 +8358,7 @@ statements:
               offset: 5926
               line: 401
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 5929
       line: 403
@@ -8366,8 +8366,8 @@ statements:
       offset: 5965
       line: 405
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 5932
@@ -8391,7 +8391,7 @@ statements:
               line: 403
             value: baz
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8410,7 +8410,7 @@ statements:
               offset: 5963
               line: 404
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 5966
       line: 406
@@ -8418,8 +8418,8 @@ statements:
       offset: 6014
       line: 408
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: regex
         begin:
           offset: 5973
@@ -8443,7 +8443,7 @@ statements:
               line: 406
             value: foobar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8462,7 +8462,7 @@ statements:
               offset: 6012
               line: 407
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6015
       line: 409
@@ -8470,8 +8470,8 @@ statements:
       offset: 6056
       line: 411
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: regex
         begin:
           offset: 6018
@@ -8495,7 +8495,7 @@ statements:
               line: 409
             value: baz
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8514,7 +8514,7 @@ statements:
               offset: 6054
               line: 410
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6057
       line: 412
@@ -8522,8 +8522,8 @@ statements:
       offset: 6108
       line: 414
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: type
         begin:
           offset: 6064
@@ -8573,7 +8573,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8592,7 +8592,7 @@ statements:
               offset: 6106
               line: 413
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6109
       line: 415
@@ -8600,8 +8600,8 @@ statements:
       offset: 6154
       line: 417
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: type
         begin:
           offset: 6112
@@ -8652,7 +8652,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8671,7 +8671,7 @@ statements:
               offset: 6152
               line: 416
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6155
       line: 418
@@ -8679,8 +8679,8 @@ statements:
       offset: 6203
       line: 420
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 6162
@@ -8730,7 +8730,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8749,7 +8749,7 @@ statements:
               offset: 6201
               line: 419
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6204
       line: 421
@@ -8757,8 +8757,8 @@ statements:
       offset: 6246
       line: 423
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 6207
@@ -8809,7 +8809,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8828,7 +8828,7 @@ statements:
               offset: 6244
               line: 422
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6247
       line: 424
@@ -8836,8 +8836,8 @@ statements:
       offset: 6317
       line: 426
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: type
         begin:
           offset: 6254
@@ -8919,7 +8919,7 @@ statements:
                   base: decimal
                   value: 6
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -8938,7 +8938,7 @@ statements:
               offset: 6315
               line: 425
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6318
       line: 427
@@ -8946,8 +8946,8 @@ statements:
       offset: 6380
       line: 429
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: type
         begin:
           offset: 6321
@@ -9031,7 +9031,7 @@ statements:
                   base: decimal
                   value: 6
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9050,7 +9050,7 @@ statements:
               offset: 6378
               line: 428
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6381
       line: 430
@@ -9058,8 +9058,8 @@ statements:
       offset: 6448
       line: 432
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 6388
@@ -9141,7 +9141,7 @@ statements:
                   base: decimal
                   value: 6
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9160,7 +9160,7 @@ statements:
               offset: 6446
               line: 431
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6449
       line: 433
@@ -9168,8 +9168,8 @@ statements:
       offset: 6508
       line: 435
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 6452
@@ -9253,7 +9253,7 @@ statements:
                   base: decimal
                   value: 6
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9272,7 +9272,7 @@ statements:
               offset: 6506
               line: 434
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6509
       line: 436
@@ -9280,8 +9280,8 @@ statements:
       offset: 6541
       line: 438
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6512
@@ -9307,7 +9307,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9326,7 +9326,7 @@ statements:
               offset: 6539
               line: 437
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6543
       line: 440
@@ -9334,8 +9334,8 @@ statements:
       offset: 6584
       line: 442
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6550
@@ -9375,7 +9375,7 @@ statements:
             base: decimal
             value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9394,7 +9394,7 @@ statements:
               offset: 6582
               line: 441
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6585
       line: 443
@@ -9402,9 +9402,9 @@ statements:
       offset: 6629
       line: 445
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 6592
           line: 443
@@ -9425,7 +9425,7 @@ statements:
             line: 443
           operator: <<
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 6598
               line: 443
@@ -9445,7 +9445,7 @@ statements:
             line: 443
           operator: ==
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 6604
               line: 443
@@ -9461,7 +9461,7 @@ statements:
               base: decimal
               value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9480,7 +9480,7 @@ statements:
               offset: 6627
               line: 444
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6630
       line: 446
@@ -9488,8 +9488,8 @@ statements:
       offset: 6672
       line: 448
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6637
@@ -9505,7 +9505,7 @@ statements:
             line: 446
           operator: <<
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 6642
               line: 446
@@ -9535,7 +9535,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9554,7 +9554,7 @@ statements:
               offset: 6670
               line: 447
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6673
       line: 449
@@ -9562,9 +9562,9 @@ statements:
       offset: 6716
       line: 451
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 6680
           line: 449
@@ -9599,7 +9599,7 @@ statements:
             line: 449
           operator: ==
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 6691
               line: 449
@@ -9615,7 +9615,7 @@ statements:
               base: decimal
               value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9634,7 +9634,7 @@ statements:
               offset: 6714
               line: 450
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6717
       line: 452
@@ -9642,8 +9642,8 @@ statements:
       offset: 6771
       line: 454
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: array
         begin:
           offset: 6724
@@ -9726,7 +9726,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9745,7 +9745,7 @@ statements:
               offset: 6769
               line: 453
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6773
       line: 456
@@ -9753,8 +9753,8 @@ statements:
       offset: 6808
       line: 458
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6780
@@ -9780,7 +9780,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9799,7 +9799,7 @@ statements:
               offset: 6806
               line: 457
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6809
       line: 459
@@ -9807,8 +9807,8 @@ statements:
       offset: 6840
       line: 461
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6812
@@ -9834,7 +9834,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9853,7 +9853,7 @@ statements:
               offset: 6838
               line: 460
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6841
       line: 462
@@ -9861,8 +9861,8 @@ statements:
       offset: 6872
       line: 464
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6844
@@ -9888,7 +9888,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9907,7 +9907,7 @@ statements:
               offset: 6870
               line: 463
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6873
       line: 465
@@ -9915,8 +9915,8 @@ statements:
       offset: 6910
       line: 467
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6880
@@ -9942,7 +9942,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -9961,7 +9961,7 @@ statements:
               offset: 6908
               line: 466
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6911
       line: 468
@@ -9969,8 +9969,8 @@ statements:
       offset: 6944
       line: 470
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6914
@@ -9996,7 +9996,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10015,7 +10015,7 @@ statements:
               offset: 6942
               line: 469
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 6945
       line: 471
@@ -10023,8 +10023,8 @@ statements:
       offset: 6978
       line: 473
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6948
@@ -10050,7 +10050,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10069,7 +10069,7 @@ statements:
               offset: 6976
               line: 472
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 6979
       line: 474
@@ -10077,8 +10077,8 @@ statements:
       offset: 7018
       line: 476
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 6986
@@ -10104,7 +10104,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10123,7 +10123,7 @@ statements:
               offset: 7016
               line: 475
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7019
       line: 477
@@ -10131,8 +10131,8 @@ statements:
       offset: 7054
       line: 479
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7022
@@ -10158,7 +10158,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10177,7 +10177,7 @@ statements:
               offset: 7052
               line: 478
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7055
       line: 480
@@ -10185,8 +10185,8 @@ statements:
       offset: 7090
       line: 482
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7058
@@ -10212,7 +10212,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10231,7 +10231,7 @@ statements:
               offset: 7088
               line: 481
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7091
       line: 483
@@ -10239,8 +10239,8 @@ statements:
       offset: 7130
       line: 485
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 7098
@@ -10264,7 +10264,7 @@ statements:
               line: 483
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10283,7 +10283,7 @@ statements:
               offset: 7128
               line: 484
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7131
       line: 486
@@ -10291,8 +10291,8 @@ statements:
       offset: 7166
       line: 488
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 7134
@@ -10316,7 +10316,7 @@ statements:
               line: 486
             value: bar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10335,7 +10335,7 @@ statements:
               offset: 7164
               line: 487
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7167
       line: 489
@@ -10343,8 +10343,8 @@ statements:
       offset: 7202
       line: 491
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 7170
@@ -10368,7 +10368,7 @@ statements:
               line: 489
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10387,7 +10387,7 @@ statements:
               offset: 7200
               line: 490
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7203
       line: 492
@@ -10395,8 +10395,8 @@ statements:
       offset: 7250
       line: 494
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: type
         begin:
           offset: 7206
@@ -10411,8 +10411,8 @@ statements:
             line: 492
           operator: <
           operand:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 7215
@@ -10421,8 +10421,8 @@ statements:
                 offset: 7221
                 line: 492
               name: String
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 7221
                   line: 492
@@ -10449,7 +10449,7 @@ statements:
                     base: decimal
                     value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10468,7 +10468,7 @@ statements:
               offset: 7248
               line: 493
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7251
       line: 495
@@ -10476,10 +10476,10 @@ statements:
       offset: 7302
       line: 497
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 7258
@@ -10488,8 +10488,8 @@ statements:
             offset: 7264
             line: 495
           name: String
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 7264
               line: 495
@@ -10530,7 +10530,7 @@ statements:
               line: 495
             name: String
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10549,7 +10549,7 @@ statements:
               offset: 7300
               line: 496
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7303
       line: 498
@@ -10557,10 +10557,10 @@ statements:
       offset: 7356
       line: 500
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 7306
@@ -10569,8 +10569,8 @@ statements:
             offset: 7312
             line: 498
           name: String
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 7312
               line: 498
@@ -10602,8 +10602,8 @@ statements:
             line: 498
           operator: <
           operand:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 7321
@@ -10612,8 +10612,8 @@ statements:
                 offset: 7327
                 line: 498
               name: String
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 7327
                   line: 498
@@ -10640,7 +10640,7 @@ statements:
                     base: decimal
                     value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10659,7 +10659,7 @@ statements:
               offset: 7354
               line: 499
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7358
       line: 502
@@ -10667,8 +10667,8 @@ statements:
       offset: 7394
       line: 504
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7365
@@ -10694,7 +10694,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10713,7 +10713,7 @@ statements:
               offset: 7392
               line: 503
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7395
       line: 505
@@ -10721,8 +10721,8 @@ statements:
       offset: 7427
       line: 507
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7398
@@ -10748,7 +10748,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10767,7 +10767,7 @@ statements:
               offset: 7425
               line: 506
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7428
       line: 508
@@ -10775,8 +10775,8 @@ statements:
       offset: 7464
       line: 510
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7435
@@ -10802,7 +10802,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10821,7 +10821,7 @@ statements:
               offset: 7462
               line: 509
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7465
       line: 511
@@ -10829,8 +10829,8 @@ statements:
       offset: 7503
       line: 513
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7472
@@ -10856,7 +10856,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10875,7 +10875,7 @@ statements:
               offset: 7501
               line: 512
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7504
       line: 514
@@ -10883,8 +10883,8 @@ statements:
       offset: 7538
       line: 516
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7507
@@ -10910,7 +10910,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10929,7 +10929,7 @@ statements:
               offset: 7536
               line: 515
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7539
       line: 517
@@ -10937,8 +10937,8 @@ statements:
       offset: 7577
       line: 519
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7546
@@ -10964,7 +10964,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -10983,7 +10983,7 @@ statements:
               offset: 7575
               line: 518
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7578
       line: 520
@@ -10991,8 +10991,8 @@ statements:
       offset: 7618
       line: 522
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7585
@@ -11018,7 +11018,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11037,7 +11037,7 @@ statements:
               offset: 7616
               line: 521
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7619
       line: 523
@@ -11045,8 +11045,8 @@ statements:
       offset: 7655
       line: 525
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7622
@@ -11072,7 +11072,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11091,7 +11091,7 @@ statements:
               offset: 7653
               line: 524
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7656
       line: 526
@@ -11099,8 +11099,8 @@ statements:
       offset: 7696
       line: 528
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 7663
@@ -11126,7 +11126,7 @@ statements:
             base: decimal
             value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11145,7 +11145,7 @@ statements:
               offset: 7694
               line: 527
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7697
       line: 529
@@ -11153,8 +11153,8 @@ statements:
       offset: 7737
       line: 531
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 7704
@@ -11178,7 +11178,7 @@ statements:
               line: 529
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11197,7 +11197,7 @@ statements:
               offset: 7735
               line: 530
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7738
       line: 532
@@ -11205,8 +11205,8 @@ statements:
       offset: 7774
       line: 534
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 7741
@@ -11230,7 +11230,7 @@ statements:
               line: 532
             value: bar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11249,7 +11249,7 @@ statements:
               offset: 7772
               line: 533
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7775
       line: 535
@@ -11257,8 +11257,8 @@ statements:
       offset: 7815
       line: 537
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 7782
@@ -11282,7 +11282,7 @@ statements:
               line: 535
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11301,7 +11301,7 @@ statements:
               offset: 7813
               line: 536
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7816
       line: 538
@@ -11309,8 +11309,8 @@ statements:
       offset: 7864
       line: 540
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: type
         begin:
           offset: 7819
@@ -11325,8 +11325,8 @@ statements:
             line: 538
           operator: <=
           operand:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 7829
@@ -11335,8 +11335,8 @@ statements:
                 offset: 7835
                 line: 538
               name: String
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 7835
                   line: 538
@@ -11363,7 +11363,7 @@ statements:
                     base: decimal
                     value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11382,7 +11382,7 @@ statements:
               offset: 7862
               line: 539
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7865
       line: 541
@@ -11390,10 +11390,10 @@ statements:
       offset: 7917
       line: 543
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 7872
@@ -11402,8 +11402,8 @@ statements:
             offset: 7878
             line: 541
           name: String
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 7878
               line: 541
@@ -11444,7 +11444,7 @@ statements:
               line: 541
             name: String
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11463,7 +11463,7 @@ statements:
               offset: 7915
               line: 542
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 7918
       line: 544
@@ -11471,10 +11471,10 @@ statements:
       offset: 7976
       line: 546
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 7925
@@ -11483,8 +11483,8 @@ statements:
             offset: 7931
             line: 544
           name: String
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 7931
               line: 544
@@ -11516,8 +11516,8 @@ statements:
             line: 544
           operator: <=
           operand:
-            kind: postfix
-            primary:
+            kind: postfix expression
+            operand:
               kind: type
               begin:
                 offset: 7941
@@ -11526,8 +11526,8 @@ statements:
                 offset: 7947
                 line: 544
               name: String
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 7947
                   line: 544
@@ -11554,7 +11554,7 @@ statements:
                     base: decimal
                     value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11573,7 +11573,7 @@ statements:
               offset: 7974
               line: 545
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 7978
       line: 548
@@ -11581,8 +11581,8 @@ statements:
       offset: 8019
       line: 550
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: boolean
         begin:
           offset: 7981
@@ -11606,7 +11606,7 @@ statements:
               line: 548
             value: false
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11625,7 +11625,7 @@ statements:
               offset: 8017
               line: 549
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8020
       line: 551
@@ -11633,8 +11633,8 @@ statements:
       offset: 8060
       line: 553
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: boolean
         begin:
           offset: 8023
@@ -11658,7 +11658,7 @@ statements:
               line: 551
             value: true
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11677,7 +11677,7 @@ statements:
               offset: 8058
               line: 552
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8061
       line: 554
@@ -11685,8 +11685,8 @@ statements:
       offset: 8101
       line: 556
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: boolean
         begin:
           offset: 8064
@@ -11710,7 +11710,7 @@ statements:
               line: 554
             value: false
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11729,7 +11729,7 @@ statements:
               offset: 8099
               line: 555
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8102
       line: 557
@@ -11737,8 +11737,8 @@ statements:
       offset: 8145
       line: 559
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: boolean
         begin:
           offset: 8109
@@ -11762,7 +11762,7 @@ statements:
               line: 557
             value: true
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11781,7 +11781,7 @@ statements:
               offset: 8143
               line: 558
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8147
       line: 561
@@ -11789,7 +11789,7 @@ statements:
       offset: 8178
       line: 563
     conditional:
-      kind: unary
+      kind: unary expression
       operator_position:
         offset: 8150
         line: 561
@@ -11804,7 +11804,7 @@ statements:
           line: 561
         value: true
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11823,7 +11823,7 @@ statements:
               offset: 8176
               line: 562
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8179
       line: 564
@@ -11831,7 +11831,7 @@ statements:
       offset: 8215
       line: 566
     conditional:
-      kind: unary
+      kind: unary expression
       operator_position:
         offset: 8186
         line: 564
@@ -11846,7 +11846,7 @@ statements:
           line: 564
         value: false
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11865,7 +11865,7 @@ statements:
               offset: 8213
               line: 565
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8217
       line: 568
@@ -11873,8 +11873,8 @@ statements:
       offset: 8257
       line: 570
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: boolean
         begin:
           offset: 8220
@@ -11898,7 +11898,7 @@ statements:
               line: 568
             value: false
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11917,7 +11917,7 @@ statements:
               offset: 8255
               line: 569
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8258
       line: 571
@@ -11925,8 +11925,8 @@ statements:
       offset: 8301
       line: 573
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: boolean
         begin:
           offset: 8265
@@ -11950,7 +11950,7 @@ statements:
               line: 571
             value: true
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -11969,7 +11969,7 @@ statements:
               offset: 8299
               line: 572
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8302
       line: 574
@@ -11977,8 +11977,8 @@ statements:
       offset: 8345
       line: 576
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: boolean
         begin:
           offset: 8309
@@ -12002,7 +12002,7 @@ statements:
               line: 574
             value: false
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12021,7 +12021,7 @@ statements:
               offset: 8343
               line: 575
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8346
       line: 577
@@ -12029,8 +12029,8 @@ statements:
       offset: 8388
       line: 579
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: boolean
         begin:
           offset: 8353
@@ -12054,7 +12054,7 @@ statements:
               line: 577
             value: true
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12073,7 +12073,7 @@ statements:
               offset: 8386
               line: 578
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8390
       line: 581
@@ -12081,8 +12081,8 @@ statements:
       offset: 8433
       line: 583
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8397
@@ -12106,7 +12106,7 @@ statements:
               line: 581
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12125,7 +12125,7 @@ statements:
               offset: 8431
               line: 582
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8434
       line: 584
@@ -12133,8 +12133,8 @@ statements:
       offset: 8470
       line: 586
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8437
@@ -12158,7 +12158,7 @@ statements:
               line: 584
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12177,7 +12177,7 @@ statements:
               offset: 8468
               line: 585
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8471
       line: 587
@@ -12185,8 +12185,8 @@ statements:
       offset: 8516
       line: 589
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8478
@@ -12210,7 +12210,7 @@ statements:
               line: 587
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12229,7 +12229,7 @@ statements:
               offset: 8514
               line: 588
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8517
       line: 590
@@ -12237,8 +12237,8 @@ statements:
       offset: 8555
       line: 592
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8520
@@ -12262,7 +12262,7 @@ statements:
               line: 590
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12281,7 +12281,7 @@ statements:
               offset: 8553
               line: 591
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8556
       line: 593
@@ -12289,8 +12289,8 @@ statements:
       offset: 8593
       line: 595
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 8559
@@ -12315,7 +12315,7 @@ statements:
               line: 593
             name: String
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12334,7 +12334,7 @@ statements:
               offset: 8591
               line: 594
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8594
       line: 596
@@ -12342,8 +12342,8 @@ statements:
       offset: 8637
       line: 598
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8601
@@ -12367,7 +12367,7 @@ statements:
               line: 596
             name: String
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12386,7 +12386,7 @@ statements:
               offset: 8635
               line: 597
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8639
       line: 600
@@ -12394,8 +12394,8 @@ statements:
       offset: 8678
       line: 602
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8642
@@ -12419,7 +12419,7 @@ statements:
               line: 600
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12438,7 +12438,7 @@ statements:
               offset: 8676
               line: 601
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8679
       line: 603
@@ -12446,8 +12446,8 @@ statements:
       offset: 8719
       line: 605
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8686
@@ -12471,7 +12471,7 @@ statements:
               line: 603
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12490,7 +12490,7 @@ statements:
               offset: 8717
               line: 604
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8720
       line: 606
@@ -12498,8 +12498,8 @@ statements:
       offset: 8761
       line: 608
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8723
@@ -12523,7 +12523,7 @@ statements:
               line: 606
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12542,7 +12542,7 @@ statements:
               offset: 8759
               line: 607
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8762
       line: 609
@@ -12550,8 +12550,8 @@ statements:
       offset: 8804
       line: 611
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8769
@@ -12575,7 +12575,7 @@ statements:
               line: 609
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12594,7 +12594,7 @@ statements:
               offset: 8802
               line: 610
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 8805
       line: 612
@@ -12602,8 +12602,8 @@ statements:
       offset: 8846
       line: 614
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 8812
@@ -12628,7 +12628,7 @@ statements:
               line: 612
             name: String
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12647,7 +12647,7 @@ statements:
               offset: 8844
               line: 613
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8847
       line: 615
@@ -12655,8 +12655,8 @@ statements:
       offset: 8886
       line: 617
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 8850
@@ -12680,7 +12680,7 @@ statements:
               line: 615
             name: String
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12699,7 +12699,7 @@ statements:
               offset: 8884
               line: 616
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8888
       line: 619
@@ -12707,8 +12707,8 @@ statements:
       offset: 8924
       line: 621
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 8891
@@ -12748,7 +12748,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12767,7 +12767,7 @@ statements:
               offset: 8922
               line: 620
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8925
       line: 622
@@ -12775,8 +12775,8 @@ statements:
       offset: 8965
       line: 624
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 8928
@@ -12816,7 +12816,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12835,7 +12835,7 @@ statements:
               offset: 8963
               line: 623
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 8966
       line: 625
@@ -12843,8 +12843,8 @@ statements:
       offset: 9006
       line: 627
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 8969
@@ -12884,7 +12884,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12903,7 +12903,7 @@ statements:
               offset: 9004
               line: 626
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9007
       line: 628
@@ -12911,9 +12911,9 @@ statements:
       offset: 9045
       line: 630
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 9010
           line: 628
@@ -12948,7 +12948,7 @@ statements:
             line: 628
           operator: "!="
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 9020
               line: 628
@@ -12964,7 +12964,7 @@ statements:
               base: decimal
               value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -12983,7 +12983,7 @@ statements:
               offset: 9043
               line: 629
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9046
       line: 631
@@ -12991,8 +12991,8 @@ statements:
       offset: 9083
       line: 633
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9049
@@ -13008,7 +13008,7 @@ statements:
             line: 631
           operator: "-"
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 9053
               line: 631
@@ -13038,7 +13038,7 @@ statements:
             base: decimal
             value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13057,7 +13057,7 @@ statements:
               offset: 9081
               line: 632
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9084
       line: 634
@@ -13065,9 +13065,9 @@ statements:
       offset: 9123
       line: 636
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 9087
           line: 634
@@ -13088,7 +13088,7 @@ statements:
             line: 634
           operator: "-"
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 9092
               line: 634
@@ -13108,7 +13108,7 @@ statements:
             line: 634
           operator: "!="
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 9098
               line: 634
@@ -13124,7 +13124,7 @@ statements:
               base: decimal
               value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13143,7 +13143,7 @@ statements:
               offset: 9121
               line: 635
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9124
       line: 637
@@ -13151,8 +13151,8 @@ statements:
       offset: 9166
       line: 639
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9127
@@ -13192,7 +13192,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13211,7 +13211,7 @@ statements:
               offset: 9164
               line: 638
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9167
       line: 640
@@ -13219,9 +13219,9 @@ statements:
       offset: 9211
       line: 642
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 9170
           line: 640
@@ -13256,7 +13256,7 @@ statements:
             line: 640
           operator: "!="
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 9184
               line: 640
@@ -13272,7 +13272,7 @@ statements:
               base: decimal
               value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13291,7 +13291,7 @@ statements:
               offset: 9209
               line: 641
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9212
       line: 643
@@ -13299,8 +13299,8 @@ statements:
       offset: 9255
       line: 645
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9215
@@ -13316,7 +13316,7 @@ statements:
             line: 643
           operator: "-"
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 9221
               line: 643
@@ -13346,7 +13346,7 @@ statements:
             base: decimal
             value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13365,7 +13365,7 @@ statements:
               offset: 9253
               line: 644
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9256
       line: 646
@@ -13373,9 +13373,9 @@ statements:
       offset: 9301
       line: 648
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 9259
           line: 646
@@ -13396,7 +13396,7 @@ statements:
             line: 646
           operator: "-"
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 9266
               line: 646
@@ -13416,7 +13416,7 @@ statements:
             line: 646
           operator: "!="
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 9274
               line: 646
@@ -13432,7 +13432,7 @@ statements:
               base: decimal
               value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13451,7 +13451,7 @@ statements:
               offset: 9299
               line: 647
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9302
       line: 649
@@ -13459,8 +13459,8 @@ statements:
       offset: 9353
       line: 651
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: array
         begin:
           offset: 9305
@@ -13551,7 +13551,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13570,7 +13570,7 @@ statements:
               offset: 9351
               line: 650
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9354
       line: 652
@@ -13578,8 +13578,8 @@ statements:
       offset: 9436
       line: 654
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: array
         begin:
           offset: 9357
@@ -13766,7 +13766,7 @@ statements:
                     base: decimal
                     value: 6
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13785,7 +13785,7 @@ statements:
               offset: 9434
               line: 653
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9437
       line: 655
@@ -13793,8 +13793,8 @@ statements:
       offset: 9486
       line: 657
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: array
         begin:
           offset: 9440
@@ -13877,7 +13877,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -13896,7 +13896,7 @@ statements:
               offset: 9484
               line: 656
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9487
       line: 658
@@ -13904,8 +13904,8 @@ statements:
       offset: 9569
       line: 660
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: hash
         begin:
           offset: 9490
@@ -14050,7 +14050,7 @@ statements:
                     line: 658
                   value: f
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14069,7 +14069,7 @@ statements:
               offset: 9567
               line: 659
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9570
       line: 661
@@ -14077,8 +14077,8 @@ statements:
       offset: 9641
       line: 663
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: hash
         begin:
           offset: 9573
@@ -14203,7 +14203,7 @@ statements:
                     line: 661
                   value: b
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14222,7 +14222,7 @@ statements:
               offset: 9639
               line: 662
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9643
       line: 665
@@ -14230,8 +14230,8 @@ statements:
       offset: 9680
       line: 667
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9646
@@ -14271,7 +14271,7 @@ statements:
             base: decimal
             value: 0
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14290,7 +14290,7 @@ statements:
               offset: 9678
               line: 666
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9681
       line: 668
@@ -14298,8 +14298,8 @@ statements:
       offset: 9718
       line: 670
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9684
@@ -14339,7 +14339,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14358,7 +14358,7 @@ statements:
               offset: 9716
               line: 669
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9719
       line: 671
@@ -14366,8 +14366,8 @@ statements:
       offset: 9760
       line: 673
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9722
@@ -14407,7 +14407,7 @@ statements:
             base: decimal
             value: 10
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14426,7 +14426,7 @@ statements:
               offset: 9758
               line: 672
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9762
       line: 675
@@ -14434,8 +14434,8 @@ statements:
       offset: 9798
       line: 677
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9765
@@ -14475,7 +14475,7 @@ statements:
             base: decimal
             value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14494,7 +14494,7 @@ statements:
               offset: 9796
               line: 676
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9799
       line: 678
@@ -14502,8 +14502,8 @@ statements:
       offset: 9839
       line: 680
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9802
@@ -14543,7 +14543,7 @@ statements:
             base: decimal
             value: 6
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14562,7 +14562,7 @@ statements:
               offset: 9837
               line: 679
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9840
       line: 681
@@ -14570,8 +14570,8 @@ statements:
       offset: 9881
       line: 683
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9843
@@ -14611,7 +14611,7 @@ statements:
             base: decimal
             value: 10
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14630,7 +14630,7 @@ statements:
               offset: 9879
               line: 682
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9882
       line: 684
@@ -14638,8 +14638,8 @@ statements:
       offset: 9925
       line: 686
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9885
@@ -14679,7 +14679,7 @@ statements:
             base: decimal
             value: 15
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14698,7 +14698,7 @@ statements:
               offset: 9923
               line: 685
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9927
       line: 688
@@ -14706,8 +14706,8 @@ statements:
       offset: 9963
       line: 690
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9930
@@ -14747,7 +14747,7 @@ statements:
             base: decimal
             value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14766,7 +14766,7 @@ statements:
               offset: 9961
               line: 689
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 9964
       line: 691
@@ -14774,8 +14774,8 @@ statements:
       offset: 10004
       line: 693
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 9967
@@ -14815,7 +14815,7 @@ statements:
             base: decimal
             value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14834,7 +14834,7 @@ statements:
               offset: 10002
               line: 692
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10005
       line: 694
@@ -14842,8 +14842,8 @@ statements:
       offset: 10045
       line: 696
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 10008
@@ -14883,7 +14883,7 @@ statements:
             base: decimal
             value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14902,7 +14902,7 @@ statements:
               offset: 10043
               line: 695
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10046
       line: 697
@@ -14910,9 +14910,9 @@ statements:
       offset: 10084
       line: 699
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 10049
           line: 697
@@ -14947,7 +14947,7 @@ statements:
             line: 697
           operator: "!="
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10059
               line: 697
@@ -14963,7 +14963,7 @@ statements:
               base: decimal
               value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -14982,7 +14982,7 @@ statements:
               offset: 10082
               line: 698
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10085
       line: 700
@@ -14990,8 +14990,8 @@ statements:
       offset: 10122
       line: 702
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 10088
@@ -15007,7 +15007,7 @@ statements:
             line: 700
           operator: +
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10092
               line: 700
@@ -15037,7 +15037,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15056,7 +15056,7 @@ statements:
               offset: 10120
               line: 701
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10123
       line: 703
@@ -15064,9 +15064,9 @@ statements:
       offset: 10162
       line: 705
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 10126
           line: 703
@@ -15087,7 +15087,7 @@ statements:
             line: 703
           operator: +
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10131
               line: 703
@@ -15107,7 +15107,7 @@ statements:
             line: 703
           operator: "!="
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10137
               line: 703
@@ -15123,7 +15123,7 @@ statements:
               base: decimal
               value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15142,7 +15142,7 @@ statements:
               offset: 10160
               line: 704
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10163
       line: 706
@@ -15150,8 +15150,8 @@ statements:
       offset: 10205
       line: 708
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 10166
@@ -15191,7 +15191,7 @@ statements:
             base: decimal
             value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15210,7 +15210,7 @@ statements:
               offset: 10203
               line: 707
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10206
       line: 709
@@ -15218,9 +15218,9 @@ statements:
       offset: 10250
       line: 711
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 10209
           line: 709
@@ -15255,7 +15255,7 @@ statements:
             line: 709
           operator: "!="
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10223
               line: 709
@@ -15271,7 +15271,7 @@ statements:
               base: decimal
               value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15290,7 +15290,7 @@ statements:
               offset: 10248
               line: 710
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10251
       line: 712
@@ -15298,8 +15298,8 @@ statements:
       offset: 10294
       line: 714
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 10254
@@ -15315,7 +15315,7 @@ statements:
             line: 712
           operator: +
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10260
               line: 712
@@ -15345,7 +15345,7 @@ statements:
             base: decimal
             value: 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15364,7 +15364,7 @@ statements:
               offset: 10292
               line: 713
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10295
       line: 715
@@ -15372,9 +15372,9 @@ statements:
       offset: 10340
       line: 717
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 10298
           line: 715
@@ -15395,7 +15395,7 @@ statements:
             line: 715
           operator: +
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10305
               line: 715
@@ -15415,7 +15415,7 @@ statements:
             line: 715
           operator: "!="
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10313
               line: 715
@@ -15431,7 +15431,7 @@ statements:
               base: decimal
               value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15450,7 +15450,7 @@ statements:
               offset: 10338
               line: 716
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10341
       line: 718
@@ -15458,8 +15458,8 @@ statements:
       offset: 10398
       line: 720
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: array
         begin:
           offset: 10344
@@ -15568,7 +15568,7 @@ statements:
                 base: decimal
                 value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15587,7 +15587,7 @@ statements:
               offset: 10396
               line: 719
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10399
       line: 721
@@ -15595,8 +15595,8 @@ statements:
       offset: 10461
       line: 723
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: array
         begin:
           offset: 10402
@@ -15715,7 +15715,7 @@ statements:
                     base: decimal
                     value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15734,7 +15734,7 @@ statements:
               offset: 10459
               line: 722
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10462
       line: 724
@@ -15742,8 +15742,8 @@ statements:
       offset: 10517
       line: 726
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: array
         begin:
           offset: 10465
@@ -15844,7 +15844,7 @@ statements:
                 base: decimal
                 value: 4
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -15863,7 +15863,7 @@ statements:
               offset: 10515
               line: 725
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10518
       line: 727
@@ -15871,8 +15871,8 @@ statements:
       offset: 10616
       line: 729
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: hash
         begin:
           offset: 10521
@@ -16053,7 +16053,7 @@ statements:
                     line: 727
                   value: h
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -16072,7 +16072,7 @@ statements:
               offset: 10614
               line: 728
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10617
       line: 730
@@ -16080,8 +16080,8 @@ statements:
       offset: 10714
       line: 732
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: hash
         begin:
           offset: 10620
@@ -16268,7 +16268,7 @@ statements:
                     line: 730
                   value: h
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -16287,7 +16287,7 @@ statements:
               offset: 10712
               line: 731
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 10715
       line: 733
@@ -16295,8 +16295,8 @@ statements:
       offset: 10810
       line: 735
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: hash
         begin:
           offset: 10718
@@ -16475,7 +16475,7 @@ statements:
                     line: 733
                   value: h
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -16494,7 +16494,7 @@ statements:
               offset: 10808
               line: 734
             value: incorrect
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 10812
       line: 737
@@ -16585,10 +16585,10 @@ statements:
                 offset: 10846
                 line: 738
               value: h
-  - kind: binary
-    first:
-      kind: postfix
-      primary:
+  - kind: relationship statement
+    operand:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 10852
@@ -16597,8 +16597,8 @@ statements:
           offset: 10856
           line: 741
         name: File
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 10856
             line: 741
@@ -16620,8 +16620,8 @@ statements:
           line: 741
         operator: ->
         operand:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 10863
@@ -16630,8 +16630,8 @@ statements:
               offset: 10867
               line: 741
             name: File
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 10867
                 line: 741
@@ -16647,10 +16647,10 @@ statements:
                     offset: 10869
                     line: 741
                   value: b
-  - kind: binary
-    first:
-      kind: postfix
-      primary:
+  - kind: relationship statement
+    operand:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 10871
@@ -16659,8 +16659,8 @@ statements:
           offset: 10875
           line: 742
         name: File
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 10875
             line: 742
@@ -16682,8 +16682,8 @@ statements:
           line: 742
         operator: ~>
         operand:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 10882
@@ -16692,8 +16692,8 @@ statements:
               offset: 10886
               line: 742
             name: File
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 10886
                 line: 742
@@ -16709,10 +16709,10 @@ statements:
                     offset: 10888
                     line: 742
                   value: d
-  - kind: binary
-    first:
-      kind: postfix
-      primary:
+  - kind: relationship statement
+    operand:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 10890
@@ -16721,8 +16721,8 @@ statements:
           offset: 10894
           line: 743
         name: File
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 10894
             line: 743
@@ -16744,8 +16744,8 @@ statements:
           line: 743
         operator: <-
         operand:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 10901
@@ -16754,8 +16754,8 @@ statements:
               offset: 10905
               line: 743
             name: File
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 10905
                 line: 743
@@ -16771,10 +16771,10 @@ statements:
                     offset: 10907
                     line: 743
                   value: f
-  - kind: binary
-    first:
-      kind: postfix
-      primary:
+  - kind: relationship statement
+    operand:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 10909
@@ -16783,8 +16783,8 @@ statements:
           offset: 10913
           line: 744
         name: File
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 10913
             line: 744
@@ -16806,8 +16806,8 @@ statements:
           line: 744
         operator: <~
         operand:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 10920
@@ -16816,8 +16816,8 @@ statements:
               offset: 10924
               line: 744
             name: File
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 10924
                 line: 744
@@ -16833,7 +16833,7 @@ statements:
                     offset: 10926
                     line: 744
                   value: h
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 10929
       line: 746
@@ -16841,8 +16841,8 @@ statements:
       offset: 10970
       line: 748
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 10936
@@ -16882,7 +16882,7 @@ statements:
             base: decimal
             value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -16901,7 +16901,7 @@ statements:
               offset: 10968
               line: 747
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 10971
       line: 749
@@ -16909,9 +16909,9 @@ statements:
       offset: 11015
       line: 751
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 10978
           line: 749
@@ -16932,7 +16932,7 @@ statements:
             line: 749
           operator: ">>"
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10984
               line: 749
@@ -16952,7 +16952,7 @@ statements:
             line: 749
           operator: ==
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 10990
               line: 749
@@ -16968,7 +16968,7 @@ statements:
               base: decimal
               value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -16987,7 +16987,7 @@ statements:
               offset: 11013
               line: 750
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11016
       line: 752
@@ -16995,8 +16995,8 @@ statements:
       offset: 11058
       line: 754
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: number
         begin:
           offset: 11023
@@ -17012,7 +17012,7 @@ statements:
             line: 752
           operator: ">>"
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 11028
               line: 752
@@ -17042,7 +17042,7 @@ statements:
             base: decimal
             value: 8
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17061,7 +17061,7 @@ statements:
               offset: 11056
               line: 753
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11059
       line: 755
@@ -17069,9 +17069,9 @@ statements:
       offset: 11102
       line: 757
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 11066
           line: 755
@@ -17106,7 +17106,7 @@ statements:
             line: 755
           operator: ==
           operand:
-            kind: unary
+            kind: unary expression
             operator_position:
               offset: 11077
               line: 755
@@ -17122,7 +17122,7 @@ statements:
               base: decimal
               value: 1
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17141,7 +17141,7 @@ statements:
               offset: 11100
               line: 756
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 11104
       line: 759
@@ -17149,9 +17149,9 @@ statements:
       offset: 11142
       line: 761
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 11107
           line: 759
@@ -17178,7 +17178,7 @@ statements:
               offset: 11119
               line: 759
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17197,7 +17197,7 @@ statements:
               offset: 11140
               line: 760
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 11143
       line: 762
@@ -17205,9 +17205,9 @@ statements:
       offset: 11178
       line: 764
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 11146
           line: 762
@@ -17246,7 +17246,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17265,7 +17265,7 @@ statements:
               offset: 11176
               line: 763
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 11179
       line: 765
@@ -17273,9 +17273,9 @@ statements:
       offset: 11228
       line: 767
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 11182
           line: 765
@@ -17358,7 +17358,7 @@ statements:
                 base: decimal
                 value: 3
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17377,7 +17377,7 @@ statements:
               offset: 11226
               line: 766
             value: incorrect
-  - kind: if
+  - kind: if expression
     begin:
       offset: 11229
       line: 768
@@ -17385,9 +17385,9 @@ statements:
       offset: 11292
       line: 770
     conditional:
-      kind: binary
-      first:
-        kind: unary
+      kind: binary expression
+      operand:
+        kind: unary expression
         operator_position:
           offset: 11232
           line: 768
@@ -17500,7 +17500,7 @@ statements:
                       line: 768
                     value: d
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17519,8 +17519,8 @@ statements:
               offset: 11290
               line: 769
             value: incorrect
-  - kind: binary
-    first:
+  - kind: binary expression
+    operand:
       kind: variable
       begin:
         offset: 11327
@@ -17543,7 +17543,7 @@ statements:
             offset: 11346
             line: 773
           value: foo
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11347
       line: 774
@@ -17551,8 +17551,8 @@ statements:
       offset: 11410
       line: 776
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: interpolated string
         begin:
           offset: 11354
@@ -17569,8 +17569,8 @@ statements:
               offset: 11363
               line: 774
             text: "1 + 1 = "
-          - kind: binary
-            first:
+          - kind: binary expression
+            operand:
               kind: number
               begin:
                 offset: 11365
@@ -17610,7 +17610,7 @@ statements:
               line: 774
             value: 1 + 1 = 2
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17629,7 +17629,7 @@ statements:
               offset: 11408
               line: 775
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11411
       line: 777
@@ -17637,8 +17637,8 @@ statements:
       offset: 11499
       line: 779
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: interpolated string
         begin:
           offset: 11418
@@ -17678,7 +17678,7 @@ statements:
               line: 777
             value: $interpolated = foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17697,7 +17697,7 @@ statements:
               offset: 11497
               line: 778
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11500
       line: 780
@@ -17705,8 +17705,8 @@ statements:
       offset: 11590
       line: 782
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: interpolated string
         begin:
           offset: 11507
@@ -17746,7 +17746,7 @@ statements:
               line: 780
             value: $interpolated = foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17765,7 +17765,7 @@ statements:
               offset: 11588
               line: 781
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11591
       line: 783
@@ -17773,8 +17773,8 @@ statements:
       offset: 11688
       line: 785
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: interpolated string
         begin:
           offset: 11598
@@ -17791,8 +17791,8 @@ statements:
               offset: 11619
               line: 783
             text: "$interpolated[0] = "
-          - kind: postfix
-            primary:
+          - kind: postfix expression
+            operand:
               kind: variable
               begin:
                 offset: 11621
@@ -17801,8 +17801,8 @@ statements:
                 offset: 11633
                 line: 783
               name: interpolated
-            subexpressions:
-              - kind: access
+            operations:
+              - kind: access expression
                 begin:
                   offset: 11633
                   line: 783
@@ -17834,7 +17834,7 @@ statements:
               line: 783
             value: $interpolated[0] = f
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17853,7 +17853,7 @@ statements:
               offset: 11686
               line: 784
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11689
       line: 786
@@ -17861,8 +17861,8 @@ statements:
       offset: 11815
       line: 788
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: interpolated string
         begin:
           offset: 11696
@@ -17879,8 +17879,8 @@ statements:
               offset: 11724
               line: 786
             text: "$interpolated.split('') = "
-          - kind: postfix
-            primary:
+          - kind: postfix expression
+            operand:
               kind: variable
               begin:
                 offset: 11726
@@ -17889,8 +17889,8 @@ statements:
                 offset: 11738
                 line: 786
               name: interpolated
-            subexpressions:
-              - kind: method call
+            operations:
+              - kind: method call expression
                 begin:
                   offset: 11738
                   line: 786
@@ -17930,7 +17930,7 @@ statements:
               line: 786
             value: $interpolated.split('') = [f, o, o]
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -17949,7 +17949,7 @@ statements:
               offset: 11813
               line: 787
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11816
       line: 789
@@ -17957,8 +17957,8 @@ statements:
       offset: 11914
       line: 791
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: name
         begin:
           offset: 11823
@@ -18032,7 +18032,7 @@ statements:
               line: 789
             value: match group 1 = 'o'
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -18051,7 +18051,7 @@ statements:
               offset: 11912
               line: 790
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11915
       line: 792
@@ -18059,8 +18059,8 @@ statements:
       offset: 11974
       line: 794
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: interpolated string
         begin:
           offset: 11922
@@ -18092,7 +18092,7 @@ statements:
               line: 792
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -18111,7 +18111,7 @@ statements:
               offset: 11972
               line: 793
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 11975
       line: 795
@@ -18119,8 +18119,8 @@ statements:
       offset: 12032
       line: 797
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: interpolated string
         begin:
           offset: 11982
@@ -18152,7 +18152,7 @@ statements:
               line: 795
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -18171,7 +18171,7 @@ statements:
               offset: 12030
               line: 796
             value: incorrect
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 12033
       line: 798
@@ -18179,8 +18179,8 @@ statements:
       offset: 12090
       line: 800
     conditional:
-      kind: binary
-      first:
+      kind: binary expression
+      operand:
         kind: interpolated string
         begin:
           offset: 12040
@@ -18212,7 +18212,7 @@ statements:
               line: 798
             value: foo
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -18231,7 +18231,7 @@ statements:
               offset: 12088
               line: 799
             value: incorrect
-  - kind: resource defaults
+  - kind: resource defaults expression
     begin:
       offset: 12112
       line: 803
@@ -18270,7 +18270,7 @@ statements:
             offset: 12133
             line: 804
           value: bar
-  - kind: resource
+  - kind: resource declaration expression
     begin:
       offset: 12137
       line: 807
@@ -18297,7 +18297,7 @@ statements:
             offset: 12160
             line: 807
           value: /default/check
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 12165
       line: 810
@@ -18305,10 +18305,10 @@ statements:
       offset: 12229
       line: 812
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 12172
@@ -18317,8 +18317,8 @@ statements:
             offset: 12176
             line: 810
           name: File
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 12176
               line: 810
@@ -18334,7 +18334,7 @@ statements:
                   offset: 12193
                   line: 810
                 value: /default/check
-          - kind: access
+          - kind: access expression
             begin:
               offset: 12194
               line: 810
@@ -18365,7 +18365,7 @@ statements:
               line: 810
             value: bar
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -18384,7 +18384,7 @@ statements:
               offset: 12227
               line: 811
             value: incorrect
-  - kind: resource override
+  - kind: resource override expression
     begin:
       offset: 12253
       line: 816
@@ -18392,8 +18392,8 @@ statements:
       offset: 12295
       line: 818
     reference:
-      kind: postfix
-      primary:
+      kind: postfix expression
+      operand:
         kind: type
         begin:
           offset: 12253
@@ -18402,8 +18402,8 @@ statements:
           offset: 12257
           line: 816
         name: File
-      subexpressions:
-        - kind: access
+      operations:
+        - kind: access expression
           begin:
             offset: 12257
             line: 816
@@ -18442,7 +18442,7 @@ statements:
             offset: 12293
             line: 817
           value: cake
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 12297
       line: 820
@@ -18450,10 +18450,10 @@ statements:
       offset: 12362
       line: 822
     conditional:
-      kind: binary
-      first:
-        kind: postfix
-        primary:
+      kind: binary expression
+      operand:
+        kind: postfix expression
+        operand:
           kind: type
           begin:
             offset: 12304
@@ -18462,8 +18462,8 @@ statements:
             offset: 12308
             line: 820
           name: File
-        subexpressions:
-          - kind: access
+        operations:
+          - kind: access expression
             begin:
               offset: 12308
               line: 820
@@ -18479,7 +18479,7 @@ statements:
                   offset: 12325
                   line: 820
                 value: /default/check
-          - kind: access
+          - kind: access expression
             begin:
               offset: 12326
               line: 820
@@ -18510,7 +18510,7 @@ statements:
               line: 820
             value: cake
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -18529,7 +18529,7 @@ statements:
               offset: 12360
               line: 821
             value: incorrect
-  - kind: function
+  - kind: function statement
     begin:
       offset: 12382
       line: 826
@@ -18554,7 +18554,7 @@ statements:
           offset: 12416
           line: 827
         value: true
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 12420
       line: 830
@@ -18562,7 +18562,7 @@ statements:
       offset: 12466
       line: 832
     conditional:
-      kind: function call
+      kind: function call expression
       function:
         kind: name
         begin:
@@ -18576,7 +18576,7 @@ statements:
         offset: 12443
         line: 830
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -18595,7 +18595,7 @@ statements:
               offset: 12464
               line: 831
             value: incorrect
-  - kind: function
+  - kind: function statement
     begin:
       offset: 12468
       line: 834
@@ -18649,8 +18649,8 @@ statements:
             line: 834
           name: b
     body:
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 12524
@@ -18700,7 +18700,7 @@ statements:
                 offset: 12545
                 line: 835
               value: foo
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 12549
       line: 838
@@ -18708,7 +18708,7 @@ statements:
       offset: 12604
       line: 840
     conditional:
-      kind: function call
+      kind: function call expression
       function:
         kind: name
         begin:
@@ -18740,7 +18740,7 @@ statements:
         offset: 12581
         line: 838
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -18759,7 +18759,7 @@ statements:
               offset: 12602
               line: 839
             value: incorrect
-  - kind: function
+  - kind: function statement
     begin:
       offset: 12606
       line: 842
@@ -18807,8 +18807,8 @@ statements:
             line: 842
           name: c
     body:
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 12649
@@ -18900,7 +18900,7 @@ statements:
                     offset: 12690
                     line: 843
                   value: baz
-  - kind: unless
+  - kind: unless expression
     begin:
       offset: 12695
       line: 846
@@ -18908,7 +18908,7 @@ statements:
       offset: 12757
       line: 848
     conditional:
-      kind: function call
+      kind: function call expression
       function:
         kind: name
         begin:
@@ -18956,7 +18956,7 @@ statements:
         offset: 12734
         line: 846
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:

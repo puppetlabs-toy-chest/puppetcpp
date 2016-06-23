@@ -1,6 +1,6 @@
 path: functions.pp
 statements:
-  - kind: function
+  - kind: function statement
     begin:
       offset: 0
       line: 1
@@ -16,7 +16,7 @@ statements:
         offset: 12
         line: 1
       value: foo
-  - kind: function
+  - kind: function statement
     begin:
       offset: 18
       line: 4
@@ -32,7 +32,7 @@ statements:
         offset: 40
         line: 4
       value: bar::baz::jam
-  - kind: function
+  - kind: function statement
     begin:
       offset: 47
       line: 8
@@ -48,7 +48,7 @@ statements:
         offset: 59
         line: 8
       value: baz
-  - kind: function
+  - kind: function statement
     begin:
       offset: 66
       line: 10
@@ -75,7 +75,7 @@ statements:
             line: 10
           name: foo
     body:
-      - kind: function call
+      - kind: function call expression
         function:
           kind: name
           begin:
@@ -112,7 +112,7 @@ statements:
                   line: 11
                 name: x
           body:
-            - kind: function call
+            - kind: function call statement
               function:
                 kind: name
                 begin:
@@ -134,7 +134,7 @@ statements:
         end:
           offset: 101
           line: 11
-  - kind: function
+  - kind: function statement
     begin:
       offset: 136
       line: 16
@@ -169,7 +169,7 @@ statements:
             offset: 159
             line: 16
           name: bar
-  - kind: function
+  - kind: function statement
     begin:
       offset: 167
       line: 20
@@ -205,8 +205,8 @@ statements:
             line: 20
           name: x
       - type:
-          kind: postfix
-          primary:
+          kind: postfix expression
+          operand:
             kind: type
             begin:
               offset: 198
@@ -215,8 +215,8 @@ statements:
               offset: 204
               line: 20
             name: String
-          subexpressions:
-            - kind: access
+          operations:
+            - kind: access expression
               begin:
                 offset: 204
                 line: 20
@@ -273,7 +273,7 @@ statements:
             line: 20
           name: rest
     body:
-      - kind: function call
+      - kind: function call statement
         function:
           kind: name
           begin:
@@ -292,8 +292,8 @@ statements:
               offset: 244
               line: 21
             value: hi
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 249
@@ -331,8 +331,8 @@ statements:
                 line: 22
               base: decimal
               value: 1
-      - kind: binary
-        first:
+      - kind: binary expression
+        operand:
           kind: variable
           begin:
             offset: 266

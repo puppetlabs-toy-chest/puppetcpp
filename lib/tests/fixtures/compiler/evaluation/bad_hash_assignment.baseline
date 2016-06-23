@@ -1,5 +1,0 @@
-Error: bad_hash_assignment.pp:1:1: node 'test': expected assignment to a variable when assigning from a hash but found Integer[1, 1].
-  [1] = {}
-  ^~~
-  backtrace:
-    in '<class main>' at bad_hash_assignment.pp:1

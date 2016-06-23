@@ -13,6 +13,10 @@ include_directories(
 
 # Set common sources
 set(PUPPET_COMMON_SOURCES
+    src/compiler/ast/visitors/definition.cc
+    src/compiler/ast/visitors/ineffective.cc
+    src/compiler/ast/visitors/type.cc
+    src/compiler/ast/visitors/validation.cc
     src/compiler/ast/ast.cc
     src/compiler/evaluation/collectors/collector.cc
     src/compiler/evaluation/collectors/list_collector.cc
@@ -57,8 +61,6 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/binary/greater.cc
     src/compiler/evaluation/operators/binary/greater_equal.cc
     src/compiler/evaluation/operators/binary/in.cc
-    src/compiler/evaluation/operators/binary/in_edge.cc
-    src/compiler/evaluation/operators/binary/in_edge_subscribe.cc
     src/compiler/evaluation/operators/binary/left_shift.cc
     src/compiler/evaluation/operators/binary/less.cc
     src/compiler/evaluation/operators/binary/less_equal.cc
@@ -70,8 +72,6 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/operators/binary/multiply.cc
     src/compiler/evaluation/operators/binary/not_equals.cc
     src/compiler/evaluation/operators/binary/not_match.cc
-    src/compiler/evaluation/operators/binary/out_edge.cc
-    src/compiler/evaluation/operators/binary/out_edge_subscribe.cc
     src/compiler/evaluation/operators/binary/plus.cc
     src/compiler/evaluation/operators/binary/right_shift.cc
     src/compiler/evaluation/operators/unary/call_context.cc
@@ -91,7 +91,6 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/lexer/position.cc
     src/compiler/lexer/tokens.cc
     src/compiler/parser/parser.cc
-    src/compiler/validation/type_validator.cc
     src/compiler/attribute.cc
     src/compiler/catalog.cc
     src/compiler/environment.cc

@@ -46,7 +46,7 @@ namespace puppet { namespace compiler {
     {
         ostringstream message;
         if (character) {
-            message << "unexpected character ";
+            message << "syntax error: unexpected character ";
             if (isprint(*character)) {
                 message << '\'' << *character << '\'';
             } else {
@@ -61,7 +61,7 @@ namespace puppet { namespace compiler {
 
     string parse_exception::format_message(string const& expected, lexer::token_id found)
     {
-        return (boost::format("expected %1% but found %2%.") % expected % found).str();
+        return (boost::format("syntax error: expected %1% but found %2%.") % expected % found).str();
     }
 
     evaluation_exception::evaluation_exception(string const& message, vector<evaluation::stack_frame> backtrace) :

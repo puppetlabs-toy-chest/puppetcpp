@@ -81,7 +81,9 @@ namespace puppet { namespace options { namespace commands {
         ++stats.parsed;
 
         try {
+            // Parse and validate
             auto tree = compiler::parser::parse_file(logger, manifest);
+            tree->validate();
 
             // TODO: write in the actual XPP file format
             tree->write(compiler::ast::format::yaml, stream);
@@ -90,7 +92,7 @@ namespace puppet { namespace options { namespace commands {
             compiler::lexer::line_info info;
             ifstream input{ manifest };
             if (input) {
-                info = lexer::get_line_info(input, ex.begin().offset(), ex.begin().offset(), ex.end().offset() - ex.begin().offset());
+                info = lexer::get_line_info(input, ex.begin().offset(), ex.end().offset() - ex.begin().offset());
             }
             LOG(error, ex.begin().line(), info.column, info.length, info.text, manifest, ex.what());
             // TODO: write out an XPP with the diagnostics
