@@ -1,7 +1,10 @@
 function display_type($x) {
     notice type($x, detailed)
+    notice $x.type(detailed)
     notice type($x, reduced)
+    notice $x.type(reduced)
     notice type($x, generalized)
+    notice $x.type(generalized)
 
     if type($x) != type($x, detailed) {
         fail "unexpected default behavior of the type function: `${type($x)}` vs. `${type($x, detailed)}`"

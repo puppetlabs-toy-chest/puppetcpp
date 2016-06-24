@@ -324,7 +324,7 @@ namespace puppet { namespace compiler { namespace parser {
     )
     DEFINE_RULE(
         method_call_expression,
-        begin('.') > name > -(raw('(') > (raw(')', false) | expressions) > end(')')) > -lambda_expression
+        begin('.') > function_name > -(raw('(') > (raw(')', false) | expressions) > end(')')) > -lambda_expression
     )
 
     // General expressions
