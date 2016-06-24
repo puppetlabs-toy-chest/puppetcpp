@@ -7,14 +7,6 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace operators { namespace binary {
 
-    static bool is_in(call_context& context, values::regex const& left, string const& right)
-    {
-        utility::regex::regions regions;
-        bool result = left.pattern().empty() || left.search(right, &regions);
-        context.context().set(regions.substrings(right));
-        return result;
-    }
-
     descriptor in::create_descriptor()
     {
         binary::descriptor descriptor{ ast::binary_operator::in };
@@ -26,7 +18,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return static_cast<bool>(unicode::string{ right }.find(left, true));
         });
         descriptor.add("Regexp", "String", [](call_context& context) {
-            return is_in(context, context.left().require<values::regex>(), context.right().require<string>());
+            return context.left().require<values::regex>().match(context.context(), context.right().require<string>());
         });
         descriptor.add("Type", "Array[Any]", [](call_context& context) {
             auto& left = context.left().require<values::type>();
@@ -44,7 +36,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             auto& right = context.right().require<values::array>();
             for (auto const& element : right) {
                 auto ptr = element->as<string>();
-                if (ptr && is_in(context, left, *ptr)) {
+                if (ptr && left.match(context.context(), *ptr)) {
                     return true;
                 }
             }

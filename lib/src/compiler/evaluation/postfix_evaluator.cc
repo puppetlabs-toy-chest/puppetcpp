@@ -45,7 +45,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     continue;
                 }
 
-                if (_evaluator.is_match(_value, _value_context, selector, selector_case.second.context())) {
+                if (selector.match(_evaluator.context(), _value)) {
                     _value = _evaluator.evaluate(selector_case.second);
                     _value_context.end = selector_case.second.context().end;
                     return;
@@ -55,7 +55,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 if (selector_case.first.is_splat()) {
                     auto unfolded = selector.to_array();
                     for (auto& element : unfolded) {
-                        if (_evaluator.is_match(_value, _value_context, element, selector_case.second.context())) {
+                        if (element->match(_evaluator.context(), _value)) {
                             _value = _evaluator.evaluate(selector_case.second);
                             _value_context.end = selector_case.second.context().end;
                             return;

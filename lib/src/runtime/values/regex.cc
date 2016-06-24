@@ -1,4 +1,5 @@
 #include <puppet/runtime/values/value.hpp>
+#include <puppet/compiler/evaluation/context.hpp>
 #include <puppet/cast.hpp>
 
 using namespace std;
@@ -14,6 +15,16 @@ namespace puppet { namespace runtime { namespace values {
     string const& regex::pattern() const
     {
         return _pattern;
+    }
+
+    bool regex::match(compiler::evaluation::context& context, std::string const& value) const
+    {
+        utility::regex::regions regions;
+        bool result = _pattern.empty() || search(value, &regions);
+        if (result) {
+            context.set(regions.substrings(value));
+        }
+        return result;
     }
 
     ostream& operator<<(ostream& os, regex const& regx)

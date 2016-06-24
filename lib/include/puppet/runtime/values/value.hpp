@@ -30,6 +30,13 @@ namespace rapidjson {
     template<typename CharType> struct UTF8;
 }
 
+namespace puppet { namespace compiler { namespace evaluation {
+
+    // Forward declare the evaluation context.
+    struct context;
+
+}}}  // namespace puppet::compiler::evaluation
+
 namespace puppet { namespace runtime { namespace values {
 
     /**
@@ -286,6 +293,15 @@ namespace puppet { namespace runtime { namespace values {
          * @return Returns true if the value is "truthy" or false if it is not.
          */
         bool is_truthy() const;
+
+        /**
+         * Determines if this value matches the other value.
+         * Match variables will be set in the given evaluation context when matched against a regex value.
+         * @param context The evaluation context.
+         * @param value The value to match.
+         * @return Returns true if the values match or false if not.
+         */
+        bool match(compiler::evaluation::context& context, values::value const& other) const;
 
         /**
          * Infers the type of the value.

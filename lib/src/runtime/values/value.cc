@@ -70,6 +70,51 @@ namespace puppet { namespace runtime { namespace values {
         return true;
     }
 
+    bool value::match(compiler::evaluation::context& context, value const& other) const
+    {
+        if (is_default()) {
+            return true;
+        }
+        if (auto regex = as<values::regex>()) {
+            if (auto string = other.as<std::string>()) {
+                return regex->match(context, *string);
+            }
+            return false;
+        }
+        if (auto array = as<values::array>()) {
+            if (auto other_array = other.as<values::array>()) {
+                if (array->size() == other_array->size()) {
+                    for (size_t i = 0; i < array->size(); ++i) {
+                        if (!(*array)[i]->match(context, (*other_array)[i])) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+        if (auto hash = as<values::hash>()) {
+            if (auto other_hash = other.as<values::hash>()) {
+                for (auto const& element : *hash) {
+                    auto other_value = other_hash->get(element.key());
+                    if (!other_value || !element.value().match(context, *other_value)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+        if (auto type = as<values::type>()) {
+            runtime::types::recursion_guard guard;
+            return type->is_instance(other, guard);
+        }
+
+        // Otherwise, use equals
+        return *this == other;
+    }
+
     struct type_inference_visitor : boost::static_visitor<values::type>
     {
         explicit type_inference_visitor(bool detailed) :

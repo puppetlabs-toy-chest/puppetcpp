@@ -10,30 +10,17 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     bool is_match(call_context& context, string const& left, string const& right)
     {
-        auto& evaluation_context = context.context();
-
         try {
-            utility::regex::regions regions;
-            bool result = right.empty() || utility::regex{ right }.search(left, &regions);
-            evaluation_context.set(regions.substrings(left));
-            return result;
+            return values::regex{ right }.match(context.context(), left);
         } catch (utility::regex_exception const& ex) {
             throw evaluation_exception(
                 (boost::format("invalid regular expression: %1%") %
                  ex.what()
                 ).str(),
                 context.right_context(),
-                evaluation_context.backtrace()
+                context.context().backtrace()
             );
         }
-    }
-
-    bool is_match(call_context& context, string const& left, values::regex const& right)
-    {
-        utility::regex::regions regions;
-        bool result = right.pattern().empty() || right.search(left, &regions);
-        context.context().set(regions.substrings(left));
-        return result;
     }
 
     descriptor match::create_descriptor()
@@ -44,7 +31,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return is_match(context, context.left().require<string>(), context.right().require<string>());
         });
         descriptor.add("String", "Regexp", [](call_context& context) {
-            return is_match(context, context.left().require<string>(), context.right().require<values::regex>());
+            return context.right().require<values::regex>().match(context.context(), context.left().require<string>());
         });
         descriptor.add("Any", "Type", [](call_context& context) {
             types::recursion_guard guard;

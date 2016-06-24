@@ -59,38 +59,6 @@ namespace puppet { namespace compiler { namespace evaluation {
         return operator()(expression);
     }
 
-    bool evaluator::is_match(value& actual, ast::context const& actual_context, value& expected, ast::context const& expected_context)
-    {
-        // If the expected value is a regex, use match
-        auto regex = expected.as<values::regex>();
-        if (regex) {
-            // Only match against strings
-            if (actual.as<std::string>()) {
-                // Dispatch a match operator
-                binary::call_context context{
-                    _context,
-                    binary_operator::match,
-                    ast::context{
-                        actual_context.begin,
-                        lexer::position{ actual_context.begin.offset() + 1, actual_context.begin.line() },
-                        actual_context.tree
-                    },
-                    actual,
-                    actual_context,
-                    expected,
-                    expected_context
-                };
-                if (_context.dispatcher().dispatch(context).is_truthy()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // Otherwise, use equals
-        return actual == expected;
-    }
-
     value evaluator::operator()(basic_expression const& expression)
     {
         return boost::apply_visitor(*this, expression);
@@ -284,8 +252,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                     continue;
                 }
 
-                // Match against the value
-                if (is_match(result, expression, option_value, option.context())) {
+                // Match the option value
+                if (option_value.match(_context, result)) {
                     return evaluate_body(proposition.body);
                 }
 
@@ -293,7 +261,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 if (option.is_splat() && option_value.as<values::array>()) {
                     auto array = option_value.move_as<values::array>();
                     for (auto& element : array) {
-                        if (is_match(result, expression, element, option.context())) {
+                        if (element->match(_context, result)) {
                             return evaluate_body(proposition.body);
                         }
                     }

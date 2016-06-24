@@ -8,7 +8,6 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
 
     // Forward declare the implementation (defined in match.cc)
     bool is_match(call_context& context, string const& left, string const& right);
-    bool is_match(call_context& context, string const& left, values::regex const& right);
 
     descriptor not_match::create_descriptor()
     {
@@ -18,7 +17,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace operato
             return !is_match(context, context.left().require<string>(), context.right().require<string>());
         });
         descriptor.add("String", "Regexp", [](call_context& context) {
-            return !is_match(context, context.left().require<string>(), context.right().require<values::regex>());
+            return !context.right().require<values::regex>().match(context.context(), context.left().require<string>());
         });
         descriptor.add("Any", "Type", [](call_context& context) {
             types::recursion_guard guard;
