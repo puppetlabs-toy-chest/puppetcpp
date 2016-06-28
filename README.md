@@ -127,7 +127,7 @@ Puppet functions implemented:
 * [ ] epp
 * [x] err
 * [x] fail
-* [ ] file
+* [x] file
 * [x] filter
 * [ ] fqdn_rand
 * [ ] generate
