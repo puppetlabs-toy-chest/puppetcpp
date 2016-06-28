@@ -108,6 +108,8 @@ SCENARIO("evaluating manifests", "[evaluation]")
         baseline_path.replace_extension(".baseline");
 
         compiler::settings settings;
+        settings.set(settings::environment_path, (fs::path{FIXTURES_DIR} / "compiler" / "environments").string());
+        settings.set(settings::environment, "evaluation");
 
         if (generate) {
             WARN("generating baseline file " << baseline_path);

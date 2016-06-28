@@ -14,7 +14,7 @@ Notice: Scope(Class[main]): 0
 {
   "name": "test",
   "version": 123456789
-  "environment": "production",
+  "environment": "evaluation",
   "resources": [
     {
       "type": "Stage",
