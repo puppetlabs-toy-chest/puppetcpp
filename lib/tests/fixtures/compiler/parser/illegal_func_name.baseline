@@ -1,0 +1,3 @@
+Error: illegal_func_name.pp:1:10: '::foo' is not a valid name for a function.
+  function ::foo() {
+           ^~~~~

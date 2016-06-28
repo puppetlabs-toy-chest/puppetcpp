@@ -285,7 +285,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             throw parse_exception("classes can only be defined at top-level or inside another class.", statement.begin, statement.end);
         }
 
-        if (!is_class_name_valid(statement.name.value)) {
+        // Don't allow empty names, non-local names, or names of built-in classes
+        if (statement.name.value.empty() ||
+            boost::starts_with(statement.name.value, "::") ||
+            (current_location() == location::top && (statement.name.value == "main" || statement.name.value == "settings"))) {
             throw parse_exception((boost::format("'%1%' is not a valid name for a class.") % statement.name).str(), statement.name.begin, statement.name.end);
         }
 
@@ -302,8 +305,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             throw parse_exception("defined types can only be defined at top-level or inside a class.", statement.begin, statement.end);
         }
 
-        // Same rules apply to defined type names
-        if (!is_class_name_valid(statement.name.value)) {
+        if (statement.name.value.empty() || boost::starts_with(statement.name.value, "::")) {
             throw parse_exception((boost::format("'%1%' is not a valid name for a defined type.") % statement.name).str(), statement.name.begin, statement.name.end);
         }
 
@@ -345,6 +347,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             throw parse_exception("functions can only be defined at top-level.", statement.begin, statement.end);
         }
 
+        if (statement.name.value.empty() || boost::starts_with(statement.name.value, "::")) {
+            throw parse_exception((boost::format("'%1%' is not a valid name for a function.") % statement.name).str(), statement.name.begin, statement.name.end);
+        }
+
         location_helper helper{*this, location::function };
 
         validate_parameters(statement.parameters);
@@ -384,6 +390,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             throw parse_exception("applications can only be defined at top-level.", statement.begin, statement.end);
         }
 
+        if (statement.name.value.empty() || boost::starts_with(statement.name.value, "::")) {
+            throw parse_exception((boost::format("'%1%' is not a valid name for an application.") % statement.name).str(), statement.name.begin, statement.name.end);
+        }
+
         location_helper helper{*this, location::application };
 
         validate_parameters(statement.parameters, true, true);
@@ -407,6 +417,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         if (current != location::top) {
             auto context = statement.context();
             throw parse_exception("type aliases can only be defined at top-level.", context.begin, context.end);
+        }
+
+        if (statement.alias.name.empty() || boost::starts_with(statement.alias.name, "::")) {
+            throw parse_exception((boost::format("'%1%' is not a valid name for a type alias.") % statement.alias).str(), statement.alias.begin, statement.alias.end);
         }
 
         if (runtime::values::type::find(statement.alias.name)) {
@@ -502,14 +516,6 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
     void validation::operator()(attribute_query const& expression)
     {
         operator()(expression.value);
-    }
-
-    bool validation::is_class_name_valid(std::string const& name) const
-    {
-        // Don't allow empty names, non-local names, or names of built-in classes
-        return !name.empty() &&
-               !boost::starts_with(name, "::") &&
-               !(current_location() == location::top && (name == "main" || name == "settings"));
     }
 
     void validation::validate_parameters(vector<parameter> const& parameters, bool is_resource, bool pass_by_hash)
