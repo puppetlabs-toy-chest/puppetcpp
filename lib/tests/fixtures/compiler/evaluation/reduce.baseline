@@ -51,7 +51,7 @@ Notice: Scope(Class[main]): [baz, cake, bar, baz, foo, bar]
 {
   "name": "test",
   "version": 123456789
-  "environment": "production",
+  "environment": "evaluation",
   "resources": [
     {
       "type": "Stage",

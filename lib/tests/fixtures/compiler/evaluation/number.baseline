@@ -6,7 +6,7 @@ Notice: Scope(Class[main]): 123.123
 {
   "name": "test",
   "version": 123456789
-  "environment": "production",
+  "environment": "evaluation",
   "resources": [
     {
       "type": "Stage",

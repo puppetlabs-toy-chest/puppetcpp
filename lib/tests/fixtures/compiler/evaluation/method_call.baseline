@@ -7,7 +7,7 @@ Notice: Scope(Class[main]): 1 john [foo, bar, baz]
 {
   "name": "test",
   "version": 123456789
-  "environment": "production",
+  "environment": "evaluation",
   "resources": [
     {
       "type": "Stage",

@@ -226,3 +226,113 @@ SCENARIO("environment with files to import", "[environment]")
         }
     }
 }
+
+SCENARIO("environment with user files", "[environment]")
+{
+    puppet::logging::console_logger logger;
+
+    const string environment_name = "import";
+
+    fs::path environments_dir = fs::path{FIXTURES_DIR} / "compiler" / "environments";
+    fs::path environment_dir  = environments_dir / environment_name;
+
+    compiler::settings settings;
+    settings.set(settings::environment_path, environments_dir.string());
+    settings.set(settings::environment, environment_name);
+
+    auto environment = puppet::compiler::environment::create(logger, settings);
+
+    WHEN("resolving using the environment namespace") {
+        THEN("it should not resolve a missing file") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "environment/missing.txt") == "");
+        }
+        THEN("it should not resolve a directory") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "environment/foo") == "");
+        }
+        THEN("it should resolve a present file") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "environment/foo.txt") == (environment_dir / "files" / "foo.txt").string());
+        }
+        THEN("it should resolve a nested file") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "environment/foo/bar.baz") == (environment_dir / "files" / "foo" / "bar.baz").string());
+        }
+    }
+    WHEN("resolving using a module namespace") {
+        THEN("it should not resolve a missing file") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "bar/missing.txt") == "");
+        }
+        THEN("it should not resolve a directory") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "bar/foo") == "");
+        }
+        THEN("it should resolve a present file") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "bar/baz.txt") == (environment_dir / "modules" / "bar" / "files" / "baz.txt").string());
+        }
+        THEN("it should resolve a nested file") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "bar/foo/bar/baz.txt") == (environment_dir / "modules" / "bar" / "files" / "foo" / "bar" / "baz.txt").string());
+        }
+    }
+    WHEN("resolving using a missing module") {
+        THEN("it should not resolve the file") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, "missing/foo.txt") == "");
+        }
+    }
+    WHEN("resolving an absolute path") {
+        THEN("it should return the same path") {
+            REQUIRE(environment->resolve_path(logger, find_type::file, (environment_dir / "files" / "foo.txt").string()) == (environment_dir / "files" / "foo.txt").string());
+        }
+    }
+}
+
+SCENARIO("environment with user templates", "[environment]")
+{
+    puppet::logging::console_logger logger;
+
+    const string environment_name = "import";
+
+    fs::path environments_dir = fs::path{FIXTURES_DIR} / "compiler" / "environments";
+    fs::path environment_dir  = environments_dir / environment_name;
+
+    compiler::settings settings;
+    settings.set(settings::environment_path, environments_dir.string());
+    settings.set(settings::environment, environment_name);
+
+    auto environment = puppet::compiler::environment::create(logger, settings);
+
+    WHEN("resolving using the environment namespace") {
+        THEN("it should not resolve a missing file") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "environment/missing.epp") == "");
+        }
+        THEN("it should not resolve a directory") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "environment/foo") == "");
+        }
+        THEN("it should resolve a present file") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "environment/foo.epp") == (environment_dir / "templates" / "foo.epp").string());
+        }
+        THEN("it should resolve a nested file") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "environment/foo/bar.baz") == (environment_dir / "templates" / "foo" / "bar.baz").string());
+        }
+    }
+    WHEN("resolving using a module namespace") {
+        THEN("it should not resolve a missing file") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "foo/missing.epp") == "");
+        }
+        THEN("it should not resolve a directory") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "foo/foo") == "");
+        }
+        THEN("it should resolve a present file") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "foo/baz.epp") == (environment_dir / "modules" / "foo" / "templates" / "baz.epp").string());
+        }
+        THEN("it should resolve a nested file") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "foo/foo/bar/baz.epp") == (environment_dir / "modules" / "foo" / "templates" / "foo" / "bar" / "baz.epp").string());
+        }
+    }
+    WHEN("resolving using a missing module") {
+        THEN("it should not resolve the file") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, "missing/foo.epp") == "");
+        }
+    }
+    WHEN("resolving an absolute path") {
+        THEN("it should return the same path") {
+            REQUIRE(environment->resolve_path(logger, find_type::template_, (environment_dir / "templates" / "foo.epp").string()) == (environment_dir / "templates" / "foo.epp").string());
+        }
+    }
+}
