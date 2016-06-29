@@ -622,11 +622,11 @@ namespace puppet { namespace compiler { namespace parser {
     // Sytax tree rules
     DEFINE_RULE(
         syntax_tree,
-        boost::spirit::x3::attr(boost::none) > statements
+        boost::spirit::x3::attr(boost::none) > (statements | boost::spirit::x3::eps)
     )
     DEFINE_RULE(
         epp_syntax_tree,
-        -(raw('|') > (raw('|', false) | parameters) > raw('|')) > statements
+        -(raw('|') > (raw('|', false) | parameters) > raw('|')) > (statements | boost::spirit::x3::eps)
     )
 
     // These macros associate the above rules with their definitions

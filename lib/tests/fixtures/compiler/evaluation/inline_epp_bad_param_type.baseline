@@ -1,0 +1,6 @@
+Error: inline_epp_bad_param_type.pp:1:25: node 'test': EPP template argument error: parameter $foo has expected type Integer but was given String[3, 3].
+  inline_epp(@(TEMPLATE), { foo => bar })
+                          ^~~~~~~~~~~~~~
+  backtrace:
+    in 'inline_epp' (no source)
+    in '<class main>' at inline_epp_bad_param_type.pp:1
