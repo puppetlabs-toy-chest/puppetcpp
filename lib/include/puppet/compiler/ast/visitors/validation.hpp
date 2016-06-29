@@ -101,7 +101,6 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void operator()(basic_query_expression const& expression);
         void operator()(attribute_query const& expression);
 
-        bool is_class_name_valid(std::string const& name) const;
         void validate_parameters(std::vector<parameter> const& parameters, bool is_resource = false, bool pass_by_hash = false);
         void validate_parameter_name(parameter const& parameter, bool is_resource_parameter) const;
         location current_location() const;
