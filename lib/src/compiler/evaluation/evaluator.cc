@@ -28,10 +28,34 @@ namespace puppet { namespace compiler { namespace evaluation {
     void evaluator::evaluate(syntax_tree const& tree, values::hash* arguments)
     {
         if (tree.parameters) {
+            // Use a function evaluator if there were parameters specified in the EPP
             function_evaluator evaluator{ _context, "<epp-eval>", *tree.parameters, tree.statements };
 
             values::hash empty;
             evaluator.evaluate(arguments ? *arguments : empty);
+            return;
+        } else if (arguments) {
+            // An EPP without parameters; set all arguments in scope
+            auto scope = make_shared<evaluation::scope>(_context.top_scope());
+            auto frame = scoped_stack_frame{ _context, stack_frame{ "<epp-eval>", scope } };
+
+            // Set the arguments
+            size_t index = 0;
+            for (auto& kvp : *arguments) {
+                auto name = kvp.key().as<std::string>();
+                if (!name) {
+                    throw argument_exception(
+                        (boost::format("expected %1% for argument key but found %2%.") %
+                         types::string::name() %
+                         kvp.key().infer_type()
+                        ).str(),
+                        index
+                    );
+                }
+                scope->set(*name, std::make_shared<values::value>(rvalue_cast(kvp.value())), ast::context{});
+            }
+
+            evaluate_body(tree.statements);
             return;
         }
 

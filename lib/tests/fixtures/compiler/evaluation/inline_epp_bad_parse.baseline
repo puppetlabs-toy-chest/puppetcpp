@@ -1,0 +1,9 @@
+Error: <epp>:1:13: syntax error: expected expression but found '->'.
+  <%- whoops %->
+              ^~
+Error: inline_epp_bad_parse.pp:2:1: node 'test': parsing of inline EPP template failed.
+    <%- whoops %->
+  ^~~~~~~~~~~~~~~~
+  backtrace:
+    in 'inline_epp' (no source)
+    in '<class main>' at inline_epp_bad_parse.pp:1

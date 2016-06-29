@@ -40,14 +40,6 @@ namespace puppet { namespace compiler { namespace parser {
             auto token_begin = lexer.begin(begin, end, epp ? EPP_STATE : nullptr);
             auto token_end = lexer.end();
 
-            // Check for "semantically empty" input
-            if (token_begin != token_end && token_begin->id() == boost::lexer::npos) {
-                if (epp) {
-                    check_missing_epp_end(begin);
-                }
-                return;
-            }
-
             // Parse the input
             bool success = false;
             if (epp) {
