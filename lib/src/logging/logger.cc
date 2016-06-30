@@ -128,7 +128,7 @@ namespace puppet { namespace logging {
             // Note: this is only counting ASCII whitespace
             size_t offset = 0;
             size_t leading_spaces = 0;
-            for (; offset < text.size(); ++offset, ++leading_spaces) {
+            for (; offset < text.size() && (offset + 1) < column; ++offset, ++leading_spaces) {
                 // If the current offset into the string is not a space, break out
                 if (!isspace(text[offset])) {
                     break;
