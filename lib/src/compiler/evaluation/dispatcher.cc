@@ -8,6 +8,7 @@
 #include <puppet/compiler/evaluation/functions/defined.hpp>
 #include <puppet/compiler/evaluation/functions/each.hpp>
 #include <puppet/compiler/evaluation/functions/emerg.hpp>
+#include <puppet/compiler/evaluation/functions/epp.hpp>
 #include <puppet/compiler/evaluation/functions/err.hpp>
 #include <puppet/compiler/evaluation/functions/fail.hpp>
 #include <puppet/compiler/evaluation/functions/file.hpp>
@@ -74,6 +75,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::defined::create_descriptor());
         add(functions::each::create_descriptor());
         add(functions::emerg::create_descriptor());
+        add(functions::epp::create_descriptor());
         add(functions::err::create_descriptor());
         add(functions::fail::create_descriptor());
         add(functions::file::create_descriptor());

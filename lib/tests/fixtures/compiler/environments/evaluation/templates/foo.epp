@@ -1,0 +1,2 @@
+hello <%= "world" -%> from environment!
+hello <%= [foo, bar, world].filter |$x| { $x =~ /^w/ }[0] -%> from environment!

@@ -124,7 +124,7 @@ Puppet functions implemented:
 * [ ] digest
 * [x] each
 * [x] emerg
-* [ ] epp
+* [x] epp
 * [x] err
 * [x] fail
 * [x] file

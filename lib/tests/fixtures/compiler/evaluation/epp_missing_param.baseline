@@ -1,0 +1,10 @@
+Error: params.epp:1:13: parameter $name is required but no value was given.
+  <%- |String $name| -%>
+              ^~~~~
+Error: epp_missing_param.pp:1:8: node 'test': evaluation of EPP template failed.
+  notice epp('environment/params.epp')
+         ^~~
+  backtrace:
+    in '<epp-eval>' (no source)
+    in 'epp' (no source)
+    in '<class main>' at epp_missing_param.pp:1

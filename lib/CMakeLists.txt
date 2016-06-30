@@ -32,6 +32,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/descriptor.cc
     src/compiler/evaluation/functions/each.cc
     src/compiler/evaluation/functions/emerg.cc
+    src/compiler/evaluation/functions/epp.cc
     src/compiler/evaluation/functions/err.cc
     src/compiler/evaluation/functions/fail.cc
     src/compiler/evaluation/functions/file.cc
