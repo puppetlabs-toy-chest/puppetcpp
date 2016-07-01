@@ -19,6 +19,11 @@ namespace puppet { namespace compiler {
             case find_type::type:
                 return ".pp";
 
+            case find_type::template_:
+            case find_type::file:
+                // No prescribed extension for user files
+                return nullptr;
+
             default:
                 throw runtime_error("unexpected file type.");
         }
@@ -41,6 +46,12 @@ namespace puppet { namespace compiler {
             case find_type::type:
                 return fs::path{ finder.directory() } / "types";
 
+            case find_type::file:
+                return fs::path{ finder.directory() } / "files";
+
+            case find_type::template_:
+                return fs::path{ finder.directory() } / "templates";
+
             default:
                 throw runtime_error("unexpected file type.");
         }
@@ -48,12 +59,16 @@ namespace puppet { namespace compiler {
 
     static bool each_file(find_type type, fs::path const& directory, std::locale const& locale, function<bool(string const&)> const& callback)
     {
+        auto ext = extension(type);
+
         vector<fs::path> entries;
         copy_if(fs::directory_iterator{ directory }, fs::directory_iterator{}, back_inserter(entries),
             [&](auto const& entry) {
                 // Add entries that are manifest files or directories that are not symlinks
-                return (fs::is_regular_file(entry.status()) && entry.path().extension() == extension(type)) ||
-                       (!fs::is_symlink(entry.symlink_status()) && fs::is_directory(entry.status()));
+                if (!fs::is_regular_file(entry.status())) {
+                    return !fs::is_symlink(entry.symlink_status()) && fs::is_directory(entry.status());
+                }
+                return !ext || (entry.path().extension() == ext);
             }
         );
 
@@ -99,10 +114,10 @@ namespace puppet { namespace compiler {
         return _manifest_setting;
     }
 
-    string finder::find_file(find_type type, string const& name) const
+    string finder::find_by_name(find_type type, string const& name) const
     {
         if (name.empty()) {
-            return string();
+            return {};
         }
 
         // Start with the base
@@ -113,12 +128,30 @@ namespace puppet { namespace compiler {
         for (auto it = boost::make_split_iterator(name, boost::first_finder("::", boost::is_equal())); it != end; ++it) {
             path.append(it->begin(), it->end());
         }
-        path.replace_extension(extension(type));
+        auto ext = extension(type);
+        if (ext) {
+            path.replace_extension(ext);
+        }
 
         // Otherwise, check that the file exists
         sys::error_code ec;
         if (!fs::is_regular_file(path, ec)) {
-            return string();
+            return {};
+        }
+        return path.string();
+    }
+
+    string finder::find_by_path(find_type type, string const& subpath) const
+    {
+        if (subpath.empty()) {
+            return {};
+        }
+
+        auto path = base_path(*this, type) / subpath;
+        // Otherwise, check that the file exists
+        sys::error_code ec;
+        if (!fs::is_regular_file(path, ec)) {
+            return {};
         }
         return path.string();
     }
@@ -128,8 +161,10 @@ namespace puppet { namespace compiler {
         auto base = base_path(*this, type);
         sys::error_code ec;
         if (fs::is_regular_file(base, ec)) {
-            // If the base itself is to a file, treat it like a manifest
-            callback(base.string());
+            // If the base path itself is to a file, treat it like a manifest if that's what's being requested
+            if (type == find_type::manifest) {
+                callback(base.string());
+            }
             return;
         }
         if (!fs::is_directory(base, ec)) {

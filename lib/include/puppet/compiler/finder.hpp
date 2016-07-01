@@ -27,7 +27,15 @@ namespace puppet { namespace compiler {
         /**
          * Finds a type.
          */
-        type
+        type,
+        /**
+         * Finds a file.
+         */
+        file,
+        /**
+         * Finds a template.
+         */
+        template_
     };
 
     /**
@@ -60,7 +68,15 @@ namespace puppet { namespace compiler {
          * @param name The qualified name (e.g. foo::bar).
          * @return Returns the path to the file if it exists or an empty string if the file does not.
          */
-        std::string find_file(find_type type, std::string const& name) const;
+        std::string find_by_name(find_type type, std::string const& name) const;
+
+        /**
+         * Finds a file by sub-path.
+         * @param type The type of file to find.
+         * @param subpath The subpath of the file (e.g. 'foo/bar/baz.txt').
+         * @return Returns the path to the file if it exists or an empty string if the file does not.
+         */
+        std::string find_by_path(find_type type, std::string const& subpath) const;
 
         /**
          * Enumerates each file of a given type.

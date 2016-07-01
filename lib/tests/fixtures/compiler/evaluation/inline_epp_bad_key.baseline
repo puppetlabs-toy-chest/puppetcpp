@@ -1,0 +1,5 @@
+Error: inline_epp_bad_key.pp:1:25: node 'test': function 'inline_epp' expects Hash[String, Any] but was given Hash[Integer[5, 5], Integer[5, 5], 1, 1].
+  inline_epp(@(TEMPLATE), { 5 => 5 })
+                          ^~~~~~~~~~
+  backtrace:
+    in '<class main>' at inline_epp_bad_key.pp:1

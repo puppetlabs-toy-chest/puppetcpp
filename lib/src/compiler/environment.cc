@@ -284,7 +284,7 @@ namespace puppet { namespace compiler {
                 LOG(debug, "could not load 'init.pp' for module '%1%' because the module does not exist.", name);
                 return;
             }
-            path = module->find_file(type, "init");
+            path = module->find_by_name(type, "init");
         } else {
             // Split into namespace and subname
             auto ns = name.substr(0, pos);
@@ -295,14 +295,14 @@ namespace puppet { namespace compiler {
                     // Don't load manifests from the environment
                     return;
                 }
-                path = this->find_file(type, subname);
+                path = find_by_name(type, subname);
             } else {
                 module = find_module(ns);
                 if (!module) {
                     LOG(debug, "could not load a file for '%1%' because module '%2%' does not exist.", name, ns);
                     return;
                 }
-                path = module->find_file(type, subname);
+                path = module->find_by_name(type, subname);
             }
         }
 
@@ -313,6 +313,36 @@ namespace puppet { namespace compiler {
 
         // Import the file, but don't parse it if it's already been imported
         import(logger, path, module);
+    }
+
+    string environment::resolve_path(logging::logger& logger, find_type type, string const& path) const
+    {
+        auto file = fs::path{ path }.lexically_normal();
+        if (file.is_absolute()) {
+            sys::error_code ec;
+            if (fs::is_regular_file(file, ec)) {
+                return file.string();
+            }
+            return {};
+        }
+        if (file.empty()) {
+            return {};
+        }
+        auto it = file.begin();
+        auto ns = *it;
+        fs::path subname;
+        for (++it; it != file.end(); ++it) {
+            subname /= *it;
+        }
+        if (ns.string() == "environment") {
+            return find_by_path(type, subname.string());
+        }
+        auto module = find_module(ns.string());
+        if (!module) {
+            LOG(debug, "could not resolve file '%1%' because module '%2%' does not exist.", path, ns);
+            return {};
+        }
+        return module->find_by_path(type, subname.string());
     }
 
     environment::environment(string name, string directory, compiler::settings settings) :

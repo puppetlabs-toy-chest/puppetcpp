@@ -298,7 +298,7 @@ namespace puppet { namespace runtime { namespace values {
          * Determines if this value matches the other value.
          * Match variables will be set in the given evaluation context when matched against a regex value.
          * @param context The evaluation context.
-         * @param value The value to match.
+         * @param other The other value to match.
          * @return Returns true if the values match or false if not.
          */
         bool match(compiler::evaluation::context& context, values::value const& other) const;

@@ -1,0 +1,2 @@
+<%- |String $name| -%>
+hello <%= $name -%> from module!

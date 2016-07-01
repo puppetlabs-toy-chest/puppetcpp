@@ -124,10 +124,10 @@ Puppet functions implemented:
 * [ ] digest
 * [x] each
 * [x] emerg
-* [ ] epp
+* [x] epp
 * [x] err
 * [x] fail
-* [ ] file
+* [x] file
 * [x] filter
 * [ ] fqdn_rand
 * [ ] generate
