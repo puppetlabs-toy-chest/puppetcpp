@@ -39,4 +39,4 @@ RUN apk add --no-cache make cmake gcc g++ boost-dev curl-dev libedit-dev git icu
     mkdir -p /etc/puppetlabs/code/environments/production && \
     apk --no-cache del make cmake gcc g++ boost-dev curl-dev libedit-dev git icu-dev && \
     apk --no-cache add libstdc++ boost boost-program_options libcurl libedit icu-libs
-ENTRYPOINT ["/usr/bin/puppetcpp"]
+ENTRYPOINT ["/usr/local/bin/puppetcpp"]
