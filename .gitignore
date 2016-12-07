@@ -41,3 +41,4 @@ html/
 # Build directories
 debug/
 release/
+cmake-build-*/
