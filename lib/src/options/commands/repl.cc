@@ -193,7 +193,9 @@ namespace puppet { namespace options { namespace commands {
 
                 try {
                     auto environment = compiler::environment::create(logger, settings);
-                    environment->dispatcher().add_builtins();
+                    environment->dispatcher().add_builtin_functions();
+                    environment->dispatcher().add_builtin_operators();
+
                     compiler::node node{ logger, node_name, rvalue_cast(environment), facts };
                     compiler::catalog catalog{ node.name(), node.environment().name() };
                     auto context = node.create_context(catalog);

@@ -64,7 +64,7 @@ using namespace puppet::compiler::evaluation::operators;
 
 namespace puppet { namespace compiler { namespace evaluation {
 
-    void dispatcher::add_builtins()
+    void dispatcher::add_builtin_functions()
     {
         // Add the built-in functions
         add(functions::alert::create_descriptor());
@@ -98,7 +98,10 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::versioncmp::create_descriptor());
         add(functions::warning::create_descriptor());
         add(functions::with::create_descriptor());
+    }
 
+    void dispatcher::add_builtin_operators()
+    {
         // Add the built-in binary operators
         add(binary::assignment::create_descriptor());
         add(binary::divide::create_descriptor());

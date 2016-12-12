@@ -311,6 +311,15 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
     }
 
+    context::context(compiler::node& node) :
+        _node(&node),
+        _catalog(nullptr),
+        _registry(&node.environment().registry()),
+        _dispatcher(&node.environment().dispatcher()),
+        _top_scope(make_shared<scope>(node.facts()))
+    {
+    }
+
     context::context(compiler::node& node, compiler::catalog& catalog) :
         _node(&node),
         _catalog(&catalog),

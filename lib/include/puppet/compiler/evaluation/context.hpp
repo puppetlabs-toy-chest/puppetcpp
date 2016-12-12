@@ -267,6 +267,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         /**
          * Constructs an evaluation context.
          * @param node The node being compiled.
+         */
+        explicit context(compiler::node& node);
+
+        /**
+         * Constructs an evaluation context.
+         * @param node The node being compiled.
          * @param catalog The catalog being compiled.
          */
         context(compiler::node& node, compiler::catalog& catalog);

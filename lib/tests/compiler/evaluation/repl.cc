@@ -13,7 +13,8 @@ SCENARIO("using the repl evaluator", "[evaluation]")
     logging::console_logger logger;
 
     auto environment = compiler::environment::create(logger, settings);
-    environment->dispatcher().add_builtins();
+    environment->dispatcher().add_builtin_functions();
+    environment->dispatcher().add_builtin_operators();
     compiler::node node{ logger, "test", rvalue_cast(environment), nullptr };
     compiler::catalog catalog{ node.name(), node.environment().name() };
     auto context = node.create_context(catalog);

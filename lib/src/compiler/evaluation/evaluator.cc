@@ -25,16 +25,16 @@ namespace puppet { namespace compiler { namespace evaluation {
         return _context;
     }
 
-    void evaluator::evaluate(syntax_tree const& tree, values::hash* arguments)
+    value evaluator::evaluate(syntax_tree const& tree, values::hash* arguments)
     {
         if (tree.parameters) {
             // Use a function evaluator if there were parameters specified in the EPP
             function_evaluator evaluator{ _context, "<epp-eval>", *tree.parameters, tree.statements };
 
             values::hash empty;
-            evaluator.evaluate(arguments ? *arguments : empty);
-            return;
-        } else if (arguments) {
+            return evaluator.evaluate(arguments ? *arguments : empty);
+        }
+        if (arguments) {
             // An EPP without parameters; set all arguments in scope
             auto scope = make_shared<evaluation::scope>(_context.top_scope());
             auto frame = scoped_stack_frame{ _context, stack_frame{ "<epp-eval>", scope } };
@@ -55,12 +55,11 @@ namespace puppet { namespace compiler { namespace evaluation {
                 scope->set(*name, std::make_shared<values::value>(rvalue_cast(kvp.value())), ast::context{});
             }
 
-            evaluate_body(tree.statements);
-            return;
+            return evaluate_body(tree.statements);
         }
 
         // Evaluate the statements
-        evaluate_body(tree.statements);
+        return evaluate_body(tree.statements);
     }
 
     value evaluator::evaluate(ast::statement const& statement)
