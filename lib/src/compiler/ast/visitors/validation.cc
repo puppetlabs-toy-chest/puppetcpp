@@ -12,9 +12,15 @@ using namespace std;
 
 namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
-    void validation::visit(syntax_tree const& tree, bool epp)
+    validation::validation(bool epp, bool allow_catalog_statements) :
+        _epp(epp),
+        _allow_catalog_statements(allow_catalog_statements)
     {
-        location_helper helper{*this, epp ? location::epp : location::top };
+    }
+
+    void validation::visit(syntax_tree const& tree)
+    {
+        location_helper helper{*this, _epp ? location::epp : location::top };
 
         if (tree.parameters) {
             validate_parameters(*tree.parameters, false, true);
@@ -280,6 +286,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::class_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top && current != location::class_) {
             throw parse_exception("classes can only be defined at top-level or inside another class.", statement.begin, statement.end);
@@ -300,6 +308,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::defined_type_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top && current != location::class_) {
             throw parse_exception("defined types can only be defined at top-level or inside a class.", statement.begin, statement.end);
@@ -317,6 +327,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::node_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top && current != location::class_) {
             throw parse_exception("node definitions can only be defined at top-level or inside a class.", statement.begin, statement.end);
@@ -359,6 +371,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::produces_statement const& statement)
     {
+        validate_catalog_statement(statement.context());
+
         auto current = current_location();
         if (current != location::top && current != location::site) {
             auto context = statement.context();
@@ -372,6 +386,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::consumes_statement const& statement)
     {
+        validate_catalog_statement(statement.context());
+
         auto current = current_location();
         if (current != location::top && current != location::site) {
             auto context = statement.context();
@@ -385,6 +401,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::application_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top) {
             throw parse_exception("applications can only be defined at top-level.", statement.begin, statement.end);
@@ -402,6 +420,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::site_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top) {
             throw parse_exception("sites can only be defined at top-level.", statement.begin, statement.end);
@@ -448,6 +468,11 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::relationship_statement const& statement)
     {
+        // Check for actual relationship statements
+        if (!statement.operations.empty()) {
+            validate_catalog_statement(statement.context());
+        }
+
         operator()(statement.operand);
 
         for (auto const& operation : statement.operations) {
@@ -462,6 +487,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::resource_declaration_expression const& expression)
     {
+        validate_catalog_statement(expression);
+
         for (auto const& body : expression.bodies) {
             operator()(body.title);
 
@@ -473,6 +500,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::resource_override_expression const& expression)
     {
+        validate_catalog_statement(expression);
+
         boost::apply_visitor(*this, expression.reference);
 
         for (auto const& operation : expression.operations) {
@@ -482,6 +511,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::resource_defaults_expression const& expression)
     {
+        validate_catalog_statement(expression);
+
         for (auto const& operation : expression.operations) {
             operator()(operation.value);
         }
@@ -489,6 +520,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::collector_expression const& expression)
     {
+        validate_catalog_statement(expression.context());
+
         if (expression.query) {
             operator()(*expression.query);
         }
@@ -703,6 +736,13 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
                 operand.begin,
                 operand.end
             );
+        }
+    }
+
+    void validation::validate_catalog_statement(ast::context const& context)
+    {
+        if (!_allow_catalog_statements) {
+            throw parse_exception("catalog statements are not allowed.", context.begin, context.end);
         }
     }
 

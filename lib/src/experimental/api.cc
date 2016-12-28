@@ -274,10 +274,8 @@ puppet_evaluation_result puppet_evaluate_file(puppet_compiler_session* session, 
             // Attempt to parse the file
             auto tree = parser::parse_file(logger, path);
 
-            // Validate the AST
-            tree->validate();
-
-            // TODO: add a validation for no catalog statements
+            // Validate the AST and disallow catalog statements
+            tree->validate(false, false);
 
             // Evaluate the AST and return the value
             evaluation::context context{ session->node() };

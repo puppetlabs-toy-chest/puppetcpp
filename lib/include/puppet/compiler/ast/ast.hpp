@@ -2807,8 +2807,9 @@ namespace puppet { namespace compiler { namespace ast {
          * Validates the AST.
          * Throws parse exceptions if validation fails.
          * @param epp True if the AST is from an EPP parse or false if not.
+         * @param allow_catalog_statements True if catalog statements are allowed or false if not.
          */
-        void validate(bool epp = false) const;
+        void validate(bool epp = false, bool allow_catalog_statements = true) const;
 
         /**
          * Creates a syntax tree.
