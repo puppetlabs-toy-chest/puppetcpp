@@ -1225,7 +1225,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Create a new scope and stack frame
         auto scope = make_shared<evaluation::scope>(parent ? parent : _context.top_scope());
         scoped_stack_frame frame = _name ?
-            scoped_stack_frame{ _context, stack_frame{ _name, scope } } :
+            scoped_stack_frame{ _context, stack_frame{ _name, scope, false } } :
             scoped_stack_frame{ _context, stack_frame{ _statement, scope } };
 
         for (size_t i = 0; i < _parameters.size(); ++i) {
