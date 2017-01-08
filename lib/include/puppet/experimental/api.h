@@ -413,6 +413,13 @@ void puppet_free_exception(struct puppet_exception* exception);
 struct puppet_value* puppet_create_value();
 
 /**
+ * Clones a Puppet value.
+ * @param value The value to clone.
+ * @return Returns the cloned value; use `puppet_free_value` to free the returned value.
+ */
+struct puppet_value* puppet_value_clone(struct puppet_value const* value);
+
+/**
  * Frees a Puppet value.
  * @param value The value to free.
  */
@@ -635,15 +642,15 @@ int puppet_hash_get(struct puppet_value const* hash, struct puppet_value const* 
 int puppet_hash_set(struct puppet_value* hash, struct puppet_value* key, struct puppet_value* value);
 
 /**
- * Iterates over a Puppet iterator value.
- * @param value The iterator value.
+ * Iterates over a Puppet value.
+ * @param value The vaule to iterate.
  * @param data The data to pass to the callback.
- * @param callback The callback to invoke for element in the iterator.
+ * @param callback The callback to invoke for element in the sequence.
  *        The first argument is the key (hash iteration only) and the second argument is the value.
  *        If the callback returns 0, the iteration will stop early.
- * @return Returns non-zero if the iterator was iterated or zero if not.
+ * @return Returns non-zero if the value is iterable or 0 if the value is not iterable.
  */
-int puppet_iterate(struct puppet_value const* value, void* data, int (*callback)(void*, struct puppet_value const*, struct puppet_value const*));
+int puppet_iterate(struct puppet_value const* value, void const* data, int (*callback)(void const*, struct puppet_value const*, struct puppet_value const*));
 
 /**
  * Converts the given value to a Puppet string value.

@@ -331,6 +331,11 @@ puppet_value* puppet_create_value()
     return reinterpret_cast<puppet_value*>(new values::value{});
 }
 
+puppet_value* puppet_clone_value(puppet_value const* value)
+{
+    return reinterpret_cast<puppet_value*>(new values::value{ *reinterpret_cast<values::value const*>(value) });
+}
+
 void puppet_free_value(puppet_value* value)
 {
     delete reinterpret_cast<values::value*>(value);
@@ -711,20 +716,25 @@ int puppet_hash_set(puppet_value* hash, puppet_value* key, puppet_value* value)
     return 1;
 }
 
-int puppet_iterate(puppet_value const* value, void* data, int (*callback)(void*, puppet_value const*, puppet_value const*))
+int puppet_iterate(puppet_value const* value, void const* data, int (*callback)(void const*, puppet_value const*, puppet_value const*))
 {
     if (!value || !callback) {
         return 0;
     }
 
-    auto iterator = reinterpret_cast<values::value const*>(value)->as<values::iterator>();
-    if (!iterator) {
+    try {
+        // Iterate the value
+        boost::apply_visitor(
+            values::iteration_visitor{
+                [&](auto const* key, auto const& value) {
+                    return callback(data, reinterpret_cast<puppet_value const*>(key), reinterpret_cast<puppet_value const*>(&value)) != 0;
+                }
+            },
+            *reinterpret_cast<values::value const*>(value)
+        );
+    } catch (values::type_not_iterable_exception const&) {
         return 0;
     }
-
-    iterator->each([&](auto const* key, auto const& value) {
-        return callback(data, reinterpret_cast<puppet_value const*>(key), reinterpret_cast<puppet_value const*>(&value)) != 0;
-    });
     return 1;
 }
 
