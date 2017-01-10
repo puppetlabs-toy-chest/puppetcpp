@@ -346,7 +346,7 @@ struct puppet_compiler_session* puppet_create_session(char const* name, char con
  * @param count The count of dispatches for the function.
  * @return Returns non-zero if the function is successfully defined or false if the function cannot be defined (already exists, invalid dispatch specification, etc).
  */
-int puppet_define_function(struct puppet_compiler_session* session, char const* name, puppet_function_dispatch const* dispatches, uint64_t count);
+int puppet_define_function(struct puppet_compiler_session* session, char const* name, struct puppet_function_dispatch const* dispatches, uint64_t count);
 
 /**
  * Determines if a block was passed to a Puppet function invocation.
@@ -388,6 +388,14 @@ struct puppet_evaluation_result puppet_evaluate_file(struct puppet_compiler_sess
  * @return Returns the new Puppet exception or nullptr if the exception failed to allocate.
  */
 struct puppet_exception* puppet_create_exception(char const* message);
+
+/**
+ * Creates a new Puppet exception with backtrace and source context.
+ * @param message The exception message.
+ * @param context The call context to use; if nullptr, no backtrace or source code context will be provided.
+ * @return Returns the new Puppet exception or nullptr if the exception failed to allocate.
+ */
+struct puppet_exception* puppet_create_exception_with_context(char const* message, struct puppet_call_context const* context);
 
 /**
  * Gets the data of the given Puppet exception.

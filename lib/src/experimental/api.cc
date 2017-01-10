@@ -303,6 +303,16 @@ puppet_exception* puppet_create_exception(char const* message)
     return new puppet_exception{ compilation_exception(message) };
 }
 
+puppet_exception* puppet_create_exception_with_context(char const* message, puppet_call_context const* context)
+{
+    if (!context) {
+        return puppet_create_exception(message);
+    }
+
+    auto backtrace = reinterpret_cast<functions::call_context const*>(context)->context().backtrace();
+    return new puppet_exception{ compilation_exception{ evaluation_exception{ message, rvalue_cast(backtrace) } } };
+}
+
 int puppet_get_exception_data(puppet_exception const* exception, puppet_exception_data* data)
 {
     if (!exception || !data) {
