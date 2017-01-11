@@ -51,9 +51,18 @@ struct callback_logger : logger
             static_cast<uint64_t>(line),
             static_cast<uint64_t>(column),
             static_cast<uint64_t>(length),
-            text.c_str(),
-            path.c_str(),
-            message.c_str()
+            {
+                static_cast<uint64_t>(text.size()),
+                text.data()
+            },
+            {
+                static_cast<uint64_t>(path.size()),
+                path.data()
+            },
+            {
+                static_cast<uint64_t>(message.size()),
+                message.data()
+            }
         };
         _callback(&entry);
     }
@@ -128,9 +137,16 @@ struct puppet_exception
             for (auto& frame : backtrace) {
                 auto& context = frame.current();
                 names.push_back(frame.name());
+                auto& name = names.back();
                 frames.push_back({
-                    names.back().c_str(),
-                    context.tree ? context.tree->path().c_str() : nullptr,
+                    {
+                        static_cast<uint64_t>(name.size()),
+                        name.data()
+                    },
+                    {
+                        context.tree ? static_cast<uint64_t>(context.tree->path().size()) : 0,
+                        context.tree ? context.tree->path().data() : nullptr
+                    },
                     {
                         static_cast<uint64_t>(context.begin.line()),
                         static_cast<uint64_t>(context.begin.offset()),
@@ -220,6 +236,25 @@ int puppet_define_function(puppet_compiler_session* session, char const* name, p
 int puppet_block_passed(puppet_call_context* context)
 {
     return context && reinterpret_cast<functions::call_context*>(context)->block() ? 1 : 0;
+}
+
+int puppet_get_caller_data(puppet_call_context const* context, puppet_caller_data* data)
+{
+    if (!context || !data) {
+        return 0;
+    }
+
+    auto& eval_context = reinterpret_cast<functions::call_context const*>(context)->context();
+    auto caller_context = eval_context.nearest_context();
+    if (!caller_context || !caller_context->tree) {
+        return 0;
+    }
+
+    auto& path = caller_context->tree->path();
+    data->path.size = path.size();
+    data->path.bytes = path.data();
+    data->line = caller_context->begin.line();
+    return 1;
 }
 
 puppet_evaluation_result puppet_yield(puppet_call_context* context, puppet_value** arguments, uint64_t count)
@@ -324,8 +359,10 @@ int puppet_get_exception_data(puppet_exception const* exception, puppet_exceptio
     data->line = inner.line();
     data->column = inner.column();
     data->span = inner.length();
-    data->text = inner.text().c_str();
-    data->path = inner.path().c_str();
+    data->text.size = static_cast<uint64_t>(inner.text().size());
+    data->text.bytes = inner.text().data();
+    data->path.size = static_cast<uint64_t>(inner.path().size());
+    data->path.bytes = inner.path().data();
     data->frame_count = static_cast<uint32_t>(exception->frames.size());
     data->frames = exception->frames.data();
     return 1;
@@ -514,7 +551,7 @@ int puppet_set_boolean(puppet_value* value, uint8_t data)
     return 1;
 }
 
-int puppet_get_string(puppet_value const* value, puppet_string_data* data)
+int puppet_get_string(puppet_value const* value, puppet_utf8_string* data)
 {
     if (value && data) {
         if (auto string = reinterpret_cast<values::value const*>(value)->as<std::string>()) {
@@ -526,7 +563,7 @@ int puppet_get_string(puppet_value const* value, puppet_string_data* data)
     return 0;
 }
 
-int puppet_set_string(puppet_value* value, puppet_string_data const* data)
+int puppet_set_string(puppet_value* value, puppet_utf8_string const* data)
 {
     if (puppet_is_immutable(value) || !data) {
         return 0;
@@ -535,7 +572,7 @@ int puppet_set_string(puppet_value* value, puppet_string_data const* data)
     return 1;
 }
 
-int puppet_get_regexp(puppet_value const* value, puppet_regexp_data* data)
+int puppet_get_regexp(puppet_value const* value, puppet_utf8_string* data)
 {
     if (value && data) {
         if (auto regex = reinterpret_cast<values::value const*>(value)->as<values::regex>()) {
@@ -547,7 +584,7 @@ int puppet_get_regexp(puppet_value const* value, puppet_regexp_data* data)
     return 0;
 }
 
-int puppet_set_regexp(puppet_value* value, puppet_regexp_data const* data)
+int puppet_set_regexp(puppet_value* value, puppet_utf8_string const* data)
 {
     try {
         if (puppet_is_immutable(value) || !data) {

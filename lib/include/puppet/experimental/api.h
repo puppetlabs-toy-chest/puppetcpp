@@ -15,6 +15,21 @@ extern "C" {
 #endif
 
 /**
+ * Represents data for a UTF-8 encoded string.
+ */
+struct puppet_utf8_string
+{
+    /**
+     * The size of the string, in bytes.
+     */
+    uint64_t size;
+    /**
+     * The pointer to the string's UTF-8 encoded data bytes.
+     */
+    char const* bytes;
+};
+
+/**
  * Represents the possible Puppet log levels.
  */
 enum puppet_log_level {
@@ -77,15 +92,15 @@ struct puppet_log_entry
     /**
      * The source text of the message.
      */
-    char const* text;
+    puppet_utf8_string text;
     /**
      * The path to the source file of the message.
      */
-    char const* path;
+    puppet_utf8_string path;
     /**
      * The message that was logged.
      */
-    char const* message;
+    puppet_utf8_string message;
 };
 
 /**
@@ -111,11 +126,11 @@ struct puppet_stack_frame
     /**
      * The name of the function associated with the stack frame.
      */
-    char const* name;
+    puppet_utf8_string name;
     /**
      * The path to the source file.
      */
-    char const* path;
+    puppet_utf8_string path;
     /**
      * The beginning position of the source context.
      */
@@ -132,7 +147,7 @@ struct puppet_stack_frame
 struct puppet_exception_data
 {
     /**
-     * The exception message.
+     * The null-terminated exception message (UTF-8).
      */
     char const* message;
     /**
@@ -150,11 +165,11 @@ struct puppet_exception_data
     /**
      * The source text of the exception.
      */
-    char const* text;
+    puppet_utf8_string text;
     /**
      * The path to the source file of the exception.
      */
-    char const* path;
+    puppet_utf8_string path;
     /**
      * The number of stack frames for the exception.
      */
@@ -239,36 +254,6 @@ enum puppet_value_kind {
 };
 
 /**
- * Represents data about a Puppet string value.
- */
-struct puppet_string_data
-{
-    /**
-     * The size of the string, in bytes.
-     */
-    uint64_t size;
-    /**
-     * The string's bytes (UTF-8 encoded).
-     */
-    char const* bytes;
-};
-
-/**
- * Represents data about a Puppet regexp value.
- */
-struct puppet_regexp_data
-{
-    /**
-     * The size of the regex's pattern, in bytes.
-     */
-    uint64_t size;
-    /**
-     * The regexp pattern's bytes (UTF-8 encoded).
-     */
-    char const* bytes;
-};
-
-/**
  * Represents an element of a hash value.
  */
 struct puppet_hash_element
@@ -309,12 +294,27 @@ struct puppet_compiler_session;
 struct puppet_call_context;
 
 /**
+ * Represents data about the caller.
+ */
+struct puppet_caller_data
+{
+    /**
+     * The caller's file path.
+     */
+    puppet_utf8_string path;
+    /**
+     * The line number of the caller.
+     */
+    uint64_t line;
+};
+
+/**
  * Represents Puppet function dispatch information.
  */
 struct puppet_function_dispatch
 {
     /**
-     * The Puppet dispatch specification (e.g. "Callable[Integer]").
+     * The null-terminated Puppet dispatch specification (e.g. "Callable[Integer]") (UTF-8).
      */
     char const* specification;
     /**
@@ -330,8 +330,8 @@ struct puppet_function_dispatch
 /**
  * Creates a new compiler session.
  * Currently the compiler will use the default compilation settings for the session.
- * @param name The name of the compilation node (and environment) to use.
- * @param directory The directory for the environment being compiled.
+ * @param name The null-terminated name of the compilation node (and environment) to use (UTF-8).
+ * @param directory The null-terminated directory for the environment being compiled (UTF-8).
  * @param level The minimum logging level to use.
  * @param callback The logging callback to use for the session. If nullptr, no messages will be logged.
  * @return Returns the compiler session or nullptr if the session could not be created.
@@ -341,7 +341,7 @@ struct puppet_compiler_session* puppet_create_session(char const* name, char con
 /**
  * Defines a Puppet function for the given compiler session.
  * @param session The compiler session to define a function for.
- * @param name The name of the function being defined.
+ * @param name The null-terminated name of the function being defined (UTF-8).
  * @param dispatches The dispatches for the function.
  * @param count The count of dispatches for the function.
  * @return Returns non-zero if the function is successfully defined or false if the function cannot be defined (already exists, invalid dispatch specification, etc).
@@ -354,6 +354,15 @@ int puppet_define_function(struct puppet_compiler_session* session, char const* 
  * @return Returns non-zero if a block was passed or zero if a block was not passed.
  */
 int puppet_block_passed(struct puppet_call_context* context);
+
+/**
+ * Gets the data for the caller.
+ * Note: the data is only valid for the current function call.
+ * @param context The current call context.
+ * @param data The caller data to populate.
+ * @return Returns none-zero if the caller data was retrieved or 0 if there is no caller data.
+ */
+int puppet_get_caller_data(struct puppet_call_context const* context, struct puppet_caller_data* data);
 
 /**
  * Yields to the function's block.
@@ -377,21 +386,21 @@ void puppet_free_session(struct puppet_compiler_session* session);
  * Free the returned value upon successful evaluation.
  * Free the returned exception if evaluation was unsuccessful.
  * @param session The compiler session to use.
- * @param path The path to the file to evaluate.
+ * @param path The null-terminated path to the file to evaluate (UTF-8).
  * @return Returns the evaluation result.
  */
 struct puppet_evaluation_result puppet_evaluate_file(struct puppet_compiler_session* session, char const* path);
 
 /**
  * Creates a new Puppet exception.
- * @param message The exception message.
+ * @param message The null-terminated exception message (UTF-8).
  * @return Returns the new Puppet exception or nullptr if the exception failed to allocate.
  */
 struct puppet_exception* puppet_create_exception(char const* message);
 
 /**
  * Creates a new Puppet exception with backtrace and source context.
- * @param message The exception message.
+ * @param message The null-terminated exception message (UTF-8).
  * @param context The call context to use; if nullptr, no backtrace or source code context will be provided.
  * @return Returns the new Puppet exception or nullptr if the exception failed to allocate.
  */
@@ -516,7 +525,7 @@ int puppet_set_boolean(struct puppet_value* value, uint8_t data);
  * @param data The returned string data.
  * @return Returns non-zero if the data was retrieved or zero if not.
  */
-int puppet_get_string(struct puppet_value const* value, struct puppet_string_data* data);
+int puppet_get_string(struct puppet_value const* value, struct puppet_utf8_string* data);
 
 /**
  * Sets the value to the given string.
@@ -524,7 +533,7 @@ int puppet_get_string(struct puppet_value const* value, struct puppet_string_dat
  * @param data The string data to set; the data will be copied from.
  * @return Returns non-zero if the value was set or zero if the value is immutable.
  */
-int puppet_set_string(struct puppet_value* value, struct puppet_string_data const* data);
+int puppet_set_string(struct puppet_value* value, struct puppet_utf8_string const* data);
 
 /**
  * Gets the data for a Puppet regexp value.
@@ -532,7 +541,7 @@ int puppet_set_string(struct puppet_value* value, struct puppet_string_data cons
  * @param data The returned regex data.
  * @return Returns non-zero if the data was retrieved or zero if not.
  */
-int puppet_get_regexp(struct puppet_value const* value, struct puppet_regexp_data* data);
+int puppet_get_regexp(struct puppet_value const* value, struct puppet_utf8_string* data);
 
 /**
  * Sets the value to a regexp with the given pattern.
@@ -540,12 +549,12 @@ int puppet_get_regexp(struct puppet_value const* value, struct puppet_regexp_dat
  * @param data The string data to set; the data will be copied from.
  * @return Returns non-zero if the value was set or zero if the value is immutable or the given pattern is invalid.
  */
-int puppet_set_regexp(struct puppet_value* value, struct puppet_regexp_data const* data);
+int puppet_set_regexp(struct puppet_value* value, struct puppet_utf8_string const* data);
 
 /**
  * Sets the value to a Puppet type.
  * @param value The value to set to a Puppet type.
- * @param specification The null-terminated Puppet type specification (e.g. "String[0, 10]").
+ * @param specification The null-terminated Puppet type specification (e.g. "String[0, 10]") (UTF-8).
  * @return Returns non-zero if the value was set or zero if the value is immutable  or the given specification is invalid.
  */
 int puppet_set_type(struct puppet_value* value, char const* specification);

@@ -391,6 +391,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         void current_context(ast::context context);
 
         /**
+         * Gets the nearest Puppet stack frame context.
+         * This function finds the nearest frame on the call stack that is a Puppet stack frame.
+         * @return Returns the nearest Puppet stack frame context or boost::none if there are no Puppet frames on the call stack.
+         */
+        boost::optional<ast::context> nearest_context() const;
+
+        /**
          * Writes the given value to the output stream.
          * @param value The value to write.
          * @return Returns true if there is a stream to write to or false if not.

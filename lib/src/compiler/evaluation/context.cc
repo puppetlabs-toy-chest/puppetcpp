@@ -503,6 +503,16 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
     }
 
+    boost::optional<ast::context> context::nearest_context() const
+    {
+        for (auto const& frame : _call_stack) {
+            if (!frame.external()) {
+                return frame.current();
+            }
+        }
+        return boost::none;
+    }
+
     bool context::write(values::value const& value)
     {
         if (_stream_stack.empty()) {
