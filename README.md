@@ -227,6 +227,11 @@ Then use `ninja` instead of `make` in the examples below.
 Build
 -----
 
+Currently Boost 1.61 and later has a breaking change that prevents building this project; see the [PR to revert the change](https://github.com/boostorg/spirit/pull/219).
+
+Boost can be patched by simply updating `include/boost/spirit/home/x3/operator/detail/sequence.hpp` to the previous version.
+The previous version is available [here](https://raw.githubusercontent.com/peterhuene/spirit/fcf705ef9ea316dded54e14fb6ba9d01a27ec0e4/include/boost/spirit/home/x3/operator/detail/sequence.hpp).
+
 To build puppetcpp, use 'make':
 
     $ cd release
