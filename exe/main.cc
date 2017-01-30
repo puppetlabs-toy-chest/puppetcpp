@@ -5,7 +5,7 @@
 #include <puppet/options/commands/repl.hpp>
 #include <puppet/options/commands/version.hpp>
 #include <puppet/logging/logger.hpp>
-#include <oniguruma.h>
+#include <onigmo.h>
 
 using namespace std;
 using namespace puppet;
