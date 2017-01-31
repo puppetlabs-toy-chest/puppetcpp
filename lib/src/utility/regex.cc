@@ -114,7 +114,7 @@ namespace puppet { namespace utility {
             reinterpret_cast<OnigUChar const*>(expression.data() + expression.size()),
             ONIG_OPTION_DEFAULT,
             ONIG_ENCODING_UTF8,
-            ONIG_SYNTAX_RUBY,
+            const_cast<OnigSyntaxType*>(ONIG_SYNTAX_RUBY),
             &error_info
         );
         if (result != ONIG_NORMAL) {

@@ -190,7 +190,7 @@ Build Requirements
 * [CMake](https://cmake.org/) >= 3.0
 * [Boost Libraries](http://www.boost.org/) >= 1.60.0
 * [ICU](http://site.icu-project.org/) >= 57.1
-* [Onigmo](https://github.com/k-takata/Onigmo) >= 5.15.0 (build with `--enable-multithread`)
+* [Onigmo](https://github.com/k-takata/Onigmo) >= 6.0.0
 * [Facter](https://github.com/puppetlabs/facter) >= 3.0
 * [yaml-cpp](https://github.com/jbeder/yaml-cpp) >= 0.5.1
 * [Editline](http://thrysoee.dk/editline/) (optional - improves the REPL experience)

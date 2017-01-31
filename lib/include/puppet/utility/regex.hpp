@@ -7,10 +7,11 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/optional.hpp>
-#include <oniguruma.h>
+#include <onigmo.h>
 #include <vector>
 #include <string>
 #include <exception>
+#include <memory>
 
 namespace puppet { namespace utility {
 
