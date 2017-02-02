@@ -449,7 +449,10 @@ int puppet_get_value_kind(puppet_value const* value, puppet_value_kind* kind)
 
         result_type operator()(values::iterator const& iterator) const
         {
-            return PUPPET_VALUE_ITERATOR;
+            if (iterator.value().as<values::hash>()) {
+                return PUPPET_VALUE_KEY_VALUE_ITERATOR;
+            }
+            return PUPPET_VALUE_SEQUENCE_ITERATOR;
         }
     };
 

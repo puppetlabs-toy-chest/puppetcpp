@@ -206,7 +206,8 @@ struct puppet_evaluation_result
 /**
  * Represents the possible kinds of runtime values.
  */
-enum puppet_value_kind {
+enum puppet_value_kind
+{
     /**
      * The undef value kind.
      */
@@ -248,9 +249,13 @@ enum puppet_value_kind {
      */
     PUPPET_VALUE_HASH,
     /**
-     * The iterator value kind.
+     * The sequence iterator (i.e. array) value kind.
      */
-    PUPPET_VALUE_ITERATOR
+    PUPPET_VALUE_SEQUENCE_ITERATOR,
+    /**
+     * The key-value iterator (i.e. hash) value kind.
+     */
+    PUPPET_VALUE_KEY_VALUE_ITERATOR
 };
 
 /**
