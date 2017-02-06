@@ -751,7 +751,7 @@ int puppet_hash_set(puppet_value* hash, puppet_value* key, puppet_value* value)
     }
 
     // Note: using boost::get here for a mutable reference to the array; this relies on the above immutable check
-    auto hash_ptr = boost::get<values::hash>(reinterpret_cast<values::value*>(value));
+    auto hash_ptr = boost::get<values::hash>(reinterpret_cast<values::value*>(hash));
     if (!hash_ptr) {
         return 0;
     }
