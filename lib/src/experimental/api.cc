@@ -171,7 +171,7 @@ extern "C"
 puppet_compiler_session* puppet_create_session(char const* name, char const* directory, puppet_log_level level, void (*callback)(puppet_log_entry const*))
 {
     try {
-        return new puppet_compiler_session{ name, directory, level, callback };
+        return new (nothrow) puppet_compiler_session{ name, directory, level, callback };
     } catch (compilation_exception const&) {
         return nullptr;
     }
@@ -282,13 +282,13 @@ puppet_evaluation_result puppet_yield(puppet_call_context* context, puppet_value
 
     // Yield to the block
     try {
-        result.value = reinterpret_cast<puppet_value*>(new values::value(cxt->yield(args)));
+        result.value = reinterpret_cast<puppet_value*>(new (nothrow) values::value(cxt->yield(args)));
     } catch (evaluation_exception const& ex) {
-        result.exception = new puppet_exception(compilation_exception(ex));
+        result.exception = new (nothrow) puppet_exception(compilation_exception(ex));
     } catch (compilation_exception const& ex) {
-        result.exception = new puppet_exception(ex);
+        result.exception = new (nothrow) puppet_exception(ex);
     } catch (exception const& ex) {
-        result.exception = new puppet_exception{ compilation_exception{ (boost::format("unhandled exception: %1%") % ex.what()).str() } };
+        result.exception = new (nothrow) puppet_exception{ compilation_exception{ (boost::format("unhandled exception: %1%") % ex.what()).str() } };
     }
     return result;
 }
@@ -318,16 +318,16 @@ puppet_evaluation_result puppet_evaluate_file(puppet_compiler_session* session, 
 
             {
                 evaluation::scoped_stack_frame frame{ context, evaluation::stack_frame{ "<main>", context.top_scope(), false }};
-                result.value = reinterpret_cast<puppet_value*>(new values::value{ evaluator.evaluate(*tree) });
+                result.value = reinterpret_cast<puppet_value*>(new (nothrow) values::value{ evaluator.evaluate(*tree) });
             }
         } catch (parse_exception const& ex) {
-            result.exception = new puppet_exception{ compilation_exception{ ex, path } };
+            result.exception = new (nothrow) puppet_exception{ compilation_exception{ ex, path } };
         } catch (evaluation_exception const& ex) {
-            result.exception = new puppet_exception{ compilation_exception{ ex } };
+            result.exception = new (nothrow) puppet_exception{ compilation_exception{ ex } };
         } catch (compilation_exception const& ex) {
-            result.exception = new puppet_exception{ ex };
+            result.exception = new (nothrow) puppet_exception{ ex };
         } catch (exception const& ex) {
-            result.exception = new puppet_exception{ compilation_exception{ (boost::format("unhandled exception: %1%") % ex.what()).str() } };
+            result.exception = new (nothrow) puppet_exception{ compilation_exception{ (boost::format("unhandled exception: %1%") % ex.what()).str() } };
         }
     }
     return result;
@@ -335,7 +335,7 @@ puppet_evaluation_result puppet_evaluate_file(puppet_compiler_session* session, 
 
 puppet_exception* puppet_create_exception(char const* message)
 {
-    return new puppet_exception{ compilation_exception(message) };
+    return new (nothrow) puppet_exception{ compilation_exception(message) };
 }
 
 puppet_exception* puppet_create_exception_with_context(char const* message, puppet_call_context const* context)
@@ -345,7 +345,7 @@ puppet_exception* puppet_create_exception_with_context(char const* message, pupp
     }
 
     auto backtrace = reinterpret_cast<functions::call_context const*>(context)->context().backtrace();
-    return new puppet_exception{ compilation_exception{ evaluation_exception{ message, rvalue_cast(backtrace) } } };
+    return new (nothrow) puppet_exception{ compilation_exception{ evaluation_exception{ message, rvalue_cast(backtrace) } } };
 }
 
 int puppet_get_exception_data(puppet_exception const* exception, puppet_exception_data* data)
@@ -375,12 +375,12 @@ void puppet_free_exception(puppet_exception* exception)
 
 puppet_value* puppet_create_value()
 {
-    return reinterpret_cast<puppet_value*>(new values::value{});
+    return reinterpret_cast<puppet_value*>(new (nothrow) values::value{});
 }
 
 puppet_value* puppet_clone_value(puppet_value const* value)
 {
-    return reinterpret_cast<puppet_value*>(new values::value{ *reinterpret_cast<values::value const*>(value) });
+    return reinterpret_cast<puppet_value*>(new (nothrow) values::value{ *reinterpret_cast<values::value const*>(value) });
 }
 
 void puppet_free_value(puppet_value* value)
@@ -619,7 +619,7 @@ puppet_value* puppet_create_array(uint64_t capacity)
 {
     values::array array;
     array.reserve(capacity);
-    return reinterpret_cast<puppet_value*>(new values::value{ rvalue_cast(array) });
+    return reinterpret_cast<puppet_value*>(new (nothrow) values::value{ rvalue_cast(array) });
 }
 
 int puppet_array_size(puppet_value const* value, uint64_t* size)
@@ -698,7 +698,7 @@ int puppet_array_push(puppet_value* value, puppet_value* element)
 
 puppet_value* puppet_create_hash()
 {
-    return reinterpret_cast<puppet_value*>(new values::value{ values::hash{} });
+    return reinterpret_cast<puppet_value*>(new (nothrow) values::value{ values::hash{} });
 }
 
 int puppet_hash_size(puppet_value const* value, uint64_t* size)
@@ -796,7 +796,7 @@ puppet_value* puppet_value_to_string(puppet_value const* value)
 
     ostringstream stream;
     stream << *reinterpret_cast<values::value const*>(value);
-    return reinterpret_cast<puppet_value*>(new values::value{ stream.str() });
+    return reinterpret_cast<puppet_value*>(new (nothrow) values::value{ stream.str() });
 }
 
 }  // extern "C"
