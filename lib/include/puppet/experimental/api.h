@@ -407,9 +407,10 @@ struct puppet_exception* puppet_create_exception(char const* message);
  * Creates a new Puppet exception with backtrace and source context.
  * @param message The null-terminated exception message (UTF-8).
  * @param context The call context to use; if nullptr, no backtrace or source code context will be provided.
+ * @param index The argument index to use for the source code context or nullptr to use the function name (when context is not nullptr).
  * @return Returns the new Puppet exception or nullptr if the exception failed to allocate.
  */
-struct puppet_exception* puppet_create_exception_with_context(char const* message, struct puppet_call_context const* context);
+struct puppet_exception* puppet_create_exception_with_context(char const* message, struct puppet_call_context const* context, uint32_t const* index);
 
 /**
  * Gets the data of the given Puppet exception.
