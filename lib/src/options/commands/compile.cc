@@ -112,7 +112,8 @@ namespace puppet { namespace options { namespace commands {
 
                     // Create a new environment with the builtin functions and operators
                     auto environment = compiler::environment::create(logger, settings);
-                    environment->dispatcher().add_builtins();
+                    environment->dispatcher().add_builtin_functions();
+                    environment->dispatcher().add_builtin_operators();
 
                     // Construct a node
                     compiler::node node{logger, node_name, environment, facts};

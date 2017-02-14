@@ -100,20 +100,19 @@ namespace puppet { namespace compiler {
 
         LOG(debug, "found environment directory '%1%' for environment '%2%'.", base_directory, name);
 
-        struct make_shared_enabler : environment
-        {
-            explicit make_shared_enabler(string name, string base, compiler::settings settings) :
-                environment(rvalue_cast(name), rvalue_cast(base), rvalue_cast(settings))
-            {
-            }
-        };
-
         // Load the environment settings
         load_environment_settings(logger, base_directory, settings);
 
-        auto environment = make_shared<make_shared_enabler>(rvalue_cast(name), rvalue_cast(base_directory), rvalue_cast(settings));
+        auto environment = make_shared<compiler::environment>(rvalue_cast(name), rvalue_cast(base_directory), rvalue_cast(settings));
         environment->add_modules(logger);
         return environment;
+    }
+
+    environment::environment(string name, string directory, compiler::settings settings) :
+        finder(rvalue_cast(directory), &settings),
+        _name(rvalue_cast(name)),
+        _settings(rvalue_cast(settings))
+    {
     }
 
     string const& environment::name() const
@@ -343,13 +342,6 @@ namespace puppet { namespace compiler {
             return {};
         }
         return module->find_by_path(type, subname.string());
-    }
-
-    environment::environment(string name, string directory, compiler::settings settings) :
-        finder(rvalue_cast(directory), &settings),
-        _name(rvalue_cast(name)),
-        _settings(rvalue_cast(settings))
-    {
     }
 
     void environment::add_modules(logging::logger& logger)

@@ -64,6 +64,11 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Update the current source for Puppet frames only
         if (!_external) {
             _current = rvalue_cast(value);
+
+            // Take a reference to the AST
+            if (_current.tree != _tree.get()) {
+                _tree = _current.tree->shared_from_this();
+            }
         }
     }
 

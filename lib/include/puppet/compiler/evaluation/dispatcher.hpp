@@ -33,9 +33,14 @@ namespace puppet { namespace compiler { namespace evaluation {
         dispatcher& operator=(dispatcher&&) = default;
 
         /**
-         * Adds the built-in Puppet functions and operators to the dispatcher.
+         * Adds the built-in Puppet functions to the dispatcher.
          */
-        void add_builtins();
+        void add_builtin_functions();
+
+        /**
+         * Adds the built-in Puppet operators to the dispatcher.
+         */
+        void add_builtin_operators();
 
         /**
          * Adds a function to the dispatcher.

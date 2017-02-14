@@ -68,6 +68,21 @@ namespace puppet { namespace compiler {
         runtime_error(message),
         _backtrace(rvalue_cast(backtrace))
     {
+        // Use the last internal context
+        for (auto& frame : _backtrace) {
+            if (frame.external()) {
+                continue;
+            }
+
+            _context = frame.current();
+            break;
+        }
+
+        if (_context.tree) {
+            // Take a shared pointer on the tree
+            // This ensures the AST continues to exist even if the exception propagates beyond the tree's original scope
+            _tree = _context.tree->shared_from_this();
+        }
     }
 
     evaluation_exception::evaluation_exception(string const& message, ast::context context, vector<evaluation::stack_frame> backtrace) :

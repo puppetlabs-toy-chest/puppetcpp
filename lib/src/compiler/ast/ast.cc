@@ -2330,10 +2330,10 @@ namespace puppet { namespace compiler { namespace ast {
         }
     }
 
-    void syntax_tree::validate(bool epp) const
+    void syntax_tree::validate(bool epp, bool allow_catalog_statements) const
     {
-        visitors::validation visitor;
-        visitor.visit(*this, epp);
+        visitors::validation visitor{ epp, allow_catalog_statements };
+        visitor.visit(*this);
     }
 
     shared_ptr<syntax_tree> syntax_tree::create(std::string path, compiler::module const* module)
