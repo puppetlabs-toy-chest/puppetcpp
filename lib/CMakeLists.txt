@@ -104,7 +104,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/resource.cc
     src/compiler/scanner.cc
     src/compiler/settings.cc
-    src/experimental/api.cc
+    src/api.cc
     src/facts/facter.cc
     src/facts/yaml.cc
     src/logging/logger.cc

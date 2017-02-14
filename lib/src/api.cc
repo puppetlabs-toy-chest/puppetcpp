@@ -1,4 +1,4 @@
-#include <puppet/experimental/api.h>
+#include <puppet/api.h>
 #include <puppet/compiler/lexer/lexer.hpp>
 #include <puppet/compiler/parser/parser.hpp>
 #include <puppet/compiler/evaluation/evaluator.hpp>

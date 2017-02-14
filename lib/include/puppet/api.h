@@ -1,6 +1,6 @@
 /**
  * @file
- * Declares the experimental C API.
+ * Declares the compiler's C API.
  */
 #pragma once
 
