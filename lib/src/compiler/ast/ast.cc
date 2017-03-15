@@ -547,6 +547,12 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    ostream& operator<<(ostream& os, break_statement const& node)
+    {
+        os << "break";
+        return os;
+    }
+
     ast::context statement::context() const
     {
         return boost::apply_visitor(context_visitor(), *this);
@@ -556,6 +562,11 @@ namespace puppet { namespace compiler { namespace ast {
     {
         visitors::validation visitor;
         visitor.visit(*this, effective);
+    }
+
+    bool statement::is_transfer_statement() const
+    {
+        return boost::get<break_statement>(this);
     }
 
     ostream& operator<<(ostream& os, statement const& node)
@@ -2254,6 +2265,13 @@ namespace puppet { namespace compiler { namespace ast {
             write("exported", node.exported);
             write("query", node.query);
             write("end", node.end);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(break_statement const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "break statement");
             _emitter << YAML::EndMap;
         }
 

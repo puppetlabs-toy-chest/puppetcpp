@@ -92,15 +92,15 @@ struct puppet_log_entry
     /**
      * The source text of the message.
      */
-    puppet_utf8_string text;
+    struct puppet_utf8_string text;
     /**
      * The path to the source file of the message.
      */
-    puppet_utf8_string path;
+    struct puppet_utf8_string path;
     /**
      * The message that was logged.
      */
-    puppet_utf8_string message;
+    struct puppet_utf8_string message;
 };
 
 /**
@@ -126,11 +126,11 @@ struct puppet_stack_frame
     /**
      * The name of the function associated with the stack frame.
      */
-    puppet_utf8_string name;
+    struct puppet_utf8_string name;
     /**
      * The path to the source file.
      */
-    puppet_utf8_string path;
+    struct puppet_utf8_string path;
     /**
      * The beginning position of the source context.
      */
@@ -165,11 +165,11 @@ struct puppet_exception_data
     /**
      * The source text of the exception.
      */
-    puppet_utf8_string text;
+    struct puppet_utf8_string text;
     /**
      * The path to the source file of the exception.
      */
-    puppet_utf8_string path;
+    struct puppet_utf8_string path;
     /**
      * The number of stack frames for the exception.
      */
@@ -255,7 +255,11 @@ enum puppet_value_kind
     /**
      * The key-value iterator (i.e. hash) value kind.
      */
-    PUPPET_VALUE_KEY_VALUE_ITERATOR
+    PUPPET_VALUE_KEY_VALUE_ITERATOR,
+    /**
+     * The break control transfer value kind; indicates an iteration break and is not a real value.
+     */
+    PUPPET_VALUE_BREAK
 };
 
 /**
@@ -306,7 +310,7 @@ struct puppet_caller_data
     /**
      * The caller's file path.
      */
-    puppet_utf8_string path;
+    struct puppet_utf8_string path;
     /**
      * The line number of the caller.
      */
@@ -682,6 +686,13 @@ int puppet_iterate(struct puppet_value const* value, void const* data, int (*cal
  * @return Returns the new string value.  Free with `puppet_free_value`.
  */
 struct puppet_value* puppet_value_to_string(struct puppet_value const* value);
+
+/**
+ * Determines if the given value is a control transfer value (i.e. not an real value).
+ * @param value The value to check.
+ * @return Returns non-zero if the value is a control transfer value or false if not.
+ */
+int puppet_value_is_control_transfer(struct puppet_value const* value);
 
 #ifdef __cplusplus
 }

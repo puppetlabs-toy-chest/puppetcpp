@@ -26,7 +26,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                         block_arguments[0] = *key;
                         block_arguments[1] = value;
                     }
-                    if (context.yield(block_arguments).is_true()) {
+                    auto filtered = context.yield(block_arguments);
+                    if (filtered.as<values::break_iteration>()) {
+                        // Break the iteration
+                        return false;
+                    }
+                    if (filtered.is_true()) {
                         result.set(*key, value);
                     }
                     return true;
@@ -69,7 +74,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                             block_arguments[0] = index++;
                             block_arguments[1] = value;
                         }
-                        if (context.yield(block_arguments).is_true()) {
+                        auto filtered = context.yield(block_arguments);
+                        if (filtered.as<values::break_iteration>()) {
+                            // Break the iteration
+                            return false;
+                        }
+                        if (filtered.is_true()) {
                             result.emplace_back(value);
                         }
                         return true;

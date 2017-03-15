@@ -1,0 +1,182 @@
+path: break.pp
+statements:
+  - kind: postfix expression
+    operand:
+      kind: array
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 9
+        line: 1
+      elements:
+        - kind: number
+          begin:
+            offset: 1
+            line: 1
+          end:
+            offset: 2
+            line: 1
+          base: decimal
+          value: 1
+        - kind: number
+          begin:
+            offset: 4
+            line: 1
+          end:
+            offset: 5
+            line: 1
+          base: decimal
+          value: 2
+        - kind: number
+          begin:
+            offset: 7
+            line: 1
+          end:
+            offset: 8
+            line: 1
+          base: decimal
+          value: 3
+    operations:
+      - kind: method call expression
+        begin:
+          offset: 9
+          line: 1
+        method:
+          kind: name
+          begin:
+            offset: 10
+            line: 1
+          end:
+            offset: 14
+            line: 1
+          value: each
+        lambda:
+          begin:
+            offset: 15
+            line: 1
+          end:
+            offset: 59
+            line: 5
+          parameters:
+            - variable:
+                kind: variable
+                begin:
+                  offset: 16
+                  line: 1
+                end:
+                  offset: 18
+                  line: 1
+                name: x
+          body:
+            - kind: if expression
+              begin:
+                offset: 26
+                line: 2
+              end:
+                offset: 57
+                line: 4
+              conditional:
+                kind: binary expression
+                operand:
+                  kind: variable
+                  begin:
+                    offset: 29
+                    line: 2
+                  end:
+                    offset: 31
+                    line: 2
+                  name: x
+                operations:
+                  - operator_position:
+                      offset: 32
+                      line: 2
+                    operator: ">"
+                    operand:
+                      kind: number
+                      begin:
+                        offset: 34
+                        line: 2
+                      end:
+                        offset: 35
+                        line: 2
+                      base: decimal
+                      value: 2
+              body:
+                - kind: break statement
+  - kind: postfix expression
+    operand:
+      kind: name
+      begin:
+        offset: 61
+        line: 7
+      end:
+        offset: 64
+        line: 7
+      value: foo
+    operations:
+      - kind: method call expression
+        begin:
+          offset: 64
+          line: 7
+        method:
+          kind: name
+          begin:
+            offset: 65
+            line: 7
+          end:
+            offset: 68
+            line: 7
+          value: map
+        lambda:
+          begin:
+            offset: 69
+            line: 7
+          end:
+            offset: 118
+            line: 11
+          parameters:
+            - variable:
+                kind: variable
+                begin:
+                  offset: 70
+                  line: 7
+                end:
+                  offset: 72
+                  line: 7
+                name: x
+          body:
+            - kind: if expression
+              begin:
+                offset: 80
+                line: 8
+              end:
+                offset: 116
+                line: 10
+              conditional:
+                kind: binary expression
+                operand:
+                  kind: variable
+                  begin:
+                    offset: 83
+                    line: 8
+                  end:
+                    offset: 85
+                    line: 8
+                  name: x
+                operations:
+                  - operator_position:
+                      offset: 86
+                      line: 8
+                    operator: ==
+                    operand:
+                      kind: string
+                      begin:
+                        offset: 89
+                        line: 8
+                      end:
+                        offset: 92
+                        line: 8
+                      value: o
+              body:
+                - kind: break statement

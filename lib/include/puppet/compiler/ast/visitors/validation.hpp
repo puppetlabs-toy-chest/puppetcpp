@@ -41,16 +41,18 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         {
             top,
             epp,
-            case_,
-            if_,
-            unless,
+            interpolated_string,
             lambda,
             class_,
             defined_type,
             node,
             function,
             application,
-            site
+            site,
+            relationship,
+            resource_declaration,
+            resource_override,
+            resource_defaults
         };
 
         template<class> friend class ::boost::detail::variant::invoke_visitor;
@@ -73,7 +75,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void operator()(if_expression const& expression);
         void operator()(unless_expression const& expression);
         void operator()(function_call_expression const& expression);
-        void operator()(lambda_expression const& expression);
+        void operator()(name const& function, lambda_expression const& expression);
         void operator()(new_expression const& expression);
         void operator()(epp_render_expression const& expression);
         void operator()(epp_render_block const& expression);
@@ -106,6 +108,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void operator()(nested_query_expression const& expression);
         void operator()(basic_query_expression const& expression);
         void operator()(attribute_query const& expression);
+        void operator()(break_statement const& statement);
 
         void validate_parameters(std::vector<parameter> const& parameters, bool is_resource = false, bool pass_by_hash = false);
         void validate_parameter_name(parameter const& parameter, bool is_resource_parameter) const;
@@ -115,6 +118,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void validate_assignment_operand(ast::array const& operand);
         void validate_assignment_operand(variable const& operand);
         void validate_catalog_statement(ast::context const& context);
+        static char const* where(location l);
 
         struct location_helper
         {

@@ -192,27 +192,27 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         return false;
     }
 
-    bool ineffective::operator()(ast::epp_render_expression const& expression) const
+    bool ineffective::operator()(epp_render_expression const& expression) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::epp_render_block const& expression) const
+    bool ineffective::operator()(epp_render_block const& expression) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::epp_render_string const& expression) const
+    bool ineffective::operator()(epp_render_string const& expression) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::unary_expression const& expression) const
+    bool ineffective::operator()(unary_expression const& expression) const
     {
         return true;
     }
 
-    bool ineffective::operator()(ast::nested_expression const& expression) const
+    bool ineffective::operator()(nested_expression const& expression) const
     {
         return operator()(expression.expression);
     }
@@ -264,57 +264,57 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         return boost::apply_visitor(*this, statement);
     }
 
-    bool ineffective::operator()(ast::class_statement const& statement) const
+    bool ineffective::operator()(class_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::defined_type_statement const& statement) const
+    bool ineffective::operator()(defined_type_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::node_statement const& statement) const
+    bool ineffective::operator()(node_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::function_statement const& statement) const
+    bool ineffective::operator()(function_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::produces_statement const& statement) const
+    bool ineffective::operator()(produces_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::consumes_statement const& statement) const
+    bool ineffective::operator()(consumes_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::application_statement const& statement) const
+    bool ineffective::operator()(application_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::site_statement const& statement) const
+    bool ineffective::operator()(site_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::type_alias_statement const& statement) const
+    bool ineffective::operator()(type_alias_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::function_call_statement const& statement) const
+    bool ineffective::operator()(function_call_statement const& statement) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::relationship_statement const& statement) const
+    bool ineffective::operator()(relationship_statement const& statement) const
     {
         // If an actual relationship statement, it has effect
         if (!statement.operations.empty()) {
@@ -324,27 +324,32 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         return operator()(statement.operand);
     }
 
-    bool ineffective::operator()(ast::relationship_expression const& expression) const
+    bool ineffective::operator()(relationship_expression const& expression) const
     {
         return boost::apply_visitor(*this, expression);
     }
 
-    bool ineffective::operator()(ast::resource_declaration_expression const& expression) const
+    bool ineffective::operator()(resource_declaration_expression const& expression) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::resource_override_expression const& expression) const
+    bool ineffective::operator()(resource_override_expression const& expression) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::resource_defaults_expression const& expression) const
+    bool ineffective::operator()(resource_defaults_expression const& expression) const
     {
         return false;
     }
 
-    bool ineffective::operator()(ast::collector_expression const& expression) const
+    bool ineffective::operator()(collector_expression const& expression) const
+    {
+        return false;
+    }
+
+    bool ineffective::operator()(break_statement const& statement) const
     {
         return false;
     }

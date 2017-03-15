@@ -55,6 +55,7 @@ namespace puppet { namespace compiler { namespace lexer {
             { token_id::keyword_consumes,       "consumes keyword" },
             { token_id::keyword_application,    "application keyword" },
             { token_id::keyword_site,           "site keyword" },
+            { token_id::keyword_break,          "break keyword" },
             { token_id::statement_call,         "name" },  // Statement calls are technically names
             { token_id::string,                 "string" },
             { token_id::string_start,           "interpolated string" },

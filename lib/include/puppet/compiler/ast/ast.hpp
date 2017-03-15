@@ -822,6 +822,21 @@ namespace puppet { namespace compiler { namespace ast {
     struct relationship_statement;
 
     /**
+     * Represents a break statement.
+     */
+    struct break_statement : context
+    {
+    };
+
+    /**
+     * Stream insertion operator for break statement.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, break_statement const& node);
+
+    /**
      * Represents a Puppet statement.
      */
     struct statement : boost::spirit::x3::variant<
@@ -835,7 +850,8 @@ namespace puppet { namespace compiler { namespace ast {
         boost::spirit::x3::forward_ast<site_statement>,
         boost::spirit::x3::forward_ast<type_alias_statement>,
         boost::spirit::x3::forward_ast<function_call_statement>,
-        boost::spirit::x3::forward_ast<relationship_statement>
+        boost::spirit::x3::forward_ast<relationship_statement>,
+        break_statement
         >
     {
         // Use the base's construction and assignment semantics
@@ -881,6 +897,13 @@ namespace puppet { namespace compiler { namespace ast {
          * @param effective True if the statement is required to be effective or false if not.
          */
         void validate(bool effective = false) const;
+
+        /**
+         * Determines if the statement is a control transfer statement.
+         * Control transfer statements include break, next, and return statements.
+         * @return Returns true if the statement is a control transfer statement or false if not.
+         */
+        bool is_transfer_statement() const;
     };
 
     /**

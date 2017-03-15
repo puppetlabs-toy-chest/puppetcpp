@@ -49,6 +49,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         call_context(evaluation::context& context, ast::new_expression const& expression, ast::name const& name);
 
         /**
+         * Gets the optional transfer if the arguments contained a control transfer.
+         * @return Returns the reference to the optional control transfer value.
+         */
+        boost::optional<runtime::values::value>& transfer();
+
+        /**
          * Gets the current evaluation context.
          * @return Returns the current evaluation context.
          */
@@ -120,6 +126,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         ast::name const& _name;
         runtime::values::array _arguments;
         std::vector<ast::context> _argument_contexts;
+        boost::optional<runtime::values::value> _transfer;
         boost::optional<ast::lambda_expression> const& _block;
         std::shared_ptr<scope> _closure_scope;
     };

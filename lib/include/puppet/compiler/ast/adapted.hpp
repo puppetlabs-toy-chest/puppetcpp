@@ -444,6 +444,13 @@ BOOST_FUSION_ADAPT_STRUCT(
 )
 
 BOOST_FUSION_ADAPT_STRUCT(
+    puppet::compiler::ast::break_statement,
+    begin,
+    end,
+    tree
+)
+
+BOOST_FUSION_ADAPT_STRUCT(
     puppet::compiler::ast::syntax_tree,
     parameters,
     statements

@@ -15,6 +15,7 @@
 #include "type.hpp"
 #include "undef.hpp"
 #include "variable.hpp"
+#include "break_iteration.hpp"
 #include "../../cast.hpp"
 #include <boost/variant.hpp>
 #include <boost/mpl/contains.hpp>
@@ -54,6 +55,8 @@ namespace puppet { namespace runtime { namespace values {
 
     /**
      * Represents all possible value types.
+     * Puppet allows non-local control transfer, such as break and return statements.
+     * These statements return special values to support this without exception handling.
      */
     using value_base = boost::variant<
         undef,
@@ -67,7 +70,8 @@ namespace puppet { namespace runtime { namespace values {
         variable,
         array,
         hash,
-        iterator
+        iterator,
+        break_iteration
     >;
 
     /**
@@ -293,6 +297,18 @@ namespace puppet { namespace runtime { namespace values {
          * @return Returns true if the value is "truthy" or false if it is not.
          */
         bool is_truthy() const;
+
+        /**
+         * Determines if the value is a control transfer value.
+         * @return Returns true if the value is a control transfer value or false if it is not.
+         */
+        bool is_transfer() const;
+
+        /**
+         * Ensures the value is not a control transfer value.
+         * If the value is control transfer value, an evaluation exception will be raised.
+         */
+        void ensure() const;
 
         /**
          * Determines if this value matches the other value.
