@@ -26,6 +26,8 @@ add_definitions(
     -DFIXTURES_DIR="${CMAKE_CURRENT_LIST_DIR}/fixtures/"
 )
 
+# Disable the parenthesis warning for Catch macros
+target_compile_options(puppet_test PUBLIC "-Wno-parentheses")
 target_link_libraries(puppet_test puppet ${Boost_LIBRARIES} ${ICU_LIBRARIES})
 
 cotire(puppet_test)
