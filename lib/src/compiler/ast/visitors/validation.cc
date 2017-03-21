@@ -210,6 +210,11 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(ast::expression const& expression)
     {
+        if (expression.operations.empty()) {
+            operator()(expression.operand);
+            return;
+        }
+
         operator()(expression.operand);
 
         postfix_expression const* left = &expression.operand;
@@ -550,60 +555,47 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(break_statement const& statement)
     {
-        // Look backward up the AST for illegal uses
-        bool lambda = false;
-        char const* message = nullptr;
-        for (auto it = _locations.rbegin(); it != _locations.rend(); ++it) {
-            auto current = *it;
-            if (current == location::lambda) {
-                lambda = true;
-                continue;
-            }
-
-            // Check for use in illegal expressions
-            if (current == location::relationship ||
-                current == location::resource_declaration ||
-                current == location::resource_override ||
-                current == location::resource_defaults) {
-                message = where(current);
-                break;
-            }
-
-            // Check for evaluation inside parameters
-            if (_parameter_begin) {
-                message = "parameter default value";
-                break;
-            }
-
-            // If no lambda yet, check for use in a block that isn't a lambda
-            if (!lambda) {
-                if (current == location::interpolated_string ||
-                    current == location::function ||
-                    current == location::class_ ||
-                    current == location::defined_type ||
-                    current == location::node ||
-                    current == location::application ||
-                    current == location::site) {
-                    message = where(current);
-                    break;
-                }
-            }
-        }
-
-        if (message) {
+        auto result = validate_transfer_statement(false);
+        if (result.first) {
             throw parse_exception(
-                (boost::format("break statement cannot be used inside %1%.") % message).str(),
+                (boost::format("break statement cannot be used inside %1%.") % result.first).str(),
                 statement.begin,
                 statement.end
             );
         }
 
-        if (!lambda) {
+        if (!result.second) {
             throw parse_exception(
                 "break statement must be used from within a block.",
                 statement.begin,
                 statement.end
             );
+        }
+    }
+
+    void validation::operator()(next_statement const& statement)
+    {
+        auto result = validate_transfer_statement(false);
+        if (result.first) {
+            auto context = statement.context();
+            throw parse_exception(
+                (boost::format("next statement cannot be used inside %1%.") % result.first).str(),
+                context.begin,
+                context.end
+            );
+        }
+
+        if (!result.second) {
+            auto context = statement.context();
+            throw parse_exception(
+                "next statement must be used from within a block.",
+                context.begin,
+                context.end
+            );
+        }
+
+        if (statement.value) {
+            operator()(*statement.value);
         }
     }
 
@@ -813,6 +805,48 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         if (!_allow_catalog_statements) {
             throw parse_exception("catalog statements are not allowed.", context.begin, context.end);
         }
+    }
+
+    std::pair<char const*, bool> validation::validate_transfer_statement(bool ret)
+    {
+        // Look backward up the AST for illegal uses
+        bool lambda = false;
+        char const* message = nullptr;
+        for (auto it = _locations.rbegin(); it != _locations.rend(); ++it) {
+            auto current = *it;
+            if (current == location::lambda) {
+                lambda = true;
+                continue;
+            }
+
+            // Check for use in illegal expressions
+            if (current == location::relationship ||
+                current == location::resource_declaration ||
+                current == location::resource_override ||
+                current == location::resource_defaults) {
+                message = where(current);
+                break;
+            }
+
+            // Check for evaluation inside parameters
+            if (_parameter_begin) {
+                message = "parameter default value";
+                break;
+            }
+
+            // If no lambda yet, check for use in a block that isn't a lambda
+            if (!lambda) {
+                if (current == location::interpolated_string ||
+                    (!ret && (current == location::function || current == location::class_ || current == location::defined_type)) ||
+                    current == location::node ||
+                    current == location::application ||
+                    current == location::site) {
+                    message = where(current);
+                    break;
+                }
+            }
+        }
+        return make_pair(message, lambda);
     }
 
     char const* validation::where(location l)

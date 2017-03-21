@@ -129,3 +129,11 @@ Integer[0, 100].step(5) |$x| {
 [1].each |$x| {
     1 + if true { break }
 }
+
+# Check for break in next (should break instead of next)
+[1, 2, 3].each |$x| {
+    if $x == 1 {
+        next if true { break }
+    }
+    notice wrong
+}

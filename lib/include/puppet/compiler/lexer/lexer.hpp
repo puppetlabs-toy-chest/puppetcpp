@@ -346,7 +346,8 @@ namespace puppet { namespace compiler { namespace lexer {
                 ("consumes",    static_cast<id_type>(token_id::keyword_consumes))
                 ("application", static_cast<id_type>(token_id::keyword_application))
                 ("site",        static_cast<id_type>(token_id::keyword_site))
-                ("break",       static_cast<id_type>(token_id::keyword_break));
+                ("break",       static_cast<id_type>(token_id::keyword_break))
+                ("next",        static_cast<id_type>(token_id::keyword_next));
             this->self +=
                 lex::token_def<>("true",  static_cast<id_type>(token_id::keyword_true)) [ no_regex ] |
                 lex::token_def<>("false", static_cast<id_type>(token_id::keyword_false)) [ no_regex ];

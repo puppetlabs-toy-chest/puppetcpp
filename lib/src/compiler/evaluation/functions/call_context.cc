@@ -144,7 +144,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             return values::undef();
         }
         function_evaluator evaluator{ _context, "<block>", _block->parameters, _block->body };
-        return evaluator.evaluate(arguments, _closure_scope);
+        auto result = evaluator.evaluate(arguments, _closure_scope);
+
+        // Check for "yield return" and return the contained value
+        if (result.as<values::yield_return>()) {
+            return result.move_as<values::yield_return>().unwrap();
+        }
+        return result;
     }
 
     void call_context::evaluate_arguments(vector<ast::expression> const& arguments)

@@ -552,6 +552,7 @@ SCENARIO("lexing keywords", "[lexer]")
     require_token(token, end, token_id::keyword_application, "application");
     require_token(token, end, token_id::keyword_site, "site");
     require_token(token, end, token_id::keyword_break, "break");
+    require_token(token, end, token_id::keyword_next, "next");
     require_token(token, end, token_id::keyword_true, "true");
     require_token(token, end, token_id::keyword_false, "false");
     REQUIRE(token == end);

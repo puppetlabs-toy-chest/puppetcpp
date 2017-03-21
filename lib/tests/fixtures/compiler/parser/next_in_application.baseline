@@ -1,0 +1,3 @@
+Error: next_in_application.pp:3:9: next statement cannot be used inside an application statement.
+  next
+  ^~~~

@@ -10,6 +10,7 @@
 #include "regex.hpp"
 #include "type.hpp"
 #include "break_iteration.hpp"
+#include "yield_return.hpp"
 #include <boost/variant.hpp>
 #include <ostream>
 #include <functional>
@@ -145,6 +146,7 @@ namespace puppet { namespace runtime { namespace values {
         void operator()(values::hash const& value) const;
         void operator()(values::iterator const& value) const;
         void operator()(values::break_iteration const& value) const;
+        void operator()(values::yield_return const& value) const;
 
         iterator::callback_type const& _callback;
         int64_t _step;

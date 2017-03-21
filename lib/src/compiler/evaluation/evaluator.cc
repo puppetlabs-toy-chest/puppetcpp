@@ -839,6 +839,15 @@ namespace puppet { namespace compiler { namespace evaluation {
         return values::break_iteration{ statement, _context.backtrace() };
     }
 
+    value evaluator::operator()(next_statement const& statement)
+    {
+        value next = statement.value ? evaluate(*statement.value) : value{ values::undef{} };
+        if (next.is_transfer()) {
+            return next;
+        }
+        return values::yield_return{ statement, rvalue_cast(next), _context.backtrace() };
+    }
+
     resource_body const* evaluator::find_default_body(resource_declaration_expression const& expression)
     {
         resource_body const* default_body = nullptr;

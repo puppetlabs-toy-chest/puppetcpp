@@ -75,6 +75,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         bool operator()(resource_defaults_expression const& expression) const;
         bool operator()(collector_expression const& expression) const;
         bool operator()(break_statement const& statement) const;
+        bool operator()(next_statement const& statement) const;
     };
 
 }}}}  // namespace puppet::compiler::visitors
