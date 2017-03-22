@@ -1,0 +1,3 @@
+Error: return_in_class_with_value.pp:3:9: classes cannot return a value.
+  return foo
+  ^~~~~~~~~~

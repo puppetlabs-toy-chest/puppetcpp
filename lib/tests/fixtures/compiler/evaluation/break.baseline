@@ -16,8 +16,10 @@ Notice: Scope(Class[main]): 15
 Notice: Scope(Class[main]): 20
 Notice: Scope(Class[main]): 25
 Notice: Scope(Class[main]): 30
-Notice: Scope(Class[main]): 1
-Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): not breaking for 1
+Notice: Scope(Class[main]): not breaking for 2
+Notice: Scope(Class[main]): breaking for 3
+Notice: Scope(Class[main]): did not return
 {
   "name": "test",
   "version": 123456789

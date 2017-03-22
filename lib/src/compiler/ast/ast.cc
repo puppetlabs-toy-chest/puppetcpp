@@ -571,6 +571,24 @@ namespace puppet { namespace compiler { namespace ast {
         return ctx;
     }
 
+    ostream& operator<<(ostream& os, return_statement const& node)
+    {
+        os << "return";
+        if (node.value) {
+            os << " " << *node.value;
+        }
+        return os;
+    }
+
+    ast::context return_statement::context() const
+    {
+        ast::context ctx = { begin, end, tree };
+        if (value) {
+            ctx.end = value->context().end;
+        }
+        return ctx;
+    }
+
     ast::context statement::context() const
     {
         return boost::apply_visitor(context_visitor(), *this);
@@ -2297,6 +2315,14 @@ namespace puppet { namespace compiler { namespace ast {
         {
             _emitter << YAML::BeginMap;
             write("kind", "next statement");
+            write("value", node.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(return_statement const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "return statement");
             write("value", node.value);
             _emitter << YAML::EndMap;
         }

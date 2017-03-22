@@ -564,7 +564,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             );
         }
 
-        if (!result.second) {
+        if (result.second != location::lambda) {
             throw parse_exception(
                 "break statement must be used from within a block.",
                 statement.begin,
@@ -585,10 +585,53 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             );
         }
 
-        if (!result.second) {
+        if (result.second != location::lambda) {
             auto context = statement.context();
             throw parse_exception(
                 "next statement must be used from within a block.",
+                context.begin,
+                context.end
+            );
+        }
+
+        if (statement.value) {
+            operator()(*statement.value);
+        }
+    }
+
+    void validation::operator()(return_statement const& statement)
+    {
+        auto result = validate_transfer_statement(true);
+        if (result.first) {
+            throw parse_exception(
+                (boost::format("return statement cannot be used inside %1%.") % result.first).str(),
+                statement.begin,
+                statement.end
+            );
+        }
+
+        if (result.second == location::class_) {
+            if (statement.value) {
+                auto context = statement.context();
+                throw parse_exception(
+                    "classes cannot return a value.",
+                    context.begin,
+                    context.end
+                );
+            }
+        } else if (result.second == location::defined_type) {
+            if (statement.value) {
+                auto context = statement.context();
+                throw parse_exception(
+                    "defined types cannot return a value.",
+                    context.begin,
+                    context.end
+                );
+            }
+        } else if (result.second != location::function) {
+            auto context = statement.context();
+            throw parse_exception(
+                "return statement must be used from within a function, class, or defined type.",
                 context.begin,
                 context.end
             );
@@ -807,15 +850,17 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
     }
 
-    std::pair<char const*, bool> validation::validate_transfer_statement(bool ret)
+    std::pair<char const*, validation::location> validation::validate_transfer_statement(bool ret)
     {
         // Look backward up the AST for illegal uses
-        bool lambda = false;
+        location inside = location::top;
         char const* message = nullptr;
         for (auto it = _locations.rbegin(); it != _locations.rend(); ++it) {
             auto current = *it;
-            if (current == location::lambda) {
-                lambda = true;
+            // Check if we've found the location where the statement is ultimately contained
+            if ((ret && (current == location::function || current == location::class_ || current == location::defined_type)) ||
+                (!ret && current == location::lambda)) {
+                inside = current;
                 continue;
             }
 
@@ -834,8 +879,8 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
                 break;
             }
 
-            // If no lambda yet, check for use in a block that isn't a lambda
-            if (!lambda) {
+            // If we haven't discovered the containing location yet, check for illegal uses
+            if (inside == location::top) {
                 if (current == location::interpolated_string ||
                     (!ret && (current == location::function || current == location::class_ || current == location::defined_type)) ||
                     current == location::node ||
@@ -846,7 +891,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
                 }
             }
         }
-        return make_pair(message, lambda);
+        return make_pair(message, inside);
     }
 
     char const* validation::where(location l)

@@ -52,6 +52,16 @@ Integer[0, 100].step(5) |$x| {
     notice $x
 }
 
+# Check for break in return (should break instead of return)
+function test {
+    [1].each |$x| {
+        return if true { next }
+    }
+    'did not return'
+}
+
+notice test()
+
 # None of the following tests should output anything
 
 # Check that next can be used in an array literal

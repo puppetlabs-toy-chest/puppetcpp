@@ -258,8 +258,14 @@ enum puppet_value_kind
     PUPPET_VALUE_KEY_VALUE_ITERATOR,
     /**
      * The break control transfer value kind; indicates an iteration break and is not a real value.
+     * Respect this value by either breaking iteration or returning it from your Puppet function (allow caller to break).
      */
-    PUPPET_VALUE_BREAK
+    PUPPET_VALUE_BREAK,
+    /**
+     * The return control transfer value kind; indicates a value being returned from a return statement and is not a real value.
+     * Respect this value by returning it from your Puppet function.
+     */
+    PUPPET_VALUE_RETURN
 };
 
 /**

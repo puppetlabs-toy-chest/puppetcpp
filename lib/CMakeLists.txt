@@ -152,6 +152,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/values/hash.cc
     src/runtime/values/iterator.cc
     src/runtime/values/regex.cc
+    src/runtime/values/return_value.cc
     src/runtime/values/type.cc
     src/runtime/values/undef.cc
     src/runtime/values/value.cc

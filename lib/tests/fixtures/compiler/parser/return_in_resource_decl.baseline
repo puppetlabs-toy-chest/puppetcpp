@@ -1,0 +1,3 @@
+Error: return_in_resource_decl.pp:3:26: return statement cannot be used inside a resource declaration expression.
+  bar => if true { return }
+                   ^~~~~~

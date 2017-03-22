@@ -15,6 +15,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             values::array block_arguments(context.block()->parameters.size());
             int64_t index = 0;
 
+            boost::optional<values::value> transfer;
             boost::apply_visitor(
                 values::iteration_visitor{
                     [&](auto const* key, auto const& value) {
@@ -41,11 +42,19 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                             // Break the iteration
                             return false;
                         }
+                        // Check for control transfer and break out of the loop
+                        if (result.is_transfer()) {
+                            transfer = result;
+                            return false;
+                        }
                         return true;
                     }
                 },
                 context.argument(0)
             );
+            if (transfer) {
+                return rvalue_cast(*transfer);
+            }
             return rvalue_cast(context.argument(0));
         });
         return descriptor;

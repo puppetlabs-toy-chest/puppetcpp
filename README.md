@@ -61,7 +61,7 @@ Expression evaluator status:
 * [x] resource collection statements
 * [ ] exported resource collection expressions (NYI: importing resources)
 * [x] break statements
-* [ ] return statements
+* [x] return statements
 * [x] next statements
 * [x] loading classes from modules
 * [x] loading defined types from modules

@@ -75,7 +75,8 @@ namespace puppet { namespace runtime { namespace values {
     {
         return
             static_cast<bool>(as<break_iteration>()) ||
-            static_cast<bool>(as<yield_return>());
+            static_cast<bool>(as<yield_return>()) ||
+            static_cast<bool>(as<return_value>());
     }
 
     void value::ensure() const
@@ -84,6 +85,9 @@ namespace puppet { namespace runtime { namespace values {
             throw ptr->create_exception();
         }
         if (auto ptr = as<yield_return>()) {
+            throw ptr->create_exception();
+        }
+        if (auto ptr = as<return_value>()) {
             throw ptr->create_exception();
         }
     }
@@ -262,6 +266,12 @@ namespace puppet { namespace runtime { namespace values {
         result_type operator()(yield_return const& value)
         {
             // Cannot infer type for yield return
+            throw value.create_exception();
+        }
+
+        result_type operator()(return_value const& value)
+        {
+            // Cannot infer type for return value
             throw value.create_exception();
         }
 
@@ -795,6 +805,12 @@ namespace puppet { namespace runtime { namespace values {
         result_type operator()(values::yield_return const& value) const
         {
             // Cannot serialize a next to JSON
+            throw value.create_exception();
+        }
+
+        result_type operator()(values::return_value const& value) const
+        {
+            // Cannot serialize a return to JSON
             throw value.create_exception();
         }
 

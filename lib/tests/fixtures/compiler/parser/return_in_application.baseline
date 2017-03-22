@@ -1,0 +1,3 @@
+Error: return_in_application.pp:3:9: return statement cannot be used inside an application statement.
+  return
+  ^~~~~~
