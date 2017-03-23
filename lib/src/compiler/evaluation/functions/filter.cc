@@ -6,11 +6,12 @@ using namespace puppet::runtime;
 
 namespace puppet { namespace compiler { namespace evaluation { namespace functions {
 
-    static values::hash iterate_hash(call_context& context)
+    static values::value iterate_hash(call_context& context)
     {
         values::array block_arguments(context.block()->parameters.size());
         values::hash result;
 
+        boost::optional<values::value> transfer;
         boost::apply_visitor(
             values::iteration_visitor{
                 [&](auto const* key, auto const& value) {
@@ -31,6 +32,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                         // Break the iteration
                         return false;
                     }
+                    // Check for control transfer and break out of the loop
+                    if (filtered.is_transfer()) {
+                        transfer = filtered;
+                        return false;
+                    }
                     if (filtered.is_true()) {
                         result.set(*key, value);
                     }
@@ -39,6 +45,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             },
             context.argument(0)
         );
+        if (transfer) {
+            return rvalue_cast(*transfer);
+        }
         return result;
     }
 
@@ -62,6 +71,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             int64_t index = 0;
             values::array result;
 
+            boost::optional<values::value> transfer;
             boost::apply_visitor(
                 values::iteration_visitor{
                     [&](auto const* key, auto const& value) {
@@ -79,6 +89,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                             // Break the iteration
                             return false;
                         }
+                        // Check for control transfer and break out of the loop
+                        if (filtered.is_transfer()) {
+                            transfer = filtered;
+                            return false;
+                        }
                         if (filtered.is_true()) {
                             result.emplace_back(value);
                         }
@@ -87,6 +102,9 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                 },
                 context.argument(0)
             );
+            if (transfer) {
+                return rvalue_cast(*transfer);
+            }
             return result;
         });
         return descriptor;

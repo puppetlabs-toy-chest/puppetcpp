@@ -471,6 +471,11 @@ int puppet_get_value_kind(puppet_value const* value, puppet_value_kind* kind)
             // Will never be returned to the API
             return static_cast<puppet_value_kind>(-1);
         }
+
+        result_type operator()(values::return_value const& value) const
+        {
+            return PUPPET_VALUE_RETURN;
+        }
     };
 
     if (!value || !kind) {

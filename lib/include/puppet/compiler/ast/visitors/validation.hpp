@@ -110,6 +110,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void operator()(attribute_query const& expression);
         void operator()(break_statement const& statement);
         void operator()(next_statement const& statement);
+        void operator()(return_statement const& statement);
 
         void validate_parameters(std::vector<parameter> const& parameters, bool is_resource = false, bool pass_by_hash = false);
         void validate_parameter_name(parameter const& parameter, bool is_resource_parameter) const;
@@ -119,7 +120,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void validate_assignment_operand(ast::array const& operand);
         void validate_assignment_operand(variable const& operand);
         void validate_catalog_statement(ast::context const& context);
-        std::pair<char const*, bool> validate_transfer_statement(bool ret = false);
+        std::pair<char const*, location> validate_transfer_statement(bool ret = false);
         static char const* where(location l);
 
         struct location_helper

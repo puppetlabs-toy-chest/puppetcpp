@@ -359,4 +359,9 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         return false;
     }
 
+    bool ineffective::operator()(return_statement const& statement) const
+    {
+        return false;
+    }
+
 }}}}  // namespace puppet::compiler::visitors

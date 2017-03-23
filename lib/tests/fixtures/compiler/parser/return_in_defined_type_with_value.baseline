@@ -1,0 +1,3 @@
+Error: return_in_defined_type_with_value.pp:3:9: defined types cannot return a value.
+  return bar
+  ^~~~~~~~~~

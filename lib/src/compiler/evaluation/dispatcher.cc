@@ -220,6 +220,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 context.context().backtrace()
             );
         }
+
         return descriptor->dispatch(context);
     }
 

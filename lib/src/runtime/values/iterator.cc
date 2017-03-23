@@ -332,4 +332,9 @@ namespace puppet { namespace runtime { namespace values {
         throw value.create_exception();
     }
 
+    void iteration_visitor::operator()(values::return_value const& value) const
+    {
+        throw value.create_exception();
+    }
+
 }}}  // namespace puppet::runtime::values

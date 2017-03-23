@@ -44,13 +44,24 @@ Integer[0, 100].step(5) |$x| {
 }
 
 [1, 2, 3, 4, 5].each |$x| {
-    $x.with |$y| {
+    notice $x.with |$y| {
         if $y == 3 {
+            notice "breaking for $y"
             break
         }
+        "not breaking for $y"
     }
-    notice $x
 }
+
+# Check for break in return (should break instead of return)
+function test {
+    [1].each |$x| {
+        return if true { break }
+    }
+    'did not return'
+}
+
+notice test()
 
 # None of the following tests should output anything
 

@@ -1,0 +1,3 @@
+Error: return_in_interpolation.pp:2:5: syntax error: expected '{' but found interpolated string.
+  "${ 'foo'.each |$x| { if $x == 'o' { return } $x } }"
+  ^

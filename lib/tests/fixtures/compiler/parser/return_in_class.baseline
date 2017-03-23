@@ -1,0 +1,37 @@
+path: return_in_class.pp
+statements:
+  - kind: class statement
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 48
+      line: 5
+    name:
+      kind: name
+      begin:
+        offset: 6
+        line: 1
+      end:
+        offset: 9
+        line: 1
+      value: foo
+    body:
+      - kind: if expression
+        begin:
+          offset: 16
+          line: 2
+        end:
+          offset: 46
+          line: 4
+        conditional:
+          kind: boolean
+          begin:
+            offset: 19
+            line: 2
+          end:
+            offset: 23
+            line: 2
+          value: true
+        body:
+          - kind: return statement

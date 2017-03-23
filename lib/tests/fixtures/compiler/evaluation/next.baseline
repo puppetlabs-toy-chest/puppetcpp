@@ -29,6 +29,7 @@ Notice: Scope(Class[main]): 2
 Notice: Scope(Class[main]): 3
 Notice: Scope(Class[main]): 4
 Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): did not return
 {
   "name": "test",
   "version": 123456789

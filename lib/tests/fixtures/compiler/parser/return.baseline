@@ -1,0 +1,151 @@
+path: return.pp
+statements:
+  - kind: function statement
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 154
+      line: 12
+    name:
+      kind: name
+      begin:
+        offset: 9
+        line: 1
+      end:
+        offset: 12
+        line: 1
+      value: foo
+    body:
+      - kind: if expression
+        begin:
+          offset: 21
+          line: 2
+        end:
+          offset: 58
+          line: 4
+        conditional:
+          kind: binary expression
+          operand:
+            kind: variable
+            begin:
+              offset: 24
+              line: 2
+            end:
+              offset: 26
+              line: 2
+            name: x
+          operations:
+            - operator_position:
+                offset: 27
+                line: 2
+              operator: ==
+              operand:
+                kind: number
+                begin:
+                  offset: 30
+                  line: 2
+                end:
+                  offset: 31
+                  line: 2
+                base: decimal
+                value: 1
+        body:
+          - kind: return statement
+            value:
+              kind: name
+              begin:
+                offset: 49
+                line: 3
+              end:
+                offset: 52
+                line: 3
+              value: foo
+      - kind: if expression
+        begin:
+          offset: 63
+          line: 5
+        end:
+          offset: 101
+          line: 7
+        conditional:
+          kind: binary expression
+          operand:
+            kind: variable
+            begin:
+              offset: 66
+              line: 5
+            end:
+              offset: 68
+              line: 5
+            name: x
+          operations:
+            - operator_position:
+                offset: 69
+                line: 5
+              operator: ==
+              operand:
+                kind: number
+                begin:
+                  offset: 72
+                  line: 5
+                end:
+                  offset: 73
+                  line: 5
+                base: decimal
+                value: 2
+        body:
+          - kind: return statement
+            value:
+              kind: nested expression
+              begin:
+                offset: 90
+                line: 6
+              end:
+                offset: 95
+                line: 6
+              expression:
+                kind: name
+                begin:
+                  offset: 91
+                  line: 6
+                end:
+                  offset: 94
+                  line: 6
+                value: bar
+      - kind: if expression
+        begin:
+          offset: 106
+          line: 8
+        end:
+          offset: 141
+          line: 10
+        conditional:
+          kind: binary expression
+          operand:
+            kind: variable
+            begin:
+              offset: 109
+              line: 8
+            end:
+              offset: 111
+              line: 8
+            name: x
+          operations:
+            - operator_position:
+                offset: 112
+                line: 8
+              operator: ==
+              operand:
+                kind: number
+                begin:
+                  offset: 115
+                  line: 8
+                end:
+                  offset: 116
+                  line: 8
+                base: decimal
+                value: 3
+        body:
+          - kind: return statement
+      - kind: return statement

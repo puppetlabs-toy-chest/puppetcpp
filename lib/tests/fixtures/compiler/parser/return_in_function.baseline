@@ -1,0 +1,142 @@
+path: return_in_function.pp
+statements:
+  - kind: function statement
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 118
+      line: 8
+    name:
+      kind: name
+      begin:
+        offset: 9
+        line: 1
+      end:
+        offset: 12
+        line: 1
+      value: foo
+    body:
+      - kind: postfix expression
+        operand:
+          kind: array
+          begin:
+            offset: 21
+            line: 2
+          end:
+            offset: 30
+            line: 2
+          elements:
+            - kind: number
+              begin:
+                offset: 22
+                line: 2
+              end:
+                offset: 23
+                line: 2
+              base: decimal
+              value: 1
+            - kind: number
+              begin:
+                offset: 25
+                line: 2
+              end:
+                offset: 26
+                line: 2
+              base: decimal
+              value: 2
+            - kind: number
+              begin:
+                offset: 28
+                line: 2
+              end:
+                offset: 29
+                line: 2
+              base: decimal
+              value: 3
+        operations:
+          - kind: method call expression
+            begin:
+              offset: 30
+              line: 2
+            method:
+              kind: name
+              begin:
+                offset: 31
+                line: 2
+              end:
+                offset: 35
+                line: 2
+              value: each
+            lambda:
+              begin:
+                offset: 36
+                line: 2
+              end:
+                offset: 116
+                line: 7
+              parameters:
+                - variable:
+                    kind: variable
+                    begin:
+                      offset: 37
+                      line: 2
+                    end:
+                      offset: 39
+                      line: 2
+                    name: x
+              body:
+                - kind: if expression
+                  begin:
+                    offset: 51
+                    line: 3
+                  end:
+                    offset: 92
+                    line: 5
+                  conditional:
+                    kind: binary expression
+                    operand:
+                      kind: variable
+                      begin:
+                        offset: 54
+                        line: 3
+                      end:
+                        offset: 56
+                        line: 3
+                      name: x
+                    operations:
+                      - operator_position:
+                          offset: 57
+                          line: 3
+                        operator: ==
+                        operand:
+                          kind: number
+                          begin:
+                            offset: 60
+                            line: 3
+                          end:
+                            offset: 61
+                            line: 3
+                          base: decimal
+                          value: 2
+                  body:
+                    - kind: return statement
+                - kind: function call statement
+                  function:
+                    kind: name
+                    begin:
+                      offset: 101
+                      line: 6
+                    end:
+                      offset: 107
+                      line: 6
+                    value: notice
+                  arguments:
+                    - kind: variable
+                      begin:
+                        offset: 108
+                        line: 6
+                      end:
+                        offset: 110
+                        line: 6
+                      name: x

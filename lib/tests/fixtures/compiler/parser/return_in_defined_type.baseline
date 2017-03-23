@@ -1,0 +1,37 @@
+path: return_in_defined_type.pp
+statements:
+  - kind: defined type statement
+    begin:
+      offset: 0
+      line: 1
+    end:
+      offset: 51
+      line: 5
+    name:
+      kind: name
+      begin:
+        offset: 7
+        line: 1
+      end:
+        offset: 10
+        line: 1
+      value: foo
+    body:
+      - kind: if expression
+        begin:
+          offset: 19
+          line: 2
+        end:
+          offset: 49
+          line: 4
+        conditional:
+          kind: boolean
+          begin:
+            offset: 22
+            line: 2
+          end:
+            offset: 26
+            line: 2
+          value: true
+        body:
+          - kind: return statement

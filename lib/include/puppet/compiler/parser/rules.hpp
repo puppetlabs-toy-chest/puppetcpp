@@ -122,6 +122,7 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(binary_query_operator,           "binary query operator",           ast::binary_query_operator)
     DECLARE_RULE(break_statement,                 "break statement",                 ast::break_statement)
     DECLARE_RULE(next_statement,                  "next statement",                  ast::next_statement)
+    DECLARE_RULE(return_statement,                "return statement",                ast::return_statement)
 
     // Syntax tree rules
     DECLARE_RULE(syntax_tree,                     "syntax tree",                     ast::syntax_tree)
@@ -384,6 +385,7 @@ namespace puppet { namespace compiler { namespace parser {
         function_call_statement |
         break_statement         |
         next_statement          |
+        return_statement        |
         relationship_statement    // Note: must come last so that produces/consume statements have precedence
     )
     DEFINE_RULE(
@@ -474,11 +476,12 @@ namespace puppet { namespace compiler { namespace parser {
             begin(lexer::token_id::keyword_application, false) |
             begin(lexer::token_id::keyword_site, false)        |
             begin(lexer::token_id::keyword_break, false)       |
-            begin(lexer::token_id::keyword_next, false)
+            begin(lexer::token_id::keyword_next, false)        |
+            begin(lexer::token_id::keyword_return, false)
         ) > value > end() > tree
     )
     // Ensure all keywords (except true/false) are present in the list above
-    static_assert((static_cast<size_t>(lexer::token_id::last_keyword) - static_cast<size_t>(lexer::token_id::first_keyword)) == (26 + 1), "a keyword is missing from the keyword_name rule.");
+    static_assert((static_cast<size_t>(lexer::token_id::last_keyword) - static_cast<size_t>(lexer::token_id::first_keyword)) == (27 + 1), "a keyword is missing from the keyword_name rule.");
     DEFINE_RULE(
         resource_override_expression,
         begin(false) >> resource_override_reference >> (raw('{') > (raw('}', false) | ((attribute_override % raw(',') > -raw(',')))) > end('}') > tree)
@@ -634,6 +637,11 @@ namespace puppet { namespace compiler { namespace parser {
         ((begin(lexer::token_id::keyword_next) >> raw('(') >> end(')')) > tree > boost::spirit::x3::attr(boost::none)) |
         (begin(lexer::token_id::keyword_next, false) > end() > tree > -expression)
     )
+    DEFINE_RULE(
+        return_statement,
+        ((begin(lexer::token_id::keyword_return) >> raw('(') >> end(')')) > tree > boost::spirit::x3::attr(boost::none)) |
+        (begin(lexer::token_id::keyword_return, false) > end() > tree > -expression)
+    )
 
     // Syntax tree rules
     DEFINE_RULE(
@@ -745,7 +753,8 @@ namespace puppet { namespace compiler { namespace parser {
         binary_query_operation,
         binary_query_operator,
         break_statement,
-        next_statement
+        next_statement,
+        return_statement
     );
 
     BOOST_SPIRIT_DEFINE(

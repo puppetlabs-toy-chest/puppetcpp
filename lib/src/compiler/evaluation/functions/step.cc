@@ -15,12 +15,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             return values::iterator{ rvalue_cast(context.argument(0)), context.argument(1).require<int64_t>() };
         });
 
-        descriptor.add("Callable[Iterable, Integer[1], 2, 2, Callable[1, 2]]", [](call_context& context) {
+        descriptor.add("Callable[Iterable, Integer[1], 2, 2, Callable[1, 2]]", [](call_context& context) -> values::value {
             values::array block_arguments(context.block()->parameters.size());
             int64_t index = 0;
 
+            boost::optional<values::value> transfer;
             values::iterator iterator{ rvalue_cast(context.argument(0)), context.argument(1).require<int64_t>() };
-
             iterator.each([&](auto const* key, auto const& value) {
                 if (key) {
                     if (block_arguments.size() == 1) {
@@ -45,8 +45,16 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                     // Break the iteration
                     return false;
                 }
+                // Check for control transfer and break out of the loop
+                if (result.is_transfer()) {
+                    transfer = result;
+                    return false;
+                }
                 return true;
             });
+            if (transfer) {
+                return rvalue_cast(*transfer);
+            }
             return iterator;
         });
         return descriptor;
