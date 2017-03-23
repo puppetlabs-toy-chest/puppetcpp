@@ -460,6 +460,11 @@ int puppet_get_value_kind(puppet_value const* value, puppet_value_kind* kind)
             }
             return PUPPET_VALUE_SEQUENCE_ITERATOR;
         }
+
+        result_type operator()(values::break_iteration const& value) const
+        {
+            return PUPPET_VALUE_BREAK;
+        }
     };
 
     if (!value || !kind) {
@@ -803,6 +808,11 @@ puppet_value* puppet_value_to_string(puppet_value const* value)
     ostringstream stream;
     stream << *reinterpret_cast<values::value const*>(value);
     return reinterpret_cast<puppet_value*>(new (nothrow) values::value{ stream.str() });
+}
+
+int puppet_value_is_control_transfer(puppet_value const* value)
+{
+    return value && reinterpret_cast<values::value const*>(value)->is_transfer() ? 1 : 0;
 }
 
 }  // extern "C"

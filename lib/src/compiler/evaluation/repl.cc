@@ -112,6 +112,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 repl::result result;
                 result.source = _buffer;
                 result.value = _evaluator.evaluate(statement);
+                result.value.ensure();
                 return result;
             }
 

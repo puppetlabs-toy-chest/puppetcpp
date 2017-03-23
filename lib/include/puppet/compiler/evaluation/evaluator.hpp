@@ -46,6 +46,13 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value evaluate(ast::statement const& statement);
 
         /**
+         * Evaluates the given statements and returns the value produced by the last statement.
+         * @param statements The statements to evaluate.
+         * @return Returns the value produced by the last statement or undef if there were no statements given.
+         */
+        runtime::values::value evaluate(std::vector<ast::statement> const& statements);
+
+        /**
          * Evaluates the given expression and returns the resulting runtime value.
          * @param expression The expression to evaluate.
          * @return Returns the runtime value that is the result of evaluating the expression.
@@ -113,8 +120,8 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::resource_override_expression const& expression);
         runtime::values::value operator()(ast::resource_defaults_expression const& expression);
         runtime::values::value operator()(ast::collector_expression const& expression);
+        runtime::values::value operator()(ast::break_statement const& statement);
 
-        runtime::values::value evaluate_body(std::vector<ast::statement> const& body);
         ast::resource_body const* find_default_body(ast::resource_declaration_expression const& expression);
         attributes evaluate_attributes(bool is_class, std::vector<ast::attribute_operation> const& operations);
         void splat_attribute(compiler::attributes& attributes, std::unordered_set<std::string>& names, ast::attribute_operation const& operations);

@@ -1,0 +1,3 @@
+Error: unreachable.pp:3:5: code is unreachable due to previous control flow statement.
+  notice unreachable
+  ^~~~~~~~~~~~~~~~~~

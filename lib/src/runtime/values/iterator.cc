@@ -1,4 +1,5 @@
 #include <puppet/runtime/values/value.hpp>
+#include <puppet/compiler/exceptions.hpp>
 #include <puppet/unicode/string.hpp>
 #include <puppet/cast.hpp>
 
@@ -192,7 +193,9 @@ namespace puppet { namespace runtime { namespace values {
                 continue;
             }
             step = _step - 1;
-            _callback(nullptr, std::string{ it->begin(), it->end() });
+            if (!_callback(nullptr, std::string{ it->begin(), it->end() })) {
+                break;
+            }
         }
     }
 
@@ -317,6 +320,11 @@ namespace puppet { namespace runtime { namespace values {
             },
             _reverse
         );
+    }
+
+    void iteration_visitor::operator()(values::break_iteration const& value) const
+    {
+        throw value.create_exception();
     }
 
 }}}  // namespace puppet::runtime::values

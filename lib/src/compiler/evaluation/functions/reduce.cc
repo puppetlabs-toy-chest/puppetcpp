@@ -40,7 +40,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                             block_arguments[1] = value;
                         }
                         block_arguments[0] = rvalue_cast(*memo);
-                        memo.emplace(context.yield(block_arguments));
+
+                        auto result = context.yield(block_arguments);
+                        if (result.as<values::break_iteration>()) {
+                            // Break the iteration
+                            return false;
+                        }
+                        memo.emplace(rvalue_cast(result));
                         return true;
                     }
                 },

@@ -147,6 +147,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/types/undef.cc
     src/runtime/types/variant.cc
     src/runtime/values/array.cc
+    src/runtime/values/break_iteration.cc
     src/runtime/values/defaulted.cc
     src/runtime/values/hash.cc
     src/runtime/values/iterator.cc

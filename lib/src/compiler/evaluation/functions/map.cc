@@ -36,7 +36,12 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                                 block_arguments[1] = value;
                             }
                         }
-                        result.emplace_back(context.yield(block_arguments));
+                        auto replacement = context.yield(block_arguments);
+                        if (replacement.as<values::break_iteration>()) {
+                            // Break the iteration
+                            return false;
+                        }
+                        result.emplace_back(rvalue_cast(replacement));
                         return true;
                     }
                 },

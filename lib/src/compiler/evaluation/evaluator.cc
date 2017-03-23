@@ -34,6 +34,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             values::hash empty;
             return evaluator.evaluate(arguments ? *arguments : empty);
         }
+
+        value result;
         if (arguments) {
             // An EPP without parameters; set all arguments in scope
             auto scope = make_shared<evaluation::scope>(_context.top_scope());
@@ -55,16 +57,36 @@ namespace puppet { namespace compiler { namespace evaluation {
                 scope->set(*name, std::make_shared<values::value>(rvalue_cast(kvp.value())), ast::context{});
             }
 
-            return evaluate_body(tree.statements);
+            // Evaluate the statements under the current scope
+            result = evaluate(tree.statements);
+        } else {
+            result = evaluate(tree.statements);
         }
 
-        // Evaluate the statements
-        return evaluate_body(tree.statements);
+        // Ensure the result is not a control transfer; illegal to do so past the "top" of the AST
+        result.ensure();
+        return result;
     }
 
     value evaluator::evaluate(ast::statement const& statement)
     {
+        _context.current_context(statement.context());
         return boost::apply_visitor(*this, statement);
+    }
+
+    value evaluator::evaluate(vector<statement> const& statements)
+    {
+        if (statements.empty()) {
+            return values::undef{};
+        }
+
+        for (size_t i = 0; i < statements.size() - 1; ++i) {
+            auto result = evaluate(statements[i]);
+            if (result.is_transfer()) {
+                return result;
+            }
+        }
+        return evaluate(statements.back());
     }
 
     value evaluator::evaluate(ast::expression const& expression)
@@ -215,7 +237,9 @@ namespace puppet { namespace compiler { namespace evaluation {
                 _context.write(operator()(*ptr));
             } else if (auto ptr = boost::get<x3::forward_ast<ast::expression>>(&part)) {
                 current_margin = 0;
-                _context.write(evaluate(*ptr));
+                auto value = evaluate(*ptr);
+                value.ensure();
+                _context.write(value);
             } else {
                 throw evaluation_exception("unsupported interpolation part.", part.context(), _context.backtrace());
             }
@@ -229,6 +253,9 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         for (auto& element : expression.elements) {
             auto result = evaluate(element);
+            if (result.is_transfer()) {
+                return result;
+            }
 
             // If the element is being splatted, move its elements
             if (element.is_splat() && result.as<values::array>()) {
@@ -246,7 +273,15 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         values::hash hash;
         for (auto& element : expression.elements) {
-            hash.set(evaluate(element.first), evaluate(element.second));
+            auto key = evaluate(element.first);
+            if (key.is_transfer()) {
+                return key;
+            }
+            auto value = evaluate(element.second);
+            if (value.is_transfer()) {
+                return value;
+            }
+            hash.set(rvalue_cast(key), rvalue_cast(value));
         }
         return hash;
     }
@@ -258,6 +293,9 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Evaluate the case's expression
         value result = evaluate(expression.conditional);
+        if (result.is_transfer()) {
+            return result;
+        }
 
         // Search for a matching proposition
         auto& propositions = expression.propositions;
@@ -269,6 +307,10 @@ namespace puppet { namespace compiler { namespace evaluation {
             for (auto& option : proposition.options) {
                 // Evaluate the option
                 value option_value = evaluate(option);
+                if (option_value.is_transfer()) {
+                    return option_value;
+                }
+
                 if (option_value.is_default()) {
                     // Remember where the default is and keep going
                     default_index = i;
@@ -277,7 +319,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
                 // Match the option value
                 if (option_value.match(_context, result)) {
-                    return evaluate_body(proposition.body);
+                    return evaluate(proposition.body);
                 }
 
                 // If splatted, match against each element in the array
@@ -285,7 +327,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     auto array = option_value.move_as<values::array>();
                     for (auto& element : array) {
                         if (element->match(_context, result)) {
-                            return evaluate_body(proposition.body);
+                            return evaluate(proposition.body);
                         }
                     }
                 }
@@ -294,7 +336,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Handle no matching case
         if (default_index) {
-            return evaluate_body(propositions[*default_index].body);
+            return evaluate(propositions[*default_index].body);
         }
 
         // Nothing matched, return undef
@@ -306,16 +348,24 @@ namespace puppet { namespace compiler { namespace evaluation {
         // If expressions create a new match scope
         match_scope scope{ _context };
 
-        if (evaluate(expression.conditional).is_truthy()) {
-            return evaluate_body(expression.body);
+        auto conditional = evaluate(expression.conditional);
+        if (conditional.is_transfer()) {
+            return conditional;
+        }
+        if (conditional.is_truthy()) {
+            return evaluate(expression.body);
         }
         for (auto& elsif : expression.elsifs) {
-            if (evaluate(elsif.conditional).is_truthy()) {
-                return evaluate_body(elsif.body);
+            auto conditional = evaluate(elsif.conditional);
+            if (conditional.is_transfer()) {
+                return conditional;
+            }
+            if (conditional.is_truthy()) {
+                return evaluate(elsif.body);
             }
         }
         if (expression.else_) {
-            return evaluate_body(expression.else_->body);
+            return evaluate(expression.else_->body);
         }
         return values::undef();
     }
@@ -325,11 +375,15 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Unless expressions create a new match scope
         match_scope scope{ _context };
 
-        if (!evaluate(expression.conditional).is_truthy()) {
-            return evaluate_body(expression.body);
+        auto conditional = evaluate(expression.conditional);
+        if (conditional.is_transfer()) {
+            return conditional;
+        }
+        if (!conditional.is_truthy()) {
+            return evaluate(expression.body);
         }
         if (expression.else_) {
-            return evaluate_body(expression.else_->body);
+            return evaluate(expression.else_->body);
         }
         return values::undef();
     }
@@ -339,7 +393,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Find the function before executing the call to ensure it is imported
         _context.find_function(expression.function.value);
 
+        // Construct the call context and check to see if any of the arguments was a control transfer
         functions::call_context context{ _context, expression };
+        auto& transfer = context.transfer();
+        if (transfer) {
+            return rvalue_cast(*transfer);
+        }
         return _context.dispatcher().dispatch(context);
     }
 
@@ -353,13 +412,21 @@ namespace puppet { namespace compiler { namespace evaluation {
         name.tree = type_context.tree;
         name.value = "new";
 
+        // Construct the call context and check to see if any of the arguments was a control transfer
         functions::call_context context{ _context, expression, name };
+        auto& transfer = context.transfer();
+        if (transfer) {
+            return rvalue_cast(*transfer);
+        }
         return _context.dispatcher().dispatch(context);
     }
 
     value evaluator::operator()(epp_render_expression const& expression)
     {
-        if (!_context.write(evaluate(expression.expression))) {
+        auto value = evaluate(expression.expression);
+        value.ensure();
+
+        if (!_context.write(value)) {
             throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
         }
         return values::undef();
@@ -367,8 +434,13 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(epp_render_block const& expression)
     {
-        for (auto const& e : expression.block) {
-            if (!_context.write(evaluate(e))) {
+        for (auto const& exp : expression.block) {
+            auto value = evaluate(exp);
+            if (value.is_transfer()) {
+                return value;
+            }
+
+            if (!_context.write(value)) {
                 throw evaluation_exception("EPP expressions are not supported.", expression, _context.backtrace());
             }
         }
@@ -386,6 +458,10 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(unary_expression const& expression)
     {
         auto operand = evaluate(expression.operand);
+        if (operand.is_transfer()) {
+            return operand;
+        }
+
         auto operand_context = expression.operand.context();
 
         unary::call_context context{
@@ -425,7 +501,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
     value evaluator::operator()(ast::statement const& statement)
     {
-        return boost::apply_visitor(*this, statement);
+        return evaluate(statement);
     }
 
     value evaluator::operator()(class_statement const& statement)
@@ -478,7 +554,12 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Find the function before executing the call to ensure it is imported
         _context.find_function(statement.function.value);
 
+        // Construct the call context and check to see if any of the arguments was a control transfer
         functions::call_context context{ _context, statement };
+        auto& transfer = context.transfer();
+        if (transfer) {
+            return rvalue_cast(*transfer);
+        }
         return _context.dispatcher().dispatch(context);
     }
 
@@ -489,6 +570,9 @@ namespace puppet { namespace compiler { namespace evaluation {
             // No relationship operations requested; just return the first operand's value
             return result;
         }
+
+        // When used in a relationship statement, control transfer is illegal
+        result.ensure();
 
         // Register the relationships
         auto left = make_shared<value>(rvalue_cast(result));
@@ -517,6 +601,8 @@ namespace puppet { namespace compiler { namespace evaluation {
             }
 
             auto right = make_shared<value>(operator()(operation.operand));
+            right->ensure();
+
             auto right_context = operation.operand.context();
             _context.add(resource_relationship{
                 relationship,
@@ -542,6 +628,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Evaluate the type name
         std::string type_name;
         auto type_value = evaluate(expression.type);
+        type_value.ensure();
 
         // Resource expressions support either strings or Resource[Type] for the type name
         bool is_class = false;
@@ -747,16 +834,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         return types::runtime(types::runtime::object_type(rvalue_cast(collector)));
     }
 
-    value evaluator::evaluate_body(vector<statement> const& body)
+    value evaluator::operator()(break_statement const& statement)
     {
-        if (body.empty()) {
-            return values::undef{};
-        }
-
-        for (size_t i = 0; i < body.size() - 1; ++i) {
-            evaluate(body[i]);
-        }
-        return evaluate(body.back());
+        return values::break_iteration{ statement, _context.backtrace() };
     }
 
     resource_body const* evaluator::find_default_body(resource_declaration_expression const& expression)
@@ -810,6 +890,7 @@ namespace puppet { namespace compiler { namespace evaluation {
 
             // Evaluate and validate the attribute value
             auto value = evaluate(operation.value);
+            value.ensure();
             validate_attribute(name, value, operation.value.context());
 
             // Add an attribute to the list
@@ -829,6 +910,8 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Evaluate what must be a hash
         auto value = evaluate(operation.value);
+        value.ensure();
+
         if (!value.as<values::hash>()) {
             throw evaluation_exception(
                 (boost::format("expected a %1% but found %2%.") %
@@ -976,6 +1059,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         vector<resource*> resources;
         for (auto const& body : expression.bodies) {
             auto title = evaluate(body.title);
+            title.ensure();
 
             // If the default title, ignore (we've already evaluated the default attributes)
             if (title.is_default()) {
@@ -1062,6 +1146,9 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
         // Evaluate the left-hand side
         auto lhs = make_pair(evaluate(expression), expression.context());
+        if (lhs.first.is_transfer()) {
+            return lhs;
+        }
 
         // Climb the binary operations based on operator precedence
         unsigned int current = 0;
@@ -1082,6 +1169,9 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Recurse and climb the right-hand side
             unsigned int next = current + (is_right_associative(operation.operator_) ? 0 : 1);
             auto rhs = climb_expression(operation.operand, next, begin, end);
+            if (rhs.first.is_transfer()) {
+                return rhs;
+            }
 
             // Dispatch the operator "call"
             binary::call_context context{
@@ -1098,6 +1188,9 @@ namespace puppet { namespace compiler { namespace evaluation {
                 rhs.second
             };
             lhs.first = _context.dispatcher().dispatch(context);
+            if (lhs.first.is_transfer()) {
+                return lhs;
+            }
             lhs.second.end = rhs.second.end;
         }
         return lhs;
@@ -1147,6 +1240,8 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         // Verify the value matches the parameter type
         auto result = evaluator.evaluate(*parameter.type);
+        result.ensure();
+
         auto type = result.as<values::type>();
         if (!type) {
             throw evaluation_exception(
@@ -1169,20 +1264,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         // Create a new match scope in case the default value assigns match variables
         match_scope scope{ context };
         evaluation::evaluator evaluator { context };
-        return evaluator.evaluate(expression);
-    }
-
-    static values::value evaluate_body(evaluation::context& context, vector<statement> const& body)
-    {
-        if (body.empty()) {
-            return values::undef{};
-        }
-
-        evaluation::evaluator evaluator{ context };
-        for (size_t i = 0; i < body.size() - 1; ++i) {
-            evaluator.evaluate(body[i]);
-        }
-        return evaluator.evaluate(body.back());
+        auto value = evaluator.evaluate(expression);
+        value.ensure();
+        return value;
     }
 
     function_evaluator::function_evaluator(evaluation::context& context, function_statement const& statement) :
@@ -1287,8 +1371,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 );
             }
         }
-
-        return evaluate_body(_context, _body);
+        evaluation::evaluator evaluator{ _context };
+        return evaluator.evaluate(_body);
     }
 
     values::value function_evaluator::evaluate(values::hash& arguments, shared_ptr<scope> parent) const
@@ -1388,7 +1472,8 @@ namespace puppet { namespace compiler { namespace evaluation {
                 );
             }
         }
-        return evaluate_body(_context, _body);
+        evaluation::evaluator evaluator{ _context };
+        return evaluator.evaluate(_body);
     }
 
     resource_evaluator::resource_evaluator(evaluation::context& context, vector<parameter> const& parameters, vector<statement> const& body) :
@@ -1527,7 +1612,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         if (created) {
             prepare_scope(*scope, resource);
         }
-        evaluate_body(_context, _body);
+
+        evaluation::evaluator evaluator{ _context };
+        evaluator.evaluate(_body);
     }
 
     shared_ptr<scope> class_evaluator::evaluate_parent() const
@@ -1540,9 +1627,9 @@ namespace puppet { namespace compiler { namespace evaluation {
 
         auto scope = _context.find_scope(_context.declare_class(parent->value, *parent)->type().title());
         if (!scope) {
-            // Because classes are added to the catalog before the scope is added to the context, a failure to find the scope means there is a circular inheritence
+            // Because classes are added to the catalog before the scope is added to the context, a failure to find the scope means there is a circular inheritance
             throw evaluation_exception(
-                (boost::format("cannot evaluate parent class '%1%' because it causes a circular inheritence.") %
+                (boost::format("cannot evaluate parent class '%1%' because it causes a circular inheritance.") %
                  *parent
                 ).str(),
                 *parent,
@@ -1565,7 +1652,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         scoped_stack_frame frame{ _context, stack_frame{ &_statement, scope } };
 
         prepare_scope(*scope, resource);
-        evaluate_body(_context, _body);
+
+        evaluation::evaluator evaluator{ _context };
+        evaluator.evaluate(_body);
     }
 
     node_evaluator::node_evaluator(evaluation::context& context, node_statement const& statement) :
@@ -1581,7 +1670,9 @@ namespace puppet { namespace compiler { namespace evaluation {
         node_scope scope{ _context, resource };
 
         scoped_stack_frame frame{ _context, stack_frame{ &_statement, _context.node_scope() } };
-        evaluate_body(_context, _body);
+
+        evaluation::evaluator evaluator{ _context };
+        evaluator.evaluate(_body);
     }
 
     vector<parameter> node_evaluator::_none;

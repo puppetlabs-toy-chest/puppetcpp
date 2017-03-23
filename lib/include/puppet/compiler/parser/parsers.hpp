@@ -826,4 +826,62 @@ namespace boost { namespace spirit { namespace x3 {
         }
     };
 
+    /**
+     * Responsible for getting the info of a plus parser.
+     * @tparam Subject The parser's subject type.
+     */
+    template <typename Subject>
+    struct get_info<boost::spirit::x3::plus<Subject>>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = boost::spirit::x3::plus<Subject>;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            std::ostringstream ss;
+            ss << "at least one " << get_info<Subject>()(parser.subject);
+            return ss.str();
+        }
+    };
+
+    /**
+     * Responsible for getting the info of a kleene parser.
+     * @tparam Subject The parser's subject type.
+     */
+    template <typename Subject>
+    struct get_info<boost::spirit::x3::kleene<Subject>>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = boost::spirit::x3::kleene<Subject>;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            std::ostringstream ss;
+            ss << "zero or more " << get_info<Subject>()(parser.subject);
+            return ss.str();
+        }
+    };
+
 }}}  // namespace boost::spirit::x3

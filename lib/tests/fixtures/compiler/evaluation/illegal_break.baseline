@@ -1,0 +1,7 @@
+Error: illegal_break.pp:2:5: node 'test': break statement is illegal in this context.
+  break
+  ^~~~~
+  backtrace:
+    in '<block>' at illegal_break.pp:2
+    in 'with' (no source)
+    in '<class main>' at illegal_break.pp:1

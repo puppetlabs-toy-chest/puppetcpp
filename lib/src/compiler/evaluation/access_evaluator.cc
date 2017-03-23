@@ -27,6 +27,10 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Evaluate the arguments
             for (auto& argument : expression.arguments) {
                 auto value = evaluator.evaluate(argument);
+                if (value.is_transfer()) {
+                    _transfer = rvalue_cast(value);
+                    return;
+                }
 
                 // Check for argument splat
                 if (argument.is_splat() && value.as<values::array>()) {
@@ -39,6 +43,11 @@ namespace puppet { namespace compiler { namespace evaluation {
                 _contexts.push_back(argument.context());
                 _arguments.emplace_back(rvalue_cast(value));
             }
+        }
+
+        boost::optional<value>& transfer()
+        {
+            return _transfer;
         }
 
         value operator()(std::string const& target)
@@ -1183,6 +1192,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         evaluation::context& _context;
         access_expression const& _expression;
         values::array _arguments;
+        boost::optional<value> _transfer;
         vector<ast::context> _contexts;
     };
 
@@ -1194,6 +1204,11 @@ namespace puppet { namespace compiler { namespace evaluation {
     value access_evaluator::evaluate(value const& target, access_expression const& expression)
     {
         access_visitor visitor{ _context, expression };
+
+        auto& transfer = visitor.transfer();
+        if (transfer) {
+            return rvalue_cast(*transfer);
+        }
         return boost::apply_visitor(visitor, target);
     }
 

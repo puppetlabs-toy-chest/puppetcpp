@@ -40,7 +40,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                         block_arguments[1] = value;
                     }
                 }
-                context.yield(block_arguments);
+                auto result = context.yield(block_arguments);
+                if (result.as<values::break_iteration>()) {
+                    // Break the iteration
+                    return false;
+                }
                 return true;
             });
             return iterator;
