@@ -157,6 +157,7 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/values/value.cc
     src/runtime/values/variable.cc
     src/runtime/values/wrapper.cc
+    src/runtime/values/yield_return.cc
     src/unicode/string.cc
     src/utility/filesystem/helpers.cc
     src/utility/regex.cc

@@ -90,6 +90,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
     {
     }
 
+    void definition::operator()(next_statement const& statement)
+    {
+    }
+
     std::string definition::qualify(std::string const& name) const
     {
         std::string qualified;

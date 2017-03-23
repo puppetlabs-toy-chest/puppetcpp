@@ -1,0 +1,81 @@
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): 4
+Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): [1, 3, 4, 5]
+Notice: Scope(Class[main]): [h, e, lol, lol, o]
+Notice: Scope(Class[main]): memo = 5, value = 6
+Notice: Scope(Class[main]): memo = 17, value = 7
+Notice: Scope(Class[main]): memo = 24, value = 8
+Notice: Scope(Class[main]): memo = 32, value = 9
+Notice: Scope(Class[main]): memo = 41, value = 10
+Notice: Scope(Class[main]): 51
+Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): 4
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 0
+Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): 10
+Notice: Scope(Class[main]): 15
+Notice: Scope(Class[main]): 20
+Notice: Scope(Class[main]): 25
+Notice: Scope(Class[main]): 85
+Notice: Scope(Class[main]): 90
+Notice: Scope(Class[main]): 95
+Notice: Scope(Class[main]): 100
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): 3
+Notice: Scope(Class[main]): 4
+Notice: Scope(Class[main]): 5
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "evaluation",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

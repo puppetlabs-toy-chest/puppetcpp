@@ -465,6 +465,12 @@ int puppet_get_value_kind(puppet_value const* value, puppet_value_kind* kind)
         {
             return PUPPET_VALUE_BREAK;
         }
+
+        result_type operator()(values::yield_return const& value) const
+        {
+            // Will never be returned to the API
+            return static_cast<puppet_value_kind>(-1);
+        }
     };
 
     if (!value || !kind) {
@@ -472,6 +478,9 @@ int puppet_get_value_kind(puppet_value const* value, puppet_value_kind* kind)
     }
 
     *kind = boost::apply_visitor(visitor{}, *reinterpret_cast<values::value const*>(value));
+    if (*kind == static_cast<puppet_value_kind>(-1)) {
+        return 0;
+    }
     return 1;
 }
 

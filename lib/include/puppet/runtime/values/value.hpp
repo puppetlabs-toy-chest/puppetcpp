@@ -16,6 +16,7 @@
 #include "undef.hpp"
 #include "variable.hpp"
 #include "break_iteration.hpp"
+#include "yield_return.hpp"
 #include "../../cast.hpp"
 #include <boost/variant.hpp>
 #include <boost/mpl/contains.hpp>
@@ -71,7 +72,8 @@ namespace puppet { namespace runtime { namespace values {
         array,
         hash,
         iterator,
-        break_iteration
+        break_iteration,
+        yield_return
     >;
 
     /**

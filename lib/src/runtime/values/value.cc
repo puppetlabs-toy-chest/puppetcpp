@@ -73,12 +73,17 @@ namespace puppet { namespace runtime { namespace values {
 
     bool value::is_transfer() const
     {
-        return static_cast<bool>(as<break_iteration>());
+        return
+            static_cast<bool>(as<break_iteration>()) ||
+            static_cast<bool>(as<yield_return>());
     }
 
     void value::ensure() const
     {
         if (auto ptr = as<break_iteration>()) {
+            throw ptr->create_exception();
+        }
+        if (auto ptr = as<yield_return>()) {
             throw ptr->create_exception();
         }
     }
@@ -251,6 +256,12 @@ namespace puppet { namespace runtime { namespace values {
         result_type operator()(break_iteration const& value)
         {
             // Cannot infer type for break iteration
+            throw value.create_exception();
+        }
+
+        result_type operator()(yield_return const& value)
+        {
+            // Cannot infer type for yield return
             throw value.create_exception();
         }
 
@@ -778,6 +789,12 @@ namespace puppet { namespace runtime { namespace values {
         result_type operator()(values::break_iteration const& value) const
         {
             // Cannot serialize a break to JSON
+            throw value.create_exception();
+        }
+
+        result_type operator()(values::yield_return const& value) const
+        {
+            // Cannot serialize a next to JSON
             throw value.create_exception();
         }
 

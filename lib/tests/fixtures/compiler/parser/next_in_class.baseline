@@ -1,0 +1,3 @@
+Error: next_in_class.pp:3:9: next statement cannot be used inside a class.
+  next
+  ^~~~

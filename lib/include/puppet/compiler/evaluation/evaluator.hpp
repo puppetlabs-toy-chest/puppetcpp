@@ -121,6 +121,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         runtime::values::value operator()(ast::resource_defaults_expression const& expression);
         runtime::values::value operator()(ast::collector_expression const& expression);
         runtime::values::value operator()(ast::break_statement const& statement);
+        runtime::values::value operator()(ast::next_statement const& statement);
 
         ast::resource_body const* find_default_body(ast::resource_declaration_expression const& expression);
         attributes evaluate_attributes(bool is_class, std::vector<ast::attribute_operation> const& operations);

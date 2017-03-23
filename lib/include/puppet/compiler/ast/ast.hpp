@@ -837,6 +837,46 @@ namespace puppet { namespace compiler { namespace ast {
     std::ostream& operator<<(std::ostream& os, break_statement const& node);
 
     /**
+     * Represents a next statement.
+     */
+    struct next_statement
+    {
+        /**
+         * Stores the beginning position of the next keyword.
+         */
+        lexer::position begin;
+
+        /**
+         * Stores the ending position of the next keyword.
+         */
+        lexer::position end;
+
+        /**
+         * Stores the back pointer to the root of the tree.
+         */
+        syntax_tree* tree = nullptr;
+
+        /**
+         * Stores the optional return value.
+         */
+        boost::optional<expression> value;
+
+        /**
+         * Gets the context of the statement.
+         * @return Returns the context of the statement.
+         */
+        ast::context context() const;
+    };
+
+    /**
+     * Stream insertion operator for next statement.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, next_statement const& node);
+
+    /**
      * Represents a Puppet statement.
      */
     struct statement : boost::spirit::x3::variant<
@@ -851,7 +891,8 @@ namespace puppet { namespace compiler { namespace ast {
         boost::spirit::x3::forward_ast<type_alias_statement>,
         boost::spirit::x3::forward_ast<function_call_statement>,
         boost::spirit::x3::forward_ast<relationship_statement>,
-        break_statement
+        break_statement,
+        next_statement
         >
     {
         // Use the base's construction and assignment semantics

@@ -69,6 +69,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         void operator()(function_call_statement const& statement);
         void operator()(relationship_statement const& statement);
         void operator()(break_statement const& statement);
+        void operator()(next_statement const& statement);
 
         std::string qualify(std::string const& name) const;
 
