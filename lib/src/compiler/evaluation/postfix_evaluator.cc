@@ -22,6 +22,9 @@ namespace puppet { namespace compiler { namespace evaluation {
             _splat = expression.is_splat();
 
             for (auto const& operation : expression.operations) {
+                if (_value.is_transfer()) {
+                    break;
+                }
                 boost::apply_visitor(*this, operation);
                 _splat = false;
             }
@@ -39,6 +42,11 @@ namespace puppet { namespace compiler { namespace evaluation {
 
                 // Evaluate the option
                 value selector = _evaluator.evaluate(selector_case.first);
+                if (selector.is_transfer()) {
+                    _value = rvalue_cast(selector);
+                    _value_context = selector_case.first.context();
+                    return;
+                }
                 if (selector.is_default()) {
                     // Remember where the default case is and keep going
                     default_index = i;
@@ -93,8 +101,14 @@ namespace puppet { namespace compiler { namespace evaluation {
             // Find the function before executing the call to ensure it is imported
             _evaluator.context().find_function(expression.method.value);
 
+            // Construct the call context and check to see if any of the arguments evaluated to a control transfer
             functions::call_context context{ _evaluator.context(), expression, _value, _value_context, _splat };
-            _value = _evaluator.context().dispatcher().dispatch(context);
+            auto& transfer = context.transfer();
+            if (transfer) {
+                _value = rvalue_cast(*transfer);
+            } else {
+                _value = _evaluator.context().dispatcher().dispatch(context);
+            }
             _value_context.end = expression.context().end;
         }
 

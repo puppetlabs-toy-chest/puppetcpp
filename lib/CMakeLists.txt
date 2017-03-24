@@ -32,8 +32,10 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/evaluation/functions/descriptor.cc
     src/compiler/evaluation/functions/each.cc
     src/compiler/evaluation/functions/emerg.cc
+    src/compiler/evaluation/functions/epp.cc
     src/compiler/evaluation/functions/err.cc
     src/compiler/evaluation/functions/fail.cc
+    src/compiler/evaluation/functions/file.cc
     src/compiler/evaluation/functions/filter.cc
     src/compiler/evaluation/functions/include.cc
     src/compiler/evaluation/functions/info.cc
@@ -102,6 +104,7 @@ set(PUPPET_COMMON_SOURCES
     src/compiler/resource.cc
     src/compiler/scanner.cc
     src/compiler/settings.cc
+    src/api.cc
     src/facts/facter.cc
     src/facts/yaml.cc
     src/logging/logger.cc
@@ -144,15 +147,18 @@ set(PUPPET_COMMON_SOURCES
     src/runtime/types/undef.cc
     src/runtime/types/variant.cc
     src/runtime/values/array.cc
+    src/runtime/values/break_iteration.cc
     src/runtime/values/defaulted.cc
     src/runtime/values/hash.cc
     src/runtime/values/iterator.cc
     src/runtime/values/regex.cc
+    src/runtime/values/return_value.cc
     src/runtime/values/type.cc
     src/runtime/values/undef.cc
     src/runtime/values/value.cc
     src/runtime/values/variable.cc
     src/runtime/values/wrapper.cc
+    src/runtime/values/yield_return.cc
     src/unicode/string.cc
     src/utility/filesystem/helpers.cc
     src/utility/regex.cc
@@ -179,28 +185,35 @@ add_executable(
     src/unicode/string.cc
     src/utility/regex.cc
 )
-target_link_libraries(generate_static_lexer ${Boost_LIBRARIES} ${Onigmo_LIBRARIES} ${ICU_LIBRARIES})
+target_link_libraries(generate_static_lexer
+    ${Boost_LIBRARIES}
+    ${Onigmo_LIBRARIES}
+    ${ICU_LIBRARIES}
+)
 
 # Add the command to generate the static lexer
 add_custom_command(COMMAND generate_static_lexer DEPENDS generate_static_lexer WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer/static_lexer.hpp)
-add_custom_target(generate_files ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer/static_lexer.hpp)
+add_custom_target(generate_headers DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/puppet/compiler/lexer/static_lexer.hpp)
 
-add_library(puppet SHARED ${PUPPET_COMMON_SOURCES} ${PUPPET_PLATFORM_SOURCES})
-add_dependencies(puppet generate_files)
+add_library(puppet SHARED
+    ${PUPPET_COMMON_SOURCES}
+    ${PUPPET_PLATFORM_SOURCES}
+)
+add_dependencies(puppet generate_headers)
 
 set_target_properties(puppet PROPERTIES VERSION "${LIBPUPPET_VERSION_MAJOR}.${LIBPUPPET_VERSION_MINOR}.${LIBPUPPET_VERSION_PATCH}")
 
 target_link_libraries(puppet
     ${Boost_LIBRARIES}
     ${Onigmo_LIBRARIES}
-    ${Facter_LIBRARY}
+    ${Facter_LIBRARIES}
     ${YAMLCPP_LIBRARIES}
     ${ICU_LIBRARIES}
 )
 
 if (Editline_FOUND)
     include_directories(puppet ${Editline_INCLUDE_DIR})
-    target_link_libraries(puppet ${Editline_LIBRARY})
+    target_link_libraries(puppet ${Editline_LIBRARIES})
 endif()
 
 install(TARGETS puppet DESTINATION lib${LIB_SUFFIX})

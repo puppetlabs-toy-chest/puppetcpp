@@ -41,6 +41,15 @@ namespace puppet { namespace compiler {
         static std::shared_ptr<environment> create(logging::logger& logger, compiler::settings settings);
 
         /**
+         * Creates a new environment with the given name and directory.
+         * The environment will only use default compiler settings.
+         * @param name The name of the environment.
+         * @param directory The full path to the environment's directory.
+         * @param settings The compiler settings to use.
+         */
+        environment(std::string name, std::string directory, compiler::settings settings);
+
+        /**
          * Gets the name of the environment.
          * @return Returns the name of the environment.
          */
@@ -118,8 +127,17 @@ namespace puppet { namespace compiler {
          */
         void import(logging::logger& logger, find_type type, std::string name);
 
+        /**
+         * Resolves the path to a file.
+         * Note: if the given path is absolute and the file exists, the same path will be returned.
+         * @param logger The logger to use to log messages.
+         * @param type The type of file to find.
+         * @param path The path to the file to resolve (i.e. 'foo/bar/baz.txt' => ''.../modules/foo/files/bar/baz.txt')
+         * @return Returns the resolved path to the file if it exists or an empty string is the file does not exist.
+         */
+        std::string resolve_path(logging::logger& logger, find_type type, std::string const& path) const;
+
      private:
-        environment(std::string name, std::string directory, compiler::settings settings);
         void add_modules(logging::logger& logger);
         void add_modules(logging::logger& logger, std::string const& directory);
         std::shared_ptr<ast::syntax_tree> import(logging::logger& logger, std::string const& path, compiler::module const* module = nullptr);

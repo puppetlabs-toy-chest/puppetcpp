@@ -1,6 +1,6 @@
 include(FindDependency)
 
-find_dependency(Onigmo DISPLAY "Onigmo" HEADERS "oniguruma.h" LIBRARIES libonig.so libonig.dylib libonig.dll)
+find_dependency(Onigmo DISPLAY "Onigmo" HEADERS "onigmo.h" LIBRARIES libonigmo.so libonigmo.dylib libonigmo.dll)
 
 include(FeatureSummary)
 set_package_properties(Onigmo PROPERTIES DESCRIPTION "A regular expressions library, used in current Ruby versions, that was forked from Oniguruma" URL "https://github.com/k-takata/Onigmo")

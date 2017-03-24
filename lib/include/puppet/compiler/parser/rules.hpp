@@ -120,6 +120,9 @@ namespace puppet { namespace compiler { namespace parser {
     DECLARE_RULE(attribute_query_value,           "attribute value",                 ast::basic_expression)
     DECLARE_RULE(binary_query_operation,          "binary query expression",         ast::binary_query_operation)
     DECLARE_RULE(binary_query_operator,           "binary query operator",           ast::binary_query_operator)
+    DECLARE_RULE(break_statement,                 "break statement",                 ast::break_statement)
+    DECLARE_RULE(next_statement,                  "next statement",                  ast::next_statement)
+    DECLARE_RULE(return_statement,                "return statement",                ast::return_statement)
 
     // Syntax tree rules
     DECLARE_RULE(syntax_tree,                     "syntax tree",                     ast::syntax_tree)
@@ -380,6 +383,9 @@ namespace puppet { namespace compiler { namespace parser {
         site_statement          |
         type_alias_statement    |
         function_call_statement |
+        break_statement         |
+        next_statement          |
+        return_statement        |
         relationship_statement    // Note: must come last so that produces/consume statements have precedence
     )
     DEFINE_RULE(
@@ -468,11 +474,14 @@ namespace puppet { namespace compiler { namespace parser {
             begin(lexer::token_id::keyword_produces, false)    |
             begin(lexer::token_id::keyword_consumes, false)    |
             begin(lexer::token_id::keyword_application, false) |
-            begin(lexer::token_id::keyword_site, false)
+            begin(lexer::token_id::keyword_site, false)        |
+            begin(lexer::token_id::keyword_break, false)       |
+            begin(lexer::token_id::keyword_next, false)        |
+            begin(lexer::token_id::keyword_return, false)
         ) > value > end() > tree
     )
     // Ensure all keywords (except true/false) are present in the list above
-    static_assert((static_cast<size_t>(lexer::token_id::last_keyword) - static_cast<size_t>(lexer::token_id::first_keyword)) == (24 + 1), "a keyword is missing from the keyword_name rule.");
+    static_assert((static_cast<size_t>(lexer::token_id::last_keyword) - static_cast<size_t>(lexer::token_id::first_keyword)) == (27 + 1), "a keyword is missing from the keyword_name rule.");
     DEFINE_RULE(
         resource_override_expression,
         begin(false) >> resource_override_reference >> (raw('{') > (raw('}', false) | ((attribute_override % raw(',') > -raw(',')))) > end('}') > tree)
@@ -618,15 +627,30 @@ namespace puppet { namespace compiler { namespace parser {
         statement_call_name,
         begin(lexer::token_id::statement_call, false) > value > end() > tree
     )
+    DEFINE_RULE(
+        break_statement,
+        ((begin(lexer::token_id::keyword_break) >> raw('(')) > end(')') > tree) |
+        (begin(lexer::token_id::keyword_break, false) > end() > tree)
+    )
+    DEFINE_RULE(
+        next_statement,
+        ((begin(lexer::token_id::keyword_next) >> raw('(') >> end(')')) > tree > boost::spirit::x3::attr(boost::none)) |
+        (begin(lexer::token_id::keyword_next, false) > end() > tree > -expression)
+    )
+    DEFINE_RULE(
+        return_statement,
+        ((begin(lexer::token_id::keyword_return) >> raw('(') >> end(')')) > tree > boost::spirit::x3::attr(boost::none)) |
+        (begin(lexer::token_id::keyword_return, false) > end() > tree > -expression)
+    )
 
-    // Sytax tree rules
+    // Syntax tree rules
     DEFINE_RULE(
         syntax_tree,
-        boost::spirit::x3::attr(boost::none) > statements
+        boost::spirit::x3::attr(boost::none) > (statements | boost::spirit::x3::eps)
     )
     DEFINE_RULE(
         epp_syntax_tree,
-        -(raw('|') > (raw('|', false) | parameters) > raw('|')) > statements
+        -(raw('|') > (raw('|', false) | parameters) > raw('|')) > (statements | boost::spirit::x3::eps)
     )
 
     // These macros associate the above rules with their definitions
@@ -727,7 +751,10 @@ namespace puppet { namespace compiler { namespace parser {
         query_operator,
         attribute_query_value,
         binary_query_operation,
-        binary_query_operator
+        binary_query_operator,
+        break_statement,
+        next_statement,
+        return_statement
     );
 
     BOOST_SPIRIT_DEFINE(

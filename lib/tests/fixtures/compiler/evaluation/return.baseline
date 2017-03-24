@@ -1,0 +1,123 @@
+Notice: Scope(Class[main]): one
+Notice: Scope(Class[main]): two
+Notice: Scope(Class[main]): none
+Notice: Scope(Class[main]): one
+Notice: Scope(Class[main]): two
+Notice: Scope(Class[main]): three
+Notice: Scope(Class[main]): four
+Notice: Scope(Class[main]): five
+Notice: Scope(Class[main]): six
+Notice: Scope(Class[main]): seven
+Notice: Scope(Class[klass]): before return in class
+Notice: Scope(Defined_type[foo]): before return in defined type
+Notice: Scope(Defined_type[bar]): before return in defined type
+Notice: Scope(Defined_type[bar]): after return in defined type
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "evaluation",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "klass",
+      "tags": [
+        "class",
+        "klass"
+      ],
+      "file": "return.pp",
+      "line": 81,
+      "exported": false,
+      "parameters": {
+        "x": true
+      }
+    },
+    {
+      "type": "Defined_type",
+      "title": "foo",
+      "tags": [
+        "class",
+        "defined_type",
+        "main",
+        "stage"
+      ],
+      "file": "return.pp",
+      "line": 95,
+      "exported": false,
+      "parameters": {
+        "x": true
+      }
+    },
+    {
+      "type": "Defined_type",
+      "title": "bar",
+      "tags": [
+        "class",
+        "defined_type",
+        "main",
+        "stage"
+      ],
+      "file": "return.pp",
+      "line": 99,
+      "exported": false,
+      "parameters": {
+        "x": false
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[klass]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Defined_type[foo]"
+    },
+    {
+      "source": "Class[main]",
+      "target": "Defined_type[bar]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main",
+    "klass"
+  ]
+}
+

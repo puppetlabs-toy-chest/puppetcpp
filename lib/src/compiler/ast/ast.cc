@@ -547,6 +547,48 @@ namespace puppet { namespace compiler { namespace ast {
         return os;
     }
 
+    ostream& operator<<(ostream& os, break_statement const& node)
+    {
+        os << "break";
+        return os;
+    }
+
+    ostream& operator<<(ostream& os, next_statement const& node)
+    {
+        os << "next";
+        if (node.value) {
+            os << " " << *node.value;
+        }
+        return os;
+    }
+
+    ast::context next_statement::context() const
+    {
+        ast::context ctx = { begin, end, tree };
+        if (value) {
+            ctx.end = value->context().end;
+        }
+        return ctx;
+    }
+
+    ostream& operator<<(ostream& os, return_statement const& node)
+    {
+        os << "return";
+        if (node.value) {
+            os << " " << *node.value;
+        }
+        return os;
+    }
+
+    ast::context return_statement::context() const
+    {
+        ast::context ctx = { begin, end, tree };
+        if (value) {
+            ctx.end = value->context().end;
+        }
+        return ctx;
+    }
+
     ast::context statement::context() const
     {
         return boost::apply_visitor(context_visitor(), *this);
@@ -556,6 +598,11 @@ namespace puppet { namespace compiler { namespace ast {
     {
         visitors::validation visitor;
         visitor.visit(*this, effective);
+    }
+
+    bool statement::is_transfer_statement() const
+    {
+        return boost::get<break_statement>(this);
     }
 
     ostream& operator<<(ostream& os, statement const& node)
@@ -2257,6 +2304,29 @@ namespace puppet { namespace compiler { namespace ast {
             _emitter << YAML::EndMap;
         }
 
+        void write(break_statement const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "break statement");
+            _emitter << YAML::EndMap;
+        }
+
+        void write(next_statement const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "next statement");
+            write("value", node.value);
+            _emitter << YAML::EndMap;
+        }
+
+        void write(return_statement const& node)
+        {
+            _emitter << YAML::BeginMap;
+            write("kind", "return statement");
+            write("value", node.value);
+            _emitter << YAML::EndMap;
+        }
+
         void write(context const& node)
         {
             write("begin", node.begin);
@@ -2330,10 +2400,10 @@ namespace puppet { namespace compiler { namespace ast {
         }
     }
 
-    void syntax_tree::validate(bool epp) const
+    void syntax_tree::validate(bool epp, bool allow_catalog_statements) const
     {
-        visitors::validation visitor;
-        visitor.visit(*this, epp);
+        visitors::validation visitor{ epp, allow_catalog_statements };
+        visitor.visit(*this);
     }
 
     shared_ptr<syntax_tree> syntax_tree::create(std::string path, compiler::module const* module)

@@ -1,5 +1,6 @@
 #include <puppet/runtime/values/value.hpp>
 #include <puppet/compiler/evaluation/collectors/collector.hpp>
+#include <puppet/compiler/exceptions.hpp>
 #include <puppet/utility/indirect_collection.hpp>
 #include <puppet/unicode/string.hpp>
 #include <puppet/cast.hpp>
@@ -68,6 +69,27 @@ namespace puppet { namespace runtime { namespace values {
             return *ptr;
         }
         return true;
+    }
+
+    bool value::is_transfer() const
+    {
+        return
+            static_cast<bool>(as<break_iteration>()) ||
+            static_cast<bool>(as<yield_return>()) ||
+            static_cast<bool>(as<return_value>());
+    }
+
+    void value::ensure() const
+    {
+        if (auto ptr = as<break_iteration>()) {
+            throw ptr->create_exception();
+        }
+        if (auto ptr = as<yield_return>()) {
+            throw ptr->create_exception();
+        }
+        if (auto ptr = as<return_value>()) {
+            throw ptr->create_exception();
+        }
     }
 
     bool value::match(compiler::evaluation::context& context, value const& other) const
@@ -233,6 +255,24 @@ namespace puppet { namespace runtime { namespace values {
         result_type operator()(iterator const& value)
         {
             return types::iterator{ make_unique<type>(value.infer_produced_type()) };
+        }
+
+        result_type operator()(break_iteration const& value)
+        {
+            // Cannot infer type for break iteration
+            throw value.create_exception();
+        }
+
+        result_type operator()(yield_return const& value)
+        {
+            // Cannot infer type for yield return
+            throw value.create_exception();
+        }
+
+        result_type operator()(return_value const& value)
+        {
+            // Cannot infer type for return value
+            throw value.create_exception();
         }
 
      private:
@@ -754,6 +794,24 @@ namespace puppet { namespace runtime { namespace values {
                 return true;
             });
             return result;
+        }
+
+        result_type operator()(values::break_iteration const& value) const
+        {
+            // Cannot serialize a break to JSON
+            throw value.create_exception();
+        }
+
+        result_type operator()(values::yield_return const& value) const
+        {
+            // Cannot serialize a next to JSON
+            throw value.create_exception();
+        }
+
+        result_type operator()(values::return_value const& value) const
+        {
+            // Cannot serialize a return to JSON
+            throw value.create_exception();
         }
 
      private:

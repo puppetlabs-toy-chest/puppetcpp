@@ -1,0 +1,5 @@
+site {
+    if true {
+        next
+    }
+}

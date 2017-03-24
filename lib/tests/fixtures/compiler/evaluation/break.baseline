@@ -1,0 +1,72 @@
+Notice: Scope(Class[main]): 1
+Notice: Scope(Class[main]): 2
+Notice: Scope(Class[main]): [1]
+Notice: Scope(Class[main]): [h, e]
+Notice: Scope(Class[main]): memo = 5, value = 6
+Notice: Scope(Class[main]): memo = 11, value = 7
+Notice: Scope(Class[main]): memo = 18, value = 8
+Notice: Scope(Class[main]): memo = 26, value = 9
+Notice: Scope(Class[main]): 35
+Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): 4
+Notice: Scope(Class[main]): 0
+Notice: Scope(Class[main]): 5
+Notice: Scope(Class[main]): 10
+Notice: Scope(Class[main]): 15
+Notice: Scope(Class[main]): 20
+Notice: Scope(Class[main]): 25
+Notice: Scope(Class[main]): 30
+Notice: Scope(Class[main]): not breaking for 1
+Notice: Scope(Class[main]): not breaking for 2
+Notice: Scope(Class[main]): breaking for 3
+Notice: Scope(Class[main]): did not return
+{
+  "name": "test",
+  "version": 123456789
+  "environment": "evaluation",
+  "resources": [
+    {
+      "type": "Stage",
+      "title": "main",
+      "tags": [
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "settings",
+      "tags": [
+        "class",
+        "settings",
+        "stage"
+      ],
+      "exported": false
+    },
+    {
+      "type": "Class",
+      "title": "main",
+      "tags": [
+        "class",
+        "main",
+        "stage"
+      ],
+      "exported": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "Stage[main]",
+      "target": "Class[settings]"
+    },
+    {
+      "source": "Stage[main]",
+      "target": "Class[main]"
+    }
+  ],
+  "classes": [
+    "settings",
+    "main"
+  ]
+}
+

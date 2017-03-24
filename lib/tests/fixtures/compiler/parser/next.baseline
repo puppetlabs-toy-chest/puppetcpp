@@ -1,0 +1,223 @@
+path: next.pp
+statements:
+  - kind: function call statement
+    function:
+      kind: name
+      begin:
+        offset: 0
+        line: 1
+      end:
+        offset: 6
+        line: 1
+      value: notice
+    arguments:
+      - kind: postfix expression
+        operand:
+          kind: array
+          begin:
+            offset: 7
+            line: 1
+          end:
+            offset: 19
+            line: 1
+          elements:
+            - kind: number
+              begin:
+                offset: 8
+                line: 1
+              end:
+                offset: 9
+                line: 1
+              base: decimal
+              value: 1
+            - kind: number
+              begin:
+                offset: 11
+                line: 1
+              end:
+                offset: 12
+                line: 1
+              base: decimal
+              value: 2
+            - kind: number
+              begin:
+                offset: 14
+                line: 1
+              end:
+                offset: 15
+                line: 1
+              base: decimal
+              value: 3
+            - kind: number
+              begin:
+                offset: 17
+                line: 1
+              end:
+                offset: 18
+                line: 1
+              base: decimal
+              value: 4
+        operations:
+          - kind: method call expression
+            begin:
+              offset: 19
+              line: 1
+            method:
+              kind: name
+              begin:
+                offset: 20
+                line: 1
+              end:
+                offset: 23
+                line: 1
+              value: map
+            lambda:
+              begin:
+                offset: 24
+                line: 1
+              end:
+                offset: 160
+                line: 12
+              parameters:
+                - variable:
+                    kind: variable
+                    begin:
+                      offset: 25
+                      line: 1
+                    end:
+                      offset: 27
+                      line: 1
+                    name: x
+              body:
+                - kind: if expression
+                  begin:
+                    offset: 35
+                    line: 2
+                  end:
+                    offset: 70
+                    line: 4
+                  conditional:
+                    kind: binary expression
+                    operand:
+                      kind: variable
+                      begin:
+                        offset: 38
+                        line: 2
+                      end:
+                        offset: 40
+                        line: 2
+                      name: x
+                    operations:
+                      - operator_position:
+                          offset: 41
+                          line: 2
+                        operator: ==
+                        operand:
+                          kind: number
+                          begin:
+                            offset: 44
+                            line: 2
+                          end:
+                            offset: 45
+                            line: 2
+                          base: decimal
+                          value: 1
+                  body:
+                    - kind: next statement
+                      value:
+                        kind: name
+                        begin:
+                          offset: 61
+                          line: 3
+                        end:
+                          offset: 64
+                          line: 3
+                        value: foo
+                - kind: if expression
+                  begin:
+                    offset: 75
+                    line: 5
+                  end:
+                    offset: 111
+                    line: 7
+                  conditional:
+                    kind: binary expression
+                    operand:
+                      kind: variable
+                      begin:
+                        offset: 78
+                        line: 5
+                      end:
+                        offset: 80
+                        line: 5
+                      name: x
+                    operations:
+                      - operator_position:
+                          offset: 81
+                          line: 5
+                        operator: ==
+                        operand:
+                          kind: number
+                          begin:
+                            offset: 84
+                            line: 5
+                          end:
+                            offset: 85
+                            line: 5
+                          base: decimal
+                          value: 2
+                  body:
+                    - kind: next statement
+                      value:
+                        kind: nested expression
+                        begin:
+                          offset: 100
+                          line: 6
+                        end:
+                          offset: 105
+                          line: 6
+                        expression:
+                          kind: name
+                          begin:
+                            offset: 101
+                            line: 6
+                          end:
+                            offset: 104
+                            line: 6
+                          value: bar
+                - kind: if expression
+                  begin:
+                    offset: 116
+                    line: 8
+                  end:
+                    offset: 149
+                    line: 10
+                  conditional:
+                    kind: binary expression
+                    operand:
+                      kind: variable
+                      begin:
+                        offset: 119
+                        line: 8
+                      end:
+                        offset: 121
+                        line: 8
+                      name: x
+                    operations:
+                      - operator_position:
+                          offset: 122
+                          line: 8
+                        operator: ==
+                        operand:
+                          kind: number
+                          begin:
+                            offset: 125
+                            line: 8
+                          end:
+                            offset: 126
+                            line: 8
+                          base: decimal
+                          value: 3
+                  body:
+                    - kind: next statement
+                - kind: next statement

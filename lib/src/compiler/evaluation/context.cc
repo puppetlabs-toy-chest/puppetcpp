@@ -311,6 +311,15 @@ namespace puppet { namespace compiler { namespace evaluation {
     {
     }
 
+    context::context(compiler::node& node) :
+        _node(&node),
+        _catalog(nullptr),
+        _registry(&node.environment().registry()),
+        _dispatcher(&node.environment().dispatcher()),
+        _top_scope(make_shared<scope>(node.facts()))
+    {
+    }
+
     context::context(compiler::node& node, compiler::catalog& catalog) :
         _node(&node),
         _catalog(&catalog),
@@ -492,6 +501,16 @@ namespace puppet { namespace compiler { namespace evaluation {
         if (!_call_stack.empty()) {
             _call_stack.back().current(rvalue_cast(context));
         }
+    }
+
+    boost::optional<ast::context> context::nearest_context() const
+    {
+        for (auto const& frame : _call_stack) {
+            if (!frame.external()) {
+                return frame.current();
+            }
+        }
+        return boost::none;
     }
 
     bool context::write(values::value const& value)

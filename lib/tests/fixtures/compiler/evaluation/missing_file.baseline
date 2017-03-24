@@ -1,0 +1,6 @@
+Error: missing_file.pp:1:8: node 'test': could not find any of the specified files.
+  notice file('foo', 'baz', 'baz')
+         ^~~~
+  backtrace:
+    in 'file' (no source)
+    in '<class main>' at missing_file.pp:1

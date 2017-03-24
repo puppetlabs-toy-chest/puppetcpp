@@ -76,9 +76,17 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         // Push back the type as the first argument
         evaluation::evaluator evaluator{ _context };
         _argument_contexts.emplace_back(expression.type.context());
-        _arguments.emplace_back(evaluator.evaluate(expression.type));
+
+        auto type = evaluator.evaluate(expression.type);
+        type.ensure();
+        _arguments.emplace_back(rvalue_cast(type));
 
         evaluate_arguments(expression.arguments);
+    }
+
+    boost::optional<values::value>& call_context::transfer()
+    {
+        return _transfer;
     }
 
     evaluation::context& call_context::context() const
@@ -136,7 +144,13 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             return values::undef();
         }
         function_evaluator evaluator{ _context, "<block>", _block->parameters, _block->body };
-        return evaluator.evaluate(arguments, _closure_scope);
+        auto result = evaluator.evaluate(arguments, _closure_scope);
+
+        // Check for "yield return" and return the contained value
+        if (result.as<values::yield_return>()) {
+            return result.move_as<values::yield_return>().unwrap();
+        }
+        return result;
     }
 
     void call_context::evaluate_arguments(vector<ast::expression> const& arguments)
@@ -144,6 +158,10 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
         evaluation::evaluator evaluator{ _context };
         for (auto& argument : arguments) {
             auto value = evaluator.evaluate(argument);
+            if (value.is_transfer()) {
+                _transfer = rvalue_cast(value);
+                return;
+            }
 
             // If the argument is being splatted, move its elements
             if (argument.is_splat()) {

@@ -96,6 +96,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         char const* _name;
         expression_type _expression;
         std::shared_ptr<evaluation::scope> _scope;
+        std::shared_ptr<ast::syntax_tree> _tree;
         ast::context _current;
         bool _external;
     };

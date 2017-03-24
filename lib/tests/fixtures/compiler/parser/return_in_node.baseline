@@ -1,0 +1,3 @@
+Error: return_in_node.pp:3:9: return statement cannot be used inside a node statement.
+  return
+  ^~~~~~

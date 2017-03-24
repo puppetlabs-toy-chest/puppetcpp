@@ -15,6 +15,9 @@
 #include "type.hpp"
 #include "undef.hpp"
 #include "variable.hpp"
+#include "break_iteration.hpp"
+#include "yield_return.hpp"
+#include "return_value.hpp"
 #include "../../cast.hpp"
 #include <boost/variant.hpp>
 #include <boost/mpl/contains.hpp>
@@ -54,6 +57,8 @@ namespace puppet { namespace runtime { namespace values {
 
     /**
      * Represents all possible value types.
+     * Puppet allows non-local control transfer, such as break and return statements.
+     * These statements return special values to support this without exception handling.
      */
     using value_base = boost::variant<
         undef,
@@ -67,7 +72,10 @@ namespace puppet { namespace runtime { namespace values {
         variable,
         array,
         hash,
-        iterator
+        iterator,
+        break_iteration,
+        yield_return,
+        return_value
     >;
 
     /**
@@ -295,10 +303,22 @@ namespace puppet { namespace runtime { namespace values {
         bool is_truthy() const;
 
         /**
+         * Determines if the value is a control transfer value.
+         * @return Returns true if the value is a control transfer value or false if it is not.
+         */
+        bool is_transfer() const;
+
+        /**
+         * Ensures the value is not a control transfer value.
+         * If the value is control transfer value, an evaluation exception will be raised.
+         */
+        void ensure() const;
+
+        /**
          * Determines if this value matches the other value.
          * Match variables will be set in the given evaluation context when matched against a regex value.
          * @param context The evaluation context.
-         * @param value The value to match.
+         * @param other The other value to match.
          * @return Returns true if the values match or false if not.
          */
         bool match(compiler::evaluation::context& context, values::value const& other) const;

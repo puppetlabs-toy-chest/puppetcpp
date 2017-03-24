@@ -8,8 +8,10 @@
 #include <puppet/compiler/evaluation/functions/defined.hpp>
 #include <puppet/compiler/evaluation/functions/each.hpp>
 #include <puppet/compiler/evaluation/functions/emerg.hpp>
+#include <puppet/compiler/evaluation/functions/epp.hpp>
 #include <puppet/compiler/evaluation/functions/err.hpp>
 #include <puppet/compiler/evaluation/functions/fail.hpp>
+#include <puppet/compiler/evaluation/functions/file.hpp>
 #include <puppet/compiler/evaluation/functions/filter.hpp>
 #include <puppet/compiler/evaluation/functions/include.hpp>
 #include <puppet/compiler/evaluation/functions/info.hpp>
@@ -62,7 +64,7 @@ using namespace puppet::compiler::evaluation::operators;
 
 namespace puppet { namespace compiler { namespace evaluation {
 
-    void dispatcher::add_builtins()
+    void dispatcher::add_builtin_functions()
     {
         // Add the built-in functions
         add(functions::alert::create_descriptor());
@@ -73,8 +75,10 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::defined::create_descriptor());
         add(functions::each::create_descriptor());
         add(functions::emerg::create_descriptor());
+        add(functions::epp::create_descriptor());
         add(functions::err::create_descriptor());
         add(functions::fail::create_descriptor());
+        add(functions::file::create_descriptor());
         add(functions::filter::create_descriptor());
         add(functions::include::create_descriptor());
         add(functions::info::create_descriptor());
@@ -94,7 +98,10 @@ namespace puppet { namespace compiler { namespace evaluation {
         add(functions::versioncmp::create_descriptor());
         add(functions::warning::create_descriptor());
         add(functions::with::create_descriptor());
+    }
 
+    void dispatcher::add_builtin_operators()
+    {
         // Add the built-in binary operators
         add(binary::assignment::create_descriptor());
         add(binary::divide::create_descriptor());
@@ -213,6 +220,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                 context.context().backtrace()
             );
         }
+
         return descriptor->dispatch(context);
     }
 

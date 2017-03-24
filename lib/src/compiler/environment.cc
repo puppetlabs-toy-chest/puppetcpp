@@ -100,20 +100,19 @@ namespace puppet { namespace compiler {
 
         LOG(debug, "found environment directory '%1%' for environment '%2%'.", base_directory, name);
 
-        struct make_shared_enabler : environment
-        {
-            explicit make_shared_enabler(string name, string base, compiler::settings settings) :
-                environment(rvalue_cast(name), rvalue_cast(base), rvalue_cast(settings))
-            {
-            }
-        };
-
         // Load the environment settings
         load_environment_settings(logger, base_directory, settings);
 
-        auto environment = make_shared<make_shared_enabler>(rvalue_cast(name), rvalue_cast(base_directory), rvalue_cast(settings));
+        auto environment = make_shared<compiler::environment>(rvalue_cast(name), rvalue_cast(base_directory), rvalue_cast(settings));
         environment->add_modules(logger);
         return environment;
+    }
+
+    environment::environment(string name, string directory, compiler::settings settings) :
+        finder(rvalue_cast(directory), &settings),
+        _name(rvalue_cast(name)),
+        _settings(rvalue_cast(settings))
+    {
     }
 
     string const& environment::name() const
@@ -284,7 +283,7 @@ namespace puppet { namespace compiler {
                 LOG(debug, "could not load 'init.pp' for module '%1%' because the module does not exist.", name);
                 return;
             }
-            path = module->find_file(type, "init");
+            path = module->find_by_name(type, "init");
         } else {
             // Split into namespace and subname
             auto ns = name.substr(0, pos);
@@ -295,14 +294,14 @@ namespace puppet { namespace compiler {
                     // Don't load manifests from the environment
                     return;
                 }
-                path = this->find_file(type, subname);
+                path = find_by_name(type, subname);
             } else {
                 module = find_module(ns);
                 if (!module) {
                     LOG(debug, "could not load a file for '%1%' because module '%2%' does not exist.", name, ns);
                     return;
                 }
-                path = module->find_file(type, subname);
+                path = module->find_by_name(type, subname);
             }
         }
 
@@ -315,11 +314,34 @@ namespace puppet { namespace compiler {
         import(logger, path, module);
     }
 
-    environment::environment(string name, string directory, compiler::settings settings) :
-        finder(rvalue_cast(directory), &settings),
-        _name(rvalue_cast(name)),
-        _settings(rvalue_cast(settings))
+    string environment::resolve_path(logging::logger& logger, find_type type, string const& path) const
     {
+        auto file = fs::path{ path }.lexically_normal();
+        if (file.is_absolute()) {
+            sys::error_code ec;
+            if (fs::is_regular_file(file, ec)) {
+                return file.string();
+            }
+            return {};
+        }
+        if (file.empty()) {
+            return {};
+        }
+        auto it = file.begin();
+        auto ns = *it;
+        fs::path subname;
+        for (++it; it != file.end(); ++it) {
+            subname /= *it;
+        }
+        if (ns.string() == "environment") {
+            return find_by_path(type, subname.string());
+        }
+        auto module = find_module(ns.string());
+        if (!module) {
+            LOG(debug, "could not resolve file '%1%' because module '%2%' does not exist.", path, ns);
+            return {};
+        }
+        return module->find_by_path(type, subname.string());
     }
 
     void environment::add_modules(logging::logger& logger)

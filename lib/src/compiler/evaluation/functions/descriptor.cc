@@ -80,7 +80,14 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
             try {
                 function_evaluator evaluator{ evaluation_context, *_statement };
-                return evaluator.evaluate(context.arguments(), nullptr, context.name(), false);
+                auto value = evaluator.evaluate(context.arguments(), nullptr, context.name(), false);
+
+                // Unwrap any return values as this point
+                if (value.as<values::return_value>()) {
+                    return value.move_as<values::return_value>().unwrap();
+                }
+                value.ensure();
+                return value;
             } catch (argument_exception const& ex) {
                 throw evaluation_exception(ex.what(), context.argument_context(ex.index()), evaluation_context.backtrace());
             }

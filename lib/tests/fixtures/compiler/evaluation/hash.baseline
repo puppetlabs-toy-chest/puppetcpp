@@ -4,7 +4,7 @@ Notice: Scope(Class[main]): [[a, 1], [5, foo], [[], []], [b, {a => b}], [yep, no
 {
   "name": "test",
   "version": 123456789
-  "environment": "production",
+  "environment": "evaluation",
   "resources": [
     {
       "type": "Stage",

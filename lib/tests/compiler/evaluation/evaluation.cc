@@ -43,11 +43,14 @@ static string normalize(string const& output)
     // Remove catalog versions
     static const std::regex version_regex{ R"((\s*"version":\s*)\d+,)" };
 
-    // Remove references to the fixture path
+    // Remove references to the fixture and template paths
+    // TODO: these need to be escaped on Windows
     static const std::regex path_regex{ (fs::path{FIXTURES_DIR} / "compiler" / "evaluation").string() + fs::path::preferred_separator };
+    static const std::regex templates_regex{ (fs::path{FIXTURES_DIR} / "compiler" / "environments" / "evaluation" / "templates").string() + fs::path::preferred_separator  };
 
     auto result = regex_replace(output, version_regex, "$01123456789");
     result = regex_replace(result, path_regex, "");
+    result = regex_replace(result, templates_regex, "");
     return result;
 }
 
@@ -108,6 +111,8 @@ SCENARIO("evaluating manifests", "[evaluation]")
         baseline_path.replace_extension(".baseline");
 
         compiler::settings settings;
+        settings.set(settings::environment_path, (fs::path{FIXTURES_DIR} / "compiler" / "environments").string());
+        settings.set(settings::environment, "evaluation");
 
         if (generate) {
             WARN("generating baseline file " << baseline_path);
@@ -115,7 +120,8 @@ SCENARIO("evaluating manifests", "[evaluation]")
             ostringstream buffer;
             test_logger logger{ buffer };
             auto environment = compiler::environment::create(logger, settings);
-            environment->dispatcher().add_builtins();
+            environment->dispatcher().add_builtin_functions();
+            environment->dispatcher().add_builtin_operators();
             compiler::node node{ logger, "test", environment, nullptr };
 
             try {
@@ -144,7 +150,8 @@ SCENARIO("evaluating manifests", "[evaluation]")
         stringstream buffer;
         test_logger logger{ buffer };
         auto environment = compiler::environment::create(logger, settings);
-        environment->dispatcher().add_builtins();
+        environment->dispatcher().add_builtin_functions();
+        environment->dispatcher().add_builtin_operators();
         compiler::node node{ logger, "test", environment, nullptr };
 
         try {

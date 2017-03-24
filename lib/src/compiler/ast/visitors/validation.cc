@@ -12,9 +12,15 @@ using namespace std;
 
 namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
-    void validation::visit(syntax_tree const& tree, bool epp)
+    validation::validation(bool epp, bool allow_catalog_statements) :
+        _epp(epp),
+        _allow_catalog_statements(allow_catalog_statements)
     {
-        location_helper helper{*this, epp ? location::epp : location::top };
+    }
+
+    void validation::visit(syntax_tree const& tree)
+    {
+        location_helper helper{*this, _epp ? location::epp : location::top };
 
         if (tree.parameters) {
             validate_parameters(*tree.parameters, false, true);
@@ -87,6 +93,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(interpolated_string const& expression)
     {
+        location_helper helper{*this, location::interpolated_string };
         for (auto& part : expression.parts) {
             boost::apply_visitor(*this, part);
         }
@@ -113,8 +120,6 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(case_expression const& expression)
     {
-        location_helper helper{*this, location::case_ };
-
         operator()(expression.conditional);
 
         for (auto const& proposition : expression.propositions) {
@@ -128,10 +133,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(if_expression const& expression)
     {
-        location_helper helper{*this, location::if_ };
-
         operator()(expression.conditional);
-
         validate_body(expression.body, true);
 
         for (auto const& elsif : expression.elsifs) {
@@ -146,10 +148,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
 
     void validation::operator()(unless_expression const& expression)
     {
-        location_helper helper{*this, location::unless };
-
         operator()(expression.conditional);
-
         validate_body(expression.body, true);
 
         if (expression.else_) {
@@ -163,14 +162,13 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             operator()(argument);
         }
         if (expression.lambda) {
-            operator()(*expression.lambda);
+            operator()(expression.function, *expression.lambda);
         }
     }
 
-    void validation::operator()(lambda_expression const& expression)
+    void validation::operator()(name const& function, lambda_expression const& expression)
     {
-        location_helper helper{*this, location::lambda };
-
+        location_helper helper{ *this, location::lambda };
         validate_parameters(expression.parameters);
         validate_body(expression.body, true);
     }
@@ -184,37 +182,42 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
     }
 
-    void validation::operator()(ast::epp_render_expression const& expression)
+    void validation::operator()(epp_render_expression const& expression)
     {
         operator()(expression.expression);
     }
 
-    void validation::operator()(ast::epp_render_block const& expression)
+    void validation::operator()(epp_render_block const& expression)
     {
         for (auto const& expr : expression.block) {
             operator()(expr);
         }
     }
 
-    void validation::operator()(ast::epp_render_string const& expression)
+    void validation::operator()(epp_render_string const& expression)
     {
     }
 
-    void validation::operator()(ast::unary_expression const& expression)
+    void validation::operator()(unary_expression const& expression)
     {
         operator()(expression.operand);
     }
 
-    void validation::operator()(ast::nested_expression const& expression)
+    void validation::operator()(nested_expression const& expression)
     {
         operator()(expression.expression);
     }
 
     void validation::operator()(ast::expression const& expression)
     {
+        if (expression.operations.empty()) {
+            operator()(expression.operand);
+            return;
+        }
+
         operator()(expression.operand);
 
-        ast::postfix_expression const* left = &expression.operand;
+        postfix_expression const* left = &expression.operand;
         for (auto const& operation : expression.operations) {
             if (operation.operator_ == binary_operator::assignment) {
                 // If we're checking for illegal parameter references, then the assignment operation is illegal inside a default value
@@ -231,7 +234,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
     }
 
-    void validation::operator()(ast::postfix_expression const& expression)
+    void validation::operator()(postfix_expression const& expression)
     {
         operator()(expression.operand);
 
@@ -262,7 +265,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
             operator()(argument);
         }
         if (expression.lambda) {
-            operator()(*expression.lambda);
+            operator()(expression.method, *expression.lambda);
         }
     }
 
@@ -278,8 +281,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         boost::apply_visitor(*this, statement);
     }
 
-    void validation::operator()(ast::class_statement const& statement)
+    void validation::operator()(class_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top && current != location::class_) {
             throw parse_exception("classes can only be defined at top-level or inside another class.", statement.begin, statement.end);
@@ -298,8 +303,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         validate_body(statement.body, false);
     }
 
-    void validation::operator()(ast::defined_type_statement const& statement)
+    void validation::operator()(defined_type_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top && current != location::class_) {
             throw parse_exception("defined types can only be defined at top-level or inside a class.", statement.begin, statement.end);
@@ -315,8 +322,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         validate_body(statement.body, false);
     }
 
-    void validation::operator()(ast::node_statement const& statement)
+    void validation::operator()(node_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top && current != location::class_) {
             throw parse_exception("node definitions can only be defined at top-level or inside a class.", statement.begin, statement.end);
@@ -340,7 +349,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         validate_body(statement.body, false);
     }
 
-    void validation::operator()(ast::function_statement const& statement)
+    void validation::operator()(function_statement const& statement)
     {
         auto current = current_location();
         if (current != location::top) {
@@ -357,8 +366,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         validate_body(statement.body, true);
     }
 
-    void validation::operator()(ast::produces_statement const& statement)
+    void validation::operator()(produces_statement const& statement)
     {
+        validate_catalog_statement(statement.context());
+
         auto current = current_location();
         if (current != location::top && current != location::site) {
             auto context = statement.context();
@@ -370,8 +381,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
     }
 
-    void validation::operator()(ast::consumes_statement const& statement)
+    void validation::operator()(consumes_statement const& statement)
     {
+        validate_catalog_statement(statement.context());
+
         auto current = current_location();
         if (current != location::top && current != location::site) {
             auto context = statement.context();
@@ -383,8 +396,10 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
     }
 
-    void validation::operator()(ast::application_statement const& statement)
+    void validation::operator()(application_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top) {
             throw parse_exception("applications can only be defined at top-level.", statement.begin, statement.end);
@@ -395,13 +410,14 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
 
         location_helper helper{*this, location::application };
-
         validate_parameters(statement.parameters, true, true);
         validate_body(statement.body, false);
     }
 
-    void validation::operator()(ast::site_statement const& statement)
+    void validation::operator()(site_statement const& statement)
     {
+        validate_catalog_statement(statement);
+
         auto current = current_location();
         if (current != location::top) {
             throw parse_exception("sites can only be defined at top-level.", statement.begin, statement.end);
@@ -411,7 +427,7 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         validate_body(statement.body, false);
     }
 
-    void validation::operator()(ast::type_alias_statement const& statement)
+    void validation::operator()(type_alias_statement const& statement)
     {
         auto current = current_location();
         if (current != location::top) {
@@ -436,18 +452,27 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         statement.type.validate_type();
     }
 
-    void validation::operator()(ast::function_call_statement const& statement)
+    void validation::operator()(function_call_statement const& statement)
     {
         for (auto const& argument : statement.arguments) {
             operator()(argument);
         }
         if (statement.lambda) {
-            operator()(*statement.lambda);
+            operator()(statement.function, *statement.lambda);
         }
     }
 
-    void validation::operator()(ast::relationship_statement const& statement)
+    void validation::operator()(relationship_statement const& statement)
     {
+        // If there are no operations, then this isn't actually a relationship statement
+        if (statement.operations.empty()) {
+            operator()(statement.operand);
+            return;
+        }
+
+        validate_catalog_statement(statement.context());
+
+        location_helper helper{*this, location::relationship };
         operator()(statement.operand);
 
         for (auto const& operation : statement.operations) {
@@ -455,13 +480,16 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
     }
 
-    void validation::operator()(ast::relationship_expression const& expression)
+    void validation::operator()(relationship_expression const& expression)
     {
         boost::apply_visitor(*this, expression);
     }
 
-    void validation::operator()(ast::resource_declaration_expression const& expression)
+    void validation::operator()(resource_declaration_expression const& expression)
     {
+        validate_catalog_statement(expression);
+
+        location_helper helper{*this, location::resource_declaration };
         for (auto const& body : expression.bodies) {
             operator()(body.title);
 
@@ -471,24 +499,31 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         }
     }
 
-    void validation::operator()(ast::resource_override_expression const& expression)
+    void validation::operator()(resource_override_expression const& expression)
     {
+        validate_catalog_statement(expression);
+
+        location_helper helper{*this, location::resource_override };
         boost::apply_visitor(*this, expression.reference);
-
         for (auto const& operation : expression.operations) {
             operator()(operation.value);
         }
     }
 
-    void validation::operator()(ast::resource_defaults_expression const& expression)
+    void validation::operator()(resource_defaults_expression const& expression)
     {
+        validate_catalog_statement(expression);
+
+        location_helper helper{*this, location::resource_defaults };
         for (auto const& operation : expression.operations) {
             operator()(operation.value);
         }
     }
 
-    void validation::operator()(ast::collector_expression const& expression)
+    void validation::operator()(collector_expression const& expression)
     {
+        validate_catalog_statement(expression.context());
+
         if (expression.query) {
             operator()(*expression.query);
         }
@@ -516,6 +551,95 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
     void validation::operator()(attribute_query const& expression)
     {
         operator()(expression.value);
+    }
+
+    void validation::operator()(break_statement const& statement)
+    {
+        auto result = validate_transfer_statement(false);
+        if (result.first) {
+            throw parse_exception(
+                (boost::format("break statement cannot be used inside %1%.") % result.first).str(),
+                statement.begin,
+                statement.end
+            );
+        }
+
+        if (result.second != location::lambda) {
+            throw parse_exception(
+                "break statement must be used from within a block.",
+                statement.begin,
+                statement.end
+            );
+        }
+    }
+
+    void validation::operator()(next_statement const& statement)
+    {
+        auto result = validate_transfer_statement(false);
+        if (result.first) {
+            auto context = statement.context();
+            throw parse_exception(
+                (boost::format("next statement cannot be used inside %1%.") % result.first).str(),
+                context.begin,
+                context.end
+            );
+        }
+
+        if (result.second != location::lambda) {
+            auto context = statement.context();
+            throw parse_exception(
+                "next statement must be used from within a block.",
+                context.begin,
+                context.end
+            );
+        }
+
+        if (statement.value) {
+            operator()(*statement.value);
+        }
+    }
+
+    void validation::operator()(return_statement const& statement)
+    {
+        auto result = validate_transfer_statement(true);
+        if (result.first) {
+            throw parse_exception(
+                (boost::format("return statement cannot be used inside %1%.") % result.first).str(),
+                statement.begin,
+                statement.end
+            );
+        }
+
+        if (result.second == location::class_) {
+            if (statement.value) {
+                auto context = statement.context();
+                throw parse_exception(
+                    "classes cannot return a value.",
+                    context.begin,
+                    context.end
+                );
+            }
+        } else if (result.second == location::defined_type) {
+            if (statement.value) {
+                auto context = statement.context();
+                throw parse_exception(
+                    "defined types cannot return a value.",
+                    context.begin,
+                    context.end
+                );
+            }
+        } else if (result.second != location::function) {
+            auto context = statement.context();
+            throw parse_exception(
+                "return statement must be used from within a function, class, or defined type.",
+                context.begin,
+                context.end
+            );
+        }
+
+        if (statement.value) {
+            operator()(*statement.value);
+        }
     }
 
     void validation::validate_parameters(vector<parameter> const& parameters, bool is_resource, bool pass_by_hash)
@@ -634,8 +758,21 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
         for (size_t i = 0; i < body.size(); ++i) {
             auto& statement = body[i];
 
+            bool is_last = i == (body.size() - 1);
+
             // The last statement in the block is allowed to be ineffective if there is a return value
-            operator()(statement, !has_return_value || i < (body.size() - 1));
+            operator()(statement, !has_return_value || !is_last);
+
+            // Check for unreachable code following a transfer statement
+            if (!is_last && statement.is_transfer_statement()) {
+                auto context = body[i + 1].context();
+
+                throw parse_exception(
+                    "code is unreachable due to previous control flow statement.",
+                    context.begin,
+                    context.end
+                );
+            }
         }
     }
 
@@ -704,6 +841,106 @@ namespace puppet { namespace compiler { namespace ast { namespace visitors {
                 operand.end
             );
         }
+    }
+
+    void validation::validate_catalog_statement(ast::context const& context)
+    {
+        if (!_allow_catalog_statements) {
+            throw parse_exception("catalog statements are not allowed.", context.begin, context.end);
+        }
+    }
+
+    std::pair<char const*, validation::location> validation::validate_transfer_statement(bool ret)
+    {
+        // Look backward up the AST for illegal uses
+        location inside = location::top;
+        char const* message = nullptr;
+        for (auto it = _locations.rbegin(); it != _locations.rend(); ++it) {
+            auto current = *it;
+            // Check if we've found the location where the statement is ultimately contained
+            if ((ret && (current == location::function || current == location::class_ || current == location::defined_type)) ||
+                (!ret && current == location::lambda)) {
+                inside = current;
+                continue;
+            }
+
+            // Check for use in illegal expressions
+            if (current == location::relationship ||
+                current == location::resource_declaration ||
+                current == location::resource_override ||
+                current == location::resource_defaults) {
+                message = where(current);
+                break;
+            }
+
+            // Check for evaluation inside parameters
+            if (_parameter_begin) {
+                message = "parameter default value";
+                break;
+            }
+
+            // If we haven't discovered the containing location yet, check for illegal uses
+            if (inside == location::top) {
+                if (current == location::interpolated_string ||
+                    (!ret && (current == location::function || current == location::class_ || current == location::defined_type)) ||
+                    current == location::node ||
+                    current == location::application ||
+                    current == location::site) {
+                    message = where(current);
+                    break;
+                }
+            }
+        }
+        return make_pair(message, inside);
+    }
+
+    char const* validation::where(location l)
+    {
+        switch (l) {
+            case location::top:
+                return "the top level";
+
+            case location::epp:
+                return "an EPP template";
+
+            case location::interpolated_string:
+                return "an interpolated string";
+
+            case location::lambda:
+                return "a block";
+
+            case location::class_:
+                return "a class";
+
+            case location::defined_type:
+                return "a defined type";
+
+            case location::node:
+                return "a node statement";
+
+            case location::function:
+                return "a function statement";
+
+            case location::application:
+                return "an application statement";
+
+            case location::site:
+                return "a site statement";
+
+            case location::relationship:
+                return "a relationship expression";
+
+            case location::resource_declaration:
+                return "a resource declaration expression";
+
+            case location::resource_override:
+                return "a resource override expression";
+
+            case location::resource_defaults:
+                return "a resource defaults expression";
+        }
+
+        throw runtime_error("unexpected location type.");
     }
 
     validation::location_helper::location_helper(validation& visitor, location where) :

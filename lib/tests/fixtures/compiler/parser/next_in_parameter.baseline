@@ -1,0 +1,3 @@
+Error: next_in_parameter.pp:1:33: next statement cannot be used inside parameter default value.
+  function foo($param = if true { next }) {
+                                  ^~~~

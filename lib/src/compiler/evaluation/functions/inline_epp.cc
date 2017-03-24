@@ -45,7 +45,20 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
             // Log the underlying problem and then throw an error pointing at the argument
             auto info = lexer::get_line_info(input, ex.begin().offset(), ex.end().offset() - ex.begin().offset());
             evaluation_context.node().logger().log(logging::level::error, ex.begin().line(), info.column, info.length, info.text, path, ex.what());
-            throw evaluation_exception("parsing of EPP template failed.", context.name(), evaluation_context.backtrace());
+            throw evaluation_exception(
+                "parsing of inline EPP template failed.",
+                context.argument_context(0),
+                evaluation_context.backtrace()
+            );
+        } catch (evaluation_exception const& ex) {
+            auto& c = ex.context();
+            auto info = lexer::get_line_info(input, c.begin.offset(), c.end.offset() - c.begin.offset());
+            logger.log(logging::level::error, c.begin.line(), info.column, info.length, info.text, path, ex.what());
+            throw evaluation_exception(
+                "evaluation of inline EPP template failed.",
+                context.name(),
+                ex.backtrace()
+            );
         } catch (argument_exception const& ex) {
             throw evaluation_exception(
                 (boost::format("EPP template argument error: %1%") %

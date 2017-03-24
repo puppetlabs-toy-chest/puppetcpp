@@ -1,0 +1,3 @@
+Error: return_at_top.pp:1:1: return statement must be used from within a function, class, or defined type.
+  return
+  ^~~~~~

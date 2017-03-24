@@ -1,0 +1,3 @@
+Error: break_in_interpolation.pp:6:19: break statement cannot be used inside an interpolated string.
+  "${ if true { break } }"
+                ^~~~~

@@ -202,9 +202,18 @@ namespace puppet { namespace logging {
          */
         virtual void log_backtrace(std::vector<compiler::evaluation::stack_frame> const& backtrace) = 0;
 
-     private:
+     protected:
+        /**
+         * Stores the number of warnings encountered.
+         */
         size_t _warnings;
+        /**
+         * Stores the number of errors encountered.
+         */
         size_t _errors;
+        /**
+         * Stores the minimum logging level.
+         */
         logging::level _level;
     };
 

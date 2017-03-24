@@ -1,0 +1,10 @@
+Error: <epp>:2:15: parameter $bar is required but no value was given.
+  Integer $bar
+          ^~~~
+Error: inline_epp_missing_param.pp:1:1: node 'test': evaluation of inline EPP template failed.
+  inline_epp(@(TEMPLATE), { foo => 1})
+  ^~~~~~~~~~
+  backtrace:
+    in '<epp-eval>' (no source)
+    in 'inline_epp' (no source)
+    in '<class main>' at inline_epp_missing_param.pp:1

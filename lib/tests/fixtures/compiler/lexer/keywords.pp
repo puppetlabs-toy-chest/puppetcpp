@@ -21,5 +21,8 @@ produces
 consumes
 application
 site
+break
+next
+return
 true
 false

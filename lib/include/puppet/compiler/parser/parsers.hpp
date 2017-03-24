@@ -187,7 +187,7 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Represents a parser that returns the base syntax tree from the parser context.
      */
-    auto const tree = tree_parser();
+    auto const tree = tree_parser{};
 
     /**
      * Responsible for consuming a token without outputting an attribute.
@@ -261,17 +261,17 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Responsible for parsing the regex values.
      */
-    auto const regex_value = value_parser('/', '/');
+    auto const regex_value = value_parser{ '/', '/' };
 
     /**
      * Responsible for parsing variable values.
      */
-    auto const variable_value = value_parser('$');
+    auto const variable_value = value_parser{ '$' };
 
     /**
      * Responsible for parsing the current token's value.
      */
-    auto const value = value_parser(false, false);
+    auto const value = value_parser{};
 
     /**
      * Responsible for parsing a number token.
@@ -306,7 +306,7 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Responsible for parsing number tokens.
      */
-    auto const number_token = number_parser();
+    auto const number_token = number_parser{};
 
     /**
      * Responsible for parsing literal strings.
@@ -390,7 +390,7 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Responsible for parsing string tokens.
      */
-    auto const string_token = string_parser();
+    auto const string_token = string_parser{};
 
     /**
      * Responsible for parsing string format information from string start tokens.
@@ -421,7 +421,7 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Responsible for parsing string format information from string start tokens.
      */
-    auto const string_format = string_format_parser();
+    auto const string_format = string_format_parser{};
 
     /**
      * Responsible for parsing interpolated string text.
@@ -455,7 +455,7 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Responsible for parsing string text tokens.
      */
-    auto const string_text = string_text_parser();
+    auto const string_text = string_text_parser{};
 
     /**
      * Responsible for parsing string margin information from string end tokens.
@@ -486,7 +486,7 @@ namespace puppet { namespace compiler { namespace parser {
     /**
      * Responsible for parsing string margin information from string end tokens.
      */
-    auto const string_margin = string_margin_parser();
+    auto const string_margin = string_margin_parser{};
 
 }}} // namespace puppet::compiler::parser
 
@@ -822,6 +822,64 @@ namespace boost { namespace spirit { namespace x3 {
         {
             std::ostringstream ss;
             ss << "an optional " << get_info<Subject>()(parser.subject);
+            return ss.str();
+        }
+    };
+
+    /**
+     * Responsible for getting the info of a plus parser.
+     * @tparam Subject The parser's subject type.
+     */
+    template <typename Subject>
+    struct get_info<boost::spirit::x3::plus<Subject>>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = boost::spirit::x3::plus<Subject>;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            std::ostringstream ss;
+            ss << "at least one " << get_info<Subject>()(parser.subject);
+            return ss.str();
+        }
+    };
+
+    /**
+     * Responsible for getting the info of a kleene parser.
+     * @tparam Subject The parser's subject type.
+     */
+    template <typename Subject>
+    struct get_info<boost::spirit::x3::kleene<Subject>>
+    {
+        /**
+         * The parser type.
+         */
+        using parser_type = boost::spirit::x3::kleene<Subject>;
+        /**
+         * The result type.
+         */
+        using result_type = std::string;
+
+        /**
+         * Gets the info for a parser.
+         * @param parser The parser to get the info for.
+         * @return Returns the info for the parser.
+         */
+        result_type operator()(parser_type const& parser) const
+        {
+            std::ostringstream ss;
+            ss << "zero or more " << get_info<Subject>()(parser.subject);
             return ss.str();
         }
     };

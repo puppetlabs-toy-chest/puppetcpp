@@ -822,6 +822,101 @@ namespace puppet { namespace compiler { namespace ast {
     struct relationship_statement;
 
     /**
+     * Represents a break statement.
+     */
+    struct break_statement : context
+    {
+    };
+
+    /**
+     * Stream insertion operator for break statement.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, break_statement const& node);
+
+    /**
+     * Represents a next statement.
+     */
+    struct next_statement
+    {
+        /**
+         * Stores the beginning position of the next keyword.
+         */
+        lexer::position begin;
+
+        /**
+         * Stores the ending position of the next keyword.
+         */
+        lexer::position end;
+
+        /**
+         * Stores the back pointer to the root of the tree.
+         */
+        syntax_tree* tree = nullptr;
+
+        /**
+         * Stores the optional return value.
+         */
+        boost::optional<expression> value;
+
+        /**
+         * Gets the context of the statement.
+         * @return Returns the context of the statement.
+         */
+        ast::context context() const;
+    };
+
+    /**
+     * Stream insertion operator for next statement.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, next_statement const& node);
+
+    /**
+     * Represents a return statement.
+     */
+    struct return_statement
+    {
+        /**
+         * Stores the beginning position of the return keyword.
+         */
+        lexer::position begin;
+
+        /**
+         * Stores the ending position of the return keyword.
+         */
+        lexer::position end;
+
+        /**
+         * Stores the back pointer to the root of the tree.
+         */
+        syntax_tree* tree = nullptr;
+
+        /**
+         * Stores the optional return value.
+         */
+        boost::optional<expression> value;
+
+        /**
+         * Gets the context of the statement.
+         * @return Returns the context of the statement.
+         */
+        ast::context context() const;
+    };
+
+    /**
+     * Stream insertion operator for return statement.
+     * @param os The output stream to write to.
+     * @param node The node to write.
+     * @return Returns the given output stream.
+     */
+    std::ostream& operator<<(std::ostream& os, return_statement const& node);
+
+    /**
      * Represents a Puppet statement.
      */
     struct statement : boost::spirit::x3::variant<
@@ -835,7 +930,10 @@ namespace puppet { namespace compiler { namespace ast {
         boost::spirit::x3::forward_ast<site_statement>,
         boost::spirit::x3::forward_ast<type_alias_statement>,
         boost::spirit::x3::forward_ast<function_call_statement>,
-        boost::spirit::x3::forward_ast<relationship_statement>
+        boost::spirit::x3::forward_ast<relationship_statement>,
+        break_statement,
+        next_statement,
+        return_statement
         >
     {
         // Use the base's construction and assignment semantics
@@ -881,6 +979,13 @@ namespace puppet { namespace compiler { namespace ast {
          * @param effective True if the statement is required to be effective or false if not.
          */
         void validate(bool effective = false) const;
+
+        /**
+         * Determines if the statement is a control transfer statement.
+         * Control transfer statements include break, next, and return statements.
+         * @return Returns true if the statement is a control transfer statement or false if not.
+         */
+        bool is_transfer_statement() const;
     };
 
     /**
@@ -2807,8 +2912,9 @@ namespace puppet { namespace compiler { namespace ast {
          * Validates the AST.
          * Throws parse exceptions if validation fails.
          * @param epp True if the AST is from an EPP parse or false if not.
+         * @param allow_catalog_statements True if catalog statements are allowed or false if not.
          */
-        void validate(bool epp = false) const;
+        void validate(bool epp = false, bool allow_catalog_statements = true) const;
 
         /**
          * Creates a syntax tree.

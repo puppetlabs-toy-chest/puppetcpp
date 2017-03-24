@@ -191,7 +191,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     ostream& operator<<(ostream& os, scope const& s)
     {
         if (!s.resource()) {
-            os << "Scope(unknown)";
+            os << "Scope(main)";
             return os;
         }
         os << "Scope(" << s.resource()->type() << ")";
