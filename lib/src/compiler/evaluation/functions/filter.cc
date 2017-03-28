@@ -34,7 +34,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                     }
                     // Check for control transfer and break out of the loop
                     if (filtered.is_transfer()) {
-                        transfer = filtered;
+                        transfer = rvalue_cast(filtered);
                         return false;
                     }
                     if (filtered.is_true()) {
@@ -91,7 +91,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                         }
                         // Check for control transfer and break out of the loop
                         if (filtered.is_transfer()) {
-                            transfer = filtered;
+                            transfer = rvalue_cast(filtered);
                             return false;
                         }
                         if (filtered.is_true()) {
