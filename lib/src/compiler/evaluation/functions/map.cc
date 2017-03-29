@@ -44,7 +44,7 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
                         }
                         // Check for control transfer and break out of the loop
                         if (replacement.is_transfer()) {
-                            transfer = replacement;
+                            transfer = rvalue_cast(replacement);
                             return false;
                         }
                         result.emplace_back(rvalue_cast(replacement));
