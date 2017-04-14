@@ -217,6 +217,7 @@ if (Editline_FOUND)
 endif()
 
 install(TARGETS puppet DESTINATION lib${LIB_SUFFIX})
+install(DIRECTORY include/ DESTINATION include)
 
 cotire(generate_static_lexer)
 cotire(puppet)
