@@ -17,7 +17,11 @@ namespace puppet { namespace compiler { namespace evaluation { namespace functio
 
         // Log the message
         if (logger.would_log(level)) {
-            logger.log(level, (boost::format("%1%: %2%") % current % message).str());
+            if (!current.resource()) {
+                logger.log(level, message);
+            } else {
+                logger.log(level, (boost::format("%1%: %2%") % current % message).str());
+            }
         }
         return message;
     }
