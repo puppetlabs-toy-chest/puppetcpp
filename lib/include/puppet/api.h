@@ -450,7 +450,7 @@ struct puppet_value* puppet_create_value();
  * @param value The value to clone.
  * @return Returns the cloned value; use `puppet_free_value` to free the returned value.
  */
-struct puppet_value* puppet_value_clone(struct puppet_value const* value);
+struct puppet_value* puppet_clone_value(struct puppet_value const* value);
 
 /**
  * Frees a Puppet value.

@@ -8,6 +8,7 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/optional.hpp>
 #include <unicode/utext.h>
+#include <unicode/ubrk.h>
 #include <string>
 #include <exception>
 #include <limits>
