@@ -38,7 +38,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         value result;
         if (arguments) {
             // An EPP without parameters; set all arguments in scope
-            auto scope = make_shared<evaluation::scope>(_context.top_scope());
+            auto scope = std::make_shared<evaluation::scope>(_context.top_scope());
             auto frame = scoped_stack_frame{ _context, stack_frame{ "<epp-eval>", scope } };
 
             // Set the arguments
@@ -575,7 +575,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         result.ensure();
 
         // Register the relationships
-        auto left = make_shared<value>(rvalue_cast(result));
+        auto left = std::make_shared<value>(rvalue_cast(result));
         auto left_context = statement.operand.context();
         for (auto const& operation : statement.operations) {
             compiler::relationship relationship;
@@ -600,7 +600,7 @@ namespace puppet { namespace compiler { namespace evaluation {
                     throw runtime_error("unsupported relationship operator.");
             }
 
-            auto right = make_shared<value>(operator()(operation.operand));
+            auto right = std::make_shared<value>(operator()(operation.operand));
             right->ensure();
 
             auto right_context = operation.operand.context();
@@ -829,7 +829,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     value evaluator::operator()(collector_expression const& expression)
     {
         // Create and add a collector to the catalog
-        auto collector = make_shared<collectors::query_collector>(expression, _context.current_scope());
+        auto collector = std::make_shared<collectors::query_collector>(expression, _context.current_scope());
         _context.add(collector);
         return types::runtime(types::runtime::object_type(rvalue_cast(collector)));
     }
@@ -1325,7 +1325,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         }
 
         // Create a new scope and stack frame
-        auto scope = make_shared<evaluation::scope>(parent ? parent : _context.top_scope());
+        auto scope = std::make_shared<evaluation::scope>(parent ? parent : _context.top_scope());
         scoped_stack_frame frame = _name ?
             scoped_stack_frame{ _context, stack_frame{ _name, scope, false } } :
             scoped_stack_frame{ _context, stack_frame{ _statement, scope } };
@@ -1396,7 +1396,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     values::value function_evaluator::evaluate(values::hash& arguments, shared_ptr<scope> parent) const
     {
         // Create a new scope and stack frame
-        auto scope = make_shared<evaluation::scope>(parent ? parent : _context.top_scope());
+        auto scope = std::make_shared<evaluation::scope>(parent ? parent : _context.top_scope());
         scoped_stack_frame frame = _name ?
            scoped_stack_frame{ _context, stack_frame{ _name, scope } } :
            scoped_stack_frame{ _context, stack_frame{ _statement, scope } };
@@ -1504,7 +1504,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     void resource_evaluator::prepare_scope(evaluation::scope& scope, compiler::resource& resource) const
     {
         // Set the title in the scope
-        shared_ptr<values::value const> title = make_shared<values::value const>(resource.type().title());
+        shared_ptr<values::value const> title = std::make_shared<values::value const>(resource.type().title());
         scope.set("title", title, resource.context());
 
         // Set the name in the scope
@@ -1620,7 +1620,7 @@ namespace puppet { namespace compiler { namespace evaluation {
         if (!scope) {
             // Create a temporary stack frame to show the child calling into the parent if parent evaluation fails
             scoped_stack_frame frame{ _context, stack_frame{ &_statement, nullptr } };
-            scope = make_shared<evaluation::scope>(evaluate_parent(), &resource);
+            scope = std::make_shared<evaluation::scope>(evaluate_parent(), &resource);
             _context.add_scope(scope);
             created = true;
         }
@@ -1666,7 +1666,7 @@ namespace puppet { namespace compiler { namespace evaluation {
     void defined_type_evaluator::evaluate(compiler::resource& resource) const
     {
         // Create a scope for evaluating the defined type
-        auto scope = make_shared<evaluation::scope>(_context.node_or_top(), &resource);
+        auto scope = std::make_shared<evaluation::scope>(_context.node_or_top(), &resource);
         scoped_stack_frame frame{ _context, stack_frame{ &_statement, scope } };
 
         prepare_scope(*scope, resource);

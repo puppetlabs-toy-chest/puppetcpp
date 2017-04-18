@@ -250,6 +250,10 @@ namespace puppet { namespace runtime { namespace values {
         std::unique_ptr<value_type> _value;
     };
 
+    // Static undef value.
+    template <typename value_type>
+    value_type wrapper<value_type>::_undef;
+
     /**
      * Stream insertion operator for wrapper.
      * @param os The output stream to write the wrapper to.
